@@ -19,7 +19,7 @@ export default function Home() {
           <Logo className="h-12 w-12" />
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-primary">
-              EcoQuest Explorers
+              GreenQuest
             </h1>
             <p className="text-muted-foreground">Your journey to becoming a Guardian of Nature</p>
           </div>

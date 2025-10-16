@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 const STORAGE_KEY = 'ecoquest-progress';
 
 export function useStationProgress() {
-  const [unlockedStations, setUnlockedStations] = useState<number[]>([1]);
+  const [unlockedStations, setUnlockedStations] = useState<number[]>([1, 2, 3, 4, 5, 6, 7, 8, 9]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -17,6 +17,11 @@ export function useStationProgress() {
         if (Array.isArray(parsedProgress) && parsedProgress.length > 0) {
             setUnlockedStations(parsedProgress);
         }
+      } else {
+        // If no saved progress, set initial state with all stations unlocked
+        const allStations = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+        setUnlockedStations(allStations);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(allStations));
       }
     } catch (error) {
       console.error("Failed to load progress from localStorage", error);
@@ -41,7 +46,7 @@ export function useStationProgress() {
   }, []);
   
   const resetProgress = useCallback(() => {
-      const initialStations = [1];
+      const initialStations = [1, 2, 3, 4, 5, 6, 7, 8, 9];
       setUnlockedStations(initialStations);
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(initialStations));

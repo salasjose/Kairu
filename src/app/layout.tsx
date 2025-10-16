@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'EcoQuest Explorers',
+  title: 'GreenQuest',
   description: 'An interactive environmental education game.',
 };
 

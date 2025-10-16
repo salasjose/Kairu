@@ -14,7 +14,7 @@ export default function StationLayout({
         <nav className="container flex items-center justify-between h-16 px-4">
           <Link href="/" className="flex items-center gap-2">
             <Logo className="h-8 w-8" />
-            <span className="font-bold font-headline text-xl hidden sm:inline">EcoQuest Explorers</span>
+            <span className="font-bold font-headline text-xl hidden sm:inline">GreenQuest</span>
           </Link>
           <Button asChild variant="outline">
             <Link href="/">
