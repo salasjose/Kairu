@@ -32,7 +32,7 @@ const ChallengeDetail = ({ title, description, onComplete, onBack, image, imageH
               <p className="text-muted-foreground mb-6">{description}</p>
               <Button onClick={onComplete} size="lg">
                   <CheckCircle className="mr-2" />
-                  Simular Completado
+                  Completar Reto
               </Button>
           </CardContent>
       </Card>
@@ -42,35 +42,20 @@ const ChallengeDetail = ({ title, description, onComplete, onBack, image, imageH
 
 export default function Station1() {
   const [selectedChallenge, setSelectedChallenge] = useState<string | null>(null);
-  const [completedChallenge, setCompletedChallenge] = useState<string | null>(null);
   const { unlockStation } = useStationProgress();
   const router = useRouter();
-
-  const handleComplete = () => {
-    if (!completedChallenge) {
-      toast({
-        title: "Reto no completado",
-        description: "Por favor, completa uno de los retos para continuar.",
-        variant: "destructive",
-      });
-      return false;
-    }
+  
+  const completeChallenge = (challenge: string) => {
+    toast({
+      title: `Reto '${challenge}' completado`,
+      description: "¡Has marcado este reto como finalizado!",
+    });
     toast({
       title: "¡Estación 1 Completada!",
       description: "¡Buen trabajo en el reto de biodiversidad!",
     });
     unlockStation(2);
     router.push("/");
-    return true;
-  };
-  
-  const completeAndGoBack = (challenge: string) => {
-    setCompletedChallenge(challenge);
-    setSelectedChallenge(null);
-     toast({
-      title: `Reto '${challenge}' completado`,
-      description: "¡Has marcado este reto como finalizado!",
-    });
   }
 
   if (selectedChallenge) {
@@ -90,7 +75,7 @@ export default function Station1() {
     }
     const challengeData = challenges[selectedChallenge as keyof typeof challenges];
 
-     return <ChallengeDetail {...challengeData} onComplete={() => completeAndGoBack(selectedChallenge)} onBack={() => setSelectedChallenge(null)} />;
+     return <ChallengeDetail {...challengeData} onComplete={() => completeChallenge(selectedChallenge)} onBack={() => setSelectedChallenge(null)} />;
   }
 
 
@@ -115,11 +100,6 @@ export default function Station1() {
                  <div className="absolute inset-0 bg-white shadow-2xl rounded-lg transform -rotate-1"></div>
                  <div className="relative bg-white w-64 h-72 rounded-lg shadow-2xl flex flex-col items-center justify-center p-4 border-4 border-gray-200">
                     <h2 className="font-kalam text-4xl text-orange-600">{reto}</h2>
-                    {completedChallenge === reto && (
-                        <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full p-1">
-                            <CheckCircle className="h-6 w-6" />
-                        </div>
-                    )}
                  </div>
               </button>
             ))}
@@ -141,9 +121,7 @@ export default function Station1() {
         </div>
 
         <div className="mt-4">
-            <Button size="lg" onClick={handleComplete}>
-                Completar Estación y Volver al Mapa
-            </Button>
+           <p className="bg-background/80 p-4 rounded-md text-center max-w-md mx-auto">Selecciona uno de los retos para completar la estación. ¡Al terminar, volverás al mapa para continuar tu aventura!</p>
         </div>
       </div>
     </div>
