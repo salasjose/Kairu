@@ -150,6 +150,18 @@ export default function Station2() {
     }
   };
   
+  const handleCompleteAllDays = () => {
+    const newDays = days.map(() => ({ status: 'completed', unlockTime: null })) as DayState[];
+    updateAndSaveChanges(newDays);
+    toast({
+        title: "¡Estación 2 Completada!",
+        description: "¡Has completado todos los retos de la semana!",
+    });
+    unlockStation(3);
+    router.push("/");
+  };
+
+
   if (selectedDay !== null) {
       return <PhotoUploadChallenge day={selectedDay} onComplete={() => handleDayComplete(selectedDay - 1)} onBack={() => setSelectedDay(null)} />
   }
@@ -194,8 +206,8 @@ export default function Station2() {
             ))}
         </div>
 
-
-        <div className="pb-20 md:pb-0 w-full">
+        <div className="pb-20 md:pb-4 w-full flex flex-col items-center gap-4">
+            <Button onClick={handleCompleteAllDays}>Simular 7 Días</Button>
             <div className="bg-white/80 backdrop-blur-sm text-green-800 font-kalam py-3 px-10 rounded-lg shadow-lg rotate-2 max-w-sm mx-auto">
                 <p className="text-2xl text-center">Yara habla...</p>
             </div>
