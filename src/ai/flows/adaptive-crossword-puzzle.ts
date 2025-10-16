@@ -36,17 +36,17 @@ const prompt = ai.definePrompt({
   name: 'crosswordPuzzlePrompt',
   input: {schema: CrosswordPuzzleInputSchema},
   output: {schema: CrosswordPuzzleOutputSchema},
-  prompt: `You are a crossword puzzle generator expert.
+  prompt: `Eres un experto generador de crucigramas en español.
 
-  Generate a crossword puzzle of size {{size}}x{{size}} based on the topic: {{topic}}.
+  Genera un crucigrama de {{size}}x{{size}} basado en el tema: {{topic}}.
 
-  The output MUST be valid JSON that represents the crossword puzzle data. The JSON should contain the following fields:
+  La salida DEBE ser un JSON válido que represente los datos del crucigrama. El JSON debe contener los siguientes campos:
 
-  - 'grid': A 2D array representing the crossword grid. Use '#' for black squares and letters for filled squares.
-  - 'across': An array of objects, each containing 'number', 'clue', and 'answer' for the across clues.
-  - 'down': An array of objects, each containing 'number', 'clue', and 'answer' for the down clues.
+  - 'grid': Una matriz 2D que representa la cuadrícula del crucigrama. Usa '#' para las casillas negras y letras para las casillas llenas.
+  - 'across': Un array de objetos, cada uno con 'number', 'clue', y 'answer' para las pistas horizontales.
+  - 'down': Un array de objetos, cada uno con 'number', 'clue', y 'answer' para las pistas verticales.
 
-  Example JSON output (for a smaller 3x3 puzzle):
+  Ejemplo de salida JSON (para un crucigrama más pequeño de 3x3):
   {
     "grid": [
       ["A", "B", "C"],
@@ -54,16 +54,16 @@ const prompt = ai.definePrompt({
       ["F", "G", "H"]
     ],
     "across": [
-      {"number": 1, "clue": "First letter", "answer": "A"},
-      {"number": 2, "clue": "Second letter", "answer": "B"}
+      {"number": 1, "clue": "Primera letra", "answer": "A"},
+      {"number": 2, "clue": "Segunda letra", "answer": "B"}
     ],
     "down": [
-      {"number": 1, "clue": "Another letter", "answer": "D"},
-      {"number": 2, "clue": "Yet another letter", "answer": "F"}
+      {"number": 1, "clue": "Otra letra", "answer": "D"},
+      {"number": 2, "clue": "Una letra más", "answer": "F"}
     ]
   }
 
-  Ensure the generated puzzle is solvable and the clues are relevant to the specified topic.
+  Asegúrate de que el crucigrama generado se pueda resolver y que las pistas sean relevantes para el tema especificado. Las pistas y respuestas deben estar en español.
 `,
 });
 

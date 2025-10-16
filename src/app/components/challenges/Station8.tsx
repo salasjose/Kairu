@@ -9,7 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import type { CrosswordData } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-const TOPICS = ["Biodiversity", "Sustainability", "Recycling", "Water Conservation", "Circular Economy"];
+const TOPICS = ["Recurso Hídrico", "Biodiversidad", "Economía Circular", "Residuo Sólido", "Negocio Verde", "Sostenibilidad", "Suelo"];
 
 export default function Station8() {
   const [puzzle, setPuzzle] = useState<CrosswordData | null>(null);
@@ -106,18 +106,18 @@ export default function Station8() {
   return (
     <ChallengeContainer
       stationId={8}
-      title="Station 8: Crossword Challenge"
-      description="Test your environmental vocabulary. Generate a random crossword and solve it!"
+      title="Station 8: Crucigrama"
+      description="Pon a prueba tu vocabulario ambiental. ¡Genera un crucigrama y resuélvelo!"
       onChallengeComplete={handleComplete}
     >
       <div className="text-center mb-6">
         <Button onClick={generatePuzzle} disabled={isPending}>
           {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          {puzzle ? "Generate New Puzzle" : "Generate Crossword"}
+          {puzzle ? "Generar Nuevo Crucigrama" : "Generar Crucigrama"}
         </Button>
       </div>
 
-      {isPending && <p className="text-center text-primary">Generating your personal puzzle on "{currentTopic}"...</p>}
+      {isPending && <p className="text-center text-primary">Generando tu crucigrama sobre "{currentTopic}"...</p>}
       {error && <p className="text-center text-destructive">{error}</p>}
 
       {puzzle && userGrid && (
@@ -131,7 +131,12 @@ export default function Station8() {
                   ) : (
                     <input
                       key={`${r}-${c}`}
-                      ref={el => inputRefs.current[r][c] = el}
+                      ref={el => {
+                        if (!inputRefs.current[r]) {
+                          inputRefs.current[r] = [];
+                        }
+                        inputRefs.current[r][c] = el;
+                      }}
                       type="text"
                       maxLength={1}
                       value={userGrid[r][c]}
@@ -149,20 +154,20 @@ export default function Station8() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
-              <h3 className="font-bold text-lg mb-2 font-headline text-primary">Across</h3>
+              <h3 className="font-bold text-lg mb-2 font-headline text-primary">Horizontales</h3>
               <ul className="space-y-1">
                 {puzzle.across.map(clue => <li key={`a-${clue.number}`}><b>{clue.number}.</b> {clue.clue}</li>)}
               </ul>
             </div>
             <div>
-              <h3 className="font-bold text-lg mb-2 font-headline text-primary">Down</h3>
+              <h3 className="font-bold text-lg mb-2 font-headline text-primary">Verticales</h3>
               <ul className="space-y-1">
                 {puzzle.down.map(clue => <li key={`d-${clue.number}`}><b>{clue.number}.</b> {clue.clue}</li>)}
               </ul>
             </div>
           </div>
            <div className="md:col-span-2 text-center mt-4">
-              <Button onClick={checkSolution} disabled={isCorrect === true}>Check My Answers</Button>
+              <Button onClick={checkSolution} disabled={isCorrect === true}>Verificar mis Respuestas</Button>
            </div>
         </div>
       )}
