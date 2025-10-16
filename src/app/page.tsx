@@ -28,29 +28,35 @@ export default function Home() {
   const [playerName, setPlayerName] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tempPlayerName, setTempPlayerName] = useState("");
+  const [clientLoaded, setClientLoaded] = useState(false);
 
   useEffect(() => {
+    setClientLoaded(true);
     const savedPlayerName = localStorage.getItem(PLAYER_NAME_STORAGE_KEY);
-    setPlayerName(savedPlayerName);
-    if (!savedPlayerName) {
-        setIsModalOpen(true);
+    if (savedPlayerName) {
+      setPlayerName(savedPlayerName);
+    } else {
+      setIsModalOpen(true);
     }
   }, []);
 
   const handleCreatePlayer = () => {
     if (tempPlayerName.trim()) {
-      setPlayerName(tempPlayerName.trim());
-      localStorage.setItem(PLAYER_NAME_STORAGE_KEY, tempPlayerName.trim());
+      const newPlayerName = tempPlayerName.trim();
+      setPlayerName(newPlayerName);
+      localStorage.setItem(PLAYER_NAME_STORAGE_KEY, newPlayerName);
       setIsModalOpen(false);
+      // Ensure progress is also set for a new player
+      resetProgress();
     }
   };
-
+  
   const handleReset = () => {
     resetProgress();
-    // To also reset the player, you could uncomment these lines:
-    // localStorage.removeItem(PLAYER_NAME_STORAGE_KEY);
-    // setPlayerName(null);
-    // setIsModalOpen(true);
+    localStorage.removeItem(PLAYER_NAME_STORAGE_KEY);
+    setPlayerName(null);
+    setTempPlayerName("");
+    setIsModalOpen(true);
   }
 
   const allStationsCompleted = unlockedStations.length >= stations.length;
@@ -68,23 +74,55 @@ export default function Home() {
     { top: "10%", left: "45%" },
   ];
 
-  if (playerName === null) {
+  if (!clientLoaded) {
     return (
       <main className="flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 min-h-screen w-full bg-background text-foreground">
         <div className="flex flex-col items-center gap-4">
-            <Skeleton className="h-12 w-12 rounded-full" />
-            <div className="space-y-2">
-                <Skeleton className="h-4 w-[250px]" />
+            <Skeleton className="h-16 w-16 rounded-full" />
+            <div className="space-y-2 flex flex-col items-center">
+                <Skeleton className="h-6 w-[250px]" />
                 <Skeleton className="h-4 w-[200px]" />
             </div>
+             <Skeleton className="h-96 w-96 mt-8" />
         </div>
       </main>
     );
   }
-
+  
   if (!playerName) {
     return (
       <main className="flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 min-h-screen w-full bg-background text-foreground">
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Crea tu Jugador</DialogTitle>
+              <DialogDescription>
+                Ingresa tu nombre para comenzar la aventura.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">
+                  Nombre
+                </Label>
+                <Input
+                  id="name"
+                  value={tempPlayerName}
+                  onChange={(e) => setTempPlayerName(e.target.value)}
+                  className="col-span-3"
+                  placeholder="Aventurero Verde"
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreatePlayer()}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit" onClick={handleCreatePlayer} disabled={!tempPlayerName.trim()}>
+                <User className="mr-2" /> Crear y Jugar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <div className="text-center">
           <div className="relative inline-block">
             <Image
@@ -113,36 +151,6 @@ export default function Home() {
             Empezar Aventura
           </Button>
         </div>
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle className="text-2xl">Crea tu Jugador</DialogTitle>
-              <DialogDescription>
-                Ingresa tu nombre para comenzar la aventura. No puedes cambiarlo después.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Nombre
-                </Label>
-                <Input
-                  id="name"
-                  value={tempPlayerName}
-                  onChange={(e) => setTempPlayerName(e.target.value)}
-                  className="col-span-3"
-                  placeholder="Aventurero Verde"
-                  onKeyDown={(e) => e.key === 'Enter' && handleCreatePlayer()}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit" onClick={handleCreatePlayer} disabled={!tempPlayerName.trim()}>
-                <User className="mr-2" /> Crear y Jugar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </main>
     );
   }
@@ -160,7 +168,7 @@ export default function Home() {
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={handleReset}>
-          Reiniciar Progreso
+          Reiniciar Juego
         </Button>
       </header>
 

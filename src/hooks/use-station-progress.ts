@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-const STORAGE_KEY = 'ecoquest-progress';
+const STORAGE_KEY = 'greenquest-progress';
 
 export function useStationProgress() {
-  const [unlockedStations, setUnlockedStations] = useState<number[]>([1]);
+  const [unlockedStations, setUnlockedStations] = useState<number[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -16,22 +16,23 @@ export function useStationProgress() {
         const parsedProgress = JSON.parse(savedProgress);
         if (Array.isArray(parsedProgress) && parsedProgress.length > 0) {
             setUnlockedStations(parsedProgress);
+        } else {
+          // Handle case where localStorage has an empty array or invalid data
+          setUnlockedStations([1]);
         }
       } else {
         // If no saved progress, set initial state with station 1 unlocked
-        const initialStations = [1];
-        setUnlockedStations(initialStations);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(initialStations));
+        setUnlockedStations([1]);
       }
     } catch (error) {
       console.error("Failed to load progress from localStorage", error);
+      setUnlockedStations([1]);
     }
     setIsLoaded(true);
   }, []);
 
   const unlockStation = useCallback((stationId: number) => {
     setUnlockedStations(prev => {
-      // Use a Set to prevent duplicate station IDs
       const newStations = new Set([...prev, stationId]);
       const sortedStations = Array.from(newStations).sort((a, b) => a - b);
       
@@ -50,6 +51,13 @@ export function useStationProgress() {
       setUnlockedStations(initialStations);
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(initialStations));
+        // also clear other station-specific data
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('greenquest-station')) {
+                localStorage.removeItem(key);
+            }
+        });
+
       } catch (error) {
         console.error("Failed to reset progress in localStorage", error);
       }
