@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -81,6 +82,7 @@ export default function Station8() {
     const newUserGrid = userGrid.map(r => [...r]);
     newUserGrid[row][col] = value;
     setUserGrid(newUserGrid);
+    setIsCorrect(null); // Reset correctness check on change
 
     if (value && col < userGrid[0].length - 1 && inputRefs.current[row][col + 1]) {
       inputRefs.current[row][col + 1]?.focus();
@@ -119,7 +121,7 @@ export default function Station8() {
                 case 'ArrowUp': nextRow = nextRow > 0 ? nextRow - 1 : userGrid.length - 1; break;
                 case 'ArrowDown': nextRow = nextRow < userGrid.length - 1 ? nextRow + 1 : 0; break;
                 case 'ArrowLeft': nextCol = nextCol > 0 ? nextCol - 1 : userGrid[0].length - 1; break;
-                case 'ArrowRight': nextCol = nextCol < userGrid[0].length - 1 ? nextCol + 1 : 0; break;
+                case 'ArrowRight': nextCol = nextCol < userGrid[0].length - 1 ? col + 1 : 0; break;
             }
         }
     }
@@ -142,7 +144,19 @@ export default function Station8() {
     toast({ title: "¡Correcto!", description: "¡Has resuelto el crucigrama!" });
   };
   
+  const solvePuzzle = () => {
+    if (!puzzle) return;
+    const solvedGrid = puzzle.grid.map(row => row.map(cell => /^[A-Z]$/.test(cell) ? cell : ''));
+    setUserGrid(solvedGrid);
+    setIsCorrect(true);
+    toast({ title: "¡Crucigrama Resuelto!", description: "Las respuestas han sido reveladas." });
+  };
+
   const handleComplete = () => {
+    if (isCorrect !== true) {
+      checkSolution();
+      return false;
+    }
     return isCorrect === true;
   }
   
@@ -170,6 +184,7 @@ export default function Station8() {
                 isCorrect === false && userGrid?.[r]?.[c] && cell !== userGrid?.[r]?.[c] ? "bg-destructive/20 text-destructive" : "",
                 isCorrect === true ? "bg-primary/20 text-primary" : ""
                 )}
+                disabled={isCorrect === true}
             />
         </div>
     );
@@ -207,8 +222,9 @@ export default function Station8() {
               </ul>
             </div>
           </div>
-           <div className="md:col-span-2 text-center mt-4">
+           <div className="md:col-span-2 text-center mt-4 flex justify-center gap-4">
               <Button onClick={checkSolution} disabled={isCorrect === true}>Verificar mis Respuestas</Button>
+              <Button onClick={solvePuzzle} variant="outline" disabled={isCorrect === true}>Resolver Crucigrama</Button>
            </div>
         </div>
       )}
