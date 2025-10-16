@@ -20,6 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User, Play } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function Home() {
   const { unlockedStations, isLoaded, resetProgress } = useStationProgress();
@@ -34,6 +35,20 @@ export default function Home() {
       setIsModalOpen(false);
     }
   };
+
+  const stationPositions = [
+    // Corresponds to station ID 1-9
+    { top: "72%", left: "18%" },
+    { top: "85%", left: "40%" },
+    { top: "70%", left: "55%" },
+    { top: "80%", left: "75%" },
+    { top: "58%", left: "85%" },
+    { top: "35%", left: "70%" },
+    { top: "45%", left: "40%" },
+    { top: "25%", left: "55%" },
+    { top: "10%", left: "45%" },
+  ];
+
 
   if (!playerCreated) {
     return (
@@ -120,48 +135,25 @@ export default function Home() {
         {!isLoaded ? (
           <div className="text-lg text-primary">Cargando tu aventura...</div>
         ) : (
-          <div className="relative w-full max-w-5xl p-4">
-            {/* Desktop Path SVG */}
-            <svg
-              className="absolute top-0 left-0 w-full h-full hidden md:block"
-              preserveAspectRatio="none"
-              viewBox="0 0 1000 400"
-            >
-              <path
-                d="M50,350 Q150,250 250,250 T450,250 Q550,250 600,150 T750,50 T950,50"
-                stroke="hsl(var(--border))"
-                strokeWidth="4"
-                fill="none"
-                strokeDasharray="10 5"
-              />
-            </svg>
-
-            {/* Mobile Path Divs */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-1 border-l-4 border-dashed border-border md:hidden" />
-
-            <div className="relative grid grid-cols-1 md:grid-cols-3 gap-y-24 md:gap-y-0 md:gap-x-8">
+          <div className="relative w-full max-w-5xl aspect-[4/3]">
+            <Image
+              src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/a2e24505-f375-4cf5-9430-a35c5c93c1f0.png"
+              alt="Game map with a frog and a winding path"
+              layout="fill"
+              objectFit="contain"
+              className="z-0"
+              data-ai-hint="game map"
+            />
+            
+            <div className="absolute inset-0 z-10">
               {stations.map((station, index) => {
                 const isUnlocked = unlockedStations.includes(station.id);
-                const positionClasses = [
-                  // Row 1
-                  "md:top-auto md:left-auto md:col-start-1 md:self-end",
-                  "md:top-auto md_left-auto md:col-start-2 md:self-center",
-                  "md:top-auto md:left-auto md:col-start-3 md:self-center",
-                  // Row 2
-                  "md:top-auto md:left-auto md:col-start-3 md:self-start",
-                  "md:top-auto md:left-auto md:col-start-2 md:self-start",
-                  "md:top-auto md:left-auto md:col-start-1 md:self-start",
-                  // Row 3
-                  "md:top-auto md:left-auto md:col-start-1 md:self-end",
-                  "md:top-auto md:left-auto md:col-start-2 md:self-center",
-                  "md:top-auto md:left-auto md:col-start-3 md:self-end",
-                ];
+                const position = stationPositions[index];
                 return (
                   <div
                     key={station.id}
-                    className={`flex justify-center items-center h-24 ${
-                      positionClasses[index % 9]
-                    }`}
+                    className="absolute -translate-x-1/2 -translate-y-1/2"
+                    style={{ top: position.top, left: position.left }}
                   >
                     <StationNode
                       station={station}
@@ -170,6 +162,16 @@ export default function Home() {
                   </div>
                 );
               })}
+               <div className="absolute bottom-[8%] left-[8%] transform -translate-x-1/2 -translate-y-1/2">
+                <Image 
+                  src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/9ac22228-5690-482c-9a4f-560447339d29.png"
+                  alt="Friendly frog character"
+                  width={140}
+                  height={140}
+                  className="hidden md:block"
+                  data-ai-hint="frog character"
+                />
+              </div>
             </div>
           </div>
         )}
