@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 
 export default function Home() {
   const { unlockedStations, isLoaded, resetProgress } = useStationProgress();
-  const allStationsCompleted = unlockedStations.length > stations.length;
+  const allStationsCompleted = unlockedStations.length >= stations.length;
   const [playerCreated, setPlayerCreated] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [playerName, setPlayerName] = useState("");
@@ -86,7 +86,7 @@ export default function Home() {
             <DialogHeader>
               <DialogTitle className="text-2xl">Crea tu Jugador</DialogTitle>
               <DialogDescription>
-                Ingresa tus datos para comenzar la aventura.
+                Ingresa tu nombre para comenzar la aventura.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -100,6 +100,7 @@ export default function Home() {
                   onChange={(e) => setPlayerName(e.target.value)}
                   className="col-span-3"
                   placeholder="Aventurero Verde"
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreatePlayer()}
                 />
               </div>
             </div>
@@ -123,11 +124,11 @@ export default function Home() {
             <h1 className="text-2xl md:text-3xl font-bold text-primary">
               GreenQuest
             </h1>
-            <p className="text-muted-foreground">Bienvenido, {playerName}!</p>
+            <p className="text-muted-foreground">¡Bienvenido, {playerName}!</p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={resetProgress}>
-          Reset Progress
+          Reiniciar Progreso
         </Button>
       </header>
 
@@ -139,7 +140,7 @@ export default function Home() {
             <Image
               src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/a2e24505-f375-4cf5-9430-a35c5c93c1f0.png"
               alt="Game map with a winding path"
-              layout="fill"
+              fill
               objectFit="contain"
               className="z-0"
               data-ai-hint="game map"

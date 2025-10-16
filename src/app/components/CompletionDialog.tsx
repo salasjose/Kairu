@@ -23,18 +23,18 @@ export default function CompletionDialog({ open, onReset }: CompletionDialogProp
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2 text-2xl justify-center text-center">
             <PartyPopper className="h-8 w-8 text-yellow-500" />
-            Congratulations!
+            ¡Felicitaciones!
             <PartyPopper className="h-8 w-8 text-yellow-500" />
           </AlertDialogTitle>
           <AlertDialogDescription className="text-center text-lg">
-            You are now a <span className="font-bold text-primary">Guardian of Nature</span>.
+            Ahora eres un <span className="font-bold text-primary">Guardián de la Naturaleza</span>.
             <br />
-            Thank you for completing the EcoQuest!
+            ¡Gracias por completar el GreenQuest!
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogAction onClick={onReset} className="w-full">
-            Play Again
+            Jugar de Nuevo
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
