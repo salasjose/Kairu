@@ -31,7 +31,7 @@ const ChallengeDetail = ({ title, description, onComplete, onBack, image, imageH
               <p className="text-muted-foreground mb-6">{description}</p>
               <Button onClick={onComplete} size="lg">
                   <CheckCircle className="mr-2" />
-                  Completar Reto
+                  Simular Completado
               </Button>
           </CardContent>
       </Card>
