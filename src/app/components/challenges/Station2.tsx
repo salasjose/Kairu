@@ -215,9 +215,6 @@ export default function Station2() {
 
         <div className="absolute bottom-[8%] left-1/2 -translate-x-1/2 w-full flex flex-col items-center gap-4">
             <Button onClick={handleCompleteAllDays}>Reto Completado</Button>
-            <div className="bg-white/80 backdrop-blur-sm text-green-800 font-kalam py-3 px-10 rounded-lg shadow-lg rotate-2 max-w-sm mx-auto">
-                <p className="text-2xl text-center">Yara habla...</p>
-            </div>
         </div>
 
         <div className="absolute bottom-0 left-4 z-20 hidden md:block">
