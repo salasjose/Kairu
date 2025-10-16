@@ -88,7 +88,7 @@ export default function Station4() {
   const handleComplete = (challengeId: ChallengeId) => {
     toast({
       title: "¡Estación 4 Completada!",
-      description: `¡Reto '${challenges[challengeId].title}' superado!`,
+      description: `¡Reto '${challenges[challengeId].title}' superado! Volviendo al mapa...`,
     });
     unlockStation(5);
     router.push("/");

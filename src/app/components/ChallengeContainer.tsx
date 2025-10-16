@@ -34,7 +34,7 @@ export default function ChallengeContainer({
     } else {
         toast({
             title: "Reto Incompleto",
-            description: "Por favor, completa uno de los retos para poder continuar.",
+            description: "Por favor, completa el reto para poder continuar.",
             variant: "destructive",
         });
     }

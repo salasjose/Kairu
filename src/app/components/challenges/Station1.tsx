@@ -34,7 +34,7 @@ const ChallengeDetail = ({ title, description, onComplete, onBack, image, imageH
                     <p className="text-muted-foreground mb-6 max-w-md mx-auto">{description}</p>
                     <Button onClick={onComplete} size="lg">
                         <CheckCircle className="mr-2" />
-                        Simular Completado
+                        Completar Reto
                     </Button>
                 </CardContent>
             </Card>
@@ -55,7 +55,7 @@ export default function Station1() {
     });
     toast({
       title: "¡Estación 1 Completada!",
-      description: "¡Buen trabajo en el reto de biodiversidad!",
+      description: "¡Buen trabajo en el reto de biodiversidad! Volviendo al mapa...",
     });
     unlockStation(2);
     router.push("/");
@@ -108,7 +108,7 @@ export default function Station1() {
             ))}
         </div>
 
-        <div className="bg-[#D95E32] text-white font-kalam py-3 px-10 rounded-lg shadow-lg rotate-2 mb-8">
+        <div className="bg-[#D95E32] text-white font-kalam py-3 px-10 rounded-lg shadow-lg rotate-2">
             <p className="text-2xl">Yara habla...</p>
         </div>
 

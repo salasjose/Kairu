@@ -34,7 +34,7 @@ const ChallengeDetail = ({ title, description, onComplete, onBack, image, imageH
                     <p className="text-muted-foreground mb-6 max-w-md mx-auto">{description}</p>
                     <Button onClick={onComplete} size="lg">
                         <CheckCircle className="mr-2" />
-                        Simular Completado
+                        Completar Reto
                     </Button>
                 </CardContent>
             </Card>
@@ -85,7 +85,7 @@ export default function Station3() {
   const handleComplete = (challengeId: ChallengeId) => {
     toast({
       title: "¡Estación 3 Completada!",
-      description: `¡Buen trabajo con el reto '${challenges[challengeId].title}'!`,
+      description: `¡Buen trabajo con el reto '${challenges[challengeId].title}'! Volviendo al mapa...`,
     });
     unlockStation(4);
     router.push("/");
