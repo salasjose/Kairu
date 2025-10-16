@@ -83,7 +83,7 @@ export default function Home() {
                 <Skeleton className="h-6 w-[250px]" />
                 <Skeleton className="h-4 w-[200px]" />
             </div>
-             <Skeleton className="h-96 w-96 mt-8" />
+             <Skeleton className="h-64 w-64 md:h-96 md:w-96 mt-8" />
         </div>
       </main>
     );
@@ -123,21 +123,21 @@ export default function Home() {
           </DialogContent>
         </Dialog>
 
-        <div className="text-center">
-          <div className="relative inline-block">
+        <div className="text-center max-w-4xl w-full">
+          <div className="relative inline-block w-full">
             <Image
               src="https://picsum.photos/seed/adventure/800/300"
               alt="Aventura Interactiva"
               width={800}
               height={300}
-              className="rounded-lg shadow-2xl"
+              className="rounded-lg shadow-2xl w-full h-auto"
               data-ai-hint="interactive adventure"
             />
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30 rounded-lg">
-                <div className="bg-orange-500 text-white font-bold text-3xl md:text-5xl px-6 py-2 rounded-md -rotate-3 shadow-lg">
+                <div className="bg-orange-500 text-white font-bold text-2xl sm:text-3xl md:text-5xl px-4 py-1 md:px-6 md:py-2 rounded-md -rotate-3 shadow-lg">
                     Aventura
                 </div>
-                <div className="bg-green-600 text-white font-black text-4xl md:text-6xl px-8 py-3 rounded-lg mt-2 rotate-2 shadow-lg">
+                <div className="bg-green-600 text-white font-black text-3xl sm:text-4xl md:text-6xl px-6 py-2 md:px-8 md:py-3 rounded-lg mt-2 rotate-2 shadow-lg">
                     INTERACTIVA
                 </div>
             </div>
@@ -157,18 +157,18 @@ export default function Home() {
 
   return (
     <main className="flex flex-col items-center p-4 sm:p-6 md:p-8 min-h-screen w-full">
-      <header className="w-full max-w-5xl flex justify-between items-center mb-6">
-        <div className="flex items-center gap-4">
-          <Logo className="h-12 w-12" />
+      <header className="w-full max-w-5xl flex justify-between items-center mb-4 md:mb-6">
+        <div className="flex items-center gap-2 md:gap-4">
+          <Logo className="h-10 w-10 md:h-12 md:w-12" />
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-primary">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
               GreenQuest
             </h1>
-            <p className="text-muted-foreground">¡Bienvenido, {playerName}!</p>
+            <p className="text-sm md:text-base text-muted-foreground">¡Bienvenido, {playerName}!</p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={handleReset}>
-          Reiniciar Juego
+          Reiniciar
         </Button>
       </header>
 

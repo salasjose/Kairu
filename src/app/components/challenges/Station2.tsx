@@ -50,7 +50,7 @@ const PhotoUploadChallenge = ({ day, onComplete, onBack }: { day: number, onComp
                     alt="Sustainable practice" 
                     width={400} 
                     height={300} 
-                    className="rounded-md mx-auto mb-4"
+                    className="rounded-md mx-auto mb-4 w-full max-w-sm h-auto"
                     data-ai-hint="sustainable practice"
                   />
                   <p className="text-muted-foreground mb-6">Documenta una práctica sostenible que realices hoy subiendo una foto.</p>
@@ -176,12 +176,12 @@ export default function Station2() {
         className="transition-transform duration-300 disabled:cursor-not-allowed group hover:scale-105"
       >
          <div className={cn(
-            "relative w-28 h-20 md:w-32 md:h-24 bg-[#D95E32] rounded-lg shadow-lg flex items-center justify-center border-4 border-white/80 group-hover:scale-105 group-disabled:scale-100 group-disabled:bg-orange-500/60 transition-transform",
+            "relative w-24 h-20 md:w-32 md:h-24 bg-[#D95E32] rounded-lg shadow-lg flex items-center justify-center border-4 border-white/80 group-hover:scale-105 group-disabled:scale-100 group-disabled:bg-orange-500/60 transition-transform",
             "transform -rotate-3"
           )}>
-            {day.status === 'locked' && <Lock className="w-10 h-10 text-white/70" />}
-            {day.status === 'unlocked' && <span className="font-kalam text-5xl text-white">{dayIndex + 1}</span>}
-            {day.status === 'completed' && <CheckCircle className="w-12 h-12 text-green-300" />}
+            {day.status === 'locked' && <Lock className="w-8 h-8 md:w-10 md:h-10 text-white/70" />}
+            {day.status === 'unlocked' && <span className="font-kalam text-4xl md:text-5xl text-white">{dayIndex + 1}</span>}
+            {day.status === 'completed' && <CheckCircle className="w-10 h-10 md:w-12 md:h-12 text-green-300" />}
          </div>
       </button>
     );
@@ -204,11 +204,11 @@ export default function Station2() {
         </div>
         <p className="absolute top-5 right-5 font-kalam text-3xl md:text-4xl text-[#D95E32] font-bold rotate-12">Estación 2</p>
 
-        <div className="flex flex-col items-center gap-6">
-            <div className="flex flex-wrap justify-center gap-6">
+        <div className="flex flex-col items-center gap-4 md:gap-6">
+            <div className="flex flex-wrap justify-center gap-4 md:gap-6">
                 {days.slice(0, 4).map((_, index) => renderDayButton(index))}
             </div>
-            <div className="flex flex-wrap justify-center gap-6">
+            <div className="flex flex-wrap justify-center gap-4 md:gap-6">
                 {days.slice(4, 7).map((_, index) => renderDayButton(index + 4))}
             </div>
         </div>

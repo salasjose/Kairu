@@ -27,7 +27,7 @@ const ChallengeDetail = ({ title, description, onComplete, onBack, image, imageH
                             alt={description} 
                             width={400} 
                             height={300} 
-                            className="rounded-lg border-4 border-white shadow-md"
+                            className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto"
                             data-ai-hint={imageHint}
                         />
                     </div>
@@ -94,22 +94,22 @@ export default function Station1() {
       />
       <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
          <div className="bg-[#D95E32] text-white font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
-            <h1 className="text-5xl">Estación 1</h1>
+            <h1 className="text-4xl md:text-5xl">Estación 1</h1>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-8 md:gap-16 mb-8">
+        <div className="flex flex-col md:flex-row gap-8 md:gap-12 mb-8">
             {["Reto 1", "Reto 2"].map((reto, index) => (
               <button key={reto} onClick={() => setSelectedChallenge(reto)} className={cn("relative transition-transform duration-300 hover:scale-105", index === 0 ? "md:-rotate-6" : "md:rotate-6")}>
                  <div className="absolute inset-0 bg-white shadow-2xl rounded-lg transform -rotate-1"></div>
-                 <div className="relative bg-white w-64 h-72 rounded-lg shadow-2xl flex flex-col items-center justify-center p-4 border-4 border-gray-200">
-                    <h2 className="font-kalam text-4xl text-orange-600">{reto}</h2>
+                 <div className="relative bg-white w-60 h-64 md:w-64 md:h-72 rounded-lg shadow-2xl flex flex-col items-center justify-center p-4 border-4 border-gray-200">
+                    <h2 className="font-kalam text-3xl md:text-4xl text-orange-600">{reto}</h2>
                  </div>
               </button>
             ))}
         </div>
 
         <div className="bg-[#D95E32] text-white font-kalam py-3 px-10 rounded-lg shadow-lg rotate-2">
-            <p className="text-2xl">Yara habla...</p>
+            <p className="text-xl md:text-2xl">Yara habla...</p>
         </div>
 
         <div className="absolute bottom-4 left-4 z-20 hidden md:block">

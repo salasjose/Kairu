@@ -28,7 +28,7 @@ const ChallengeDetail = ({ title, description, onComplete, onBack, image, imageH
                             alt={description} 
                             width={400} 
                             height={300} 
-                            className="rounded-lg border-4 border-white shadow-md"
+                            className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto"
                             data-ai-hint={imageHint}
                         />
                     </div>
@@ -112,21 +112,21 @@ export default function Station3() {
             data-ai-hint="city recycling"
         />
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
-            <div className="bg-primary text-white font-headline py-3 px-10 rounded-lg shadow-lg mb-8 text-center">
-                <h1 className="text-4xl md:text-5xl">Estación 3</h1>
-                <p className="text-lg md:text-xl">Gestión de Residuos</p>
+            <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
+                <h1 className="text-3xl md:text-5xl">Estación 3</h1>
+                <p className="text-base md:text-xl">Gestión de Residuos</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-6 md:gap-8 mb-8">
+            <div className="grid grid-cols-2 gap-4 md:gap-8 mb-8">
                 {(Object.keys(challenges) as ChallengeId[]).map((key) => {
                   const challenge = challenges[key];
                   const Icon = challenge.icon;
                   return (
                       <button key={key} onClick={() => setSelectedChallenge(key)} className="transition-transform duration-300 hover:scale-105 group">
-                         <Card className="w-40 h-48 md:w-48 md:h-56 bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors">
-                            <CardContent className="flex flex-col items-center justify-center text-center p-4 h-full">
-                                <Icon className="w-12 h-12 text-primary mb-3" />
-                                <h2 className="font-bold font-headline text-lg text-primary">{challenge.title}</h2>
+                         <Card className="w-36 h-44 md:w-48 md:h-56 bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors">
+                            <CardContent className="flex flex-col items-center justify-center text-center p-2 md:p-4 h-full">
+                                <Icon className="w-10 h-10 md:w-12 md:h-12 text-primary mb-2 md:mb-3" />
+                                <h2 className="font-bold font-headline text-base md:text-lg text-primary">{challenge.title}</h2>
                             </CardContent>
                          </Card>
                       </button>

@@ -180,7 +180,7 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge }: Wat
                       <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
                       <h3 className="font-bold text-2xl mb-2">Reto Bloqueado</h3>
                       <p className="text-muted-foreground mb-6">Has perdido todas tus vidas. El quiz se desbloqueará en 24 horas.</p>
-                      <div className="flex justify-center gap-4">
+                      <div className="flex flex-col sm:flex-row justify-center gap-4">
                         <Button variant="outline" onClick={onBack}>Volver a Estación</Button>
                         <Button onClick={onSwitchChallenge}>Probar otro Reto</Button>
                       </div>
@@ -196,34 +196,34 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge }: Wat
   
   return (
     <div className="w-full max-w-4xl mx-auto p-4 flex flex-col items-center">
-        <div className="w-full flex justify-between items-center mb-4">
+        <div className="w-full flex justify-between items-center mb-4 gap-2">
             <Button variant="ghost" onClick={onBack} className="self-start">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Volver
             </Button>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap justify-end">
                 <Button variant="outline" size="sm" onClick={useFiftyFifty} disabled={lifelines.fiftyFifty <= 0 || isAnswered}>
-                    <Scale className="mr-2" /> 50/50 ({lifelines.fiftyFifty})
+                    <Scale className="mr-1 md:mr-2" /> 50/50 ({lifelines.fiftyFifty})
                 </Button>
                 <Button variant="outline" size="sm" onClick={useHint} disabled={lifelines.hint <= 0 || isAnswered}>
-                    <Lightbulb className="mr-2" /> Pista ({lifelines.hint})
+                    <Lightbulb className="mr-1 md:mr-2" /> Pista ({lifelines.hint})
                 </Button>
             </div>
         </div>
         <Card className="w-full shadow-2xl bg-gradient-to-br from-blue-900 to-blue-950 text-white border-none">
             <CardHeader>
-                <div className="flex justify-between items-center text-lg mb-2">
+                <div className="flex justify-between items-center text-sm md:text-lg mb-2">
                     <span>Pregunta {currentQuestionIndex + 1} / 10</span>
                     <span>Vidas: {quizState.lives}</span>
                 </div>
                 <Progress value={(timeLeft / 60) * 100} className="w-full h-2 bg-blue-700" />
-                 <CardTitle className="pt-4 text-center text-2xl lg:text-3xl font-bold min-h-[100px] flex items-center justify-center">
+                 <CardTitle className="pt-4 text-center text-xl md:text-3xl font-bold min-h-[100px] flex items-center justify-center">
                     {currentQuestion.question}
                 </CardTitle>
                 <CardDescription className="text-center text-blue-200">Respuestas correctas consecutivas: {score}</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     {visibleOptions.map((option, index) => {
                         const isCorrect = option === currentQuestion.answer;
                         const isSelected = option === selectedOption;
@@ -233,7 +233,7 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge }: Wat
                                 key={index}
                                 variant="outline"
                                 className={cn(
-                                    "text-lg p-6 h-auto whitespace-normal justify-start text-left bg-blue-800/50 border-blue-600 hover:bg-blue-700/80",
+                                    "text-base p-4 md:p-6 h-auto whitespace-normal justify-start text-left bg-blue-800/50 border-blue-600 hover:bg-blue-700/80",
                                     isAnswered && isCorrect && "bg-green-500 hover:bg-green-500 border-green-400 animate-pulse",
                                     isAnswered && isSelected && !isCorrect && "bg-red-500 hover:bg-red-500 border-red-400"
                                 )}
