@@ -10,7 +10,7 @@ export default function StationLayout({
 }) {
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="sticky top-0 bg-background/80 backdrop-blur-sm border-b z-10">
+      <header className="sticky top-0 bg-background/80 backdrop-blur-sm border-b z-30">
         <nav className="container flex items-center justify-between h-16 px-4">
           <Link href="/" className="flex items-center gap-2">
             <Logo className="h-8 w-8" />
@@ -19,12 +19,12 @@ export default function StationLayout({
           <Button asChild variant="outline">
             <Link href="/">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Map
+              Volver al Mapa
             </Link>
           </Button>
         </nav>
       </header>
-      <main className="flex-grow container py-8">
+      <main className="flex-grow">
         {children}
       </main>
     </div>

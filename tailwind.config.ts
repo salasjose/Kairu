@@ -20,6 +20,7 @@ export default {
         body: ['"PT Sans"', 'sans-serif'],
         headline: ['Alegreya', 'serif'],
         code: ['monospace'],
+        kalam: ['Kalam', 'cursive'],
       },
       colors: {
         background: 'hsl(var(--background))',
