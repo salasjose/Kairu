@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { stations } from "@/lib/data";
@@ -20,23 +19,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User, Play } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const PLAYER_NAME_STORAGE_KEY = "greenquest-player-name";
 
 export default function Home() {
   const { unlockedStations, isLoaded, resetProgress } = useStationProgress();
-  const allStationsCompleted = unlockedStations.length >= stations.length;
-  const [playerName, setPlayerName] = useState("");
-  const [isPlayerCreated, setIsPlayerCreated] = useState(false);
+  const [playerName, setPlayerName] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tempPlayerName, setTempPlayerName] = useState("");
 
   useEffect(() => {
     const savedPlayerName = localStorage.getItem(PLAYER_NAME_STORAGE_KEY);
-    if (savedPlayerName) {
-      setPlayerName(savedPlayerName);
-      setIsPlayerCreated(true);
+    setPlayerName(savedPlayerName);
+    if (!savedPlayerName) {
+        setIsModalOpen(true);
     }
   }, []);
 
@@ -44,19 +41,19 @@ export default function Home() {
     if (tempPlayerName.trim()) {
       setPlayerName(tempPlayerName.trim());
       localStorage.setItem(PLAYER_NAME_STORAGE_KEY, tempPlayerName.trim());
-      setIsPlayerCreated(true);
       setIsModalOpen(false);
     }
   };
 
   const handleReset = () => {
     resetProgress();
-    // Optionally, you could also clear the player name here
+    // To also reset the player, you could uncomment these lines:
     // localStorage.removeItem(PLAYER_NAME_STORAGE_KEY);
-    // setIsPlayerCreated(false);
-    // setPlayerName("");
+    // setPlayerName(null);
+    // setIsModalOpen(true);
   }
 
+  const allStationsCompleted = unlockedStations.length >= stations.length;
 
   const stationPositions = [
     // Corresponds to station ID 1-9
@@ -71,8 +68,21 @@ export default function Home() {
     { top: "10%", left: "45%" },
   ];
 
+  if (playerName === null) {
+    return (
+      <main className="flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 min-h-screen w-full bg-background text-foreground">
+        <div className="flex flex-col items-center gap-4">
+            <Skeleton className="h-12 w-12 rounded-full" />
+            <div className="space-y-2">
+                <Skeleton className="h-4 w-[250px]" />
+                <Skeleton className="h-4 w-[200px]" />
+            </div>
+        </div>
+      </main>
+    );
+  }
 
-  if (!isPlayerCreated) {
+  if (!playerName) {
     return (
       <main className="flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 min-h-screen w-full bg-background text-foreground">
         <div className="text-center">
@@ -108,7 +118,7 @@ export default function Home() {
             <DialogHeader>
               <DialogTitle className="text-2xl">Crea tu Jugador</DialogTitle>
               <DialogDescription>
-                Ingresa tu nombre para comenzar la aventura.
+                Ingresa tu nombre para comenzar la aventura. No puedes cambiarlo después.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
