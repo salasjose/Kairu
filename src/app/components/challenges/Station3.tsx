@@ -10,6 +10,7 @@ import { ArrowLeft, CheckCircle, Recycle, Trash2, Video, Sparkles } from "lucide
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import RecyclingGame from "./RecyclingGame";
 
 const ChallengeDetail = ({ title, description, onComplete, onBack, image, imageHint }: { title: string, description: string, onComplete: () => void, onBack: () => void, image: string, imageHint: string }) => (
     <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-full">
@@ -91,6 +92,10 @@ export default function Station3() {
     router.push("/");
   };
   
+  if (selectedChallenge === 'game') {
+    return <RecyclingGame onComplete={() => handleComplete('game')} onBack={() => setSelectedChallenge(null)} />;
+  }
+
   if (selectedChallenge) {
     const challengeData = challenges[selectedChallenge];
      return <ChallengeDetail {...challengeData} onComplete={() => handleComplete(selectedChallenge)} onBack={() => setSelectedChallenge(null)} />;
