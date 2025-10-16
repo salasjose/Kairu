@@ -182,35 +182,33 @@ export default function Station2() {
         className="z-0 opacity-90"
         data-ai-hint="cartoon city"
       />
-      <div className="relative z-10 flex flex-col items-center justify-start text-center w-full h-full pt-8">
-         <div className="text-[#D95E32] font-kalam py-3 px-10">
+      <div className="relative z-10 w-full h-full">
+         <div className="absolute top-[8%] left-1/2 -translate-x-1/2 text-[#D95E32] font-kalam text-center">
             <h1 className="text-5xl md:text-7xl leading-none">Reto de la</h1>
             <p className="text-4xl md:text-6xl">Semana</p>
         </div>
-        <p className="font-kalam text-3xl md:text-4xl text-[#D95E32] font-bold absolute top-5 right-5 rotate-12">Estación 2</p>
+        <p className="absolute top-5 right-5 font-kalam text-3xl md:text-4xl text-[#D95E32] font-bold rotate-12">Estación 2</p>
 
-        <div className="flex-grow w-full relative">
-            {days.map((day, index) => (
-              <button 
-                key={index} 
-                disabled={day.status === 'locked'}
-                onClick={() => setSelectedDay(index + 1)}
-                className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-transform duration-300 disabled:cursor-not-allowed group"
-                style={dayPositions[index]}
-              >
-                 <div className={cn(
-                    "relative w-28 h-20 md:w-32 md:h-24 bg-[#D95E32] rounded-lg shadow-lg flex items-center justify-center border-4 border-white/80 group-hover:scale-105 group-disabled:scale-100 group-disabled:bg-orange-500/60 transition-transform",
-                    "transform -rotate-3"
-                  )}>
-                    {day.status === 'locked' && <Lock className="w-10 h-10 text-white/70" />}
-                    {day.status === 'unlocked' && <span className="font-kalam text-5xl text-white">{index + 1}</span>}
-                    {day.status === 'completed' && <CheckCircle className="w-12 h-12 text-green-300" />}
-                 </div>
-              </button>
-            ))}
-        </div>
+        {days.map((day, index) => (
+          <button 
+            key={index} 
+            disabled={day.status === 'locked'}
+            onClick={() => setSelectedDay(index + 1)}
+            className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-transform duration-300 disabled:cursor-not-allowed group"
+            style={dayPositions[index]}
+          >
+             <div className={cn(
+                "relative w-28 h-20 md:w-32 md:h-24 bg-[#D95E32] rounded-lg shadow-lg flex items-center justify-center border-4 border-white/80 group-hover:scale-105 group-disabled:scale-100 group-disabled:bg-orange-500/60 transition-transform",
+                "transform -rotate-3"
+              )}>
+                {day.status === 'locked' && <Lock className="w-10 h-10 text-white/70" />}
+                {day.status === 'unlocked' && <span className="font-kalam text-5xl text-white">{index + 1}</span>}
+                {day.status === 'completed' && <CheckCircle className="w-12 h-12 text-green-300" />}
+             </div>
+          </button>
+        ))}
 
-        <div className="pb-20 md:pb-4 w-full flex flex-col items-center gap-4">
+        <div className="absolute bottom-[20%] md:bottom-[15%] left-1/2 -translate-x-1/2 w-full flex flex-col items-center gap-4">
             <Button onClick={handleCompleteAllDays}>Simular 7 Días</Button>
             <div className="bg-white/80 backdrop-blur-sm text-green-800 font-kalam py-3 px-10 rounded-lg shadow-lg rotate-2 max-w-sm mx-auto">
                 <p className="text-2xl text-center">Yara habla...</p>
