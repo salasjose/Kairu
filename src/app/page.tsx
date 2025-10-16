@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useStationProgress } from "@/hooks/use-station-progress";
@@ -22,19 +22,41 @@ import { Label } from "@/components/ui/label";
 import { User, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const PLAYER_NAME_STORAGE_KEY = "greenquest-player-name";
+
 export default function Home() {
   const { unlockedStations, isLoaded, resetProgress } = useStationProgress();
   const allStationsCompleted = unlockedStations.length >= stations.length;
-  const [playerCreated, setPlayerCreated] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [playerName, setPlayerName] = useState("");
+  const [isPlayerCreated, setIsPlayerCreated] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [tempPlayerName, setTempPlayerName] = useState("");
+
+  useEffect(() => {
+    const savedPlayerName = localStorage.getItem(PLAYER_NAME_STORAGE_KEY);
+    if (savedPlayerName) {
+      setPlayerName(savedPlayerName);
+      setIsPlayerCreated(true);
+    }
+  }, []);
 
   const handleCreatePlayer = () => {
-    if (playerName.trim()) {
-      setPlayerCreated(true);
+    if (tempPlayerName.trim()) {
+      setPlayerName(tempPlayerName.trim());
+      localStorage.setItem(PLAYER_NAME_STORAGE_KEY, tempPlayerName.trim());
+      setIsPlayerCreated(true);
       setIsModalOpen(false);
     }
   };
+
+  const handleReset = () => {
+    resetProgress();
+    // Optionally, you could also clear the player name here
+    // localStorage.removeItem(PLAYER_NAME_STORAGE_KEY);
+    // setIsPlayerCreated(false);
+    // setPlayerName("");
+  }
+
 
   const stationPositions = [
     // Corresponds to station ID 1-9
@@ -50,7 +72,7 @@ export default function Home() {
   ];
 
 
-  if (!playerCreated) {
+  if (!isPlayerCreated) {
     return (
       <main className="flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 min-h-screen w-full bg-background text-foreground">
         <div className="text-center">
@@ -96,8 +118,8 @@ export default function Home() {
                 </Label>
                 <Input
                   id="name"
-                  value={playerName}
-                  onChange={(e) => setPlayerName(e.target.value)}
+                  value={tempPlayerName}
+                  onChange={(e) => setTempPlayerName(e.target.value)}
                   className="col-span-3"
                   placeholder="Aventurero Verde"
                   onKeyDown={(e) => e.key === 'Enter' && handleCreatePlayer()}
@@ -105,7 +127,7 @@ export default function Home() {
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit" onClick={handleCreatePlayer} disabled={!playerName.trim()}>
+              <Button type="submit" onClick={handleCreatePlayer} disabled={!tempPlayerName.trim()}>
                 <User className="mr-2" /> Crear y Jugar
               </Button>
             </DialogFooter>
@@ -127,7 +149,7 @@ export default function Home() {
             <p className="text-muted-foreground">¡Bienvenido, {playerName}!</p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={resetProgress}>
+        <Button variant="outline" size="sm" onClick={handleReset}>
           Reiniciar Progreso
         </Button>
       </header>
@@ -177,7 +199,7 @@ export default function Home() {
           </div>
         )}
       </div>
-      <CompletionDialog open={allStationsCompleted} onReset={resetProgress} />
+      <CompletionDialog open={allStationsCompleted} onReset={handleReset} />
     </main>
   );
 }
