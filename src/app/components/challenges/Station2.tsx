@@ -71,10 +71,12 @@ export default function Station2() {
   const { unlockStation } = useStationProgress();
   const router = useRouter();
 
-  const updateAndSaveChanges = (newDays: DayState[]) => {
+  const updateAndSaveChanges = useCallback((newDays: DayState[]) => {
     setDays(newDays);
-    localStorage.setItem(STORAGE_KEY_STATION2, JSON.stringify(newDays));
-  };
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY_STATION2, JSON.stringify(newDays));
+    }
+  }, []);
   
   useEffect(() => {
     const savedProgress = localStorage.getItem(STORAGE_KEY_STATION2);
@@ -94,20 +96,27 @@ export default function Station2() {
 
   const checkUnlocks = useCallback(() => {
     let changed = false;
-    const newDays = [...days];
     const now = Date.now();
     
-    newDays.forEach((day, index) => {
-        if(day.status === 'locked' && day.unlockTime && now >= day.unlockTime) {
-            newDays[index].status = 'unlocked';
-            changed = true;
-        }
-    });
+    setDays(currentDays => {
+      const newDays = [...currentDays];
+      let hasChanged = false;
+      newDays.forEach((day, index) => {
+          if(day.status === 'locked' && day.unlockTime && now >= day.unlockTime) {
+              newDays[index] = {...newDays[index], status: 'unlocked'};
+              hasChanged = true;
+          }
+      });
 
-    if (changed) {
-        updateAndSaveChanges(newDays);
-    }
-  }, [days, updateAndSaveChanges]);
+      if (hasChanged) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_KEY_STATION2, JSON.stringify(newDays));
+        }
+      }
+      return hasChanged ? newDays : currentDays;
+    });
+  }, []);
+
 
   useEffect(() => {
     const interval = setInterval(checkUnlocks, 1000 * 60); // Check for unlocks every minute
@@ -152,7 +161,7 @@ export default function Station2() {
   ];
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center p-4 relative overflow-hidden bg-blue-200">
+    <div className="w-full flex-grow flex flex-col items-center p-4 relative overflow-hidden bg-blue-200">
       <Image 
         src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/15ae8e51-9f93-4a11-a806-df6b7f32997e.png"
         alt="City background"
@@ -165,9 +174,9 @@ export default function Station2() {
          <div className="bg-[#D95E32] text-white font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-4">
             <h1 className="text-4xl md:text-5xl">Reto de la Semana</h1>
         </div>
-        <p className="font-kalam text-2xl md:text-3xl text-green-700 font-bold mb-16">Estación 2</p>
+        <p className="font-kalam text-2xl md:text-3xl text-green-700 font-bold">Estación 2</p>
 
-        <div className="absolute inset-0 w-full h-full">
+        <div className="flex-grow w-full relative">
             {days.map((day, index) => (
               <button 
                 key={index} 
@@ -186,7 +195,7 @@ export default function Station2() {
         </div>
 
 
-        <div className="absolute bottom-16 w-full px-4">
+        <div className="pb-20 md:pb-0 w-full">
             <div className="bg-white/80 backdrop-blur-sm text-green-800 font-kalam py-3 px-10 rounded-lg shadow-lg rotate-2 max-w-sm mx-auto">
                 <p className="text-2xl text-center">Yara habla...</p>
             </div>
@@ -206,5 +215,3 @@ export default function Station2() {
     </div>
   );
 }
-
-    
