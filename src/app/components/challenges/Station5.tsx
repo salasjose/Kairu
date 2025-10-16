@@ -4,25 +4,12 @@ import { useState } from "react";
 import ChallengeContainer from "@/app/components/ChallengeContainer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/hooks/use-toast";
 
 export default function Station5() {
   const [completed, setCompleted] = useState(false);
 
   const handleComplete = () => {
-    if (!completed) {
-      toast({
-        title: "Challenge Not Completed",
-        description: "Please complete the challenge before proceeding.",
-        variant: "destructive",
-      });
-      return false;
-    }
-    toast({
-      title: "Station 5 Complete!",
-      description: "Knowledge is power! Well done for learning about sustainable design.",
-    });
-    return true;
+    return completed;
   };
 
   return (

@@ -5,25 +5,12 @@ import ChallengeContainer from "@/app/components/ChallengeContainer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/hooks/use-toast";
 
 export default function Station4() {
   const [completedChallenge, setCompletedChallenge] = useState<string | null>(null);
 
   const handleComplete = () => {
-    if (!completedChallenge) {
-      toast({
-        title: "Challenge Not Completed",
-        description: "Please complete one of the challenges before proceeding.",
-        variant: "destructive",
-      });
-      return false;
-    }
-    toast({
-      title: "Station 4 Complete!",
-      description: "You're a water conservation champion!",
-    });
-    return true;
+    return !!completedChallenge;
   };
 
   return (

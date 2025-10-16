@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
+import { toast } from "@/hooks/use-toast";
 
 interface ChallengeContainerProps {
   stationId: number;
@@ -25,7 +26,17 @@ export default function ChallengeContainer({
   const handleComplete = () => {
     if (onChallengeComplete()) {
       unlockStation(stationId + 1);
+      toast({
+        title: `¡Estación ${stationId} Completada!`,
+        description: "¡Has vuelto al mapa para continuar tu aventura!",
+      });
       router.push("/");
+    } else {
+        toast({
+            title: "Reto Incompleto",
+            description: "Por favor, completa uno de los retos para poder continuar.",
+            variant: "destructive",
+        });
     }
   };
 
@@ -42,7 +53,7 @@ export default function ChallengeContainer({
 
       <div className="mt-8 text-center">
         <Button size="lg" onClick={handleComplete}>
-          Complete Challenge & Return to Map
+          Completar Reto y Volver al Mapa
         </Button>
       </div>
     </div>

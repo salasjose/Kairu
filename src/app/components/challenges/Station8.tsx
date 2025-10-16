@@ -100,9 +100,7 @@ export default function Station8() {
   };
   
   const handleComplete = () => {
-    if(isCorrect) return true;
-    toast({title: "Challenge Not Completed", description: "Please generate and correctly solve the puzzle.", variant: "destructive"});
-    return false;
+    return isCorrect === true;
   }
 
   return (
