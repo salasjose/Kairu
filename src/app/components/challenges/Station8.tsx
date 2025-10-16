@@ -2,83 +2,108 @@
 
 import { useState, useTransition, useRef, useEffect, useCallback } from "react";
 import ChallengeContainer from "@/app/components/ChallengeContainer";
-import { handleGenerateCrossword } from "@/app/actions";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { CrosswordData } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-const TOPICS = ["Recurso Hídrico", "Biodiversidad", "Economía Circular", "Residuo Sólido", "Negocio Verde", "Sostenibilidad", "Suelo"];
+const staticPuzzle: CrosswordData = {
+  grid: [
+    ["#", "#", "#", "1", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
+    ["#", "#", "2", "S", "3", "U", "E", "L", "O", "#", "#", "#", "#", "#", "#"],
+    ["#", "#", "#", "O", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
+    ["4", "F", "A", "U", "N", "A", "#", "#", "#", "7", "#", "8", "#", "#", "#"],
+    ["#", "#", "#", "N", "#", "#", "#", "#", "9", "A", "G", "U", "A", "#", "#"],
+    ["#", "#", "6", "R", "E", "C", "I", "C", "L", "A", "R", "#", "#", "#", "#"],
+    ["#", "#", "#", "#", "#", "#", "#", "#", "#", "B", "#", "I", "#", "#", "#"],
+    ["#", "11", "R", "I", "O", "#", "#", "10", "B", "O", "S", "Q", "U", "E", "#"],
+    ["#", "#", "#", "A", "#", "#", "#", "#", "#", "S", "#", "O", "#", "#", "#"],
+    ["#", "#", "#", "#", "#", "12", "V", "I", "D", "A", "#", "#", "#", "#", "#"],
+    ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
+    ["#", "#", "13", "H", "U", "E", "L", "L", "A", "#", "#", "#", "#", "#", "#"],
+    ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
+    ["14", "S", "O", "S", "T", "E", "N", "I", "B", "L", "E", "#", "#", "#", "#"],
+  ],
+  across: [
+    { number: 2, clue: "Capa superior de la tierra, vital para la agricultura.", answer: "SUELO" },
+    { number: 4, clue: "Conjunto de animales de una región.", answer: "FAUNA" },
+    { number: 6, clue: "Proceso para convertir residuos en nuevos productos.", answer: "RECICLAR" },
+    { number: 9, clue: "Recurso hídrico esencial para la vida.", answer: "AGUA" },
+    { number: 11, clue: "Corriente de agua natural.", answer: "RIO" },
+    { number: 12, clue: "La biodiversidad es la variedad de...", answer: "VIDA" },
+    { number: 13, clue: "Medida del impacto humano en el ambiente (____ ecológica).", answer: "HUELLA" },
+    { number: 14, clue: "Desarrollo que satisface las necesidades del presente sin comprometer las del futuro.", answer: "SOSTENIBLE" },
+  ],
+  down: [
+    { number: 1, clue: "Organismos que realizan la fotosíntesis.", answer: "FLORA" },
+    { number: 3, clue: "Sinónimo de ecológico.", answer: "VERDE" },
+    { number: 5, clue: "Capa gaseosa que rodea la Tierra.", answer: "AIRE" },
+    { number: 7, clue: "Astro rey que nos da energía.", answer: "SOL" },
+    { number: 8, clue: "Extensa área de árboles.", answer: "BOSQUE" },
+    { number: 10, clue: "Proceso por el cual los residuos se descomponen naturalmente.", answer: "COMPOST" },
+  ],
+};
+
 
 export default function Station8() {
-  const [puzzle, setPuzzle] = useState<CrosswordData | null>(null);
-  const [userGrid, setUserGrid] = useState<string[][] | null>(null);
-  const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const [puzzle, setPuzzle] = useState<CrosswordData | null>(staticPuzzle);
+  const [userGrid, setUserGrid] = useState<string[][] | null>(staticPuzzle.grid.map(row => row.map(cell => (cell === "#" || !/^[A-Z]$/.test(cell) ? "#" : ""))));
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const inputRefs = useRef<(HTMLInputElement | null)[][]>([]);
-  const [currentTopic, setCurrentTopic] = useState('');
 
-  const generatePuzzle = () => {
-    const topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
-    setCurrentTopic(topic);
-    setError(null);
-    setPuzzle(null);
-    setUserGrid(null);
-    setIsCorrect(null);
-    startTransition(async () => {
-      const result = await handleGenerateCrossword(topic, 10);
-      if (result.success && result.data) {
-        setPuzzle(result.data);
-        const newGrid = result.data.grid.map(row => row.map(cell => (cell === "#" ? "#" : "")));
-        setUserGrid(newGrid);
-        inputRefs.current = Array(10).fill(null).map(() => Array(10).fill(null));
-      } else {
-        setError(result.error || "An unknown error occurred.");
-        toast({ title: "Generation Failed", description: result.error, variant: "destructive" });
-      }
-    });
-  };
+  useEffect(() => {
+    if (puzzle) {
+      inputRefs.current = Array(puzzle.grid.length).fill(null).map(() => Array(puzzle.grid[0].length).fill(null));
+    }
+  }, [puzzle]);
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, row: number, col: number) => {
+    if (!userGrid) return;
     const value = e.target.value.toUpperCase().slice(-1);
-    const newUserGrid = userGrid!.map(r => [...r]);
+    const newUserGrid = userGrid.map(r => [...r]);
     newUserGrid[row][col] = value;
     setUserGrid(newUserGrid);
 
-    if (value && col < 9 && inputRefs.current[row][col + 1]) {
+    if (value && col < userGrid[0].length - 1 && inputRefs.current[row][col + 1]) {
       inputRefs.current[row][col + 1]?.focus();
     }
   };
 
    const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, row: number, col: number) => {
+    if (!userGrid) return;
     let nextRow = row, nextCol = col;
+    let moved = false;
     switch (e.key) {
-        case 'ArrowUp': e.preventDefault(); nextRow = row > 0 ? row - 1 : 9; break;
-        case 'ArrowDown': e.preventDefault(); nextRow = row < 9 ? row + 1 : 0; break;
-        case 'ArrowLeft': e.preventDefault(); nextCol = col > 0 ? col - 1 : 9; break;
-        case 'ArrowRight': e.preventDefault(); nextCol = col < 9 ? col + 1 : 0; break;
+        case 'ArrowUp': e.preventDefault(); nextRow = row > 0 ? row - 1 : userGrid.length - 1; moved = true; break;
+        case 'ArrowDown': e.preventDefault(); nextRow = row < userGrid.length - 1 ? row + 1 : 0; moved = true; break;
+        case 'ArrowLeft': e.preventDefault(); nextCol = col > 0 ? col - 1 : userGrid[0].length - 1; moved = true; break;
+        case 'ArrowRight': e.preventDefault(); nextCol = col < userGrid[0].length - 1 ? col + 1 : 0; moved = true; break;
         case 'Backspace':
-            if (!userGrid![row][col] && col > 0 && inputRefs.current[row][col - 1]) {
-                e.preventDefault();
-                inputRefs.current[row][col-1]?.focus();
+            if (!userGrid[row][col] && col > 0) {
+              const prevRef = inputRefs.current[row][col-1];
+               if(prevRef) {
+                  e.preventDefault();
+                  prevRef.focus();
+               }
             }
             return;
         default: return;
     }
-    // Find next valid cell
-    for(let i = 0; i < 100; i++) {
-        const targetRef = inputRefs.current[nextRow]?.[nextCol];
-        if(targetRef) {
-            targetRef.focus();
-            return;
-        }
-        switch (e.key) {
-            case 'ArrowUp': nextRow = nextRow > 0 ? nextRow - 1 : 9; break;
-            case 'ArrowDown': nextRow = nextRow < 9 ? nextRow + 1 : 0; break;
-            case 'ArrowLeft': nextCol = nextCol > 0 ? nextCol - 1 : 9; break;
-            case 'ArrowRight': nextCol = nextCol < 9 ? nextCol + 1 : 0; break;
+
+    if (moved) {
+       for(let i = 0; i < userGrid.length * userGrid[0].length; i++) {
+            const targetRef = inputRefs.current[nextRow]?.[nextCol];
+            if(targetRef) {
+                targetRef.focus();
+                return;
+            }
+            switch (e.key) {
+                case 'ArrowUp': nextRow = nextRow > 0 ? nextRow - 1 : userGrid.length - 1; break;
+                case 'ArrowDown': nextRow = nextRow < userGrid.length - 1 ? nextRow + 1 : 0; break;
+                case 'ArrowLeft': nextCol = nextCol > 0 ? nextCol - 1 : userGrid[0].length - 1; break;
+                case 'ArrowRight': nextCol = nextCol < userGrid[0].length - 1 ? nextCol + 1 : 0; break;
+            }
         }
     }
 }, [userGrid]);
@@ -86,69 +111,130 @@ export default function Station8() {
 
   const checkSolution = () => {
     if (!puzzle || !userGrid) return;
-    for (let r = 0; r < 10; r++) {
-      for (let c = 0; c < 10; c++) {
-        if (puzzle.grid[r][c] !== "#" && puzzle.grid[r][c] !== userGrid[r][c]) {
+    for (let r = 0; r < puzzle.grid.length; r++) {
+      for (let c = 0; c < puzzle.grid[r].length; c++) {
+        const cell = puzzle.grid[r][c];
+        if (/^[A-Z]$/.test(cell) && cell !== userGrid[r][c]) {
           setIsCorrect(false);
-          toast({ title: "Not quite!", description: "Some letters are incorrect. Keep trying!", variant: "destructive" });
+          toast({ title: "No del todo...", description: "Algunas letras son incorrectas. ¡Sigue intentando!", variant: "destructive" });
           return;
         }
       }
     }
     setIsCorrect(true);
-    toast({ title: "Correct!", description: "You've solved the puzzle!" });
+    toast({ title: "¡Correcto!", description: "¡Has resuelto el crucigrama!" });
   };
   
   const handleComplete = () => {
     return isCorrect === true;
   }
+  
+  const renderCell = (cell: string, r: number, c: number) => {
+    if (cell === "#") {
+        return <div key={`${r}-${c}`} className="bg-foreground/20" />;
+    }
+    
+    const isLetter = /^[A-Z]$/.test(cell);
+    
+    let clueNumber: number | null = null;
+    if (isLetter) {
+        puzzle?.across.forEach(clue => {
+            if (puzzle.grid[r][c-1] === '#' && puzzle.grid[r][c] === clue.answer[0]) {
+                 clueNumber = clue.number
+            }
+        });
+        puzzle?.down.forEach(clue => {
+             if ((r === 0 || puzzle.grid[r-1][c] === '#') && puzzle.grid[r][c] === clue.answer[0]) {
+                 clueNumber = clue.number;
+             }
+        });
+
+        const acrossClue = puzzle?.across.find(cl => cl.number === clueNumber);
+        if (acrossClue && userGrid) {
+            let match = true;
+            for(let i=0; i<acrossClue.answer.length; i++) {
+                if(puzzle.grid[r][c+i] !== acrossClue.answer[i]) match = false;
+            }
+            if (!match) clueNumber = null;
+        }
+
+        const downClue = puzzle?.down.find(cl => cl.number === clueNumber);
+         if (downClue && userGrid) {
+            let match = true;
+            for(let i=0; i<downClue.answer.length; i++) {
+                if( r+i >= puzzle.grid.length || puzzle.grid[r+i][c] !== downClue.answer[i]) match = false;
+            }
+            if (!match) clueNumber = null;
+        }
+
+
+        // Re-check logic for numbers
+        const acrossStart = puzzle?.across.find(a => {
+            const word = a.answer;
+            return puzzle.grid[r][c] === word[0] && (c === 0 || puzzle.grid[r][c-1] === '#') && puzzle.grid[r][c+word.length-1] === word[word.length-1]
+        });
+
+        const downStart = puzzle?.down.find(d => {
+             const word = d.answer;
+            return puzzle.grid[r][c] === word[0] && (r === 0 || puzzle.grid[r-1][c] === '#') && (r + word.length -1 < puzzle.grid.length && puzzle.grid[r+word.length-1][c] === word[word.length-1]);
+        });
+       
+        if(acrossStart) clueNumber = acrossStart.number;
+        if(downStart) clueNumber = downStart.number;
+
+         if (r === 1 && c === 2) clueNumber = 2;
+         if (r === 1 && c === 4) clueNumber = 3;
+         if (r === 3 && c === 0) clueNumber = 4;
+         if (r === 5 && c === 2) clueNumber = 6;
+         if (r === 3 && c === 9) clueNumber = 7;
+         if (r === 3 && c === 11) clueNumber = 8;
+         if (r === 4 && c === 8) clueNumber = 9;
+         if (r === 6 && c === 9) clueNumber = 10;
+         if (r === 7 && c === 1) clueNumber = 11;
+         if (r === 9 && c === 5) clueNumber = 12;
+         if (r === 11 && c === 2) clueNumber = 13;
+         if (r === 13 && c === 0) clueNumber = 14;
+
+
+    }
+
+    return (
+        <div key={`${r}-${c}`} className="relative bg-card">
+            {clueNumber && <span className="absolute top-0 left-0.5 text-xxs text-muted-foreground">{clueNumber}</span>}
+            <input
+                ref={el => {
+                    if (!inputRefs.current[r]) inputRefs.current[r] = [];
+                    inputRefs.current[r][c] = el;
+                }}
+                type="text"
+                maxLength={1}
+                value={userGrid?.[r]?.[c] || ""}
+                onChange={(e) => handleInputChange(e, r, c)}
+                onKeyDown={(e) => handleKeyDown(e, r, c)}
+                className={cn("w-full h-full aspect-square text-center uppercase font-bold text-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-primary z-10",
+                isCorrect === false && userGrid?.[r]?.[c] && cell !== userGrid?.[r]?.[c] ? "bg-destructive/20 text-destructive" : "",
+                isCorrect === true ? "bg-primary/20 text-primary" : ""
+                )}
+            />
+        </div>
+    );
+  }
 
   return (
     <ChallengeContainer
       stationId={8}
-      title="Station 8: Crucigrama"
-      description="Pon a prueba tu vocabulario ambiental. ¡Genera un crucigrama y resuélvelo!"
+      title="Station 8: Crucigrama Ambiental"
+      description="Pon a prueba tu vocabulario ambiental resolviendo este crucigrama."
       onChallengeComplete={handleComplete}
     >
-      <div className="text-center mb-6">
-        <Button onClick={generatePuzzle} disabled={isPending}>
-          {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          {puzzle ? "Generar Nuevo Crucigrama" : "Generar Crucigrama"}
-        </Button>
-      </div>
-
-      {isPending && <p className="text-center text-primary">Generando tu crucigrama sobre "{currentTopic}"...</p>}
-      {error && <p className="text-center text-destructive">{error}</p>}
-
-      {puzzle && userGrid && (
-        <div className="grid md:grid-cols-2 gap-8">
+      {!puzzle || !userGrid ? (
+        <p className="text-center">Cargando crucigrama...</p>
+      ) : (
+        <div className="grid md:grid-cols-2 gap-8 items-start">
           <div className="flex justify-center">
-            <div className="grid grid-cols-10 gap-0.5 bg-muted-foreground p-1 rounded-md aspect-square max-w-sm w-full">
+            <div className="grid grid-cols-15 gap-0.5 bg-muted-foreground p-1 rounded-md aspect-square max-w-lg w-full" style={{ gridTemplateColumns: 'repeat(15, minmax(0, 1fr))' }}>
               {puzzle.grid.map((row, r) =>
-                row.map((cell, c) =>
-                  cell === "#" ? (
-                    <div key={`${r}-${c}`} className="bg-foreground" />
-                  ) : (
-                    <input
-                      key={`${r}-${c}`}
-                      ref={el => {
-                        if (!inputRefs.current[r]) {
-                          inputRefs.current[r] = [];
-                        }
-                        inputRefs.current[r][c] = el;
-                      }}
-                      type="text"
-                      maxLength={1}
-                      value={userGrid[r][c]}
-                      onChange={(e) => handleInputChange(e, r, c)}
-                      onKeyDown={(e) => handleKeyDown(e, r, c)}
-                      className={cn("w-full aspect-square text-center uppercase font-bold text-sm bg-card focus:outline-none focus:ring-2 focus:ring-primary",
-                       isCorrect === false && userGrid[r][c] && puzzle.grid[r][c] !== userGrid[r][c] ? "bg-destructive/20 text-destructive" : "",
-                       isCorrect === true ? "bg-primary/20 text-primary" : ""
-                      )}
-                    />
-                  )
-                )
+                row.map((cell, c) => renderCell(cell, r, c))
               )}
             </div>
           </div>
