@@ -2,23 +2,22 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/hooks/use-toast";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, CheckCircle } from "lucide-react";
-import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 
 const ChallengeDetail = ({ title, description, onComplete, onBack, image, imageHint }: { title: string, description: string, onComplete: () => void, onBack: () => void, image: string, imageHint: string }) => (
-  <div className="w-full max-w-2xl mx-auto">
-      <Button variant="ghost" onClick={onBack} className="mb-4">
+  <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-full">
+      <Button variant="ghost" onClick={onBack} className="mb-4 self-start">
         <ArrowLeft className="mr-2 h-4 w-4" />
         Volver a los retos
       </Button>
-      <Card className="text-center">
+      <Card className="text-center w-full">
           <CardContent className="p-6">
               <h3 className="font-bold text-2xl text-primary font-headline mb-4">{title}</h3>
               <Image 
@@ -120,8 +119,8 @@ export default function Station1() {
                 />
         </div>
 
-        <div className="mt-4">
-           <p className="bg-background/80 p-4 rounded-md text-center max-w-md mx-auto">Selecciona uno de los retos para completar la estación. ¡Al terminar, volverás al mapa para continuar tu aventura!</p>
+        <div className="mt-4 max-w-md mx-auto">
+           <p className="bg-background/80 p-4 rounded-md text-center">Selecciona uno de los retos para completar la estación. ¡Al terminar, volverás al mapa para continuar tu aventura!</p>
         </div>
       </div>
     </div>
