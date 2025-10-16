@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import ChallengeContainer from "@/app/components/ChallengeContainer";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -9,39 +9,56 @@ import { cn } from "@/lib/utils";
 
 const staticPuzzle: CrosswordData = {
   grid: [
-    ["#", "#", "#", "1", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
-    ["#", "#", "2", "S", "3", "U", "E", "L", "O", "#", "#", "#", "#", "#", "#"],
-    ["#", "#", "#", "O", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
-    ["4", "F", "A", "U", "N", "A", "#", "#", "#", "7", "#", "8", "#", "#", "#"],
-    ["#", "#", "#", "N", "#", "#", "#", "#", "9", "A", "G", "U", "A", "#", "#"],
-    ["#", "#", "6", "R", "E", "C", "I", "C", "L", "A", "R", "#", "#", "#", "#"],
-    ["#", "#", "#", "#", "#", "#", "#", "#", "#", "B", "#", "I", "#", "#", "#"],
-    ["#", "11", "R", "I", "O", "#", "#", "10", "B", "O", "S", "Q", "U", "E", "#"],
-    ["#", "#", "#", "A", "#", "#", "#", "#", "#", "S", "#", "O", "#", "#", "#"],
-    ["#", "#", "#", "#", "#", "12", "V", "I", "D", "A", "#", "#", "#", "#", "#"],
+    ["#", "#", "F", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
+    ["#", "#", "L", "#", "V", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
+    ["#", "#", "O", "#", "E", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
+    ["S", "U", "E", "L", "O", "#", "#", "A", "#", "#", "#", "B", "#", "#", "#"],
+    ["#", "#", "A", "#", "R", "#", "S", "#", "A", "G", "U", "A", "#", "C", "#"],
+    ["#", "F", "A", "U", "N", "A", "#", "L", "B", "O", "S", "Q", "U", "E", "#"],
+    ["R", "E", "C", "I", "C", "L", "A", "R", "#", "#", "#", "E", "#", "M", "#"],
+    ["I", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "P", "#"],
+    ["O", "#", "H", "U", "E", "L", "L", "A", "#", "#", "#", "#", "#", "O", "#"],
+    ["#", "#", "#", "#", "#", "#", "#", "#", "#", "V", "I", "D", "A", "#", "T"],
     ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
-    ["#", "#", "13", "H", "U", "E", "L", "L", "A", "#", "#", "#", "#", "#", "#"],
+    ["S", "O", "S", "T", "E", "N", "I", "B", "L", "E", "#", "#", "#", "#", "#"],
     ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
-    ["14", "S", "O", "S", "T", "E", "N", "I", "B", "L", "E", "#", "#", "#", "#"],
+    ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
+    ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
   ],
   across: [
-    { number: 2, clue: "Capa superior de la tierra, vital para la agricultura.", answer: "SUELO" },
-    { number: 4, clue: "Conjunto de animales de una región.", answer: "FAUNA" },
-    { number: 6, clue: "Proceso para convertir residuos en nuevos productos.", answer: "RECICLAR" },
+    { number: 4, clue: "Capa superior de la tierra, vital para la agricultura.", answer: "SUELO" },
+    { number: 6, clue: "Conjunto de animales de una región.", answer: "FAUNA" },
+    { number: 7, clue: "Proceso para convertir residuos en nuevos productos.", answer: "RECICLAR" },
     { number: 9, clue: "Recurso hídrico esencial para la vida.", answer: "AGUA" },
-    { number: 11, clue: "Corriente de agua natural.", answer: "RIO" },
-    { number: 12, clue: "La biodiversidad es la variedad de...", answer: "VIDA" },
-    { number: 13, clue: "Medida del impacto humano en el ambiente (____ ecológica).", answer: "HUELLA" },
-    { number: 14, clue: "Desarrollo que satisface las necesidades del presente sin comprometer las del futuro.", answer: "SOSTENIBLE" },
+    { number: 8, clue: "Medida del impacto humano en el ambiente (____ ecológica).", answer: "HUELLA" },
+    { number: 10, clue: "La biodiversidad es la variedad de...", answer: "VIDA" },
+    { number: 12, clue: "Desarrollo que satisface las necesidades del presente sin comprometer las del futuro.", answer: "SOSTENIBLE" },
+    { number: 5, clue: "Extensa área de árboles.", answer: "BOSQUE" },
+    { number: 2, clue: "Corriente de agua natural.", answer: "RIO" },
   ],
   down: [
     { number: 1, clue: "Organismos que realizan la fotosíntesis.", answer: "FLORA" },
     { number: 3, clue: "Sinónimo de ecológico.", answer: "VERDE" },
-    { number: 5, clue: "Capa gaseosa que rodea la Tierra.", answer: "AIRE" },
-    { number: 7, clue: "Astro rey que nos da energía.", answer: "SOL" },
-    { number: 8, clue: "Extensa área de árboles.", answer: "BOSQUE" },
-    { number: 10, clue: "Proceso por el cual los residuos se descomponen naturalmente.", answer: "COMPOST" },
+    { number: 4, clue: "Capa gaseosa que rodea la Tierra.", answer: "AIRE" },
+    { number: 5, clue: "Astro rey que nos da energía.", answer: "SOL" },
+    { number: 11, clue: "Proceso por el cual los residuos se descomponen naturalmente.", answer: "COMPOST" },
+    { number: 2, clue: "Corriente de agua natural.", answer: "RIO" },
   ],
+};
+
+const cluePositions: { [key: string]: number } = {
+  "0-2": 1, 
+  "3-0": 4, 
+  "1-4": 3, 
+  "5-1": 6, 
+  "6-0": 7, 
+  "8-2": 8, 
+  "4-8": 9,
+  "9-9": 10,
+  "4-13": 11,
+  "11-0": 12,
+  "5-7": 5,
+  "6-1": 2, // RIO horizontal
 };
 
 
@@ -134,73 +151,11 @@ export default function Station8() {
         return <div key={`${r}-${c}`} className="bg-foreground/20" />;
     }
     
-    const isLetter = /^[A-Z]$/.test(cell);
-    
-    let clueNumber: number | null = null;
-    if (isLetter) {
-        puzzle?.across.forEach(clue => {
-            if (puzzle.grid[r][c-1] === '#' && puzzle.grid[r][c] === clue.answer[0]) {
-                 clueNumber = clue.number
-            }
-        });
-        puzzle?.down.forEach(clue => {
-             if ((r === 0 || puzzle.grid[r-1][c] === '#') && puzzle.grid[r][c] === clue.answer[0]) {
-                 clueNumber = clue.number;
-             }
-        });
-
-        const acrossClue = puzzle?.across.find(cl => cl.number === clueNumber);
-        if (acrossClue && userGrid) {
-            let match = true;
-            for(let i=0; i<acrossClue.answer.length; i++) {
-                if(puzzle.grid[r][c+i] !== acrossClue.answer[i]) match = false;
-            }
-            if (!match) clueNumber = null;
-        }
-
-        const downClue = puzzle?.down.find(cl => cl.number === clueNumber);
-         if (downClue && userGrid) {
-            let match = true;
-            for(let i=0; i<downClue.answer.length; i++) {
-                if( r+i >= puzzle.grid.length || puzzle.grid[r+i][c] !== downClue.answer[i]) match = false;
-            }
-            if (!match) clueNumber = null;
-        }
-
-
-        // Re-check logic for numbers
-        const acrossStart = puzzle?.across.find(a => {
-            const word = a.answer;
-            return puzzle.grid[r][c] === word[0] && (c === 0 || puzzle.grid[r][c-1] === '#') && puzzle.grid[r][c+word.length-1] === word[word.length-1]
-        });
-
-        const downStart = puzzle?.down.find(d => {
-             const word = d.answer;
-            return puzzle.grid[r][c] === word[0] && (r === 0 || puzzle.grid[r-1][c] === '#') && (r + word.length -1 < puzzle.grid.length && puzzle.grid[r+word.length-1][c] === word[word.length-1]);
-        });
-       
-        if(acrossStart) clueNumber = acrossStart.number;
-        if(downStart) clueNumber = downStart.number;
-
-         if (r === 1 && c === 2) clueNumber = 2;
-         if (r === 1 && c === 4) clueNumber = 3;
-         if (r === 3 && c === 0) clueNumber = 4;
-         if (r === 5 && c === 2) clueNumber = 6;
-         if (r === 3 && c === 9) clueNumber = 7;
-         if (r === 3 && c === 11) clueNumber = 8;
-         if (r === 4 && c === 8) clueNumber = 9;
-         if (r === 6 && c === 9) clueNumber = 10;
-         if (r === 7 && c === 1) clueNumber = 11;
-         if (r === 9 && c === 5) clueNumber = 12;
-         if (r === 11 && c === 2) clueNumber = 13;
-         if (r === 13 && c === 0) clueNumber = 14;
-
-
-    }
+    const clueNumber = cluePositions[`${r}-${c}`];
 
     return (
         <div key={`${r}-${c}`} className="relative bg-card">
-            {clueNumber && <span className="absolute top-0 left-0.5 text-xxs text-muted-foreground">{clueNumber}</span>}
+            {clueNumber && <span className="absolute top-0 left-0.5 text-xxs text-muted-foreground font-bold">{clueNumber}</span>}
             <input
                 ref={el => {
                     if (!inputRefs.current[r]) inputRefs.current[r] = [];
