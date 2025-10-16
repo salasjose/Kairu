@@ -1,3 +1,88 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "fauna-capybara",
+      "description": "A capybara sitting calmly.",
+      "imageUrl": "https://picsum.photos/seed/capybara/400/300",
+      "imageHint": "capybara wildlife"
+    },
+    {
+      "id": "fauna-toucan",
+      "description": "A colorful toucan on a branch.",
+      "imageUrl": "https://picsum.photos/seed/toucan/400/300",
+      "imageHint": "toucan bird"
+    },
+    {
+      "id": "fauna-jaguar",
+      "description": "A jaguar in the jungle.",
+      "imageUrl": "https://picsum.photos/seed/jaguar/400/300",
+      "imageHint": "jaguar cat"
+    },
+    {
+      "id": "flora-orchid",
+      "description": "A vibrant orchid flower.",
+      "imageUrl": "https://picsum.photos/seed/orchid/400/300",
+      "imageHint": "orchid flower"
+    },
+    {
+      "id": "flora-ceiba",
+      "description": "A tall Ceiba tree.",
+      "imageUrl": "https://picsum.photos/seed/ceiba/400/300",
+      "imageHint": "ceiba tree"
+    },
+    {
+      "id": "flora-victoria-regia",
+      "description": "A Victoria Regia water lily.",
+      "imageUrl": "https://picsum.photos/seed/lily/400/300",
+      "imageHint": "water lily"
+    },
+    {
+      "id": "habitat-build-1",
+      "description": "Building a bird feeder.",
+      "imageUrl": "https://picsum.photos/seed/build1/400/300",
+      "imageHint": "building birdhouse"
+    },
+    {
+      "id": "habitat-install-1",
+      "description": "Installing a bird feeder.",
+      "imageUrl": "https://picsum.photos/seed/install1/400/300",
+      "imageHint": "installing birdhouse"
+    },
+    {
+      "id": "sustainable-practice",
+      "description": "A person sorting recycling.",
+      "imageUrl": "https://picsum.photos/seed/recycle1/400/300",
+      "imageHint": "recycling"
+    },
+    {
+      "id": "cleanup-video",
+      "description": "Thumbnail for a beach cleanup video.",
+      "imageUrl": "https://picsum.photos/seed/cleanup/400/300",
+      "imageHint": "beach cleanup"
+    },
+    {
+      "id": "recycled-art",
+      "description": "Art made from recycled materials.",
+      "imageUrl": "https://picsum.photos/seed/artrecycle/400/300",
+      "imageHint": "recycled art"
+    },
+    {
+      "id": "water-post",
+      "description": "Social media post about water conservation.",
+      "imageUrl": "https://picsum.photos/seed/waterpost/400/300",
+      "imageHint": "water conservation"
+    },
+    {
+      "id": "sustainable-design-video",
+      "description": "Thumbnail for a sustainable design video.",
+      "imageUrl": "https://picsum.photos/seed/designvid/400/300",
+      "imageHint": "sustainable design"
+    },
+    {
+      "id": "green-business-product",
+      "description": "An eco-friendly product from a green business.",
+      "imageUrl": "https://picsum.photos/seed/greenprod/400/300",
+      "imageHint": "eco product"
+    }
+  ]
 }
