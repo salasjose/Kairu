@@ -12,30 +12,34 @@ import { toast } from "@/hooks/use-toast";
 
 
 const ChallengeDetail = ({ title, description, onComplete, onBack, image, imageHint }: { title: string, description: string, onComplete: () => void, onBack: () => void, image: string, imageHint: string }) => (
-  <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-full">
-      <Button variant="ghost" onClick={onBack} className="mb-4 self-start">
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Volver a los retos
-      </Button>
-      <Card className="text-center w-full">
-          <CardContent className="p-6">
-              <h3 className="font-bold text-2xl text-primary font-headline mb-4">{title}</h3>
-              <Image 
-                src={image} 
-                alt={description} 
-                width={400} 
-                height={300} 
-                className="rounded-md mx-auto mb-4"
-                data-ai-hint={imageHint}
-              />
-              <p className="text-muted-foreground mb-6">{description}</p>
-              <Button onClick={onComplete} size="lg">
-                  <CheckCircle className="mr-2" />
-                  Simular Completado
-              </Button>
-          </CardContent>
-      </Card>
-  </div>
+    <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-full">
+        <div className="w-full">
+            <Button variant="ghost" onClick={onBack} className="mb-4">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Volver a los retos
+            </Button>
+            <Card className="text-center w-full shadow-lg">
+                <CardContent className="p-6">
+                    <h3 className="font-bold text-2xl text-primary font-headline mb-4">{title}</h3>
+                    <div className="flex justify-center mb-6">
+                        <Image 
+                            src={image} 
+                            alt={description} 
+                            width={400} 
+                            height={300} 
+                            className="rounded-lg border-4 border-white shadow-md"
+                            data-ai-hint={imageHint}
+                        />
+                    </div>
+                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">{description}</p>
+                    <Button onClick={onComplete} size="lg">
+                        <CheckCircle className="mr-2" />
+                        Simular Completado
+                    </Button>
+                </CardContent>
+            </Card>
+        </div>
+    </div>
 );
 
 
