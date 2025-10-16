@@ -138,7 +138,7 @@ export default function Home() {
           <div className="relative w-full max-w-5xl aspect-[4/3]">
             <Image
               src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/a2e24505-f375-4cf5-9430-a35c5c93c1f0.png"
-              alt="Game map with a frog and a winding path"
+              alt="Game map with a winding path"
               layout="fill"
               objectFit="contain"
               className="z-0"
