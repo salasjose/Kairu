@@ -37,7 +37,7 @@ const PhotoUploadChallenge = ({ day, onComplete, onBack }: { day: number, onComp
     }
     
     return (
-      <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-full">
+      <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center h-full">
           <Button variant="ghost" onClick={onBack} className="mb-4 self-start">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Volver a los retos
@@ -107,7 +107,7 @@ export default function Station2() {
     if (changed) {
         updateAndSaveChanges(newDays);
     }
-  }, [days]);
+  }, [days, updateAndSaveChanges]);
 
   useEffect(() => {
     const interval = setInterval(checkUnlocks, 1000 * 60); // Check for unlocks every minute
@@ -152,7 +152,7 @@ export default function Station2() {
   ];
 
   return (
-    <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden bg-blue-200">
+    <div className="w-full h-full flex flex-col items-center justify-center p-4 relative overflow-hidden bg-blue-200">
       <Image 
         src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/15ae8e51-9f93-4a11-a806-df6b7f32997e.png"
         alt="City background"
@@ -206,3 +206,5 @@ export default function Station2() {
     </div>
   );
 }
+
+    
