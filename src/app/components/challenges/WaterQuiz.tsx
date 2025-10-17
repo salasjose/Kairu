@@ -8,7 +8,7 @@ import { AlertCircle, ArrowLeft, Lightbulb, Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
-const QUIZ_STORAGE_KEY = 'greenquest-water-quiz-progress';
+const QUIZ_STORAGE_KEY = 'kairu-water-quiz-progress';
 
 type Question = {
   question: string;

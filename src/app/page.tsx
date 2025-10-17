@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { User, Play } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const PLAYER_NAME_STORAGE_KEY = "greenquest-player-name";
+const PLAYER_NAME_STORAGE_KEY = "kairu-player-name";
 
 export default function Home() {
   const { unlockedStations, isLoaded, resetProgress } = useStationProgress();
@@ -31,6 +31,7 @@ export default function Home() {
   const [clientLoaded, setClientLoaded] = useState(false);
 
   useEffect(() => {
+    // This effect runs only on the client
     setClientLoaded(true);
     const savedPlayerName = localStorage.getItem(PLAYER_NAME_STORAGE_KEY);
     if (savedPlayerName) {
@@ -162,7 +163,7 @@ export default function Home() {
           <Logo className="h-10 w-10 md:h-12 md:w-12" />
           <div>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
-              GreenQuest
+              Kairu
             </h1>
             <p className="text-sm md:text-base text-muted-foreground">¡Bienvenido, {playerName}!</p>
           </div>

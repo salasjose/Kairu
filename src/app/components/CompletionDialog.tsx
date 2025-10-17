@@ -29,7 +29,7 @@ export default function CompletionDialog({ open, onReset }: CompletionDialogProp
           <AlertDialogDescription className="text-center text-lg">
             Ahora eres un <span className="font-bold text-primary">Guardián de la Naturaleza</span>.
             <br />
-            ¡Gracias por completar el GreenQuest!
+            ¡Gracias por completar la aventura de Kairu!
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

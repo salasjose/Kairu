@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-const STORAGE_KEY = 'greenquest-progress';
+const STORAGE_KEY = 'kairu-progress';
 
 export function useStationProgress() {
   const [unlockedStations, setUnlockedStations] = useState<number[]>([]);
@@ -53,7 +53,7 @@ export function useStationProgress() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(initialStations));
         // also clear other station-specific data
         Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('greenquest-station')) {
+            if (key.startsWith('kairu-station')) {
                 localStorage.removeItem(key);
             }
         });

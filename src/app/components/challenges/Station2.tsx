@@ -11,7 +11,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-const STORAGE_KEY_STATION2 = 'greenquest-station2-progress';
+const STORAGE_KEY_STATION2 = 'kairu-station2-progress';
 
 type DayStatus = 'locked' | 'unlocked' | 'completed';
 

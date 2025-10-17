@@ -3,8 +3,8 @@ import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'GreenQuest',
-  description: 'An interactive environmental education game.',
+  title: 'Kairu',
+  description: 'Una aventura interactiva de educación ambiental.',
 };
 
 export default function RootLayout({
