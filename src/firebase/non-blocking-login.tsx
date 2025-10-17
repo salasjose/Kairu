@@ -1,29 +1,55 @@
 'use client';
 import {
-  Auth, // Import Auth type for type hinting
-  signInAnonymously,
+  Auth,
+  UserCredential,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  // Assume getAuth and app are initialized elsewhere
 } from 'firebase/auth';
 
-/** Initiate anonymous sign-in (non-blocking). */
-export function initiateAnonymousSignIn(authInstance: Auth): void {
-  // CRITICAL: Call signInAnonymously directly. Do NOT use 'await signInAnonymously(...)'.
-  signInAnonymously(authInstance);
-  // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
+import { errorEmitter } from './error-emitter';
+import { FirestorePermissionError } from './errors';
+
+export function createUserWithEmailAndPasswordNonBlocking(
+  auth: Auth,
+  email: string,
+  pass: string
+): Promise<UserCredential> {
+  const promise = createUserWithEmailAndPassword(auth, email, pass).catch(
+    (error) => {
+      // Create a generic error for login failure, as detailed context is less critical here.
+      const permissionError = new FirestorePermissionError({
+        path: 'firebase-auth',
+        operation: 'create', // Representing user creation
+        requestResourceData: { email: email, error: error.message },
+      });
+
+      errorEmitter.emit('permission-error', permissionError);
+
+      // Re-throw the original error to allow the caller's catch block to execute
+      throw error;
+    }
+  );
+  return promise;
 }
 
-/** Initiate email/password sign-up (non-blocking). */
-export function initiateEmailSignUp(authInstance: Auth, email: string, password: string): void {
-  // CRITICAL: Call createUserWithEmailAndPassword directly. Do NOT use 'await createUserWithEmailAndPassword(...)'.
-  createUserWithEmailAndPassword(authInstance, email, password);
-  // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
-}
 
-/** Initiate email/password sign-in (non-blocking). */
-export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): void {
-  // CRITICAL: Call signInWithEmailAndPassword directly. Do NOT use 'await signInWithEmailAndPassword(...)'.
-  signInWithEmailAndPassword(authInstance, email, password);
-  // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
+export function signInWithEmailAndPasswordNonBlocking(
+  auth: Auth,
+  email: string,
+  pass: string
+): Promise<UserCredential> {
+  const promise = signInWithEmailAndPassword(auth, email, pass).catch(
+    (error) => {
+      // Create a generic error for login failure
+      const permissionError = new FirestorePermissionError({
+        path: 'firebase-auth',
+        operation: 'get', // Representing user login
+        requestResourceData: { email: email, error: error.message },
+      });
+
+      errorEmitter.emit('permission-error', permissionError);
+      throw error;
+    }
+  );
+  return promise;
 }

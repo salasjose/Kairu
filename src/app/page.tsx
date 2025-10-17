@@ -9,34 +9,55 @@ import CompletionDialog from "@/app/components/CompletionDialog";
 import Logo from "@/app/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useUser } from "@/firebase";
-import { useRouter } from "next/navigation";
-import { User as AuthUser } from "firebase/auth";
-import { doc } from "firebase/firestore";
-import { useFirestore, useDoc } from "@/firebase";
-import type { User } from "@/lib/types";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+
+
+const PLAYER_NAME_KEY = 'kairu-player-name';
 
 export default function Home() {
   const { unlockedStations, isLoaded: isProgressLoaded, resetProgress } = useStationProgress();
-  const { user: authUser, isUserLoading } = useUser();
-  const router = useRouter();
-  const firestore = useFirestore();
+  const [clientLoaded, setClientLoaded] = useState(false);
+  const [playerName, setPlayerName] = useState<string | null>(null);
+  const [inputName, setInputName] = useState("");
 
-  const userDocRef = authUser ? doc(firestore, `users/${authUser.uid}`) : null;
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc<User>(userDocRef);
 
   useEffect(() => {
-    if (!isUserLoading && !authUser) {
-      router.push('/login');
+    // This effect runs only on the client
+    setClientLoaded(true);
+    try {
+      const savedName = localStorage.getItem(PLAYER_NAME_KEY);
+      if (savedName) {
+        setPlayerName(savedName);
+      }
+    } catch (error) {
+      console.error("Failed to load player name from localStorage", error);
     }
-  }, [authUser, isUserLoading, router]);
+  }, []);
+
+
+  const handleSaveName = () => {
+    if (inputName.trim()) {
+      const name = inputName.trim();
+      try {
+        localStorage.setItem(PLAYER_NAME_KEY, name);
+        setPlayerName(name);
+      } catch (error) {
+        console.error("Failed to save player name to localStorage", error);
+      }
+    }
+  };
+
 
   const handleReset = () => {
-    // Note: This should also sign the user out.
-    // For now, it just resets local progress.
-    // Full sign out logic would be in a header/profile button.
     resetProgress();
-    // Potentially add Firebase sign out logic here.
+    try {
+        localStorage.removeItem(PLAYER_NAME_KEY);
+        setPlayerName(null);
+        setInputName("");
+    } catch (error) {
+        console.error("Failed to clear localStorage", error);
+    }
   }
 
   const allStationsCompleted = unlockedStations.length >= stations.length;
@@ -53,8 +74,8 @@ export default function Home() {
     { top: "25%", left: "55%" },
     { top: "10%", left: "45%" },
   ];
-
-  if (isUserLoading || !isProgressLoaded || (authUser && isProfileLoading)) {
+  
+  if (!clientLoaded || !isProgressLoaded) {
     return (
       <main className="flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 min-h-screen w-full bg-background text-foreground">
         <div className="flex flex-col items-center gap-4">
@@ -63,19 +84,41 @@ export default function Home() {
                 <Skeleton className="h-6 w-[250px]" />
                 <Skeleton className="h-4 w-[200px]" />
             </div>
-             <Skeleton className="relative w-[300px] h-[225px] md:w-[700px] md:h-[525px] mt-8" />
+             <Skeleton className="relative w-[300px] h-[225px] sm:w-[400px] sm:h-[300px] md:w-[700px] md:h-[525px] mt-8" />
         </div>
       </main>
     );
   }
 
-  if (!authUser) {
-     // This is a fallback while redirecting
+  if (!playerName) {
      return (
-        <main className="flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 min-h-screen w-full bg-background text-foreground">
-            <p>Redirigiendo a la página de inicio de sesión...</p>
+        <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
+             <div className="flex items-center gap-2 md:gap-4 mb-6">
+                <Logo className="h-10 w-10 md:h-12 md:w-12" />
+                <div>
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
+                    Kairu
+                    </h1>
+                    <p className="text-sm md:text-base text-muted-foreground">Una aventura interactiva de educación ambiental</p>
+                </div>
+            </div>
+            <Card className="w-full max-w-sm shadow-2xl">
+                <CardHeader>
+                    <CardTitle>¡Bienvenido Explorador!</CardTitle>
+                    <CardDescription>Escribe tu nombre para comenzar la aventura.</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-4">
+                    <Input 
+                        placeholder="Tu nombre" 
+                        value={inputName}
+                        onChange={(e) => setInputName(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+                    />
+                    <Button onClick={handleSaveName}>Comenzar Aventura</Button>
+                </CardContent>
+            </Card>
         </main>
-     );
+     )
   }
 
 
@@ -88,7 +131,7 @@ export default function Home() {
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
               Kairu
             </h1>
-            <p className="text-sm md:text-base text-muted-foreground">¡Bienvenido, {userProfile?.firstName || authUser.email}!</p>
+            <p className="text-sm md:text-base text-muted-foreground">¡Bienvenido, {playerName}!</p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={handleReset}>
@@ -102,8 +145,9 @@ export default function Home() {
             src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/a2e24505-f375-4cf5-9430-a35c5c93c1f0.png"
             alt="Game map with a winding path"
             fill
-            objectFit="contain"
-            className="z-0"
+            priority
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-contain"
             data-ai-hint="game map"
           />
           
