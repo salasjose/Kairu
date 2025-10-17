@@ -81,7 +81,16 @@ export default function Station1() {
     }
     const challengeData = challenges[selectedChallenge as keyof typeof challenges];
 
-     return <ChallengeDetail {...challengeData} onComplete={() => completeChallenge(selectedChallenge)} onBack={() => setSelectedChallenge(null)} />;
+     return (
+        <>
+            <ChallengeDetail {...challengeData} onComplete={() => completeChallenge(selectedChallenge)} onBack={() => setSelectedChallenge(null)} />
+            <PrizeDialog 
+                open={isPrizeModalOpen} 
+                stationId={1} 
+                onClaim={handleClaimPrize} 
+            />
+        </>
+     );
   }
 
 
