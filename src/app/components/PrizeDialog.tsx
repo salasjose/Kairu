@@ -10,13 +10,13 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Star, Coin, TreeDeciduous, PawPrint, Diamond, Heart } from "lucide-react";
+import { Star, Coins, TreeDeciduous, PawPrint, Diamond, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
 const prizes = [
   { id: 1, name: "Estrella", icon: Star },
-  { id: 2, name: "Moneda", icon: Coin },
+  { id: 2, name: "Moneda", icon: Coins },
   { id: 3, name: "Árbol", icon: TreeDeciduous },
   { id: 4, name: "Huella Animal", icon: PawPrint },
   { id: 5, name: "Diamante", icon: Diamond },
