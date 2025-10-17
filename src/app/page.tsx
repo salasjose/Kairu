@@ -8,56 +8,35 @@ import StationNode from "@/app/components/StationNode";
 import CompletionDialog from "@/app/components/CompletionDialog";
 import Logo from "@/app/components/Logo";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { User, Play } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const PLAYER_NAME_STORAGE_KEY = "kairu-player-name";
+import { useUser } from "@/firebase";
+import { useRouter } from "next/navigation";
+import { User as AuthUser } from "firebase/auth";
+import { doc } from "firebase/firestore";
+import { useFirestore, useDoc } from "@/firebase";
+import type { User } from "@/lib/types";
 
 export default function Home() {
-  const { unlockedStations, isLoaded, resetProgress } = useStationProgress();
-  const [playerName, setPlayerName] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [tempPlayerName, setTempPlayerName] = useState("");
-  const [clientLoaded, setClientLoaded] = useState(false);
+  const { unlockedStations, isLoaded: isProgressLoaded, resetProgress } = useStationProgress();
+  const { user: authUser, isUserLoading } = useUser();
+  const router = useRouter();
+  const firestore = useFirestore();
+
+  const userDocRef = authUser ? doc(firestore, `users/${authUser.uid}`) : null;
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<User>(userDocRef);
 
   useEffect(() => {
-    // This effect runs only on the client
-    setClientLoaded(true);
-    const savedPlayerName = localStorage.getItem(PLAYER_NAME_STORAGE_KEY);
-    if (savedPlayerName) {
-      setPlayerName(savedPlayerName);
-    } else {
-      setIsModalOpen(true);
+    if (!isUserLoading && !authUser) {
+      router.push('/login');
     }
-  }, []);
+  }, [authUser, isUserLoading, router]);
 
-  const handleCreatePlayer = () => {
-    if (tempPlayerName.trim()) {
-      const newPlayerName = tempPlayerName.trim();
-      setPlayerName(newPlayerName);
-      localStorage.setItem(PLAYER_NAME_STORAGE_KEY, newPlayerName);
-      setIsModalOpen(false);
-      // Ensure progress is also set for a new player
-      resetProgress();
-    }
-  };
-  
   const handleReset = () => {
+    // Note: This should also sign the user out.
+    // For now, it just resets local progress.
+    // Full sign out logic would be in a header/profile button.
     resetProgress();
-    localStorage.removeItem(PLAYER_NAME_STORAGE_KEY);
-    setPlayerName(null);
-    setTempPlayerName("");
-    setIsModalOpen(true);
+    // Potentially add Firebase sign out logic here.
   }
 
   const allStationsCompleted = unlockedStations.length >= stations.length;
@@ -75,7 +54,7 @@ export default function Home() {
     { top: "10%", left: "45%" },
   ];
 
-  if (!clientLoaded) {
+  if (isUserLoading || !isProgressLoaded || (authUser && isProfileLoading)) {
     return (
       <main className="flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 min-h-screen w-full bg-background text-foreground">
         <div className="flex flex-col items-center gap-4">
@@ -84,77 +63,21 @@ export default function Home() {
                 <Skeleton className="h-6 w-[250px]" />
                 <Skeleton className="h-4 w-[200px]" />
             </div>
-             <Skeleton className="h-64 w-64 md:h-96 md:w-96 mt-8" />
+             <Skeleton className="relative w-[300px] h-[225px] md:w-[700px] md:h-[525px] mt-8" />
         </div>
       </main>
     );
   }
-  
-  if (!playerName) {
-    return (
-      <main className="flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 min-h-screen w-full bg-background text-foreground">
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle className="text-2xl">Crea tu Jugador</DialogTitle>
-              <DialogDescription>
-                Ingresa tu nombre para comenzar la aventura.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Nombre
-                </Label>
-                <Input
-                  id="name"
-                  value={tempPlayerName}
-                  onChange={(e) => setTempPlayerName(e.target.value)}
-                  className="col-span-3"
-                  placeholder="Aventurero Verde"
-                  onKeyDown={(e) => e.key === 'Enter' && handleCreatePlayer()}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit" onClick={handleCreatePlayer} disabled={!tempPlayerName.trim()}>
-                <User className="mr-2" /> Crear y Jugar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
 
-        <div className="text-center max-w-4xl w-full">
-          <div className="relative inline-block w-full">
-            <Image
-              src="https://picsum.photos/seed/adventure/800/300"
-              alt="Aventura Interactiva"
-              width={800}
-              height={300}
-              className="rounded-lg shadow-2xl w-full h-auto"
-              data-ai-hint="interactive adventure"
-            />
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30 rounded-lg">
-                <div className="bg-orange-500 text-white font-bold text-2xl sm:text-3xl md:text-5xl px-4 py-1 md:px-6 md:py-2 rounded-md -rotate-3 shadow-lg">
-                    Aventura
-                </div>
-                <div className="bg-green-600 text-white font-black text-3xl sm:text-4xl md:text-6xl px-6 py-2 md:px-8 md:py-3 rounded-lg mt-2 rotate-2 shadow-lg">
-                    INTERACTIVA
-                </div>
-            </div>
-          </div>
-          <Button
-            size="lg"
-            className="mt-8 animate-bounce"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <Play className="mr-2" />
-            Empezar Aventura
-          </Button>
-        </div>
-      </main>
-    );
+  if (!authUser) {
+     // This is a fallback while redirecting
+     return (
+        <main className="flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 min-h-screen w-full bg-background text-foreground">
+            <p>Redirigiendo a la página de inicio de sesión...</p>
+        </main>
+     );
   }
+
 
   return (
     <main className="flex flex-col items-center p-4 sm:p-6 md:p-8 min-h-screen w-full">
@@ -165,7 +88,7 @@ export default function Home() {
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
               Kairu
             </h1>
-            <p className="text-sm md:text-base text-muted-foreground">¡Bienvenido, {playerName}!</p>
+            <p className="text-sm md:text-base text-muted-foreground">¡Bienvenido, {userProfile?.firstName || authUser.email}!</p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={handleReset}>
@@ -174,49 +97,45 @@ export default function Home() {
       </header>
 
       <div className="flex-grow w-full flex items-center justify-center">
-        {!isLoaded ? (
-          <div className="text-lg text-primary">Cargando tu aventura...</div>
-        ) : (
-          <div className="relative w-full max-w-5xl aspect-[4/3]">
-            <Image
-              src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/a2e24505-f375-4cf5-9430-a35c5c93c1f0.png"
-              alt="Game map with a winding path"
-              fill
-              objectFit="contain"
-              className="z-0"
-              data-ai-hint="game map"
-            />
-            
-            <div className="absolute inset-0 z-10">
-              {stations.map((station, index) => {
-                const isUnlocked = unlockedStations.includes(station.id);
-                const position = stationPositions[index];
-                return (
-                  <div
-                    key={station.id}
-                    className="absolute -translate-x-1/2 -translate-y-1/2"
-                    style={{ top: position.top, left: position.left }}
-                  >
-                    <StationNode
-                      station={station}
-                      isUnlocked={isUnlocked}
-                    />
-                  </div>
-                );
-              })}
-               <div className="absolute bottom-[8%] left-[8%] transform -translate-x-1/2 -translate-y-1/2">
-                <Image 
-                  src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/9ac22228-5690-482c-9a4f-560447339d29.png"
-                  alt="Friendly frog character"
-                  width={140}
-                  height={140}
-                  className="hidden md:block"
-                  data-ai-hint="frog character"
-                />
-              </div>
+        <div className="relative w-full max-w-5xl aspect-[4/3]">
+          <Image
+            src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/a2e24505-f375-4cf5-9430-a35c5c93c1f0.png"
+            alt="Game map with a winding path"
+            fill
+            objectFit="contain"
+            className="z-0"
+            data-ai-hint="game map"
+          />
+          
+          <div className="absolute inset-0 z-10">
+            {stations.map((station, index) => {
+              const isUnlocked = unlockedStations.includes(station.id);
+              const position = stationPositions[index];
+              return (
+                <div
+                  key={station.id}
+                  className="absolute -translate-x-1/2 -translate-y-1/2"
+                  style={{ top: position.top, left: position.left }}
+                >
+                  <StationNode
+                    station={station}
+                    isUnlocked={isUnlocked}
+                  />
+                </div>
+              );
+            })}
+             <div className="absolute bottom-[8%] left-[8%] transform -translate-x-1/2 -translate-y-1/2">
+              <Image 
+                src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/9ac22228-5690-482c-9a4f-560447339d29.png"
+                alt="Friendly frog character"
+                width={140}
+                height={140}
+                className="hidden md:block"
+                data-ai-hint="frog character"
+              />
             </div>
           </div>
-        )}
+        </div>
       </div>
       <CompletionDialog open={allStationsCompleted} onReset={handleReset} />
     </main>

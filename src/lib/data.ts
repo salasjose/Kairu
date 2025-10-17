@@ -57,3 +57,17 @@ export const stations: Station[] = [
     icon: Search
   },
 ];
+
+export const countries = [
+  { value: "CO", label: "Colombia" },
+  { value: "MX", label: "Mexico" },
+  { value: "AR", label: "Argentina" },
+  { value: "PE", label: "Peru" },
+  { value: "CL", label: "Chile" },
+  { value: "EC", label: "Ecuador" },
+  { value: "VE", label: "Venezuela" },
+  { value: "GT", label: "Guatemala" },
+  { value: "BO", label: "Bolivia" },
+  { value: "ES", label: "Spain" },
+  { value: "US", label: "United States" },
+];

@@ -8,7 +8,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the user."
+          "description": "Unique identifier for the user, matches Firebase Auth UID."
         },
         "firstName": {
           "type": "string",
@@ -20,8 +20,8 @@
         },
         "dateOfBirth": {
           "type": "string",
-          "description": "The user's date of birth.",
-          "format": "date-time"
+          "description": "The user's date of birth in ISO format.",
+          "format": "date"
         },
         "country": {
           "type": "string",
@@ -29,7 +29,7 @@
         },
         "username": {
           "type": "string",
-          "description": "The username chosen by the user."
+          "description": "The email address chosen by the user."
         },
         "profileImageUrl": {
           "type": "string",
@@ -43,7 +43,8 @@
         "lastName",
         "dateOfBirth",
         "country",
-        "username"
+        "username",
+        "profileImageUrl"
       ]
     },
     "StationProgress": {
@@ -151,8 +152,7 @@
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "password"
     ]
   },
   "firestore": {
@@ -162,7 +162,7 @@
         "definition": {
           "entityName": "User",
           "schema": {
-            "$ref": "#/backend/entities/User"
+            "$ref": "#/entities/User"
           },
           "description": "Stores user profile information. The 'userId' parameter represents the unique identifier for each user.",
           "params": [
@@ -178,7 +178,7 @@
         "definition": {
           "entityName": "Station",
           "schema": {
-            "$ref": "#/backend/entities/Station"
+            "$ref": "#/entities/Station"
           },
           "description": "Stores information about each station in the EcoQuest Explorers game.",
           "params": [
@@ -194,7 +194,7 @@
         "definition": {
           "entityName": "StationProgress",
           "schema": {
-            "$ref": "#/backend/entities/StationProgress"
+            "$ref": "#/entities/StationProgress"
           },
           "description": "Tracks a user's progress in a specific station. 'userId' identifies the user, and 'stationProgressId' uniquely identifies the progress record.",
           "params": [
@@ -214,7 +214,7 @@
         "definition": {
           "entityName": "ContentSubmission",
           "schema": {
-            "$ref": "#/backend/entities/ContentSubmission"
+            "$ref": "#/entities/ContentSubmission"
           },
           "description": "Stores content submissions by a user for a particular station challenge. 'userId' identifies the user, 'stationProgressId' identifies the station progress, and 'contentSubmissionId' uniquely identifies the submission.",
           "params": [
