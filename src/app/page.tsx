@@ -18,6 +18,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import PrizeCart from "./components/PrizeCart";
 
 const PLAYER_NAME_KEY = "kairu-player-name";
 
@@ -147,14 +148,17 @@ export default function Home() {
             </p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={handleReset}>
-          Reiniciar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleReset}>
+            Reiniciar
+          </Button>
+          <PrizeCart />
+        </div>
       </header>
 
-      <div className="flex-grow w-full flex items-center justify-center">
+      <div className="flex-grow w-full max-w-5xl flex items-center justify-center">
         {/* Mobile Grid Layout */}
-        <div className="grid grid-cols-3 gap-x-4 gap-y-8 md:hidden w-full max-w-md">
+        <div className="grid grid-cols-3 gap-x-2 gap-y-8 md:hidden w-full">
           {stations.map((station) => {
             const isUnlocked = unlockedStations.includes(station.id);
             return (
@@ -169,19 +173,18 @@ export default function Home() {
         </div>
 
         {/* Desktop Map Layout */}
-        <div className="relative w-full max-w-5xl aspect-[4/3] hidden md:block">
+        <div className="relative w-full aspect-[4/3] hidden md:block">
           {mapBgImage && (
             <Image
               src={mapBgImage.imageUrl}
               alt={mapBgImage.description}
               fill
               priority
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              sizes="(max-width: 768px) 100vw, 1024px"
               className="object-contain"
               data-ai-hint={mapBgImage.imageHint}
             />
           )}
-
           <div className="absolute inset-0 z-10">
             {stations.map((station, index) => {
               const isUnlocked = unlockedStations.includes(station.id);

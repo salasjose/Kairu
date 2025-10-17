@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import { usePrizeCart } from './use-prize-cart.tsx';
 
 const STORAGE_KEY = 'kairu-progress';
 
 export function useStationProgress() {
   const [unlockedStations, setUnlockedStations] = useState<number[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const { clearCart: clearPrizes } = usePrizeCart();
+
 
   useEffect(() => {
     // This effect runs only on the client
@@ -49,6 +52,7 @@ export function useStationProgress() {
   const resetProgress = useCallback(() => {
       const initialStations = [1];
       setUnlockedStations(initialStations);
+      clearPrizes(); // Clear prizes when resetting progress
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(initialStations));
         // also clear other station-specific data
@@ -61,7 +65,7 @@ export function useStationProgress() {
       } catch (error) {
         console.error("Failed to reset progress in localStorage", error);
       }
-  }, []);
+  }, [clearPrizes]);
 
   return { unlockedStations, unlockStation, isLoaded, resetProgress };
 }

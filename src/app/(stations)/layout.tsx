@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import Logo from "@/app/components/Logo";
 import { Button } from "@/components/ui/button";
+import PrizeCart from "@/app/components/PrizeCart";
 
 export default function StationLayout({
   children,
@@ -16,12 +17,15 @@ export default function StationLayout({
             <Logo className="h-8 w-8" />
             <span className="font-bold font-headline text-xl hidden sm:inline">Kairu</span>
           </Link>
-          <Button asChild variant="outline">
-            <Link href="/">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Volver al Mapa
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Volver al Mapa
+              </Link>
+            </Button>
+            <PrizeCart />
+          </div>
         </nav>
       </header>
       <main className="flex-grow flex flex-col">

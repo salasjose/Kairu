@@ -10,18 +10,11 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Star, Coins, TreeDeciduous, PawPrint, Diamond, Heart } from "lucide-react";
+import { allPrizes } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { usePrizeCart } from "@/hooks/use-prize-cart.tsx";
 
-const prizes = [
-  { id: 1, name: "Estrella", icon: Star },
-  { id: 2, name: "Moneda", icon: Coins },
-  { id: 3, name: "Árbol", icon: TreeDeciduous },
-  { id: 4, name: "Huella Animal", icon: PawPrint },
-  { id: 5, name: "Diamante", icon: Diamond },
-  { id: 6, name: "Corazón", icon: Heart },
-];
 
 interface PrizeDialogProps {
   open: boolean;
@@ -31,6 +24,7 @@ interface PrizeDialogProps {
 
 export default function PrizeDialog({ open, stationId, onClaim }: PrizeDialogProps) {
   const [selectedPrize, setSelectedPrize] = useState<number | null>(null);
+  const { addPrize } = usePrizeCart();
 
   const handleClaim = () => {
     if (selectedPrize === null) {
@@ -41,13 +35,17 @@ export default function PrizeDialog({ open, stationId, onClaim }: PrizeDialogPro
       });
       return;
     }
-    const prize = prizes.find(p => p.id === selectedPrize);
+    const prize = allPrizes.find(p => p.id === selectedPrize);
+    addPrize(selectedPrize);
     toast({
         title: `¡Felicidades!`,
-        description: `Has ganado el premio: ${prize?.name}.`
+        description: `Has ganado la insignia: ${prize?.name}.`
     });
     onClaim();
   }
+
+  // We filter prizes for this modal, maybe show different ones per station later?
+  const availablePrizes = allPrizes;
 
   return (
     <Dialog open={open}>
@@ -55,11 +53,11 @@ export default function PrizeDialog({ open, stationId, onClaim }: PrizeDialogPro
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-headline">¡Estación {stationId} Completada!</DialogTitle>
           <DialogDescription className="text-center">
-            ¡Excelente trabajo! Como recompensa, elige uno de los siguientes premios.
+            ¡Excelente trabajo! Como recompensa, elige una de las siguientes insignias.
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-3 gap-4 py-4">
-          {prizes.map((prize) => {
+          {availablePrizes.map((prize) => {
             const Icon = prize.icon;
             return (
               <button
@@ -80,7 +78,7 @@ export default function PrizeDialog({ open, stationId, onClaim }: PrizeDialogPro
         </div>
         <DialogFooter>
           <Button onClick={handleClaim} className="w-full">
-            Reclamar Premio y Continuar
+            Reclamar Insignia y Continuar
           </Button>
         </DialogFooter>
       </DialogContent>

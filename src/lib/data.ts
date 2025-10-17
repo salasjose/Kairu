@@ -1,5 +1,5 @@
 import type { Station } from './types';
-import { Sprout, Recycle, Trash2, Droplets, Building, RefreshCw, Store, Puzzle, Search } from 'lucide-react';
+import { Sprout, Recycle, Trash2, Droplets, Building, RefreshCw, Store, Puzzle, Search, LucideIcon, Star, Coins, TreeDeciduous, PawPrint, Diamond, Heart } from 'lucide-react';
 
 export const stations: Station[] = [
   { 
@@ -70,4 +70,19 @@ export const countries = [
   { value: "BO", label: "Bolivia" },
   { value: "ES", label: "Spain" },
   { value: "US", label: "United States" },
+];
+
+export type Prize = {
+  id: number;
+  name: string;
+  icon: LucideIcon;
+};
+
+export const allPrizes: Prize[] = [
+  { id: 1, name: "Estrella", icon: Star },
+  { id: 2, name: "Moneda", icon: Coins },
+  { id: 3, name: "Árbol", icon: TreeDeciduous },
+  { id: 4, name: "Huella", icon: PawPrint },
+  { id: 5, name: "Diamante", icon: Diamond },
+  { id: 6, name: "Corazón", icon: Heart },
 ];
