@@ -20,9 +20,8 @@ interface StationNodeProps {
 export default function StationNode({ station, isUnlocked }: StationNodeProps) {
   const Icon = station.icon;
 
-  const content = (
-    <div className="flex flex-col items-center gap-2">
-      <div
+  const stationIcon = (
+     <div
         className={cn(
           "flex h-16 w-16 items-center justify-center rounded-full border-4 transition-all duration-300",
           isUnlocked
@@ -32,9 +31,14 @@ export default function StationNode({ station, isUnlocked }: StationNodeProps) {
       >
         {isUnlocked ? <Icon className="h-8 w-8" /> : <Lock className="h-8 w-8" />}
       </div>
+  );
+
+  const content = (
+    <div className="flex flex-col items-center gap-2">
+      {stationIcon}
       <span
         className={cn(
-          "text-center font-bold font-headline text-sm",
+          "text-center font-bold font-headline text-sm hidden md:inline", // Hide on mobile, show on md and up
           isUnlocked ? "text-primary" : "text-muted-foreground"
         )}
       >
@@ -56,11 +60,18 @@ export default function StationNode({ station, isUnlocked }: StationNodeProps) {
             {isUnlocked && (
                 <Sparkles className="absolute -top-2 -right-2 h-5 w-5 text-yellow-500 animate-pulse" />
             )}
-            {content}
+            {/* On mobile, only show the icon. On desktop, show the full content with text */}
+            <div className="md:hidden">
+              {stationIcon}
+            </div>
+            <div className="hidden md:block">
+              {content}
+            </div>
           </Wrapper>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{isUnlocked ? station.description : "Complete previous stations to unlock."}</p>
+          <p className="font-bold md:hidden">{station.id}. {station.title}</p>
+          <p>{isUnlocked ? station.description : "Completa las estaciones anteriores para desbloquear."}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
