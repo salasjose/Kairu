@@ -10,17 +10,17 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Award, Leaf, Droplet, Wind, Mountain, Sun } from "lucide-react";
+import { Star, Coin, TreeDeciduous, PawPrint, Diamond, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
 const prizes = [
-  { id: 1, name: "Insignia de la Hoja", icon: Leaf },
-  { id: 2, name: "Insignia de la Gota", icon: Droplet },
-  { id: 3, name: "Insignia del Viento", icon: Wind },
-  { id: 4, name: "Insignia de la Montaña", icon: Mountain },
-  { id: 5, name: "Insignia del Sol", icon: Sun },
-  { id: 6, name: "Insignia de Guardián", icon: Award },
+  { id: 1, name: "Estrella", icon: Star },
+  { id: 2, name: "Moneda", icon: Coin },
+  { id: 3, name: "Árbol", icon: TreeDeciduous },
+  { id: 4, name: "Huella Animal", icon: PawPrint },
+  { id: 5, name: "Diamante", icon: Diamond },
+  { id: 6, name: "Corazón", icon: Heart },
 ];
 
 interface PrizeDialogProps {
@@ -44,7 +44,7 @@ export default function PrizeDialog({ open, stationId, onClaim }: PrizeDialogPro
     const prize = prizes.find(p => p.id === selectedPrize);
     toast({
         title: `¡Felicidades!`,
-        description: `Has ganado la ${prize?.name}.`
+        description: `Has ganado el premio: ${prize?.name}.`
     });
     onClaim();
   }
@@ -55,7 +55,7 @@ export default function PrizeDialog({ open, stationId, onClaim }: PrizeDialogPro
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-headline">¡Estación {stationId} Completada!</DialogTitle>
           <DialogDescription className="text-center">
-            ¡Excelente trabajo! Como recompensa, elige una de las siguientes insignias.
+            ¡Excelente trabajo! Como recompensa, elige uno de los siguientes premios.
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-3 gap-4 py-4">
@@ -80,7 +80,7 @@ export default function PrizeDialog({ open, stationId, onClaim }: PrizeDialogPro
         </div>
         <DialogFooter>
           <Button onClick={handleClaim} className="w-full">
-            Reclamar Insignia y Continuar
+            Reclamar Premio y Continuar
           </Button>
         </DialogFooter>
       </DialogContent>
