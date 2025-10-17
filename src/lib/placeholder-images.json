@@ -3,7 +3,7 @@
     {
       "id": "map-background",
       "description": "A vibrant illustrated map for a kids' game, showing a winding path through different environments like forests, cities, and mountains.",
-      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/a2e24505-f375-4cf5-9430-a35c5c93c1f0.png",
+      "imageUrl": "/backgrounds/map-background.png",
       "imageHint": "game map"
     },
     {
@@ -15,13 +15,13 @@
     {
       "id": "forest-background",
       "description": "A lush, green cartoon forest background, with tall trees and sunlight filtering through the leaves.",
-      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/a76b7e0e-c765-4113-8991-89787e99b369.png",
+      "imageUrl": "/backgrounds/forest-background.jpg",
       "imageHint": "forest background"
     },
     {
       "id": "city-background",
       "description": "A bright and clean cartoon city skyline with buildings and green spaces.",
-      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/15ae8e51-9f93-4a11-a806-df6b7f32997e.png",
+      "imageUrl": "/backgrounds/city-background.png",
       "imageHint": "cartoon city"
     },
     {
