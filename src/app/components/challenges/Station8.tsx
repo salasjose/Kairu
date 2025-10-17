@@ -71,7 +71,9 @@ export default function Station8() {
 
   useEffect(() => {
     if (puzzle) {
-      inputRefs.current = Array(puzzle.grid.length).fill(null).map(() => Array(puzzle.grid[0].length).fill(null));
+      const numRows = puzzle.grid.length;
+      const numCols = puzzle.grid[0]?.length || 0;
+      inputRefs.current = Array(numRows).fill(null).map(() => Array(numCols).fill(null));
     }
   }, [puzzle]);
 
@@ -93,11 +95,15 @@ export default function Station8() {
     if (!userGrid) return;
     let nextRow = row, nextCol = col;
     let moved = false;
+    
+    let numRows = userGrid.length;
+    let numCols = userGrid[0]?.length || 0;
+
     switch (e.key) {
-        case 'ArrowUp': e.preventDefault(); nextRow = row > 0 ? row - 1 : userGrid.length - 1; moved = true; break;
-        case 'ArrowDown': e.preventDefault(); nextRow = row < userGrid.length - 1 ? row + 1 : 0; moved = true; break;
-        case 'ArrowLeft': e.preventDefault(); nextCol = col > 0 ? col - 1 : userGrid[0].length - 1; moved = true; break;
-        case 'ArrowRight': e.preventDefault(); nextCol = col < userGrid[0].length - 1 ? col + 1 : 0; moved = true; break;
+        case 'ArrowUp': e.preventDefault(); nextRow = row > 0 ? row - 1 : numRows - 1; moved = true; break;
+        case 'ArrowDown': e.preventDefault(); nextRow = row < numRows - 1 ? row + 1 : 0; moved = true; break;
+        case 'ArrowLeft': e.preventDefault(); nextCol = col > 0 ? col - 1 : numCols - 1; moved = true; break;
+        case 'ArrowRight': e.preventDefault(); nextCol = col < numCols - 1 ? col + 1 : 0; moved = true; break;
         case 'Backspace':
             if (!userGrid[row][col] && col > 0) {
               const prevRef = inputRefs.current[row][col-1];
@@ -111,17 +117,17 @@ export default function Station8() {
     }
 
     if (moved) {
-       for(let i = 0; i < userGrid.length * userGrid[0].length; i++) {
+       for(let i = 0; i < numRows * numCols; i++) {
             const targetRef = inputRefs.current[nextRow]?.[nextCol];
             if(targetRef) {
                 targetRef.focus();
                 return;
             }
             switch (e.key) {
-                case 'ArrowUp': nextRow = nextRow > 0 ? nextRow - 1 : userGrid.length - 1; break;
-                case 'ArrowDown': nextRow = nextRow < userGrid.length - 1 ? nextRow + 1 : 0; break;
-                case 'ArrowLeft': nextCol = nextCol > 0 ? nextCol - 1 : userGrid[0].length - 1; break;
-                case 'ArrowRight': nextCol = nextCol < userGrid[0].length - 1 ? col + 1 : 0; break;
+                case 'ArrowUp': nextRow = nextRow > 0 ? nextRow - 1 : numRows - 1; break;
+                case 'ArrowDown': nextRow = nextRow < numRows - 1 ? nextRow + 1 : 0; break;
+                case 'ArrowLeft': nextCol = nextCol > 0 ? nextCol - 1 : numCols - 1; break;
+                case 'ArrowRight': nextCol = nextCol < numCols - 1 ? nextCol + 1 : 0; break;
             }
         }
     }
@@ -162,7 +168,7 @@ export default function Station8() {
   
   const renderCell = (cell: string, r: number, c: number) => {
     if (cell === "#") {
-        return <div key={`${r}-${c}`} className="bg-foreground/20" />;
+        return <div key={`${r}-${c}`} className="bg-foreground/20 aspect-square" />;
     }
     
     const clueNumber = cluePositions[`${r}-${c}`];
@@ -180,7 +186,7 @@ export default function Station8() {
                 value={userGrid?.[r]?.[c] || ""}
                 onChange={(e) => handleInputChange(e, r, c)}
                 onKeyDown={(e) => handleKeyDown(e, r, c)}
-                className={cn("w-full h-full aspect-square text-center uppercase font-bold text-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-primary z-10",
+                className={cn("w-full h-full aspect-square text-center uppercase font-bold text-sm md:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-primary z-10",
                 isCorrect === false && userGrid?.[r]?.[c] && cell !== userGrid?.[r]?.[c] ? "bg-destructive/20 text-destructive" : "",
                 isCorrect === true ? "bg-primary/20 text-primary" : ""
                 )}
@@ -231,3 +237,5 @@ export default function Station8() {
     </ChallengeContainer>
   );
 }
+
+    
