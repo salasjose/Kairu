@@ -7,7 +7,7 @@ import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, CheckCircle, Lock, Upload } from "lucide-react";
-import Link from "next/link";
+import PrizeDialog from "../PrizeDialog";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
@@ -68,6 +68,7 @@ const PhotoUploadChallenge = ({ day, onComplete, onBack }: { day: number, onComp
 export default function Station2() {
   const [days, setDays] = useState<DayState[]>(initialDays);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
   const router = useRouter();
 
@@ -124,7 +125,6 @@ export default function Station2() {
     return () => clearInterval(interval);
   }, [checkUnlocks]);
 
-
   const handleDayComplete = (dayIndex: number) => {
     const newDays = [...days];
     newDays[dayIndex].status = 'completed';
@@ -141,23 +141,28 @@ export default function Station2() {
 
     const allCompleted = newDays.every(d => d.status === 'completed');
     if (allCompleted) {
+        unlockStation(3);
         toast({
             title: "¡Estación 2 Completada!",
             description: "¡Fantástico! Sigue con esos hábitos sostenibles.",
         });
-        unlockStation(3);
-        router.push("/");
+        setIsPrizeModalOpen(true);
     }
   };
   
   const handleCompleteAllDays = () => {
     const newDays = days.map(() => ({ status: 'completed', unlockTime: null })) as DayState[];
     updateAndSaveChanges(newDays);
+    unlockStation(3);
     toast({
         title: "¡Estación 2 Completada!",
         description: "¡Has completado todos los retos de la semana!",
     });
-    unlockStation(3);
+    setIsPrizeModalOpen(true);
+  };
+  
+  const handleClaimPrize = () => {
+    setIsPrizeModalOpen(false);
     router.push("/");
   };
 
@@ -188,46 +193,53 @@ export default function Station2() {
   }
 
   return (
-    <div className="w-full flex-grow flex flex-col items-center p-4 relative overflow-hidden bg-blue-200">
-      <Image 
-        src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/15ae8e51-9f93-4a11-a806-df6b7f32997e.png"
-        alt="City background"
-        fill
-        objectFit="cover"
-        className="z-0 opacity-90"
-        data-ai-hint="cartoon city"
-      />
-      <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
-         <div className="text-[#D95E32] font-kalam text-center mb-8">
-            <h1 className="text-5xl md:text-7xl leading-none">Reto de la</h1>
-            <p className="text-4xl md:text-6xl">Semana</p>
-        </div>
-        <p className="absolute top-5 right-5 font-kalam text-3xl md:text-4xl text-[#D95E32] font-bold rotate-12">Estación 2</p>
+    <>
+      <div className="w-full flex-grow flex flex-col items-center p-4 relative overflow-hidden bg-blue-200">
+        <Image 
+          src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/15ae8e51-9f93-4a11-a806-df6b7f32997e.png"
+          alt="City background"
+          fill
+          objectFit="cover"
+          className="z-0 opacity-90"
+          data-ai-hint="cartoon city"
+        />
+        <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
+           <div className="text-[#D95E32] font-kalam text-center mb-8">
+              <h1 className="text-5xl md:text-7xl leading-none">Reto de la</h1>
+              <p className="text-4xl md:text-6xl">Semana</p>
+          </div>
+          <p className="absolute top-5 right-5 font-kalam text-3xl md:text-4xl text-[#D95E32] font-bold rotate-12">Estación 2</p>
 
-        <div className="flex flex-col items-center gap-4 md:gap-6">
-            <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-                {days.slice(0, 4).map((_, index) => renderDayButton(index))}
-            </div>
-            <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-                {days.slice(4, 7).map((_, index) => renderDayButton(index + 4))}
-            </div>
-        </div>
+          <div className="flex flex-col items-center gap-4 md:gap-6">
+              <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+                  {days.slice(0, 4).map((_, index) => renderDayButton(index))}
+              </div>
+              <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+                  {days.slice(4, 7).map((_, index) => renderDayButton(index + 4))}
+              </div>
+          </div>
 
-        <div className="absolute bottom-[8%] left-1/2 -translate-x-1/2 w-full flex flex-col items-center gap-4">
-            <Button onClick={handleCompleteAllDays}>Reto Completado</Button>
-        </div>
+          <div className="absolute bottom-[8%] left-1/2 -translate-x-1/2 w-full flex flex-col items-center gap-4">
+              <Button onClick={handleCompleteAllDays}>Reto Completado</Button>
+          </div>
 
-        <div className="absolute bottom-0 left-4 z-20 hidden md:block">
-             <Image 
-                  src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/9ac22228-5690-482c-9a4f-560447339d29.png"
-                  alt="Friendly frog character Yara"
-                  width={140}
-                  height={140}
-                  className="transform -scale-x-100"
-                  data-ai-hint="frog character"
-                />
+          <div className="absolute bottom-0 left-4 z-20 hidden md:block">
+               <Image 
+                    src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/9ac22228-5690-482c-9a4f-560447339d29.png"
+                    alt="Friendly frog character Yara"
+                    width={140}
+                    height={140}
+                    className="transform -scale-x-100"
+                    data-ai-hint="frog character"
+                  />
+          </div>
         </div>
       </div>
-    </div>
+      <PrizeDialog 
+        open={isPrizeModalOpen} 
+        stationId={2} 
+        onClaim={handleClaimPrize} 
+      />
+    </>
   );
 }

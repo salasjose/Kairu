@@ -11,6 +11,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import RecyclingGame from "./RecyclingGame";
+import PrizeDialog from "../PrizeDialog";
 
 const ChallengeDetail = ({ title, description, onComplete, onBack, image, imageHint }: { title: string, description: string, onComplete: () => void, onBack: () => void, image: string, imageHint: string }) => (
     <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-full">
@@ -80,15 +81,21 @@ type ChallengeId = keyof typeof challenges;
 
 export default function Station3() {
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeId | null>(null);
+  const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
   const router = useRouter();
 
   const handleComplete = (challengeId: ChallengeId) => {
+    unlockStation(4);
     toast({
       title: "¡Estación 3 Completada!",
-      description: `¡Buen trabajo con el reto '${challenges[challengeId].title}'! Volviendo al mapa...`,
+      description: `¡Buen trabajo con el reto '${challenges[challengeId].title}'!`,
     });
-    unlockStation(4);
+    setIsPrizeModalOpen(true);
+  };
+  
+  const handleClaimPrize = () => {
+    setIsPrizeModalOpen(false);
     router.push("/");
   };
   
@@ -102,53 +109,60 @@ export default function Station3() {
   }
 
   return (
-    <div className="w-full min-h-full flex flex-col items-center justify-center p-4 bg-[#89A1C5] relative overflow-hidden">
-        <Image 
-            src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/15ae8e51-9f93-4a11-a806-df6b7f32997e.png"
-            alt="City background with waste management theme"
-            fill
-            objectFit="cover"
-            className="z-0 opacity-70"
-            data-ai-hint="city recycling"
-        />
-        <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
-            <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
-                <h1 className="text-3xl md:text-5xl">Estación 3</h1>
-                <p className="text-base md:text-xl">Gestión de Residuos</p>
-            </div>
+    <>
+      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 bg-[#89A1C5] relative overflow-hidden">
+          <Image 
+              src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/15ae8e51-9f93-4a11-a806-df6b7f32997e.png"
+              alt="City background with waste management theme"
+              fill
+              objectFit="cover"
+              className="z-0 opacity-70"
+              data-ai-hint="city recycling"
+          />
+          <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
+              <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
+                  <h1 className="text-3xl md:text-5xl">Estación 3</h1>
+                  <p className="text-base md:text-xl">Gestión de Residuos</p>
+              </div>
 
-            <div className="grid grid-cols-2 gap-4 md:gap-8 mb-8">
-                {(Object.keys(challenges) as ChallengeId[]).map((key) => {
-                  const challenge = challenges[key];
-                  const Icon = challenge.icon;
-                  return (
-                      <button key={key} onClick={() => setSelectedChallenge(key)} className="transition-transform duration-300 hover:scale-105 group">
-                         <Card className="w-36 h-44 md:w-48 md:h-56 bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors">
-                            <CardContent className="flex flex-col items-center justify-center text-center p-2 md:p-4 h-full">
-                                <Icon className="w-10 h-10 md:w-12 md:h-12 text-primary mb-2 md:mb-3" />
-                                <h2 className="font-bold font-headline text-base md:text-lg text-primary">{challenge.title}</h2>
-                            </CardContent>
-                         </Card>
-                      </button>
-                  )
-                })}
-            </div>
+              <div className="grid grid-cols-2 gap-4 md:gap-8 mb-8">
+                  {(Object.keys(challenges) as ChallengeId[]).map((key) => {
+                    const challenge = challenges[key];
+                    const Icon = challenge.icon;
+                    return (
+                        <button key={key} onClick={() => setSelectedChallenge(key)} className="transition-transform duration-300 hover:scale-105 group">
+                           <Card className="w-36 h-44 md:w-48 md:h-56 bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors">
+                              <CardContent className="flex flex-col items-center justify-center text-center p-2 md:p-4 h-full">
+                                  <Icon className="w-10 h-10 md:w-12 md:h-12 text-primary mb-2 md:mb-3" />
+                                  <h2 className="font-bold font-headline text-base md:text-lg text-primary">{challenge.title}</h2>
+                              </CardContent>
+                           </Card>
+                        </button>
+                    )
+                  })}
+              </div>
 
-            <div className="mt-4 max-w-md mx-auto">
-               <p className="bg-background/80 p-4 rounded-md text-center">Selecciona uno de los retos para demostrar cómo gestionas los residuos. ¡Al terminar, volverás al mapa!</p>
-            </div>
-            
-             <div className="absolute bottom-4 -left-8 z-20 hidden md:block">
-             <Image 
-                  src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/9ac22228-5690-482c-9a4f-560447339d29.png"
-                  alt="Friendly frog character Yara"
-                  width={140}
-                  height={140}
-                  className="transform -scale-x-100"
-                  data-ai-hint="frog character"
-                />
-        </div>
-        </div>
-    </div>
+              <div className="mt-4 max-w-md mx-auto">
+                 <p className="bg-background/80 p-4 rounded-md text-center">Selecciona uno de los retos para demostrar cómo gestionas los residuos. ¡Al terminar, volverás al mapa!</p>
+              </div>
+              
+               <div className="absolute bottom-4 -left-8 z-20 hidden md:block">
+               <Image 
+                    src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/9ac22228-5690-482c-9a4f-560447339d29.png"
+                    alt="Friendly frog character Yara"
+                    width={140}
+                    height={140}
+                    className="transform -scale-x-100"
+                    data-ai-hint="frog character"
+                  />
+          </div>
+          </div>
+      </div>
+      <PrizeDialog 
+        open={isPrizeModalOpen} 
+        stationId={3} 
+        onClaim={handleClaimPrize} 
+      />
+    </>
   );
 }

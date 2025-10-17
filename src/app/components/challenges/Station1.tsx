@@ -9,6 +9,7 @@ import { ArrowLeft, CheckCircle } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import PrizeDialog from "../PrizeDialog";
 
 
 const ChallengeDetail = ({ title, description, onComplete, onBack, image, imageHint }: { title: string, description: string, onComplete: () => void, onBack: () => void, image: string, imageHint: string }) => (
@@ -45,21 +46,23 @@ const ChallengeDetail = ({ title, description, onComplete, onBack, image, imageH
 
 export default function Station1() {
   const [selectedChallenge, setSelectedChallenge] = useState<string | null>(null);
+  const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
   const router = useRouter();
   
   const completeChallenge = (challenge: string) => {
-    toast({
-      title: `Reto '${challenge}' completado`,
-      description: "¡Has marcado este reto como finalizado!",
-    });
-    toast({
-      title: "¡Estación 1 Completada!",
-      description: "¡Buen trabajo en el reto de biodiversidad! Volviendo al mapa...",
-    });
     unlockStation(2);
-    router.push("/");
+    toast({
+      title: `¡Estación 1 Completada!`,
+      description: "¡Has ganado un premio!",
+    });
+    setIsPrizeModalOpen(true);
   }
+
+  const handleClaimPrize = () => {
+    setIsPrizeModalOpen(false);
+    router.push("/");
+  };
 
   if (selectedChallenge) {
     const challenges = {
@@ -83,50 +86,57 @@ export default function Station1() {
 
 
   return (
-    <div className="w-full min-h-full flex flex-col items-center justify-center p-4 bg-[#A1C589] relative overflow-hidden">
-      <Image 
-        src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/a76b7e0e-c765-4113-8991-89787e99b369.png"
-        alt="Forest background"
-        fill
-        objectFit="cover"
-        className="z-0 opacity-80"
-        data-ai-hint="forest background"
-      />
-      <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
-         <div className="bg-[#D95E32] text-white font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
-            <h1 className="text-4xl md:text-5xl">Estación 1</h1>
-        </div>
+    <>
+      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 bg-[#A1C589] relative overflow-hidden">
+        <Image 
+          src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/a76b7e0e-c765-4113-8991-89787e99b369.png"
+          alt="Forest background"
+          fill
+          objectFit="cover"
+          className="z-0 opacity-80"
+          data-ai-hint="forest background"
+        />
+        <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
+           <div className="bg-[#D95E32] text-white font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
+              <h1 className="text-4xl md:text-5xl">Estación 1</h1>
+          </div>
 
-        <div className="flex flex-col md:flex-row gap-8 md:gap-12 mb-8">
-            {["Reto 1", "Reto 2"].map((reto, index) => (
-              <button key={reto} onClick={() => setSelectedChallenge(reto)} className={cn("relative transition-transform duration-300 hover:scale-105", index === 0 ? "md:-rotate-6" : "md:rotate-6")}>
-                 <div className="absolute inset-0 bg-white shadow-2xl rounded-lg transform -rotate-1"></div>
-                 <div className="relative bg-white w-60 h-64 md:w-64 md:h-72 rounded-lg shadow-2xl flex flex-col items-center justify-center p-4 border-4 border-gray-200">
-                    <h2 className="font-kalam text-3xl md:text-4xl text-orange-600">{reto}</h2>
-                 </div>
-              </button>
-            ))}
-        </div>
+          <div className="flex flex-col md:flex-row gap-8 md:gap-12 mb-8">
+              {["Reto 1", "Reto 2"].map((reto, index) => (
+                <button key={reto} onClick={() => setSelectedChallenge(reto)} className={cn("relative transition-transform duration-300 hover:scale-105", index === 0 ? "md:-rotate-6" : "md:rotate-6")}>
+                   <div className="absolute inset-0 bg-white shadow-2xl rounded-lg transform -rotate-1"></div>
+                   <div className="relative bg-white w-60 h-64 md:w-64 md:h-72 rounded-lg shadow-2xl flex flex-col items-center justify-center p-4 border-4 border-gray-200">
+                      <h2 className="font-kalam text-3xl md:text-4xl text-orange-600">{reto}</h2>
+                   </div>
+                </button>
+              ))}
+          </div>
 
-        <div className="bg-[#D95E32] text-white font-kalam py-3 px-10 rounded-lg shadow-lg rotate-2">
-            <p className="text-xl md:text-2xl">Yara habla...</p>
-        </div>
+          <div className="bg-[#D95E32] text-white font-kalam py-3 px-10 rounded-lg shadow-lg rotate-2">
+              <p className="text-xl md:text-2xl">Yara habla...</p>
+          </div>
 
-        <div className="absolute bottom-4 left-4 z-20 hidden md:block">
-             <Image 
-                  src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/9ac22228-5690-482c-9a4f-560447339d29.png"
-                  alt="Friendly frog character Yara"
-                  width={140}
-                  height={140}
-                  className="transform -scale-x-100"
-                  data-ai-hint="frog character"
-                />
-        </div>
+          <div className="absolute bottom-4 left-4 z-20 hidden md:block">
+               <Image 
+                    src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/9ac22228-5690-482c-9a4f-560447339d29.png"
+                    alt="Friendly frog character Yara"
+                    width={140}
+                    height={140}
+                    className="transform -scale-x-100"
+                    data-ai-hint="frog character"
+                  />
+          </div>
 
-        <div className="mt-4 max-w-md mx-auto">
-           <p className="bg-background/80 p-4 rounded-md text-center">Selecciona uno de los retos para completar la estación. ¡Al terminar, volverás al mapa para continuar tu aventura!</p>
+          <div className="mt-4 max-w-md mx-auto">
+             <p className="bg-background/80 p-4 rounded-md text-center">Selecciona uno de los retos para completar la estación. ¡Al terminar, volverás al mapa para continuar tu aventura!</p>
+          </div>
         </div>
       </div>
-    </div>
+      <PrizeDialog 
+        open={isPrizeModalOpen} 
+        stationId={1} 
+        onClaim={handleClaimPrize} 
+      />
+    </>
   );
 }

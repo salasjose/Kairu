@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Store, ShoppingCart, Upload, Link as LinkIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import PrizeDialog from "../PrizeDialog";
 
 
 const challenges = {
@@ -114,15 +115,21 @@ const ChallengeDetail = ({
 
 export default function Station7() {
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeId | null>(null);
+  const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
   const router = useRouter();
 
   const handleComplete = (challengeId: ChallengeId) => {
+    unlockStation(8);
     toast({
       title: "¡Estación 7 Completada!",
-      description: `¡Reto '${challenges[challengeId].title}' superado! Volviendo al mapa...`,
+      description: `¡Reto '${challenges[challengeId].title}' superado!`,
     });
-    unlockStation(8);
+    setIsPrizeModalOpen(true);
+  };
+  
+  const handleClaimPrize = () => {
+    setIsPrizeModalOpen(false);
     router.push("/");
   };
   
@@ -131,55 +138,62 @@ export default function Station7() {
   }
 
   return (
-    <div className="w-full min-h-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-teal-200 to-green-200 relative overflow-hidden">
-      <div className="absolute inset-0 opacity-20">
-        <Image 
-            src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/a2e24505-f375-4cf5-9430-a35c5c93c1f0.png"
-            alt="Green business background"
-            fill
-            objectFit="cover"
-            className="z-0"
-            data-ai-hint="green business background"
-        />
-      </div>
-      <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
-        <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
-            <h1 className="text-3xl md:text-5xl">Estación 7</h1>
-            <p className="text-base md:text-xl">Negocios Verdes</p>
+    <>
+      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-teal-200 to-green-200 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <Image 
+              src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/a2e24505-f375-4cf5-9430-a35c5c93c1f0.png"
+              alt="Green business background"
+              fill
+              objectFit="cover"
+              className="z-0"
+              data-ai-hint="green business background"
+          />
         </div>
+        <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
+          <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
+              <h1 className="text-3xl md:text-5xl">Estación 7</h1>
+              <p className="text-base md:text-xl">Negocios Verdes</p>
+          </div>
 
-        <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
-            {(Object.keys(challenges) as ChallengeId[]).map((key) => {
-              const challenge = challenges[key];
-              const Icon = challenge.icon;
-              return (
-                  <button key={key} onClick={() => setSelectedChallenge(key)} className="transition-transform duration-300 hover:scale-105 group">
-                     <Card className="w-60 md:w-64 h-auto bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors">
-                        <CardContent className="flex flex-col items-center justify-center text-center p-4 h-full">
-                            <Icon className="w-12 h-12 md:w-16 md:h-16 text-primary mb-3" />
-                            <h2 className="font-bold font-headline text-lg md:text-xl text-primary">{challenge.title}</h2>
-                        </CardContent>
-                     </Card>
-                  </button>
-              )
-            })}
-        </div>
+          <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
+              {(Object.keys(challenges) as ChallengeId[]).map((key) => {
+                const challenge = challenges[key];
+                const Icon = challenge.icon;
+                return (
+                    <button key={key} onClick={() => setSelectedChallenge(key)} className="transition-transform duration-300 hover:scale-105 group">
+                       <Card className="w-60 md:w-64 h-auto bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors">
+                          <CardContent className="flex flex-col items-center justify-center text-center p-4 h-full">
+                              <Icon className="w-12 h-12 md:w-16 md:h-16 text-primary mb-3" />
+                              <h2 className="font-bold font-headline text-lg md:text-xl text-primary">{challenge.title}</h2>
+                          </CardContent>
+                       </Card>
+                    </button>
+                )
+              })}
+          </div>
 
-        <div className="mt-4 max-w-md mx-auto">
-           <p className="bg-background/80 p-4 rounded-md text-center">Interactúa con negocios verdes locales completando uno de los siguientes retos.</p>
-        </div>
-        
-         <div className="absolute bottom-4 -left-8 z-20 hidden md:block">
-         <Image 
-              src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/9ac22228-5690-482c-9a4f-560447339d29.png"
-              alt="Friendly frog character Yara"
-              width={140}
-              height={140}
-              className="transform -scale-x-100"
-              data-ai-hint="frog character"
-            />
+          <div className="mt-4 max-w-md mx-auto">
+             <p className="bg-background/80 p-4 rounded-md text-center">Interactúa con negocios verdes locales completando uno de los siguientes retos.</p>
+          </div>
+          
+           <div className="absolute bottom-4 -left-8 z-20 hidden md:block">
+           <Image 
+                src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/9ac22228-5690-482c-9a4f-560447339d29.png"
+                alt="Friendly frog character Yara"
+                width={140}
+                height={140}
+                className="transform -scale-x-100"
+                data-ai-hint="frog character"
+              />
+          </div>
         </div>
       </div>
-    </div>
+      <PrizeDialog 
+        open={isPrizeModalOpen} 
+        stationId={7} 
+        onClaim={handleClaimPrize} 
+      />
+    </>
   );
 }

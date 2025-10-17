@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, BrainCircuit, Link as LinkIcon } from "lucide-react";
 import WaterQuiz from "@/app/components/challenges/WaterQuiz";
 import { Input } from "@/components/ui/input";
+import PrizeDialog from "../PrizeDialog";
 
 const challenges = {
   quiz: {
@@ -82,17 +83,24 @@ const PostChallenge = ({ onComplete, onBack }: { onComplete: () => void; onBack:
 
 export default function Station4() {
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeId | null>(null);
+  const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
   const router = useRouter();
 
   const handleComplete = (challengeId: ChallengeId) => {
+    unlockStation(5);
     toast({
       title: "¡Estación 4 Completada!",
-      description: `¡Reto '${challenges[challengeId].title}' superado! Volviendo al mapa...`,
+      description: `¡Reto '${challenges[challengeId].title}' superado!`,
     });
-    unlockStation(5);
+    setIsPrizeModalOpen(true);
+  };
+  
+  const handleClaimPrize = () => {
+    setIsPrizeModalOpen(false);
     router.push("/");
   };
+
 
   const renderContent = () => {
     if (selectedChallenge === 'quiz') {
@@ -156,5 +164,14 @@ export default function Station4() {
     )
   };
 
-  return renderContent();
+  return (
+    <>
+      {renderContent()}
+      <PrizeDialog 
+        open={isPrizeModalOpen} 
+        stationId={4} 
+        onClaim={handleClaimPrize} 
+      />
+    </>
+  );
 }
