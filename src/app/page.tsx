@@ -19,8 +19,89 @@ import {
 } from "@/components/ui/card";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import PrizeCart from "./components/PrizeCart";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const PLAYER_NAME_KEY = "kairu-player-name";
+
+const DesktopMap = () => {
+  const { unlockedStations } = useStationProgress();
+  const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
+  const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
+
+  const stationPositions = [
+    { top: "72%", left: "18%" },
+    { top: "85%", left: "40%" },
+    { top: "70%", left: "55%" },
+    { top: "80%", left: "75%" },
+    { top: "58%", left: "85%" },
+    { top: "35%", left: "70%" },
+    { top: "45%", left: "40%" },
+    { top: "25%", left: "55%" },
+    { top: "10%", left: "45%" },
+  ];
+
+  return (
+    <div className="relative w-full aspect-[4/3]">
+      {mapBgImage && (
+        <Image
+          src={mapBgImage.imageUrl}
+          alt={mapBgImage.description}
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, 1024px"
+          className="object-contain"
+          data-ai-hint={mapBgImage.imageHint}
+        />
+      )}
+      <div className="absolute inset-0 z-10">
+        {stations.map((station, index) => {
+          const isUnlocked = unlockedStations.includes(station.id);
+          const position = stationPositions[index];
+          return (
+            <div
+              key={station.id}
+              className="absolute -translate-x-1/2 -translate-y-1/2"
+              style={{ top: position.top, left: position.left }}
+            >
+              <StationNode station={station} isUnlocked={isUnlocked} />
+            </div>
+          );
+        })}
+        {yaraCharImage && (
+          <div className="absolute bottom-[8%] left-[8%] transform -translate-x-1/2 -translate-y-1/2">
+            <Image
+              src={yaraCharImage.imageUrl}
+              alt={yaraCharImage.description}
+              width={140}
+              height={140}
+              data-ai-hint={yaraCharImage.imageHint}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const MobileGrid = () => {
+    const { unlockedStations } = useStationProgress();
+    return (
+        <div className="grid grid-cols-3 gap-x-2 gap-y-8 w-full">
+            {stations.map((station) => {
+                const isUnlocked = unlockedStations.includes(station.id);
+                return (
+                    <div
+                        key={station.id}
+                        className="flex items-center justify-center"
+                    >
+                        <StationNode station={station} isUnlocked={isUnlocked} />
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
+
 
 export default function Home() {
   const {
@@ -31,9 +112,8 @@ export default function Home() {
   const [clientLoaded, setClientLoaded] = useState(false);
   const [playerName, setPlayerName] = useState<string | null>(null);
   const [inputName, setInputName] = useState("");
+  const isMobile = useIsMobile();
 
-  const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
-  const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
   useEffect(() => {
     setClientLoaded(true);
@@ -71,18 +151,6 @@ export default function Home() {
   };
 
   const allStationsCompleted = unlockedStations.length >= stations.length;
-
-  const stationPositions = [
-    { top: "72%", left: "18%" },
-    { top: "85%", left: "40%" },
-    { top: "70%", left: "55%" },
-    { top: "80%", left: "75%" },
-    { top: "58%", left: "85%" },
-    { top: "35%", left: "70%" },
-    { top: "45%", left: "40%" },
-    { top: "25%", left: "55%" },
-    { top: "10%", left: "45%" },
-  ];
 
   if (!clientLoaded || !isProgressLoaded) {
     return (
@@ -157,62 +225,7 @@ export default function Home() {
       </header>
 
       <div className="flex-grow w-full max-w-5xl flex items-center justify-center">
-        {/* Mobile Grid Layout */}
-        <div className="grid grid-cols-3 gap-x-2 gap-y-8 md:hidden w-full">
-          {stations.map((station) => {
-            const isUnlocked = unlockedStations.includes(station.id);
-            return (
-              <div
-                key={station.id}
-                className="flex items-center justify-center"
-              >
-                <StationNode station={station} isUnlocked={isUnlocked} />
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Desktop Map Layout */}
-        <div className="relative w-full aspect-[4/3] hidden md:block">
-          {mapBgImage && (
-            <Image
-              src={mapBgImage.imageUrl}
-              alt={mapBgImage.description}
-              fill
-              priority
-              sizes="(max-width: 768px) 100vw, 1024px"
-              className="object-contain"
-              data-ai-hint={mapBgImage.imageHint}
-            />
-          )}
-          <div className="absolute inset-0 z-10">
-            {stations.map((station, index) => {
-              const isUnlocked = unlockedStations.includes(station.id);
-              const position = stationPositions[index];
-              return (
-                <div
-                  key={station.id}
-                  className="absolute -translate-x-1/2 -translate-y-1/2"
-                  style={{ top: position.top, left: position.left }}
-                >
-                  <StationNode station={station} isUnlocked={isUnlocked} />
-                </div>
-              );
-            })}
-            {yaraCharImage && (
-              <div className="absolute bottom-[8%] left-[8%] transform -translate-x-1/2 -translate-y-1/2">
-                <Image
-                  src={yaraCharImage.imageUrl}
-                  alt={yaraCharImage.description}
-                  width={140}
-                  height={140}
-                  className="hidden md:block"
-                  data-ai-hint={yaraCharImage.imageHint}
-                />
-              </div>
-            )}
-          </div>
-        </div>
+        {isMobile ? <MobileGrid /> : <DesktopMap />}
       </div>
       <CompletionDialog open={allStationsCompleted} onReset={handleReset} />
     </main>
