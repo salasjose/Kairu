@@ -35,7 +35,6 @@ export default function Home() {
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
   useEffect(() => {
-    // This effect runs only on the client
     setClientLoaded(true);
     try {
       const savedName = localStorage.getItem(PLAYER_NAME_KEY);
@@ -73,7 +72,6 @@ export default function Home() {
   const allStationsCompleted = unlockedStations.length >= stations.length;
 
   const stationPositions = [
-    // Corresponds to station ID 1-9
     { top: "72%", left: "18%" },
     { top: "85%", left: "40%" },
     { top: "70%", left: "55%" },
@@ -155,7 +153,23 @@ export default function Home() {
       </header>
 
       <div className="flex-grow w-full flex items-center justify-center">
-        <div className="relative w-full max-w-5xl aspect-[4/3]">
+        {/* Mobile Grid Layout */}
+        <div className="grid grid-cols-3 gap-x-4 gap-y-8 md:hidden w-full max-w-md">
+          {stations.map((station) => {
+            const isUnlocked = unlockedStations.includes(station.id);
+            return (
+              <div
+                key={station.id}
+                className="flex items-center justify-center"
+              >
+                <StationNode station={station} isUnlocked={isUnlocked} />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop Map Layout */}
+        <div className="relative w-full max-w-5xl aspect-[4/3] hidden md:block">
           {mapBgImage && (
             <Image
               src={mapBgImage.imageUrl}
