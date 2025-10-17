@@ -1,0 +1,239 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user in the EcoQuest Explorers application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the user."
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "description": "The user's date of birth.",
+          "format": "date-time"
+        },
+        "country": {
+          "type": "string",
+          "description": "The country of residence of the user."
+        },
+        "username": {
+          "type": "string",
+          "description": "The username chosen by the user."
+        },
+        "profileImageUrl": {
+          "type": "string",
+          "description": "URL of the user's profile image.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "dateOfBirth",
+        "country",
+        "username"
+      ]
+    },
+    "StationProgress": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StationProgress",
+      "type": "object",
+      "description": "Represents a user's progress in a station.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the station progress entry."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N StationProgress)"
+        },
+        "stationId": {
+          "type": "string",
+          "description": "Reference to Station. (Relationship: Station 1:N StationProgress)"
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Indicates whether the station is completed by the user."
+        },
+        "completionDate": {
+          "type": "string",
+          "description": "The date and time when the station was completed.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "stationId",
+        "completed"
+      ]
+    },
+    "Station": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Station",
+      "type": "object",
+      "description": "Represents an educational station in the EcoQuest Explorers application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the station."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the station (e.g., Biodiversity, Sustainability)."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the station's content and objectives."
+        },
+        "order": {
+          "type": "number",
+          "description": "The order in which the stations should be completed."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "order"
+      ]
+    },
+    "ContentSubmission": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ContentSubmission",
+      "type": "object",
+      "description": "Represents a user's submission of content for a station challenge.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the content submission."
+        },
+        "stationProgressId": {
+          "type": "string",
+          "description": "Reference to StationProgress. (Relationship: StationProgress 1:N ContentSubmission)"
+        },
+        "contentType": {
+          "type": "string",
+          "description": "The type of content submitted (e.g., image, video URL)."
+        },
+        "contentUrl": {
+          "type": "string",
+          "description": "The URL of the submitted content (e.g., image URL, YouTube video URL).",
+          "format": "uri"
+        },
+        "submissionDate": {
+          "type": "string",
+          "description": "The date and time when the content was submitted.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "stationProgressId",
+        "contentType",
+        "contentUrl",
+        "submissionDate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information. The 'userId' parameter represents the unique identifier for each user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "stations/{stationId}",
+        "definition": {
+          "entityName": "Station",
+          "schema": {
+            "$ref": "#/backend/entities/Station"
+          },
+          "description": "Stores information about each station in the EcoQuest Explorers game.",
+          "params": [
+            {
+              "name": "stationId",
+              "description": "Unique identifier for the station."
+            }
+          ]
+        }
+      },
+      {
+        "path": "users/{userId}/stationProgress/{stationProgressId}",
+        "definition": {
+          "entityName": "StationProgress",
+          "schema": {
+            "$ref": "#/backend/entities/StationProgress"
+          },
+          "description": "Tracks a user's progress in a specific station. 'userId' identifies the user, and 'stationProgressId' uniquely identifies the progress record.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            },
+            {
+              "name": "stationProgressId",
+              "description": "Unique identifier for the station progress entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "users/{userId}/stationProgress/{stationProgressId}/contentSubmissions/{contentSubmissionId}",
+        "definition": {
+          "entityName": "ContentSubmission",
+          "schema": {
+            "$ref": "#/backend/entities/ContentSubmission"
+          },
+          "description": "Stores content submissions by a user for a particular station challenge. 'userId' identifies the user, 'stationProgressId' identifies the station progress, and 'contentSubmissionId' uniquely identifies the submission.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            },
+            {
+              "name": "stationProgressId",
+              "description": "Unique identifier for the station progress entry."
+            },
+            {
+              "name": "contentSubmissionId",
+              "description": "Unique identifier for the content submission."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure prioritizes authorization independence and data clarity. The core design revolves around user-owned data and leverages path-based ownership for maximum security and efficient querying. The `users/{userId}` collection stores user profile data. The `stations` collection holds information about each station in the EcoQuest Explorers game. The relationship between users and stations is tracked via the `users/{userId}/stationProgress/{stationProgressId}` subcollection to record individual progress through each station. Finally, the `users/{userId}/stationProgress/{stationProgressId}/contentSubmissions/{contentSubmissionId}` models the user generated content submissions for each station. This design achieves Authorization Independence by associating all station progress and content submission directly to a user id. This means that all station progress and content submissions are dependent on a user document in order to be created. This design is also favorable since the app has a 1:N relationship from User to Station Progress to Content Submission."
+  }
+}
