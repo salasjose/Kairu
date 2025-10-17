@@ -10,17 +10,29 @@ import Logo from "@/app/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
-
-const PLAYER_NAME_KEY = 'kairu-player-name';
+const PLAYER_NAME_KEY = "kairu-player-name";
 
 export default function Home() {
-  const { unlockedStations, isLoaded: isProgressLoaded, resetProgress } = useStationProgress();
+  const {
+    unlockedStations,
+    isLoaded: isProgressLoaded,
+    resetProgress,
+  } = useStationProgress();
   const [clientLoaded, setClientLoaded] = useState(false);
   const [playerName, setPlayerName] = useState<string | null>(null);
   const [inputName, setInputName] = useState("");
 
+  const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
+  const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
   useEffect(() => {
     // This effect runs only on the client
@@ -35,7 +47,6 @@ export default function Home() {
     }
   }, []);
 
-
   const handleSaveName = () => {
     if (inputName.trim()) {
       const name = inputName.trim();
@@ -48,17 +59,16 @@ export default function Home() {
     }
   };
 
-
   const handleReset = () => {
     resetProgress();
     try {
-        localStorage.removeItem(PLAYER_NAME_KEY);
-        setPlayerName(null);
-        setInputName("");
+      localStorage.removeItem(PLAYER_NAME_KEY);
+      setPlayerName(null);
+      setInputName("");
     } catch (error) {
-        console.error("Failed to clear localStorage", error);
+      console.error("Failed to clear localStorage", error);
     }
-  }
+  };
 
   const allStationsCompleted = unlockedStations.length >= stations.length;
 
@@ -74,53 +84,56 @@ export default function Home() {
     { top: "25%", left: "55%" },
     { top: "10%", left: "45%" },
   ];
-  
+
   if (!clientLoaded || !isProgressLoaded) {
     return (
       <main className="flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 min-h-screen w-full bg-background text-foreground">
         <div className="flex flex-col items-center gap-4">
-            <Skeleton className="h-16 w-16 rounded-full" />
-            <div className="space-y-2 flex flex-col items-center">
-                <Skeleton className="h-6 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
-            </div>
-             <Skeleton className="relative w-[300px] h-[225px] sm:w-[400px] sm:h-[300px] md:w-[700px] md:h-[525px] mt-8" />
+          <Skeleton className="h-16 w-16 rounded-full" />
+          <div className="space-y-2 flex flex-col items-center">
+            <Skeleton className="h-6 w-[250px]" />
+            <Skeleton className="h-4 w-[200px]" />
+          </div>
+          <Skeleton className="relative w-[300px] h-[225px] sm:w-[400px] sm:h-[300px] md:w-[700px] md:h-[525px] mt-8" />
         </div>
       </main>
     );
   }
 
   if (!playerName) {
-     return (
-        <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
-             <div className="flex items-center gap-2 md:gap-4 mb-6">
-                <Logo className="h-10 w-10 md:h-12 md:w-12" />
-                <div>
-                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
-                    Kairu
-                    </h1>
-                    <p className="text-sm md:text-base text-muted-foreground">Una aventura interactiva de educación ambiental</p>
-                </div>
-            </div>
-            <Card className="w-full max-w-sm shadow-2xl">
-                <CardHeader>
-                    <CardTitle>¡Bienvenido Explorador!</CardTitle>
-                    <CardDescription>Escribe tu nombre para comenzar la aventura.</CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-4">
-                    <Input 
-                        placeholder="Tu nombre" 
-                        value={inputName}
-                        onChange={(e) => setInputName(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
-                    />
-                    <Button onClick={handleSaveName}>Comenzar Aventura</Button>
-                </CardContent>
-            </Card>
-        </main>
-     )
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
+        <div className="flex items-center gap-2 md:gap-4 mb-6">
+          <Logo className="h-10 w-10 md:h-12 md:w-12" />
+          <div>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
+              Kairu
+            </h1>
+            <p className="text-sm md:text-base text-muted-foreground">
+              Una aventura interactiva de educación ambiental
+            </p>
+          </div>
+        </div>
+        <Card className="w-full max-w-sm shadow-2xl">
+          <CardHeader>
+            <CardTitle>¡Bienvenido Explorador!</CardTitle>
+            <CardDescription>
+              Escribe tu nombre para comenzar la aventura.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <Input
+              placeholder="Tu nombre"
+              value={inputName}
+              onChange={(e) => setInputName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSaveName()}
+            />
+            <Button onClick={handleSaveName}>Comenzar Aventura</Button>
+          </CardContent>
+        </Card>
+      </main>
+    );
   }
-
 
   return (
     <main className="flex flex-col items-center p-4 sm:p-6 md:p-8 min-h-screen w-full">
@@ -131,7 +144,9 @@ export default function Home() {
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
               Kairu
             </h1>
-            <p className="text-sm md:text-base text-muted-foreground">¡Bienvenido, {playerName}!</p>
+            <p className="text-sm md:text-base text-muted-foreground">
+              ¡Bienvenido, {playerName}!
+            </p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={handleReset}>
@@ -141,16 +156,18 @@ export default function Home() {
 
       <div className="flex-grow w-full flex items-center justify-center">
         <div className="relative w-full max-w-5xl aspect-[4/3]">
-          <Image
-            src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/a2e24505-f375-4cf5-9430-a35c5c93c1f0.png"
-            alt="Game map with a winding path"
-            fill
-            priority
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-contain"
-            data-ai-hint="game map"
-          />
-          
+          {mapBgImage && (
+            <Image
+              src={mapBgImage.imageUrl}
+              alt={mapBgImage.description}
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-contain"
+              data-ai-hint={mapBgImage.imageHint}
+            />
+          )}
+
           <div className="absolute inset-0 z-10">
             {stations.map((station, index) => {
               const isUnlocked = unlockedStations.includes(station.id);
@@ -161,23 +178,22 @@ export default function Home() {
                   className="absolute -translate-x-1/2 -translate-y-1/2"
                   style={{ top: position.top, left: position.left }}
                 >
-                  <StationNode
-                    station={station}
-                    isUnlocked={isUnlocked}
-                  />
+                  <StationNode station={station} isUnlocked={isUnlocked} />
                 </div>
               );
             })}
-             <div className="absolute bottom-[8%] left-[8%] transform -translate-x-1/2 -translate-y-1/2">
-              <Image 
-                src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/9ac22228-5690-482c-9a4f-560447339d29.png"
-                alt="Friendly frog character"
-                width={140}
-                height={140}
-                className="hidden md:block"
-                data-ai-hint="frog character"
-              />
-            </div>
+            {yaraCharImage && (
+              <div className="absolute bottom-[8%] left-[8%] transform -translate-x-1/2 -translate-y-1/2">
+                <Image
+                  src={yaraCharImage.imageUrl}
+                  alt={yaraCharImage.description}
+                  width={140}
+                  height={140}
+                  className="hidden md:block"
+                  data-ai-hint={yaraCharImage.imageHint}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

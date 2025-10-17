@@ -1,88 +1,106 @@
 {
   "placeholderImages": [
     {
+      "id": "map-background",
+      "description": "A vibrant illustrated map for a kids' game, showing a winding path through different environments like forests, cities, and mountains.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/a2e24505-f375-4cf5-9430-a35c5c93c1f0.png",
+      "imageHint": "game map"
+    },
+    {
+      "id": "char-yara",
+      "description": "A friendly, smiling cartoon frog character named Yara, ready for adventure.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/9ac22228-5690-482c-9a4f-560447339d29.png",
+      "imageHint": "frog character"
+    },
+    {
+      "id": "forest-background",
+      "description": "A lush, green cartoon forest background, with tall trees and sunlight filtering through the leaves.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/a76b7e0e-c765-4113-8991-89787e99b369.png",
+      "imageHint": "forest background"
+    },
+    {
+      "id": "city-background",
+      "description": "A bright and clean cartoon city skyline with buildings and green spaces.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/15ae8e51-9f93-4a11-a806-df6b7f32997e.png",
+      "imageHint": "cartoon city"
+    },
+    {
       "id": "fauna-capybara",
-      "description": "A capybara sitting calmly.",
-      "imageUrl": "https://images.unsplash.com/photo-1759455171755-b4afec64d61b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjYXB5YmFyYSUyMHdpbGRsaWZlfGVufDB8fHx8MTc2MDczNzU5MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "A friendly capybara in its natural habitat.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/8ff352d1-213c-4148-9941-454536645318.png",
       "imageHint": "capybara wildlife"
     },
     {
-      "id": "fauna-toucan",
-      "description": "A colorful toucan on a branch.",
-      "imageUrl": "https://images.unsplash.com/photo-1619038779484-a27362fb82cd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0b3VjYW4lMjBiaXJkfGVufDB8fHx8MTc2MDczNzU5MXww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "toucan bird"
-    },
-    {
-      "id": "fauna-jaguar",
-      "description": "A jaguar in the jungle.",
-      "imageUrl": "https://images.unsplash.com/photo-1662149609231-ecc25d5ce121?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxqYWd1YXIlMjBjYXR8ZW58MHx8fHwxNzYwNzM3NTkxfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "jaguar cat"
-    },
-    {
-      "id": "flora-orchid",
-      "description": "A vibrant orchid flower.",
-      "imageUrl": "https://images.unsplash.com/photo-1618080578815-335456280012?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxvcmNoaWQlMjBmbG93ZXJ8ZW58MHx8fHwxNzYwNzM3NTkxfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "orchid flower"
-    },
-    {
-      "id": "flora-ceiba",
-      "description": "A tall Ceiba tree.",
-      "imageUrl": "https://images.unsplash.com/photo-1642362987871-3081cf952158?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxjZWliYSUyMHRyZWV8ZW58MHx8fHwxNzYwNzM3NTkxfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "ceiba tree"
-    },
-    {
-      "id": "flora-victoria-regia",
-      "description": "A Victoria Regia water lily.",
-      "imageUrl": "https://images.unsplash.com/photo-1624383626716-6a354c84ac66?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8d2F0ZXIlMjBsaWx5fGVufDB8fHx8MTc2MDczNzU5MXww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "water lily"
-    },
-    {
       "id": "habitat-build-1",
-      "description": "Building a bird feeder.",
-      "imageUrl": "https://images.unsplash.com/photo-1661229125184-e62150d87d80?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxidWlsZGluZyUyMGJpcmRob3VzZXxlbnwwfHx8fDE3NjA3Mzc1OTF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "A person building a birdhouse, focusing on creating a habitat for local wildlife.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/4066c1e3-1b72-4e08-967a-12a8740b2e88.png",
       "imageHint": "building birdhouse"
     },
     {
-      "id": "habitat-install-1",
-      "description": "Installing a bird feeder.",
-      "imageUrl": "https://images.unsplash.com/photo-1620398325107-ea5695589baf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxpbnN0YWxsaW5nJTIwYmlyZGhvdXNlfGVufDB8fHx8MTc2MDczNzU5MXww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "installing birdhouse"
-    },
-    {
       "id": "sustainable-practice",
-      "description": "A person sorting recycling.",
-      "imageUrl": "https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxyZWN5Y2xpbmd8ZW58MHx8fHwxNzYwNzM3NTkxfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "recycling"
+      "description": "A person sorting different types of waste into recycling bins.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/19ff9a84-023a-4467-b52e-c764e6f4a868.png",
+      "imageHint": "sorting recycling"
     },
     {
       "id": "cleanup-video",
-      "description": "Thumbnail for a beach cleanup video.",
-      "imageUrl": "https://images.unsplash.com/photo-1595902392414-16c64fe8d048?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxiZWFjaCUyMGNsZWFudXB8ZW58MHx8fHwxNzYwNzM3NTkxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "A group of volunteers cleaning up a beach, collecting plastic and other waste.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/55a687e8-669c-4972-875f-2c3555af5118.png",
       "imageHint": "beach cleanup"
     },
     {
+      "id": "waste-separation",
+      "description": "Clearly labeled bins for separating waste: organic, plastic, paper, and glass.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/75949174-8742-4592-8869-959685a4af8e.png",
+      "imageHint": "waste separation"
+    },
+    {
+      "id": "recycling-game",
+      "description": "A fun and colorful interface for a recycling game.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/b83325a7-3349-4aa8-874c-687483693f0b.png",
+      "imageHint": "recycling game"
+    },
+    {
       "id": "recycled-art",
-      "description": "Art made from recycled materials.",
-      "imageUrl": "https://images.unsplash.com/photo-1760331283968-36724afcfc71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxyZWN5Y2xlZCUyMGFydHxlbnwwfHx8fDE3NjA3Mzc1OTF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "A beautiful sculpture made entirely from recycled materials like plastic bottles and bottle caps.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/3847321a-2895-4654-9493-41c10729352e.png",
       "imageHint": "recycled art"
     },
     {
       "id": "water-post",
-      "description": "Social media post about water conservation.",
-      "imageUrl": "https://images.unsplash.com/photo-1515150144380-bca9f1650ed9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHx3YXRlciUyMGNvbnNlcnZhdGlvbnxlbnwwfHx8fDE3NjA3Mzc1OTF8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "water conservation"
+      "description": "An infographic-style social media post about water conservation tips.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/a2fcb1b3-68d1-432d-944e-a34f8a123992.png",
+      "imageHint": "water conservation post"
     },
     {
       "id": "sustainable-design-video",
-      "description": "Thumbnail for a sustainable design video.",
-      "imageUrl": "https://images.unsplash.com/photo-1668854820080-1c4b201112a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxzdXN0YWluYWJsZSUyMGRlc2lnbnxlbnwwfHx8fDE3NjA3Mzc1OTF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "A video thumbnail showing a modern house with solar panels and a green roof.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/d9c10444-934c-4734-9323-018659d80d19.png",
       "imageHint": "sustainable design"
     },
     {
+      "id": "circular-economy-product",
+      "description": "A stylish backpack made from recycled plastic, illustrating a circular economy product.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/5f31952e-561b-45e0-a496-e26b38c20165.png",
+      "imageHint": "circular economy"
+    },
+    {
+      "id": "green-business",
+      "description": "The storefront of a local green business, like a zero-waste shop or a cafe with sustainable practices.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/59385d88-2947-495c-9c71-2b02ef0192e4.png",
+      "imageHint": "green business"
+    },
+    {
+      "id": "green-business-visit",
+      "description": "A person filming a video inside a green business, showcasing its eco-friendly features.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/4010375a-074a-4a74-a957-19e0797f6c38.png",
+      "imageHint": "business visit"
+    },
+    {
       "id": "green-business-product",
-      "description": "An eco-friendly product from a green business.",
-      "imageUrl": "https://images.unsplash.com/photo-1588959571205-4f53699d31d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxlY28lMjBwcm9kdWN0fGVufDB8fHx8MTc2MDczNzU5MXww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "eco product"
+      "description": "A close-up of a sustainable product, like a bamboo toothbrush or a reusable coffee cup.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/7510255b-4884-4458-895c-982873155700.png",
+      "imageHint": "sustainable product"
     }
   ]
 }

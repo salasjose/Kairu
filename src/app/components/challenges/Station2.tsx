@@ -10,60 +10,75 @@ import { ArrowLeft, CheckCircle, Lock, Upload } from "lucide-react";
 import PrizeDialog from "../PrizeDialog";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
-const STORAGE_KEY_STATION2 = 'kairu-station2-progress';
+const STORAGE_KEY_STATION2 = "kairu-station2-progress";
 
-type DayStatus = 'locked' | 'unlocked' | 'completed';
+type DayStatus = "locked" | "unlocked" | "completed";
 
 interface DayState {
   status: DayStatus;
   unlockTime: number | null;
 }
 
-const initialDays: DayState[] = Array(7).fill(null).map((_, i) => ({
-  status: i === 0 ? 'unlocked' : 'locked',
-  unlockTime: i === 0 ? Date.now() : null,
-}));
+const initialDays: DayState[] = Array(7)
+  .fill(null)
+  .map((_, i) => ({
+    status: i === 0 ? "unlocked" : "locked",
+    unlockTime: i === 0 ? Date.now() : null,
+  }));
 
+const PhotoUploadChallenge = ({
+  day,
+  onComplete,
+  onBack,
+}: {
+  day: number;
+  onComplete: () => void;
+  onBack: () => void;
+}) => {
 
-const PhotoUploadChallenge = ({ day, onComplete, onBack }: { day: number, onComplete: () => void, onBack: () => void }) => {
-    
-    const handleSimulateUpload = () => {
-        toast({
-            title: `Foto del Día ${day} subida`,
-            description: "¡Has completado el reto de hoy!",
-        });
-        onComplete();
-    }
-    
-    return (
-      <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center h-full">
-          <Button variant="ghost" onClick={onBack} className="mb-4 self-start">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Volver a los retos
+  const sustainablePracticeImage = PlaceHolderImages.find(p => p.id === "sustainable-practice");
+
+  const handleSimulateUpload = () => {
+    toast({
+      title: `Foto del Día ${day} subida`,
+      description: "¡Has completado el reto de hoy!",
+    });
+    onComplete();
+  };
+
+  return (
+    <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center h-full">
+      <Button variant="ghost" onClick={onBack} className="mb-4 self-start">
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Volver a los retos
+      </Button>
+      <Card className="text-center w-full">
+        <CardContent className="p-6">
+          <h3 className="font-bold text-2xl text-primary font-headline mb-4">
+            Reto del Día {day}
+          </h3>
+          <Image
+            src={sustainablePracticeImage?.imageUrl ?? "https://picsum.photos/seed/sustainability-day/400/300"}
+            alt={sustainablePracticeImage?.description ?? "Sustainable practice"}
+            width={400}
+            height={300}
+            className="rounded-md mx-auto mb-4 w-full max-w-sm h-auto"
+            data-ai-hint={sustainablePracticeImage?.imageHint ?? "sustainable practice"}
+          />
+          <p className="text-muted-foreground mb-6">
+            Documenta una práctica sostenible que realices hoy subiendo una foto.
+          </p>
+          <Button onClick={handleSimulateUpload} size="lg">
+            <Upload className="mr-2" />
+            Simular Subida de Foto
           </Button>
-          <Card className="text-center w-full">
-              <CardContent className="p-6">
-                  <h3 className="font-bold text-2xl text-primary font-headline mb-4">Reto del Día {day}</h3>
-                  <Image 
-                    src="https://picsum.photos/seed/sustainability-day/400/300" 
-                    alt="Sustainable practice" 
-                    width={400} 
-                    height={300} 
-                    className="rounded-md mx-auto mb-4 w-full max-w-sm h-auto"
-                    data-ai-hint="sustainable practice"
-                  />
-                  <p className="text-muted-foreground mb-6">Documenta una práctica sostenible que realices hoy subiendo una foto.</p>
-                  <Button onClick={handleSimulateUpload} size="lg">
-                      <Upload className="mr-2" />
-                      Simular Subida de Foto
-                  </Button>
-              </CardContent>
-          </Card>
-      </div>
-    );
+        </CardContent>
+      </Card>
+    </div>
+  );
 };
-
 
 export default function Station2() {
   const [days, setDays] = useState<DayState[]>(initialDays);
@@ -72,52 +87,54 @@ export default function Station2() {
   const { unlockStation } = useStationProgress();
   const router = useRouter();
 
+  const cityBgImage = PlaceHolderImages.find((p) => p.id === "city-background");
+  const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
+
   const updateAndSaveChanges = useCallback((newDays: DayState[]) => {
     setDays(newDays);
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEY_STATION2, JSON.stringify(newDays));
     }
   }, []);
-  
+
   useEffect(() => {
     const savedProgress = localStorage.getItem(STORAGE_KEY_STATION2);
     if (savedProgress) {
-        try {
-            const parsedProgress = JSON.parse(savedProgress) as DayState[];
-            if(parsedProgress.length === 7) {
-                setDays(parsedProgress);
-            }
-        } catch {
-            // ignore parsing errors, use initial state
+      try {
+        const parsedProgress = JSON.parse(savedProgress) as DayState[];
+        if (parsedProgress.length === 7) {
+          setDays(parsedProgress);
         }
+      } catch {
+        // ignore parsing errors, use initial state
+      }
     } else {
-        localStorage.setItem(STORAGE_KEY_STATION2, JSON.stringify(initialDays));
+      localStorage.setItem(STORAGE_KEY_STATION2, JSON.stringify(initialDays));
     }
   }, []);
 
   const checkUnlocks = useCallback(() => {
     let changed = false;
     const now = Date.now();
-    
-    setDays(currentDays => {
+
+    setDays((currentDays) => {
       const newDays = [...currentDays];
       let hasChanged = false;
       newDays.forEach((day, index) => {
-          if(day.status === 'locked' && day.unlockTime && now >= day.unlockTime) {
-              newDays[index] = {...newDays[index], status: 'unlocked'};
-              hasChanged = true;
-          }
+        if (day.status === "locked" && day.unlockTime && now >= day.unlockTime) {
+          newDays[index] = { ...newDays[index], status: "unlocked" };
+          hasChanged = true;
+        }
       });
 
       if (hasChanged) {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== "undefined") {
           localStorage.setItem(STORAGE_KEY_STATION2, JSON.stringify(newDays));
         }
       }
       return hasChanged ? newDays : currentDays;
     });
   }, []);
-
 
   useEffect(() => {
     const interval = setInterval(checkUnlocks, 1000 * 60); // Check for unlocks every minute
@@ -127,118 +144,142 @@ export default function Station2() {
 
   const handleDayComplete = (dayIndex: number) => {
     const newDays = [...days];
-    newDays[dayIndex].status = 'completed';
+    newDays[dayIndex].status = "completed";
 
     const nextDayIndex = dayIndex + 1;
     if (nextDayIndex < days.length) {
-      if (newDays[nextDayIndex].status === 'locked') {
+      if (newDays[nextDayIndex].status === "locked") {
         newDays[nextDayIndex].unlockTime = Date.now() + 24 * 60 * 60 * 1000; // 24 hours from now
       }
     }
-    
+
     updateAndSaveChanges(newDays);
     setSelectedDay(null);
 
-    const allCompleted = newDays.every(d => d.status === 'completed');
+    const allCompleted = newDays.every((d) => d.status === "completed");
     if (allCompleted) {
-        unlockStation(3);
-        toast({
-            title: "¡Estación 2 Completada!",
-            description: "¡Fantástico! Sigue con esos hábitos sostenibles.",
-        });
-        setIsPrizeModalOpen(true);
+      unlockStation(3);
+      toast({
+        title: "¡Estación 2 Completada!",
+        description: "¡Fantástico! Sigue con esos hábitos sostenibles.",
+      });
+      setIsPrizeModalOpen(true);
     }
   };
-  
+
   const handleCompleteAllDays = () => {
-    const newDays = days.map(() => ({ status: 'completed', unlockTime: null })) as DayState[];
+    const newDays = days.map(() => ({
+      status: "completed",
+      unlockTime: null,
+    })) as DayState[];
     updateAndSaveChanges(newDays);
     unlockStation(3);
     toast({
-        title: "¡Estación 2 Completada!",
-        description: "¡Has completado todos los retos de la semana!",
+      title: "¡Estación 2 Completada!",
+      description: "¡Has completado todos los retos de la semana!",
     });
     setIsPrizeModalOpen(true);
   };
-  
+
   const handleClaimPrize = () => {
     setIsPrizeModalOpen(false);
     router.push("/");
   };
 
-
   if (selectedDay !== null) {
-      return <PhotoUploadChallenge day={selectedDay} onComplete={() => handleDayComplete(selectedDay - 1)} onBack={() => setSelectedDay(null)} />
+    return (
+      <PhotoUploadChallenge
+        day={selectedDay}
+        onComplete={() => handleDayComplete(selectedDay - 1)}
+        onBack={() => setSelectedDay(null)}
+      />
+    );
   }
 
   const renderDayButton = (dayIndex: number) => {
     const day = days[dayIndex];
     return (
-      <button 
-        key={dayIndex} 
-        disabled={day.status === 'locked'}
+      <button
+        key={dayIndex}
+        disabled={day.status === "locked"}
         onClick={() => setSelectedDay(dayIndex + 1)}
         className="transition-transform duration-300 disabled:cursor-not-allowed group hover:scale-105"
       >
-         <div className={cn(
+        <div
+          className={cn(
             "relative w-24 h-20 md:w-32 md:h-24 bg-[#D95E32] rounded-lg shadow-lg flex items-center justify-center border-4 border-white/80 group-hover:scale-105 group-disabled:scale-100 group-disabled:bg-orange-500/60 transition-transform",
             "transform -rotate-3"
-          )}>
-            {day.status === 'locked' && <Lock className="w-8 h-8 md:w-10 md:h-10 text-white/70" />}
-            {day.status === 'unlocked' && <span className="font-kalam text-4xl md:text-5xl text-white">{dayIndex + 1}</span>}
-            {day.status === 'completed' && <CheckCircle className="w-10 h-10 md:w-12 md:h-12 text-green-300" />}
-         </div>
+          )}
+        >
+          {day.status === "locked" && (
+            <Lock className="w-8 h-8 md:w-10 md:h-10 text-white/70" />
+          )}
+          {day.status === "unlocked" && (
+            <span className="font-kalam text-4xl md:text-5xl text-white">
+              {dayIndex + 1}
+            </span>
+          )}
+          {day.status === "completed" && (
+            <CheckCircle className="w-10 h-10 md:w-12 md:h-12 text-green-300" />
+          )}
+        </div>
       </button>
     );
-  }
+  };
 
   return (
     <>
       <div className="w-full flex-grow flex flex-col items-center p-4 relative overflow-hidden bg-blue-200">
-        <Image 
-          src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/15ae8e51-9f93-4a11-a806-df6b7f32997e.png"
-          alt="City background"
-          fill
-          objectFit="cover"
-          className="z-0 opacity-90"
-          data-ai-hint="cartoon city"
-        />
+        {cityBgImage && (
+            <Image
+              src={cityBgImage.imageUrl}
+              alt={cityBgImage.description}
+              fill
+              objectFit="cover"
+              className="z-0 opacity-90"
+              data-ai-hint={cityBgImage.imageHint}
+            />
+        )}
         <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
-           <div className="text-[#D95E32] font-kalam text-center mb-8">
-              <h1 className="text-5xl md:text-7xl leading-none">Reto de la</h1>
-              <p className="text-4xl md:text-6xl">Semana</p>
+          <div className="text-[#D95E32] font-kalam text-center mb-8">
+            <h1 className="text-5xl md:text-7xl leading-none">Reto de la</h1>
+            <p className="text-4xl md:text-6xl">Semana</p>
           </div>
-          <p className="absolute top-5 right-5 font-kalam text-3xl md:text-4xl text-[#D95E32] font-bold rotate-12">Estación 2</p>
+          <p className="absolute top-5 right-5 font-kalam text-3xl md:text-4xl text-[#D95E32] font-bold rotate-12">
+            Estación 2
+          </p>
 
           <div className="flex flex-col items-center gap-4 md:gap-6">
-              <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-                  {days.slice(0, 4).map((_, index) => renderDayButton(index))}
-              </div>
-              <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-                  {days.slice(4, 7).map((_, index) => renderDayButton(index + 4))}
-              </div>
+            <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+              {days.slice(0, 4).map((_, index) => renderDayButton(index))}
+            </div>
+            <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+              {days.slice(4, 7).map((_, index) => renderDayButton(index + 4))}
+            </div>
           </div>
 
           <div className="absolute bottom-[8%] left-1/2 -translate-x-1/2 w-full flex flex-col items-center gap-4">
-              <Button onClick={handleCompleteAllDays}>Reto Completado</Button>
+            <Button onClick={handleCompleteAllDays}>Reto Completado</Button>
           </div>
 
-          <div className="absolute bottom-0 left-4 z-20 hidden md:block">
-               <Image 
-                    src="https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/9ac22228-5690-482c-9a4f-560447339d29.png"
-                    alt="Friendly frog character Yara"
-                    width={140}
-                    height={140}
-                    className="transform -scale-x-100"
-                    data-ai-hint="frog character"
-                  />
-          </div>
+          {yaraCharImage && (
+            <div className="absolute bottom-0 left-4 z-20 hidden md:block">
+              <Image
+                src={yaraCharImage.imageUrl}
+                alt={yaraCharImage.description}
+                width={140}
+                height={140}
+                className="transform -scale-x-100"
+                data-ai-hint={yaraCharImage.imageHint}
+              />
+            </div>
+          )}
         </div>
       </div>
-      <PrizeDialog 
-        open={isPrizeModalOpen} 
-        stationId={2} 
-        onClaim={handleClaimPrize} 
+      <PrizeDialog
+        open={isPrizeModalOpen}
+        stationId={2}
+        onClaim={handleClaimPrize}
       />
     </>
   );
