@@ -62,7 +62,7 @@ const DesktopMap = () => {
             fill="none"
             stroke="white"
             strokeWidth="0.5"
-            strokeDasharray="2 2"
+            strokeDasharray="0.5 2.5"
             strokeLinecap="round"
           />
         </svg>
