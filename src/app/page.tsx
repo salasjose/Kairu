@@ -100,7 +100,7 @@ export default function Home() {
   const [clientLoaded, setClientLoaded] = useState(false);
   const [playerName, setPlayerName] = useState<string | null>(null);
   const [inputName, setInputName] = useState("");
-  const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
+  const mapBgImage = PlaceHolderImages.find((p) => p.id === "forest-background");
   const isMobile = useIsMobile();
 
   useEffect(() => {
