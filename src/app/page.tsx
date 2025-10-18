@@ -29,15 +29,15 @@ const DesktopMap = () => {
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
   const stationPositions = [
-    { top: "72%", left: "18%" },
-    { top: "85%", left: "40%" },
-    { top: "70%", left: "55%" },
-    { top: "80%", left: "75%" },
-    { top: "58%", left: "85%" },
-    { top: "35%", left: "70%" },
-    { top: "45%", left: "40%" },
-    { top: "25%", left: "55%" },
-    { top: "10%", left: "45%" },
+    { top: "80%", left: "19%" }, // 1. Bionexus
+    { top: "88%", left: "37%" }, // 2. ImpacTrack
+    { top: "82%", left: "55%" }, // 3. ReNova
+    { top: "88%", left: "73%" }, // 4. TerrAzul
+    { top: "60%", left: "89%" }, // 5. ZonaCreativa
+    { top: "37%", left: "75%" }, // 6. ReGira
+    { top: "50%", left: "44%" }, // 7. VerdeLAb
+    { top: "30%", left: "60%" }, // 8. Vitalia
+    { top: "15%", left: "48%" }, // 9. Final Puzzle
   ];
 
   return (
@@ -49,7 +49,7 @@ const DesktopMap = () => {
           fill
           priority
           sizes="(max-width: 768px) 100vw, 1024px"
-          className="object-contain"
+          className="object-cover"
           data-ai-hint={mapBgImage.imageHint}
         />
       )}
