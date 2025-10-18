@@ -27,49 +27,49 @@ const DesktopMap = () => {
   const { unlockedStations } = useStationProgress();
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
-  // Coordenadas precisas dentro de un sistema de 1000x1000 para el SVG
+  // Coordinates are percentages (top, left) for responsive positioning
   const stationPositions = [
-    { x: 230, y: 390 }, // 1
-    { x: 420, y: 250 }, // 2
-    { x: 670, y: 365 }, // 3
-    { x: 505, y: 555 }, // 4
-    { x: 810, y: 510 }, // 5
-    { x: 700, y: 790 }, // 6
-    { x: 380, y: 840 }, // 7
-    { x: 190, y: 800 }, // 8
-    { x: 480, y: 80 },  // 9
+    { top: '39%', left: '23%' }, // 1
+    { top: '25%', left: '42%' }, // 2
+    { top: '36.5%', left: '67%' }, // 3
+    { top: '55.5%', left: '50.5%' }, // 4
+    { top: '51%', left: '81%' }, // 5
+    { top: '79%', left: '70%' }, // 6
+    { top: '84%', left: '38%' }, // 7
+    { top: '80%', left: '19%' }, // 8
+    { top: '8%', left: '48%' },  // 9
   ];
 
   return (
     <div className="hidden md:block w-full h-full relative">
-      <svg viewBox="0 0 1000 1000" className="absolute inset-0 w-full h-full">
-        {stations.map((station, index) => {
-          const isUnlocked = unlockedStations.includes(station.id);
-          const pos = stationPositions[index];
-          return (
-            <foreignObject key={station.id} x={pos.x - 48} y={pos.y - 48} width="96" height="96" className="overflow-visible">
-               <div className="w-24 h-24">
-                 <StationNode station={station} isUnlocked={isUnlocked} />
-               </div>
-            </foreignObject>
-          );
-        })}
-
-        {yaraCharImage && (
-            <foreignObject x="50" y="800" width="140" height="140">
-                <Image
-                    src={yaraCharImage.imageUrl}
-                    alt={yaraCharImage.description}
-                    width={140}
-                    height={140}
-                    data-ai-hint={yaraCharImage.imageHint}
-                />
-            </foreignObject>
-        )}
-      </svg>
+      {stations.map((station, index) => {
+        const isUnlocked = unlockedStations.includes(station.id);
+        const pos = stationPositions[index];
+        return (
+          <div 
+            key={station.id} 
+            className="absolute -translate-x-1/2 -translate-y-1/2"
+            style={{ top: pos.top, left: pos.left }}
+          >
+            <StationNode station={station} isUnlocked={isUnlocked} />
+          </div>
+        );
+      })}
+      {yaraCharImage && (
+        <div className="absolute bottom-[5%] left-[5%] w-[140px] h-[140px]">
+          <Image
+            src={yaraCharImage.imageUrl}
+            alt={yaraCharImage.description}
+            width={140}
+            height={140}
+            data-ai-hint={yaraCharImage.imageHint}
+          />
+        </div>
+      )}
     </div>
   );
 };
+
 
 const MobileGrid = () => {
     const { unlockedStations } = useStationProgress();
