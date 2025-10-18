@@ -78,7 +78,7 @@ export default function Station1() {
   const completeChallenge = (challenge: string) => {
     unlockStation(2);
     toast({
-      title: `¡Estación 1 Completada!`,
+      title: `¡Estación Bionexus Completada!`,
       description: "¡Has ganado un premio!",
     });
     setIsPrizeModalOpen(true);
@@ -139,7 +139,7 @@ export default function Station1() {
         )}
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
           <div className="bg-[#D95E32] text-white font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
-            <h1 className="text-4xl md:text-5xl">Estación 1</h1>
+            <h1 className="text-4xl md:text-5xl">Bionexus</h1>
           </div>
 
           <div className="flex flex-col md:flex-row gap-8 md:gap-12 mb-8">

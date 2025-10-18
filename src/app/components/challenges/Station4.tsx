@@ -103,7 +103,7 @@ export default function Station4() {
   const handleComplete = (challengeId: ChallengeId) => {
     unlockStation(5);
     toast({
-      title: "¡Estación 4 Completada!",
+      title: "¡Estación TerrAzul Completada!",
       description: `¡Reto '${challenges[challengeId].title}' superado!`,
     });
     setIsPrizeModalOpen(true);
@@ -148,7 +148,7 @@ export default function Station4() {
         </div>
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
           <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
-            <h1 className="text-3xl md:text-5xl">Estación 4</h1>
+            <h1 className="text-3xl md:text-5xl">TerrAzul</h1>
             <p className="text-base md:text-xl">Recursos Hídricos</p>
           </div>
 

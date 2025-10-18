@@ -25,7 +25,7 @@ export default function Station5() {
   return (
     <ChallengeContainer
       stationId={5}
-      title="Estación 5: Diseño Sostenible"
+      title="Estación 5: ZonaCreativa"
       description="Mira los siguientes videos para aprender sobre los principios del diseño y la arquitectura sostenible."
       onChallengeComplete={handleComplete}
     >

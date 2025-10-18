@@ -4,49 +4,49 @@ import { Sprout, Recycle, Trash2, Droplets, Building, RefreshCw, Store, Puzzle, 
 export const stations: Station[] = [
   { 
     id: 1, 
-    title: 'Biodiversity', 
+    title: 'Bionexus', 
     description: 'Discover the variety of life around you.', 
     icon: Sprout 
   },
   { 
     id: 2, 
-    title: 'Sustainability', 
+    title: 'ImpacTrack', 
     description: 'Learn to live in harmony with nature.', 
     icon: Recycle
   },
   { 
     id: 3, 
-    title: 'Waste Management', 
+    title: 'ReNova', 
     description: 'Reduce, reuse, and recycle.', 
     icon: Trash2 
   },
   { 
     id: 4, 
-    title: 'Water Resources', 
+    title: 'TerrAzul', 
     description: 'Protect our most precious resource.', 
     icon: Droplets 
   },
   { 
     id: 5, 
-    title: 'Sustainable Design', 
+    title: 'ZonaCreativa', 
     description: 'Build a greener future.', 
     icon: Building
   },
   { 
     id: 6, 
-    title: 'Circular Economy', 
+    title: 'ReGira', 
     description: 'Close the loop on consumption.', 
     icon: RefreshCw
   },
   { 
     id: 7, 
-    title: 'Green Business', 
+    title: 'VerdeLAb', 
     description: 'Support eco-friendly enterprises.', 
     icon: Store
   },
   { 
     id: 8, 
-    title: 'Crossword Challenge', 
+    title: 'Vitalia', 
     description: 'Test your environmental knowledge.', 
     icon: Puzzle
   },

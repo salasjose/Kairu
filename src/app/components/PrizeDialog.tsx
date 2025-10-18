@@ -10,7 +10,7 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { allPrizes } from "@/lib/data";
+import { allPrizes, stations } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { usePrizeCart } from "@/hooks/use-prize-cart.tsx";
@@ -25,6 +25,7 @@ interface PrizeDialogProps {
 export default function PrizeDialog({ open, stationId, onClaim }: PrizeDialogProps) {
   const [selectedPrize, setSelectedPrize] = useState<number | null>(null);
   const { addPrize } = usePrizeCart();
+  const station = stations.find(s => s.id === stationId);
 
   const handleClaim = () => {
     if (selectedPrize === null) {
@@ -51,7 +52,7 @@ export default function PrizeDialog({ open, stationId, onClaim }: PrizeDialogPro
     <Dialog open={open}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center text-2xl font-headline">¡Estación {stationId} Completada!</DialogTitle>
+          <DialogTitle className="text-center text-2xl font-headline">¡{station?.title} Completada!</DialogTitle>
           <DialogDescription className="text-center">
             ¡Excelente trabajo! Como recompensa, elige una de las siguientes insignias.
           </DialogDescription>

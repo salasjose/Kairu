@@ -116,7 +116,7 @@ export default function Station3() {
   const handleComplete = (challengeId: ChallengeId) => {
     unlockStation(4);
     toast({
-      title: "¡Estación 3 Completada!",
+      title: "¡Estación ReNova Completada!",
       description: `¡Buen trabajo con el reto '${challenges[challengeId].title}'!`,
     });
     setIsPrizeModalOpen(true);
@@ -172,7 +172,7 @@ export default function Station3() {
         )}
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
           <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
-            <h1 className="text-3xl md:text-5xl">Estación 3</h1>
+            <h1 className="text-3xl md:text-5xl">ReNova</h1>
             <p className="text-base md:text-xl">Gestión de Residuos</p>
           </div>
 

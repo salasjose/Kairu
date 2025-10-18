@@ -199,7 +199,7 @@ export default function Station8() {
   return (
     <ChallengeContainer
       stationId={8}
-      title="Station 8: Crucigrama Ambiental"
+      title="Estación 8: Vitalia"
       description="Pon a prueba tu vocabulario ambiental resolviendo este crucigrama."
       onChallengeComplete={handleComplete}
     >
@@ -237,5 +237,3 @@ export default function Station8() {
     </ChallengeContainer>
   );
 }
-
-    

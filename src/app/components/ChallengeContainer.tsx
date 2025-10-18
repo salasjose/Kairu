@@ -6,6 +6,7 @@ import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 import PrizeDialog from "./PrizeDialog";
+import { stations } from "@/lib/data";
 
 interface ChallengeContainerProps {
   stationId: number;
@@ -25,12 +26,13 @@ export default function ChallengeContainer({
   const { unlockStation } = useStationProgress();
   const router = useRouter();
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
+  const station = stations.find(s => s.id === stationId);
 
   const handleComplete = () => {
     if (onChallengeComplete()) {
       unlockStation(stationId + 1);
       toast({
-        title: `¡Estación ${stationId} Completada!`,
+        title: `¡${station?.title} Completada!`,
         description: "¡Has ganado un premio!",
       });
       setIsPrizeModalOpen(true);

@@ -160,7 +160,7 @@ export default function Station2() {
     if (allCompleted) {
       unlockStation(3);
       toast({
-        title: "¡Estación 2 Completada!",
+        title: "¡Estación ImpacTrack Completada!",
         description: "¡Fantástico! Sigue con esos hábitos sostenibles.",
       });
       setIsPrizeModalOpen(true);
@@ -175,7 +175,7 @@ export default function Station2() {
     updateAndSaveChanges(newDays);
     unlockStation(3);
     toast({
-      title: "¡Estación 2 Completada!",
+      title: "¡Estación ImpacTrack Completada!",
       description: "¡Has completado todos los retos de la semana!",
     });
     setIsPrizeModalOpen(true);
@@ -246,7 +246,7 @@ export default function Station2() {
             <p className="text-4xl md:text-6xl">Semana</p>
           </div>
           <p className="absolute top-5 right-5 font-kalam text-3xl md:text-4xl text-[#D95E32] font-bold rotate-12">
-            Estación 2
+            ImpacTrack
           </p>
 
           <div className="flex flex-col items-center gap-4 md:gap-6">
