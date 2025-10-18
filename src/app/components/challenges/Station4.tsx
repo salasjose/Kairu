@@ -97,7 +97,7 @@ export default function Station4() {
   const { unlockStation } = useStationProgress();
   const router = useRouter();
 
-  const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
+  const terrazulBgImage = PlaceHolderImages.find((p) => p.id === "terrazul-background");
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
   const handleComplete = (challengeId: ChallengeId) => {
@@ -133,19 +133,17 @@ export default function Station4() {
       );
     }
     return (
-      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-blue-200 to-cyan-200 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          {mapBgImage && (
+      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        {terrazulBgImage && (
             <Image
-                src={mapBgImage.imageUrl}
-                alt={mapBgImage.description}
+                src={terrazulBgImage.imageUrl}
+                alt={terrazulBgImage.description}
                 fill
-                objectFit="cover"
-                className="z-0"
-                data-ai-hint={mapBgImage.imageHint}
-              />
-          )}
-        </div>
+                style={{objectFit: 'cover'}}
+                className="z-0 opacity-80"
+                data-ai-hint={terrazulBgImage.imageHint}
+            />
+        )}
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
           <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
             <h1 className="text-3xl md:text-5xl">TerrAzul</h1>

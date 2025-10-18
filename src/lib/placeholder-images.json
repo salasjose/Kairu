@@ -37,6 +37,12 @@
       "imageHint": "solid waste"
     },
     {
+      "id": "terrazul-background",
+      "description": "Fondo para la estación TerrAzul con un río.",
+      "imageUrl": "/backgrounds/Rio.png",
+      "imageHint": "river background"
+    },
+    {
       "id": "fauna-capybara",
       "description": "A friendly capybara in its natural habitat.",
       "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/8ff352d1-213c-4148-9941-454536645318.png",
