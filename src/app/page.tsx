@@ -20,10 +20,11 @@ import {
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import PrizeCart from "./components/PrizeCart";
 
+const PLAYER_NAME_KEY = 'kairu-player-name';
+
 const DesktopMap = () => {
   const { unlockedStations } = useStationProgress();
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
-  const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
 
   const stationPositions = [
     { top: "80%", left: "19%" }, // 1. Bionexus
@@ -39,16 +40,6 @@ const DesktopMap = () => {
 
   return (
     <div className="hidden md:block w-full h-full relative">
-       {mapBgImage && (
-        <Image
-          src={mapBgImage.imageUrl}
-          alt={mapBgImage.description}
-          fill
-          priority
-          className="object-contain z-0"
-          data-ai-hint={mapBgImage.imageHint}
-        />
-      )}
       {stations.map((station, index) => {
         const isUnlocked = unlockedStations.includes(station.id);
         const position = stationPositions[index];
@@ -197,6 +188,16 @@ export default function Home() {
 
   return (
     <main className="min-h-screen w-full flex flex-col relative">
+       {mapBgImage && (
+        <Image
+          src={mapBgImage.imageUrl}
+          alt={mapBgImage.description}
+          fill
+          priority
+          className="object-cover z-0"
+          data-ai-hint={mapBgImage.imageHint}
+        />
+      )}
       <header className="w-full max-w-5xl mx-auto flex justify-between items-center p-4 sm:p-6 md:p-8 z-20">
         <div className="flex items-center gap-2 md:gap-4 bg-background/70 p-2 rounded-md">
           <Logo className="h-10 w-10 md:h-12 md:w-12" />
