@@ -41,19 +41,18 @@ const DesktopMap = () => {
   ];
 
   return (
-    <div className="relative w-full aspect-[4/3]">
+    <div className="absolute inset-0 w-full h-full z-0">
       {mapBgImage && (
         <Image
           src={mapBgImage.imageUrl}
           alt={mapBgImage.description}
           fill
           priority
-          sizes="(max-width: 768px) 100vw, 1024px"
           className="object-cover"
           data-ai-hint={mapBgImage.imageHint}
         />
       )}
-      <div className="absolute inset-0 z-10">
+      <div className="relative w-full h-full">
         {stations.map((station, index) => {
           const isUnlocked = unlockedStations.includes(station.id);
           const position = stationPositions[index];
@@ -86,7 +85,7 @@ const DesktopMap = () => {
 const MobileGrid = () => {
     const { unlockedStations } = useStationProgress();
     return (
-        <div className="grid grid-cols-3 gap-x-2 gap-y-8 w-full">
+        <div className="grid grid-cols-3 gap-x-2 gap-y-8 w-full p-4 sm:p-6">
             {stations.map((station) => {
                 const isUnlocked = unlockedStations.includes(station.id);
                 return (
@@ -203,31 +202,34 @@ export default function Home() {
   }
 
   return (
-    <main className="flex flex-col items-center p-4 sm:p-6 md:p-8 min-h-screen w-full">
-      <header className="w-full max-w-5xl flex justify-between items-center mb-4 md:mb-6">
-        <div className="flex items-center gap-2 md:gap-4">
-          <Logo className="h-10 w-10 md:h-12 md:w-12" />
-          <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
-              Kairu
-            </h1>
-            <p className="text-sm md:text-base text-muted-foreground">
-              ¡Bienvenido, {playerName}!
-            </p>
+    <div className="min-h-screen w-full bg-background flex flex-col">
+       {isMobile ? null : <DesktopMap />}
+      <main className="flex-grow flex flex-col items-center relative z-10">
+        <header className="w-full max-w-5xl flex justify-between items-center p-4 sm:p-6 md:p-8">
+          <div className="flex items-center gap-2 md:gap-4">
+            <Logo className="h-10 w-10 md:h-12 md:w-12" />
+            <div>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
+                Kairu
+              </h1>
+              <p className="text-sm md:text-base text-muted-foreground">
+                ¡Bienvenido, {playerName}!
+              </p>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleReset}>
-            Reiniciar
-          </Button>
-          <PrizeCart />
-        </div>
-      </header>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleReset}>
+              Reiniciar
+            </Button>
+            <PrizeCart />
+          </div>
+        </header>
 
-      <div className="flex-grow w-full max-w-5xl flex items-center justify-center">
-        {isMobile ? <MobileGrid /> : <DesktopMap />}
-      </div>
-      <CompletionDialog open={allStationsCompleted} onReset={handleReset} />
-    </main>
+        <div className="flex-grow w-full flex items-center justify-center">
+            {isMobile ? <MobileGrid /> : null}
+        </div>
+        <CompletionDialog open={allStationsCompleted} onReset={handleReset} />
+      </main>
+    </div>
   );
 }
