@@ -110,7 +110,7 @@ export default function Station3() {
   const { unlockStation } = useStationProgress();
   const router = useRouter();
 
-  const streetBgImage = PlaceHolderImages.find((p) => p.id === "street-background");
+  const streetBgImage = PlaceHolderImages.find((p) => p.id === "renova-background");
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
   const handleComplete = (challengeId: ChallengeId) => {

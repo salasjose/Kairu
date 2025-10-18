@@ -2,8 +2,8 @@
   "placeholderImages": [
     {
       "id": "map-background",
-      "description": "A vibrant illustrated map for a kids' game, showing a winding path through different environments like forests, cities, and mountains.",
-      "imageUrl": "/backgrounds/map-background.png",
+      "description": "Fondo de bienvenida del juego Kairu.",
+      "imageUrl": "/backgrounds/Bienvenida_Del_Juego.png",
       "imageHint": "game map"
     },
     {
@@ -25,10 +25,10 @@
       "imageHint": "cartoon city"
     },
     {
-      "id": "street-background",
-      "description": "A brick wall with a crosswalk in front, representing an urban street scene.",
-      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/580f4f9f-02d2-45e3-85f8-8a8f4c46f125.png",
-      "imageHint": "street crosswalk"
+      "id": "renova-background",
+      "description": "Fondo para la estación de residuos sólidos.",
+      "imageUrl": "/backgrounds/Residuos_Solidos.png",
+      "imageHint": "solid waste"
     },
     {
       "id": "fauna-capybara",
