@@ -41,32 +41,30 @@ const DesktopMap = () => {
 
   return (
     <div className="absolute inset-0 w-full h-full z-0 hidden md:block">
-      <div className="relative w-full h-full">
-        {stations.map((station, index) => {
-          const isUnlocked = unlockedStations.includes(station.id);
-          const position = stationPositions[index];
-          return (
-            <div
-              key={station.id}
-              className="absolute -translate-x-1/2 -translate-y-1/2"
-              style={{ top: position.top, left: position.left }}
-            >
-              <StationNode station={station} isUnlocked={isUnlocked} />
-            </div>
-          );
-        })}
-        {yaraCharImage && (
-          <div className="absolute bottom-[8%] left-[8%] transform -translate-x-1/2 -translate-y-1/2">
-            <Image
-              src={yaraCharImage.imageUrl}
-              alt={yaraCharImage.description}
-              width={140}
-              height={140}
-              data-ai-hint={yaraCharImage.imageHint}
-            />
+      {stations.map((station, index) => {
+        const isUnlocked = unlockedStations.includes(station.id);
+        const position = stationPositions[index];
+        return (
+          <div
+            key={station.id}
+            className="absolute -translate-x-1/2 -translate-y-1/2"
+            style={{ top: position.top, left: position.left }}
+          >
+            <StationNode station={station} isUnlocked={isUnlocked} />
           </div>
-        )}
-      </div>
+        );
+      })}
+      {yaraCharImage && (
+        <div className="absolute bottom-[8%] left-[8%] transform -translate-x-1/2 -translate-y-1/2">
+          <Image
+            src={yaraCharImage.imageUrl}
+            alt={yaraCharImage.description}
+            width={140}
+            height={140}
+            data-ai-hint={yaraCharImage.imageHint}
+          />
+        </div>
+      )}
     </div>
   );
 };
