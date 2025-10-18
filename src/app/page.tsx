@@ -19,13 +19,11 @@ import {
 } from "@/components/ui/card";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import PrizeCart from "./components/PrizeCart";
-import { useIsMobile } from "@/hooks/use-mobile";
-
-const PLAYER_NAME_KEY = "kairu-player-name";
 
 const DesktopMap = () => {
   const { unlockedStations } = useStationProgress();
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
+  const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
 
   const stationPositions = [
     { top: "80%", left: "19%" }, // 1. Bionexus
@@ -40,14 +38,24 @@ const DesktopMap = () => {
   ];
 
   return (
-    <div className="absolute inset-0 w-full h-full z-0 hidden md:block">
+    <div className="hidden md:block w-full h-full relative">
+       {mapBgImage && (
+        <Image
+          src={mapBgImage.imageUrl}
+          alt={mapBgImage.description}
+          fill
+          priority
+          className="object-contain z-0"
+          data-ai-hint={mapBgImage.imageHint}
+        />
+      )}
       {stations.map((station, index) => {
         const isUnlocked = unlockedStations.includes(station.id);
         const position = stationPositions[index];
         return (
           <div
             key={station.id}
-            className="absolute -translate-x-1/2 -translate-y-1/2"
+            className="absolute -translate-x-1/2 -translate-y-1/2 z-10"
             style={{ top: position.top, left: position.left }}
           >
             <StationNode station={station} isUnlocked={isUnlocked} />
@@ -55,7 +63,7 @@ const DesktopMap = () => {
         );
       })}
       {yaraCharImage && (
-        <div className="absolute bottom-[8%] left-[8%] transform -translate-x-1/2 -translate-y-1/2">
+        <div className="absolute bottom-[8%] left-[8%] transform -translate-x-1/2 -translate-y-1/2 z-10">
           <Image
             src={yaraCharImage.imageUrl}
             alt={yaraCharImage.description}
@@ -189,42 +197,31 @@ export default function Home() {
 
   return (
     <main className="min-h-screen w-full flex flex-col relative">
-      {mapBgImage && (
-        <Image
-          src={mapBgImage.imageUrl}
-          alt={mapBgImage.description}
-          fill
-          priority
-          className="object-cover z-0"
-          data-ai-hint={mapBgImage.imageHint}
-        />
-      )}
-      <div className="relative z-10 flex-grow flex flex-col">
-        <header className="w-full max-w-5xl mx-auto flex justify-between items-center p-4 sm:p-6 md:p-8">
-          <div className="flex items-center gap-2 md:gap-4 bg-background/70 p-2 rounded-md">
-            <Logo className="h-10 w-10 md:h-12 md:w-12" />
-            <div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
-                Kairu
-              </h1>
-              <p className="text-sm md:text-base text-muted-foreground">
-                ¡Bienvenido, {playerName}!
-              </p>
-            </div>
+      <header className="w-full max-w-5xl mx-auto flex justify-between items-center p-4 sm:p-6 md:p-8 z-20">
+        <div className="flex items-center gap-2 md:gap-4 bg-background/70 p-2 rounded-md">
+          <Logo className="h-10 w-10 md:h-12 md:w-12" />
+          <div>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
+              Kairu
+            </h1>
+            <p className="text-sm md:text-base text-muted-foreground">
+              ¡Bienvenido, {playerName}!
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleReset}>
-              Reiniciar
-            </Button>
-            <PrizeCart />
-          </div>
-        </header>
-
-        <div className="flex-grow w-full flex items-center justify-center">
-            <MobileGrid />
-            <DesktopMap />
         </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleReset}>
+            Reiniciar
+          </Button>
+          <PrizeCart />
+        </div>
+      </header>
+
+      <div className="flex-grow w-full flex items-center justify-center relative">
+          <MobileGrid />
+          <DesktopMap />
       </div>
+
       <CompletionDialog open={allStationsCompleted} onReset={handleReset} />
     </main>
   );
