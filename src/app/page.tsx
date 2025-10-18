@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/card";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import PrizeCart from "./components/PrizeCart";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const PLAYER_NAME_KEY = 'kairu-player-name';
 
@@ -27,15 +28,15 @@ const DesktopMap = () => {
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
   const stationPositions = [
-    { top: '80%', left: '23%' },   // 1
-    { top: '65%', left: '35%' },   // 2
-    { top: '48%', left: '25%' },   // 3
-    { top: '25%', left: '38%' },   // 4
-    { top: '15%', left: '55%' },   // 5
-    { top: '28%', left: '72%' },   // 6
-    { top: '45%', left: '80%' },   // 7
-    { top: '65%', left: '68%' },   // 8
-    { top: '82%', left: '55%' },   // 9
+    { top: "58%", left: "18%" }, // 1
+    { top: "75%", left: "30%" }, // 2
+    { top: "85%", left: "50%" }, // 3
+    { top: "45%", left: "35%" }, // 4
+    { top: "60%", left: "55%" }, // 5
+    { top: "78%", left: "75%" }, // 6
+    { top: "30%", left: "50%" }, // 7
+    { top: "45%", left: "70%" }, // 8
+    { top: "60%", left: "90%" }, // 9
   ];
 
   const generatePath = (positions: { top: string; left: string }[]) => {
@@ -60,8 +61,8 @@ const DesktopMap = () => {
             d={pathD}
             fill="none"
             stroke="white"
-            strokeWidth="1"
-            strokeDasharray="4 4"
+            strokeWidth="0.5"
+            strokeDasharray="2 2"
             strokeLinecap="round"
           />
         </svg>
@@ -176,8 +177,8 @@ export default function Home() {
     );
   }
 
+  const welcomeBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
   if (!playerName) {
-    const welcomeBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
         {welcomeBgImage && (
@@ -226,6 +227,8 @@ export default function Home() {
   }
   
   const mapBgImage = PlaceHolderImages.find((p) => p.id === "mapa-juego-background");
+  const avatarImage = PlaceHolderImages.find((p) => p.id === "avatar-placeholder");
+
 
   return (
     <main className="min-h-screen w-full flex flex-col relative">
@@ -240,25 +243,33 @@ export default function Home() {
             priority
         />
       )}
-      <header className="w-full max-w-7xl mx-auto flex justify-between items-center p-4 sm:p-6 md:p-8 z-20">
-        <div className="flex items-center gap-2 md:gap-4 bg-background/70 backdrop-blur-sm p-2 rounded-md">
-          <Logo className="h-10 w-10 md:h-12 md:w-12" />
-          <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
-              Kairu
-            </h1>
-            <p className="text-sm md:text-base text-muted-foreground">
-              ¡Bienvenido, {playerName}!
-            </p>
+      
+      <header className="w-full max-w-7xl mx-auto p-4 z-20">
+        <div className="flex justify-between items-center gap-4">
+          <div className="flex items-center gap-3 bg-cyan-100/80 backdrop-blur-sm p-2 rounded-xl shadow-md">
+            <Logo className="h-10 w-10 text-cyan-800" />
+            <div className="flex items-center gap-3">
+              <div>
+                <h1 className="text-lg font-bold text-cyan-900">Kairu</h1>
+                <p className="text-sm text-cyan-800">
+                  ¡Bienvenido, {playerName}!
+                </p>
+              </div>
+              <Avatar className="h-12 w-12 border-2 border-white">
+                <AvatarImage src={avatarImage?.imageUrl} alt="Player avatar" />
+                <AvatarFallback>P</AvatarFallback>
+              </Avatar>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleReset} className="rounded-full bg-white/80">
+              Reiniciar
+            </Button>
+            <PrizeCart />
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleReset}>
-            Reiniciar
-          </Button>
-          <PrizeCart />
-        </div>
       </header>
+
 
       <div className="flex-grow w-full flex items-center justify-center relative z-10">
           <MobileGrid />

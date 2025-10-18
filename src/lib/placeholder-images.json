@@ -19,6 +19,12 @@
       "imageHint": "frog character"
     },
     {
+      "id": "avatar-placeholder",
+      "description": "A placeholder avatar image for the player.",
+      "imageUrl": "https://images.unsplash.com/photo-1724435811349-32d27f4d5806?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwcm9maWxlJTIwYXZhdGFyfGVufDB8fHx8MTc2MDczMTI4NHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "profile avatar"
+    },
+    {
       "id": "forest-background",
       "description": "A lush, green cartoon forest background, with tall trees and sunlight filtering through the leaves.",
       "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/e09e23c2-f123-45c1-9293-e0750e3ac113.png",

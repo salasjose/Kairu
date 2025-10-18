@@ -22,21 +22,21 @@ export default function StationNode({ station, isUnlocked }: StationNodeProps) {
   const stationButton = (
     <div
       className={cn(
-        "relative w-12 h-12 rounded-full transition-all duration-300 transform flex items-center justify-center",
+        "relative w-12 h-12 rounded-full transition-all duration-300 transform flex items-center justify-center shadow-lg",
         isUnlocked
-          ? "bg-white shadow-md hover:scale-110 hover:shadow-lg"
-          : "bg-gray-400/50 cursor-not-allowed"
+          ? "bg-slate-800/90 hover:bg-slate-700 hover:scale-110"
+          : "bg-slate-800/90 cursor-not-allowed"
       )}
     >
       {isUnlocked ? (
-        <Icon className="h-7 w-7 text-primary" />
+        <Icon className="h-7 w-7 text-white" />
       ) : (
-        <Lock className="h-6 w-6 text-white/70" />
+        <Lock className="h-6 w-6 text-white/80" />
       )}
     </div>
   );
 
-  const Wrapper = isUnlocked ? Link : 'div';
+  const Wrapper = isUnlocked ? Link : "div";
 
   return (
     <TooltipProvider>
@@ -47,8 +47,14 @@ export default function StationNode({ station, isUnlocked }: StationNodeProps) {
           </Wrapper>
         </TooltipTrigger>
         <TooltipContent>
-          <p className="font-bold">{station.id}. {station.title}</p>
-          <p>{isUnlocked ? station.description : "Completa las estaciones anteriores para desbloquear."}</p>
+          <p className="font-bold">
+            {station.id}. {station.title}
+          </p>
+          <p>
+            {isUnlocked
+              ? station.description
+              : "Completa las estaciones anteriores para desbloquear."}
+          </p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
