@@ -110,7 +110,7 @@ export default function Station3() {
   const { unlockStation } = useStationProgress();
   const router = useRouter();
 
-  const cityBgImage = PlaceHolderImages.find((p) => p.id === "city-background");
+  const streetBgImage = PlaceHolderImages.find((p) => p.id === "street-background");
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
   const handleComplete = (challengeId: ChallengeId) => {
@@ -159,15 +159,15 @@ export default function Station3() {
 
   return (
     <>
-      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 bg-[#89A1C5] relative overflow-hidden">
-        {cityBgImage && (
+      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        {streetBgImage && (
             <Image
-              src={cityBgImage.imageUrl}
-              alt={cityBgImage.description}
+              src={streetBgImage.imageUrl}
+              alt={streetBgImage.description}
               fill
               objectFit="cover"
               className="z-0 opacity-70"
-              data-ai-hint={cityBgImage.imageHint}
+              data-ai-hint={streetBgImage.imageHint}
             />
         )}
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">

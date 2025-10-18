@@ -25,6 +25,12 @@
       "imageHint": "cartoon city"
     },
     {
+      "id": "street-background",
+      "description": "A brick wall with a crosswalk in front, representing an urban street scene.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/580f4f9f-02d2-45e3-85f8-8a8f4c46f125.png",
+      "imageHint": "street crosswalk"
+    },
+    {
       "id": "fauna-capybara",
       "description": "A friendly capybara in its natural habitat.",
       "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/8ff352d1-213c-4148-9941-454536645318.png",
