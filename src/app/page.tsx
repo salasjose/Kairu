@@ -25,7 +25,6 @@ const PLAYER_NAME_KEY = "kairu-player-name";
 
 const DesktopMap = () => {
   const { unlockedStations } = useStationProgress();
-  const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
   const stationPositions = [
@@ -41,17 +40,7 @@ const DesktopMap = () => {
   ];
 
   return (
-    <div className="absolute inset-0 w-full h-full z-0">
-      {mapBgImage && (
-        <Image
-          src={mapBgImage.imageUrl}
-          alt={mapBgImage.description}
-          fill
-          priority
-          className="object-cover"
-          data-ai-hint={mapBgImage.imageHint}
-        />
-      )}
+    <div className="absolute inset-0 w-full h-full z-0 hidden md:block">
       <div className="relative w-full h-full">
         {stations.map((station, index) => {
           const isUnlocked = unlockedStations.includes(station.id);
@@ -85,7 +74,7 @@ const DesktopMap = () => {
 const MobileGrid = () => {
     const { unlockedStations } = useStationProgress();
     return (
-        <div className="grid grid-cols-3 gap-x-2 gap-y-8 w-full p-4 sm:p-6">
+        <div className="grid grid-cols-3 gap-x-2 gap-y-8 w-full p-4 sm:p-6 md:hidden">
             {stations.map((station) => {
                 const isUnlocked = unlockedStations.includes(station.id);
                 return (
@@ -111,8 +100,7 @@ export default function Home() {
   const [clientLoaded, setClientLoaded] = useState(false);
   const [playerName, setPlayerName] = useState<string | null>(null);
   const [inputName, setInputName] = useState("");
-  const isMobile = useIsMobile();
-
+  const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
 
   useEffect(() => {
     setClientLoaded(true);
@@ -202,11 +190,20 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen w-full bg-background flex flex-col">
-       {!isMobile && <DesktopMap />}
+    <main className="min-h-screen w-full flex flex-col relative">
+      {mapBgImage && (
+        <Image
+          src={mapBgImage.imageUrl}
+          alt={mapBgImage.description}
+          fill
+          priority
+          className="object-cover z-0"
+          data-ai-hint={mapBgImage.imageHint}
+        />
+      )}
       <div className="relative z-10 flex-grow flex flex-col">
         <header className="w-full max-w-5xl mx-auto flex justify-between items-center p-4 sm:p-6 md:p-8">
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-2 md:gap-4 bg-background/70 p-2 rounded-md">
             <Logo className="h-10 w-10 md:h-12 md:w-12" />
             <div>
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
@@ -226,7 +223,8 @@ export default function Home() {
         </header>
 
         <div className="flex-grow w-full flex items-center justify-center">
-            {isMobile && <MobileGrid />}
+            <MobileGrid />
+            <DesktopMap />
         </div>
       </div>
       <CompletionDialog open={allStationsCompleted} onReset={handleReset} />
