@@ -17,7 +17,9 @@ interface StationNodeProps {
 }
 
 export default function StationNode({ station, isUnlocked }: StationNodeProps) {
-  const stationIcon = (
+  const StationIcon = station.icon;
+  
+  const stationButton = (
     <div
       className={cn(
         "relative w-16 h-16 rounded-full transition-all duration-300 transform",
@@ -35,9 +37,7 @@ export default function StationNode({ station, isUnlocked }: StationNodeProps) {
               "absolute inset-0 rounded-full bg-slate-700 shadow-inner-lg flex items-center justify-center border-2 border-slate-500"
             )}
           >
-            <span className="text-white font-bold text-2xl font-headline">
-              {station.id}
-            </span>
+            <StationIcon className="h-8 w-8 text-white" />
           </div>
         </>
       ) : (
@@ -61,7 +61,7 @@ export default function StationNode({ station, isUnlocked }: StationNodeProps) {
       <Tooltip>
         <TooltipTrigger asChild>
           <Wrapper href={`/station/${station.id}`} className="relative">
-            {stationIcon}
+            {stationButton}
           </Wrapper>
         </TooltipTrigger>
         <TooltipContent>
