@@ -19,6 +19,12 @@
       "imageHint": "forest background"
     },
     {
+      "id": "biodiversidad-background",
+      "description": "Un fondo de biodiversidad con un paisaje frondoso.",
+      "imageUrl": "/backgrounds/Biodiversidad.png",
+      "imageHint": "biodiversity background"
+    },
+    {
       "id": "city-background",
       "description": "A bright and clean cartoon city skyline with buildings and green spaces.",
       "imageUrl": "/backgrounds/city-background.png",

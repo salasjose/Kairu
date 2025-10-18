@@ -57,7 +57,7 @@ export default function Station1() {
 
   const faunaImage = PlaceHolderImages.find((p) => p.id === "fauna-capybara");
   const habitatImage = PlaceHolderImages.find((p) => p.id === "habitat-build-1");
-  const forestBgImage = PlaceHolderImages.find((p) => p.id === "forest-background");
+  const biodiversidadBgImage = PlaceHolderImages.find((p) => p.id === "biodiversidad-background");
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
   const challenges = {
@@ -100,14 +100,14 @@ export default function Station1() {
 
   return (
     <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
-      {forestBgImage && (
+      {biodiversidadBgImage && (
           <Image
-            src={forestBgImage.imageUrl}
-            alt={forestBgImage.description}
+            src={biodiversidadBgImage.imageUrl}
+            alt={biodiversidadBgImage.description}
             fill
             style={{objectFit: 'cover'}}
             className="z-0 opacity-80"
-            data-ai-hint={forestBgImage.imageHint}
+            data-ai-hint={biodiversidadBgImage.imageHint}
           />
       )}
       <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
