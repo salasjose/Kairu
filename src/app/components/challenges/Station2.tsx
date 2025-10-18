@@ -87,7 +87,7 @@ export default function Station2() {
   const { unlockStation } = useStationProgress();
   const router = useRouter();
 
-  const cityBgImage = PlaceHolderImages.find((p) => p.id === "city-background");
+  const sostenibilidadBgImage = PlaceHolderImages.find((p) => p.id === "sostenibilidad-background");
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
   const updateAndSaveChanges = useCallback((newDays: DayState[]) => {
@@ -229,27 +229,27 @@ export default function Station2() {
 
   return (
     <>
-      <div className="w-full flex-grow flex flex-col items-center p-4 relative overflow-hidden bg-blue-200">
-        {cityBgImage && (
+      <div className="w-full flex-grow flex flex-col items-center p-4 relative overflow-hidden">
+        {sostenibilidadBgImage && (
             <Image
-              src={cityBgImage.imageUrl}
-              alt={cityBgImage.description}
+              src={sostenibilidadBgImage.imageUrl}
+              alt={sostenibilidadBgImage.description}
               fill
-              objectFit="cover"
+              style={{objectFit: 'cover'}}
               className="z-0 opacity-90"
-              data-ai-hint={cityBgImage.imageHint}
+              data-ai-hint={sostenibilidadBgImage.imageHint}
             />
         )}
         <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
-          <div className="text-[#D95E32] font-kalam text-center mb-8">
+          <div className="text-[#D95E32] font-kalam text-center mb-8 bg-background/70 backdrop-blur-sm p-4 rounded-xl">
             <h1 className="text-5xl md:text-7xl leading-none">Reto de la</h1>
             <p className="text-4xl md:text-6xl">Semana</p>
           </div>
-          <p className="absolute top-5 right-5 font-kalam text-3xl md:text-4xl text-[#D95E32] font-bold rotate-12">
+          <p className="absolute top-5 right-5 font-kalam text-3xl md:text-4xl text-[#D95E32] font-bold rotate-12 bg-background/70 backdrop-blur-sm p-2 rounded-lg">
             ImpacTrack
           </p>
 
-          <div className="flex flex-col items-center gap-4 md:gap-6">
+          <div className="flex flex-col items-center gap-4 md:gap-6 bg-background/70 backdrop-blur-sm p-6 rounded-xl">
             <div className="flex flex-wrap justify-center gap-4 md:gap-6">
               {days.slice(0, 4).map((_, index) => renderDayButton(index))}
             </div>
