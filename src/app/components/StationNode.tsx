@@ -17,33 +17,21 @@ interface StationNodeProps {
 }
 
 export default function StationNode({ station, isUnlocked }: StationNodeProps) {
-  const Icon = station.icon;
 
   const stationButton = (
     <div
       className={cn(
-        "relative w-12 h-14 transition-transform duration-300 transform",
-        isUnlocked ? "hover:scale-110" : "cursor-not-allowed"
+        "relative w-10 h-10 transition-transform duration-300 transform rounded-full shadow-lg",
+        isUnlocked ? "bg-white hover:scale-110" : "bg-gray-400/80 cursor-not-allowed"
       )}
     >
-      {/* 3D Base Effect */}
-      <div className="absolute top-2 left-0 w-full h-12 rounded-full bg-slate-400 shadow-[0_6px_0_0_#94a3b8,0_10px_10px_0_rgba(0,0,0,0.3)]"></div>
-
-      {/* Top part of the button */}
-      <div
-        className={cn(
-          "absolute top-0 left-0 w-full h-12 rounded-full flex items-center justify-center border-2",
-          isUnlocked
-            ? "bg-slate-800 border-slate-600"
-            : "bg-slate-600 border-slate-500"
-        )}
-      >
-        {isUnlocked ? (
-          <Icon className="h-7 w-7 text-white" />
+       {isUnlocked ? (
+          <span className="w-full h-full" />
         ) : (
-          <Lock className="h-6 w-6 text-white/80" />
+          <div className="w-full h-full flex items-center justify-center">
+            <Lock className="h-5 w-5 text-white/90" />
+          </div>
         )}
-      </div>
     </div>
   );
 

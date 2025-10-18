@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/card";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import PrizeCart from "./components/PrizeCart";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const PLAYER_NAME_KEY = 'kairu-player-name';
 
@@ -28,15 +27,15 @@ const DesktopMap = () => {
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
   const stationPositions = [
-    { top: "58%", left: "18%" }, // 1
-    { top: "75%", left: "30%" }, // 2
-    { top: "85%", left: "50%" }, // 3
-    { top: "45%", left: "35%" }, // 4
-    { top: "60%", left: "55%" }, // 5
-    { top: "78%", left: "75%" }, // 6
-    { top: "30%", left: "50%" }, // 7
-    { top: "45%", left: "70%" }, // 8
-    { top: "60%", left: "90%" }, // 9
+    { top: "60%", left: "18%" }, // 1
+    { top: "50%", left: "32%" }, // 2
+    { top: "35%", left: "25%" }, // 3
+    { top: "25%", left: "45%" }, // 4
+    { top: "45%", left: "55%" }, // 5
+    { top: "30%", left: "70%" }, // 6
+    { top: "55%", left: "80%" }, // 7
+    { top: "75%", left: "70%" }, // 8
+    { top: "80%", left: "90%" }, // 9
   ];
 
   const generatePath = (positions: { top: string; left: string }[]) => {
@@ -226,8 +225,7 @@ export default function Home() {
     );
   }
   
-  const mapBgImage = PlaceHolderImages.find((p) => p.id === "mapa-juego-background");
-  const avatarImage = PlaceHolderImages.find((p) => p.id === "avatar-placeholder");
+  const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
 
 
   return (
@@ -244,30 +242,11 @@ export default function Home() {
         />
       )}
       
-      <header className="w-full max-w-7xl mx-auto p-4 z-20">
-        <div className="flex justify-between items-center gap-4">
-          <div className="flex items-center gap-3 bg-cyan-100/80 backdrop-blur-sm p-2 rounded-xl shadow-md">
-            <Logo className="h-10 w-10 text-cyan-800" />
-            <div className="flex items-center gap-3">
-              <div>
-                <h1 className="text-lg font-bold text-cyan-900">Kairu</h1>
-                <p className="text-sm text-cyan-800">
-                  ¡Bienvenido, {playerName}!
-                </p>
-              </div>
-              <Avatar className="h-12 w-12 border-2 border-white">
-                <AvatarImage src={avatarImage?.imageUrl} alt="Player avatar" />
-                <AvatarFallback>P</AvatarFallback>
-              </Avatar>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleReset} className="rounded-full bg-white/80">
-              Reiniciar
-            </Button>
-            <PrizeCart />
-          </div>
-        </div>
+      <header className="absolute top-4 right-4 z-20 flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={handleReset} className="rounded-full bg-white/80">
+          Reiniciar
+        </Button>
+        <PrizeCart />
       </header>
 
 
