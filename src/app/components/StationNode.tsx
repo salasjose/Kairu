@@ -17,18 +17,19 @@ interface StationNodeProps {
 }
 
 export default function StationNode({ station, isUnlocked }: StationNodeProps) {
-  
+  const Icon = station.icon;
+
   const stationButton = (
     <div
       className={cn(
         "relative w-12 h-12 rounded-full transition-all duration-300 transform flex items-center justify-center",
-        isUnlocked 
+        isUnlocked
           ? "bg-white shadow-md hover:scale-110 hover:shadow-lg"
           : "bg-gray-400/50 cursor-not-allowed"
       )}
     >
       {isUnlocked ? (
-        <span className="sr-only">{station.title}</span>
+        <Icon className="h-7 w-7 text-primary" />
       ) : (
         <Lock className="h-6 w-6 text-white/70" />
       )}

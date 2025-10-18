@@ -41,28 +41,6 @@ const DesktopMap = () => {
   const generatePath = (positions: { top: string; left: string }[]) => {
     if (positions.length < 2) return "";
     
-    // Create a smooth curve through the points
-    let pathData = `M ${positions[0].left.replace('%','')} ${positions[0].top.replace('%','')}`;
-    
-    for (let i = 0; i < positions.length - 1; i++) {
-      const p1 = { x: parseFloat(positions[i].left), y: parseFloat(positions[i].top) };
-      const p2 = { x: parseFloat(positions[i+1].left), y: parseFloat(positions[i+1].top) };
-      
-      const midPoint = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
-      const cp1 = { x: (midPoint.x + p1.x) / 2, y: p1.y };
-      const cp2 = { x: (midPoint.x + p1.x) / 2, y: p2.y };
-
-      // Using quadratic bezier for smoother curves between points.
-      // This is a simplified approach. For perfect curves, one might need a more complex algorithm.
-      if(i < positions.length - 2) {
-        const p3 = { x: parseFloat(positions[i+2].left), y: parseFloat(positions[i+2].top) };
-        const midPoint2 = { x: (p2.x + p3.x) / 2, y: (p2.y + p3.y) / 2 };
-        pathData += ` Q ${p2.x},${p2.y} ${midPoint2.x},${midPoint2.y}`;
-      } else {
-        pathData += ` L ${p2.x},${p2.y}`;
-      }
-    }
-    
     const simplePath = positions.map((pos, index) => {
       const command = index === 0 ? 'M' : 'L';
       return `${command} ${pos.left.replace('%','')} ${pos.top.replace('%','')}`;
@@ -247,7 +225,7 @@ export default function Home() {
     );
   }
   
-  const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
+  const mapBgImage = PlaceHolderImages.find((p) => p.id === "mapa-juego-background");
 
   return (
     <main className="min-h-screen w-full flex flex-col relative">
