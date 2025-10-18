@@ -28,23 +28,46 @@ const DesktopMap = () => {
 
   // Coordinates are percentages (top, left) for responsive positioning
   const stationPositions = [
-    { top: '39%', left: '23%' }, // 1
-    { top: '25%', left: '42%' }, // 2
+    { top: '39%', left: '23%' },   // 1
+    { top: '25%', left: '42%' },   // 2
     { top: '36.5%', left: '67%' }, // 3
-    { top: '55.5%', left: '50.5%' }, // 4
-    { top: '51%', left: '81%' }, // 5
-    { top: '79%', left: '70%' }, // 6
-    { top: '84%', left: '38%' }, // 7
-    { top: '80%', left: '19%' }, // 8
-    { top: '8%', left: '52%' },  // 9
+    { top: '55.5%', left: '50.5%' },// 4
+    { top: '51%', left: '81%' },   // 5
+    { top: '79%', left: '70%' },   // 6
+    { top: '84%', left: '38%' },   // 7
+    { top: '80%', left: '19%' },   // 8
+    { top: '8%', left: '52%' },    // 9
   ];
+
+  const generatePath = (positions: { top: string; left: string }[]) => {
+    if (positions.length < 2) return "";
+    const pathData = positions.map((pos, index) => {
+      const command = index === 0 ? 'M' : 'L';
+      return `${command} ${pos.left.replace('%','')} ${pos.top.replace('%','')}`;
+    });
+    // Find station 9 and draw a line back to start or another point if needed
+    // For now, it just connects 1->2->...->9
+    return pathData.join(' ');
+  };
+  
+  const pathD = generatePath(stations.map(s => stationPositions[s.id - 1]));
 
 
   return (
     <div className="hidden md:block w-full h-full relative">
+       <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute top-0 left-0">
+          <path
+            d={pathD}
+            fill="none"
+            stroke="rgba(255, 255, 255, 0.7)"
+            strokeWidth="1.5"
+            strokeDasharray="4 4"
+            strokeLinecap="round"
+          />
+        </svg>
       {stations.map((station, index) => {
         const isUnlocked = unlockedStations.includes(station.id);
-        const pos = stationPositions[index];
+        const pos = stationPositions[station.id-1];
         return (
           <div 
             key={station.id} 
