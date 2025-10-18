@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/card";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import PrizeCart from "./components/PrizeCart";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 const PLAYER_NAME_KEY = 'kairu-player-name';
 
@@ -101,7 +100,6 @@ export default function Home() {
   const [clientLoaded, setClientLoaded] = useState(false);
   const [playerName, setPlayerName] = useState<string | null>(null);
   const [inputName, setInputName] = useState("");
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     setClientLoaded(true);
