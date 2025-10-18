@@ -17,39 +17,20 @@ interface StationNodeProps {
 }
 
 export default function StationNode({ station, isUnlocked }: StationNodeProps) {
-  const StationIcon = station.icon;
   
   const stationButton = (
     <div
       className={cn(
-        "relative w-16 h-16 rounded-full transition-all duration-300 transform",
-        isUnlocked && "hover:scale-110"
+        "relative w-12 h-12 rounded-full transition-all duration-300 transform flex items-center justify-center",
+        isUnlocked 
+          ? "bg-white shadow-md hover:scale-110 hover:shadow-lg"
+          : "bg-gray-400/50 cursor-not-allowed"
       )}
     >
       {isUnlocked ? (
-        <>
-          {/* Cilindro base 3D */}
-          <div className="absolute inset-x-1 top-2 h-full rounded-full bg-white/90 shadow-[0_8px_0_0_rgba(0,0,0,0.1)]" />
-          
-          {/* Tapa superior del cilindro */}
-          <div
-            className={cn(
-              "absolute inset-0 rounded-full bg-slate-700 shadow-inner-lg flex items-center justify-center border-2 border-slate-500"
-            )}
-          >
-            <StationIcon className="h-8 w-8 text-white" />
-          </div>
-        </>
+        <span className="sr-only">{station.title}</span>
       ) : (
-        <>
-           {/* Cilindro base 3D bloqueado */}
-           <div className="absolute inset-x-1 top-2 h-full rounded-full bg-slate-600/50 shadow-[0_8px_0_0_rgba(0,0,0,0.1)]" />
-          
-           {/* Tapa superior bloqueada */}
-           <div className="absolute inset-0 rounded-full bg-slate-800 shadow-inner-lg flex items-center justify-center border-2 border-slate-600">
-             <Lock className="h-7 w-7 text-slate-500" />
-           </div>
-        </>
+        <Lock className="h-6 w-6 text-white/70" />
       )}
     </div>
   );

@@ -26,28 +26,50 @@ const DesktopMap = () => {
   const { unlockedStations } = useStationProgress();
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
-  // Coordinates are percentages (top, left) for responsive positioning
   const stationPositions = [
-    { top: '39%', left: '23%' },   // 1
-    { top: '25%', left: '42%' },   // 2
-    { top: '36.5%', left: '67%' }, // 3
-    { top: '55.5%', left: '50.5%' },// 4
-    { top: '51%', left: '81%' },   // 5
-    { top: '79%', left: '70%' },   // 6
-    { top: '84%', left: '38%' },   // 7
-    { top: '80%', left: '19%' },   // 8
-    { top: '8%', left: '52%' },    // 9
+    { top: '80%', left: '23%' },   // 1
+    { top: '65%', left: '35%' },   // 2
+    { top: '48%', left: '25%' },   // 3
+    { top: '25%', left: '38%' },   // 4
+    { top: '15%', left: '55%' },   // 5
+    { top: '28%', left: '72%' },   // 6
+    { top: '45%', left: '80%' },   // 7
+    { top: '65%', left: '68%' },   // 8
+    { top: '82%', left: '55%' },   // 9
   ];
 
   const generatePath = (positions: { top: string; left: string }[]) => {
     if (positions.length < 2) return "";
-    const pathData = positions.map((pos, index) => {
+    
+    // Create a smooth curve through the points
+    let pathData = `M ${positions[0].left.replace('%','')} ${positions[0].top.replace('%','')}`;
+    
+    for (let i = 0; i < positions.length - 1; i++) {
+      const p1 = { x: parseFloat(positions[i].left), y: parseFloat(positions[i].top) };
+      const p2 = { x: parseFloat(positions[i+1].left), y: parseFloat(positions[i+1].top) };
+      
+      const midPoint = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+      const cp1 = { x: (midPoint.x + p1.x) / 2, y: p1.y };
+      const cp2 = { x: (midPoint.x + p1.x) / 2, y: p2.y };
+
+      // Using quadratic bezier for smoother curves between points.
+      // This is a simplified approach. For perfect curves, one might need a more complex algorithm.
+      if(i < positions.length - 2) {
+        const p3 = { x: parseFloat(positions[i+2].left), y: parseFloat(positions[i+2].top) };
+        const midPoint2 = { x: (p2.x + p3.x) / 2, y: (p2.y + p3.y) / 2 };
+        pathData += ` Q ${p2.x},${p2.y} ${midPoint2.x},${midPoint2.y}`;
+      } else {
+        pathData += ` L ${p2.x},${p2.y}`;
+      }
+    }
+    
+    const simplePath = positions.map((pos, index) => {
       const command = index === 0 ? 'M' : 'L';
       return `${command} ${pos.left.replace('%','')} ${pos.top.replace('%','')}`;
-    });
-    // Find station 9 and draw a line back to start or another point if needed
-    // For now, it just connects 1->2->...->9
-    return pathData.join(' ');
+    }).join(' ');
+
+
+    return simplePath;
   };
   
   const pathD = generatePath(stations.map(s => stationPositions[s.id - 1]));
@@ -59,13 +81,13 @@ const DesktopMap = () => {
           <path
             d={pathD}
             fill="none"
-            stroke="rgba(255, 255, 255, 0.7)"
-            strokeWidth="1.5"
+            stroke="white"
+            strokeWidth="1"
             strokeDasharray="4 4"
             strokeLinecap="round"
           />
         </svg>
-      {stations.map((station, index) => {
+      {stations.map((station) => {
         const isUnlocked = unlockedStations.includes(station.id);
         const pos = stationPositions[station.id-1];
         return (
@@ -177,7 +199,7 @@ export default function Home() {
   }
 
   if (!playerName) {
-    const welcomeBgImage = PlaceHolderImages.find((p) => p.id === "forest-background");
+    const welcomeBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
         {welcomeBgImage && (
@@ -225,7 +247,7 @@ export default function Home() {
     );
   }
   
-  const mapBgImage = PlaceHolderImages.find((p) => p.id === "mapa-juego-background");
+  const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
 
   return (
     <main className="min-h-screen w-full flex flex-col relative">
