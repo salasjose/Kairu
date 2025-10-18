@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -19,67 +20,54 @@ import {
 } from "@/components/ui/card";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import PrizeCart from "./components/PrizeCart";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const PLAYER_NAME_KEY = 'kairu-player-name';
 
 const DesktopMap = () => {
   const { unlockedStations } = useStationProgress();
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
-  const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
 
+  // Coordenadas precisas dentro de un sistema de 1000x1000 para el SVG
   const stationPositions = [
-    { top: "80%", left: "19%" },
-    { top: "88%", left: "37%" },
-    { top: "82%", left: "55%" },
-    { top: "88%", left: "73%" },
-    { top: "60%", left: "89%" },
-    { top: "37%", left: "75%" },
-    { top: "50%", left: "44%" },
-    { top_desktop: "30%", top_mobile: "30%", left: "60%" },
-    { top_desktop: "15%", top_mobile: "15%", left: "48%" },
-];
-
+    { x: 230, y: 390 }, // 1
+    { x: 420, y: 250 }, // 2
+    { x: 670, y: 365 }, // 3
+    { x: 505, y: 555 }, // 4
+    { x: 810, y: 510 }, // 5
+    { x: 700, y: 790 }, // 6
+    { x: 380, y: 840 }, // 7
+    { x: 190, y: 800 }, // 8
+    { x: 480, y: 80 },  // 9
+  ];
 
   return (
     <div className="hidden md:block w-full h-full relative">
-      {mapBgImage && (
-        <Image
-          src={mapBgImage.imageUrl}
-          alt={mapBgImage.description}
-          layout="fill"
-          objectFit="cover"
-          className="z-0"
-          data-ai-hint={mapBgImage.imageHint}
-          priority
-        />
-      )}
-      {stations.map((station, index) => {
-        const isUnlocked = unlockedStations.includes(station.id);
-        const position = stationPositions[index];
-        return (
-          <div
-            key={station.id}
-            className="absolute -translate-x-1/2 -translate-y-1/2 z-10"
-            style={{ 
-              top: (position as any).top_desktop || position.top, 
-              left: position.left 
-            }}
-          >
-            <StationNode station={station} isUnlocked={isUnlocked} />
-          </div>
-        );
-      })}
-      {yaraCharImage && (
-        <div className="absolute bottom-[8%] left-[8%] transform -translate-x-1/2 -translate-y-1/2 z-10">
-          <Image
-            src={yaraCharImage.imageUrl}
-            alt={yaraCharImage.description}
-            width={140}
-            height={140}
-            data-ai-hint={yaraCharImage.imageHint}
-          />
-        </div>
-      )}
+      <svg viewBox="0 0 1000 1000" className="absolute inset-0 w-full h-full">
+        {stations.map((station, index) => {
+          const isUnlocked = unlockedStations.includes(station.id);
+          const pos = stationPositions[index];
+          return (
+            <foreignObject key={station.id} x={pos.x - 32} y={pos.y - 32} width="64" height="64" className="overflow-visible">
+               <div className="w-16 h-16">
+                 <StationNode station={station} isUnlocked={isUnlocked} />
+               </div>
+            </foreignObject>
+          );
+        })}
+
+        {yaraCharImage && (
+            <foreignObject x="50" y="800" width="140" height="140">
+                <Image
+                    src={yaraCharImage.imageUrl}
+                    alt={yaraCharImage.description}
+                    width={140}
+                    height={140}
+                    data-ai-hint={yaraCharImage.imageHint}
+                />
+            </foreignObject>
+        )}
+      </svg>
     </div>
   );
 };
@@ -114,6 +102,7 @@ export default function Home() {
   const [playerName, setPlayerName] = useState<string | null>(null);
   const [inputName, setInputName] = useState("");
   const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     setClientLoaded(true);
@@ -170,41 +159,53 @@ export default function Home() {
   if (!playerName) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
-        <div className="flex items-center gap-2 md:gap-4 mb-6">
-          <Logo className="h-10 w-10 md:h-12 md:w-12" />
-          <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
-              Kairu
-            </h1>
-            <p className="text-sm md:text-base text-muted-foreground">
-              Una aventura interactiva de educación ambiental
-            </p>
-          </div>
-        </div>
-        <Card className="w-full max-w-sm shadow-2xl">
-          <CardHeader>
-            <CardTitle>¡Bienvenido Explorador!</CardTitle>
-            <CardDescription>
-              Escribe tu nombre para comenzar la aventura.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <Input
-              placeholder="Tu nombre"
-              value={inputName}
-              onChange={(e) => setInputName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSaveName()}
+        {mapBgImage && (
+            <Image
+                src={mapBgImage.imageUrl}
+                alt="Background map"
+                layout="fill"
+                objectFit="cover"
+                className="z-0 opacity-50"
+                priority
             />
-            <Button onClick={handleSaveName}>Comenzar Aventura</Button>
-          </CardContent>
-        </Card>
+        )}
+        <div className="relative z-10 flex flex-col items-center">
+            <div className="flex items-center gap-2 md:gap-4 mb-6 bg-background/80 p-4 rounded-xl">
+              <Logo className="h-10 w-10 md:h-12 md:w-12" />
+              <div>
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
+                  Kairu
+                </h1>
+                <p className="text-sm md:text-base text-muted-foreground">
+                  Una aventura interactiva de educación ambiental
+                </p>
+              </div>
+            </div>
+            <Card className="w-full max-w-sm shadow-2xl">
+              <CardHeader>
+                <CardTitle>¡Bienvenido Explorador!</CardTitle>
+                <CardDescription>
+                  Escribe tu nombre para comenzar la aventura.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4">
+                <Input
+                  placeholder="Tu nombre"
+                  value={inputName}
+                  onChange={(e) => setInputName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSaveName()}
+                />
+                <Button onClick={handleSaveName}>Comenzar Aventura</Button>
+              </CardContent>
+            </Card>
+        </div>
       </main>
     );
   }
 
   return (
     <main className="min-h-screen w-full flex flex-col relative bg-black">
-       {mapBgImage && (
+      {mapBgImage && (
         <Image
           src={mapBgImage.imageUrl}
           alt={mapBgImage.description}
@@ -215,8 +216,8 @@ export default function Home() {
           priority
         />
       )}
-      <header className="w-full max-w-5xl mx-auto flex justify-between items-center p-4 sm:p-6 md:p-8 z-20">
-        <div className="flex items-center gap-2 md:gap-4 bg-background/70 p-2 rounded-md">
+      <header className="w-full max-w-7xl mx-auto flex justify-between items-center p-4 sm:p-6 md:p-8 z-20">
+        <div className="flex items-center gap-2 md:gap-4 bg-background/70 backdrop-blur-sm p-2 rounded-md">
           <Logo className="h-10 w-10 md:h-12 md:w-12" />
           <div>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
@@ -235,7 +236,7 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="flex-grow w-full flex items-center justify-center relative">
+      <div className="flex-grow w-full flex items-center justify-center relative z-10">
           <MobileGrid />
           <DesktopMap />
       </div>
@@ -244,3 +245,5 @@ export default function Home() {
     </main>
   );
 }
+
+    
