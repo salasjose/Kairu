@@ -202,10 +202,10 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-background flex flex-col">
-       {isMobile ? null : <DesktopMap />}
-      <main className="flex-grow flex flex-col items-center relative z-10">
-        <header className="w-full max-w-5xl flex justify-between items-center p-4 sm:p-6 md:p-8">
+    <main className="min-h-screen w-full bg-background flex flex-col">
+       {!isMobile && <DesktopMap />}
+      <div className="relative z-10 flex-grow flex flex-col">
+        <header className="w-full max-w-5xl mx-auto flex justify-between items-center p-4 sm:p-6 md:p-8">
           <div className="flex items-center gap-2 md:gap-4">
             <Logo className="h-10 w-10 md:h-12 md:w-12" />
             <div>
@@ -226,10 +226,10 @@ export default function Home() {
         </header>
 
         <div className="flex-grow w-full flex items-center justify-center">
-            {isMobile ? <MobileGrid /> : null}
+            {isMobile && <MobileGrid />}
         </div>
-        <CompletionDialog open={allStationsCompleted} onReset={handleReset} />
-      </main>
-    </div>
+      </div>
+      <CompletionDialog open={allStationsCompleted} onReset={handleReset} />
+    </main>
   );
 }
