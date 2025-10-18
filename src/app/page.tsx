@@ -19,14 +19,13 @@ import {
 } from "@/components/ui/card";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import PrizeCart from "./components/PrizeCart";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const PLAYER_NAME_KEY = 'kairu-player-name';
 
-const DesktopMap = () => {
+const MapView = () => {
   const { unlockedStations } = useStationProgress();
-  const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
-  // Coordinates distributed across the map for a better visual path
   const stationPositions = [
     { top: "60%", left: "18%" }, // 1
     { top: "50%", left: "32%" }, // 2
@@ -41,80 +40,46 @@ const DesktopMap = () => {
 
   const generatePath = (positions: { top: string; left: string }[]) => {
     if (positions.length < 2) return "";
-    
-    // Using percentages directly for SVG coordinates within a 100x100 viewBox
-    const simplePath = positions.map((pos, index) => {
+    return positions.map((pos, index) => {
       const command = index === 0 ? 'M' : 'L';
       return `${command} ${pos.left.replace('%','')} ${pos.top.replace('%','')}`;
     }).join(' ');
-
-
-    return simplePath;
   };
   
   const pathD = generatePath(stations.map(s => stationPositions[s.id - 1]));
 
-
   return (
-    <div className="hidden lg:block w-full h-full relative">
+    <div className="w-full h-full relative">
        <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute top-0 left-0">
           <path
             d={pathD}
             fill="none"
             stroke="white"
             strokeWidth="0.5"
-            strokeDasharray="0.5 2.5"
-            strokeLinecap="round"
+            strokeDasharray="2 2"
           />
         </svg>
       {stations.map((station) => {
         const isUnlocked = unlockedStations.includes(station.id);
-        const pos = stationPositions[station.id-1];
+        const pos = stationPositions[station.id - 1];
         return (
           <div 
             key={station.id} 
-            className="absolute -translate-x-1/2 -translate-y-1/2"
-            style={{ top: pos.top, left: pos.left }}
+            className="absolute"
+            style={{ 
+              top: `calc(${pos.top} - 24px)`, 
+              left: `calc(${pos.left} - 24px)`,
+              width: '48px',
+              height: '48px',
+            }}
           >
             <StationNode station={station} isUnlocked={isUnlocked} />
           </div>
         );
       })}
-      {yaraCharImage && (
-        <div className="absolute bottom-[5%] left-[5%] w-[140px] h-[140px]">
-          <Image
-            src={yaraCharImage.imageUrl}
-            alt={yaraCharImage.description}
-            width={140}
-            height={140}
-            data-ai-hint={yaraCharImage.imageHint}
-          />
-        </div>
-      )}
     </div>
   );
 };
-
-
-const MobileGrid = () => {
-    const { unlockedStations } = useStationProgress();
-    return (
-        <div className="grid grid-cols-3 gap-x-2 gap-y-8 w-full p-4 sm:p-6 lg:hidden z-10">
-            {stations.map((station) => {
-                const isUnlocked = unlockedStations.includes(station.id);
-                return (
-                    <div
-                        key={station.id}
-                        className="flex items-center justify-center"
-                    >
-                        <StationNode station={station} isUnlocked={isUnlocked} />
-                    </div>
-                );
-            })}
-        </div>
-    );
-};
-
 
 export default function Home() {
   const {
@@ -125,6 +90,9 @@ export default function Home() {
   const [clientLoaded, setClientLoaded] = useState(false);
   const [playerName, setPlayerName] = useState<string | null>(null);
   const [inputName, setInputName] = useState("");
+  
+  const avatarImage = PlaceHolderImages.find((p) => p.id === "avatar-placeholder");
+
 
   useEffect(() => {
     setClientLoaded(true);
@@ -229,7 +197,6 @@ export default function Home() {
   
   const mapBgImage = PlaceHolderImages.find((p) => p.id === "mapa-juego-background");
 
-
   return (
     <main className="min-h-screen w-full flex flex-col relative">
       {mapBgImage && (
@@ -244,17 +211,32 @@ export default function Home() {
         />
       )}
       
-      <header className="absolute top-4 right-4 z-20 flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={handleReset} className="rounded-full bg-white/80">
-          Reiniciar
-        </Button>
-        <PrizeCart />
+      <header className="absolute top-0 left-0 right-0 p-2 sm:p-4 z-20">
+        <div className="container mx-auto flex items-start justify-between gap-2">
+            <div className="bg-cyan-100/90 backdrop-blur-sm p-2 rounded-2xl flex items-center gap-2 shadow-md">
+                <Logo className="h-8 w-8 text-green-800" />
+                <div className="pr-2">
+                    <h1 className="font-bold text-green-900 leading-tight">Kairu</h1>
+                    <p className="text-xs text-green-800/80 leading-tight">¡Bienvenido, {playerName}!</p>
+                </div>
+                {avatarImage && (
+                  <Avatar className="h-10 w-10 border-2 border-white">
+                      <AvatarImage src={avatarImage.imageUrl} alt={avatarImage.description} data-ai-hint={avatarImage.imageHint} />
+                      <AvatarFallback>{playerName.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                )}
+            </div>
+            <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={handleReset} className="rounded-full bg-white/90 shadow-md h-10 w-auto px-4">
+                  Reiniciar
+                </Button>
+                <PrizeCart />
+            </div>
+        </div>
       </header>
 
-
       <div className="flex-grow w-full flex items-center justify-center relative z-10">
-          <MobileGrid />
-          <DesktopMap />
+          <MapView />
       </div>
 
       <CompletionDialog open={allStationsCompleted} onReset={handleReset} />

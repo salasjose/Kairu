@@ -17,21 +17,24 @@ interface StationNodeProps {
 }
 
 export default function StationNode({ station, isUnlocked }: StationNodeProps) {
+  const Icon = station.icon;
 
   const stationButton = (
-    <div
-      className={cn(
-        "relative w-10 h-10 transition-transform duration-300 transform rounded-full shadow-lg",
-        isUnlocked ? "bg-white hover:scale-110" : "bg-gray-400/80 cursor-not-allowed"
-      )}
-    >
-       {isUnlocked ? (
-          <span className="w-full h-full" />
+    <div className="relative w-12 h-12 transition-transform duration-300 transform hover:scale-110">
+      {/* Base del cilindro */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[90%] h-[60%] rounded-[50%] bg-gray-200/80 shadow-inner-lg" />
+      
+      {/* Tapa superior del cilindro */}
+      <div className={cn(
+        "absolute top-0 left-0 w-full h-full rounded-full border-2 border-slate-900/50 flex items-center justify-center shadow-lg",
+        isUnlocked ? "bg-slate-800" : "bg-slate-900/80"
+      )}>
+        {isUnlocked ? (
+          <Icon className="w-6 h-6 text-white" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Lock className="h-5 w-5 text-white/90" />
-          </div>
+          <Lock className="h-6 w-6 text-white/70" />
         )}
+      </div>
     </div>
   );
 
@@ -41,7 +44,7 @@ export default function StationNode({ station, isUnlocked }: StationNodeProps) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Wrapper href={`/station/${station.id}`} className="relative">
+          <Wrapper href={`/station/${station.id}`} className="relative block w-full h-full cursor-pointer">
             {stationButton}
           </Wrapper>
         </TooltipTrigger>
