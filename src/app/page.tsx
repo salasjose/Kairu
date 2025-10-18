@@ -56,7 +56,7 @@ const DesktopMap = () => {
 
 
   return (
-    <div className="hidden md:block w-full h-full relative">
+    <div className="hidden lg:block w-full h-full relative">
        <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute top-0 left-0">
           <path
             d={pathD}
@@ -99,7 +99,7 @@ const DesktopMap = () => {
 const MobileGrid = () => {
     const { unlockedStations } = useStationProgress();
     return (
-        <div className="grid grid-cols-3 gap-x-2 gap-y-8 w-full p-4 sm:p-6 md:hidden z-10">
+        <div className="grid grid-cols-3 gap-x-2 gap-y-8 w-full p-4 sm:p-6 lg:hidden z-10">
             {stations.map((station) => {
                 const isUnlocked = unlockedStations.includes(station.id);
                 return (
