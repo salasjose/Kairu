@@ -1,4 +1,5 @@
 import type {Config} from 'tailwindcss';
+const plugin = require('tailwindcss/plugin');
 
 export default {
   darkMode: ['class'],
@@ -79,6 +80,9 @@ export default {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
+      boxShadow: {
+        'inner-lg': 'inset 0 4px 8px 0 rgb(0 0 0 / 0.2)',
+      },
       keyframes: {
         'accordion-down': {
           from: {
@@ -103,5 +107,14 @@ export default {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+    require('tailwindcss-animate'),
+    plugin(function({ addUtilities }: {addUtilities: any}) {
+      addUtilities({
+        '.shadow-inner-lg': {
+          'box-shadow': 'inset 0 4px 8px 0 rgb(0 0 0 / 0.2)',
+        },
+      })
+    })
+  ],
 } satisfies Config;

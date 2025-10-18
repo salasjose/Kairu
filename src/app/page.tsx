@@ -37,8 +37,9 @@ const DesktopMap = () => {
     { top: '79%', left: '70%' }, // 6
     { top: '84%', left: '38%' }, // 7
     { top: '80%', left: '19%' }, // 8
-    { top: '8%', left: '48%' },  // 9
+    { top: '8%', left: '52%' },  // 9
   ];
+
 
   return (
     <div className="hidden md:block w-full h-full relative">
@@ -100,7 +101,6 @@ export default function Home() {
   const [clientLoaded, setClientLoaded] = useState(false);
   const [playerName, setPlayerName] = useState<string | null>(null);
   const [inputName, setInputName] = useState("");
-  const mapBgImage = PlaceHolderImages.find((p) => p.id === "sostenibilidad-background");
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -205,18 +205,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen w-full flex flex-col relative bg-background">
-      {mapBgImage && (
-         <Image
-            src={mapBgImage.imageUrl}
-            alt={mapBgImage.description}
-            layout="fill"
-            objectFit="cover"
-            className="z-0"
-            data-ai-hint={mapBgImage.imageHint}
-            priority
-        />
-      )}
+    <main className="min-h-screen w-full flex flex-col relative bg-orange-300">
       <header className="w-full max-w-7xl mx-auto flex justify-between items-center p-4 sm:p-6 md:p-8 z-20">
         <div className="flex items-center gap-2 md:gap-4 bg-background/70 backdrop-blur-sm p-2 rounded-md">
           <Logo className="h-10 w-10 md:h-12 md:w-12" />

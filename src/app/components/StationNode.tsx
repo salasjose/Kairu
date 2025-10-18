@@ -3,14 +3,13 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { type Station } from "@/lib/types";
-import { Button } from "@/components/ui/button";
-import { Lock, Sparkles } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Lock } from "lucide-react";
 
 interface StationNodeProps {
   station: Station;
@@ -18,32 +17,40 @@ interface StationNodeProps {
 }
 
 export default function StationNode({ station, isUnlocked }: StationNodeProps) {
-  const Icon = station.icon;
-
   const stationIcon = (
-     <div
-        className={cn(
-          "flex h-16 w-16 items-center justify-center rounded-full border-4 transition-all duration-300",
-          isUnlocked
-            ? "border-primary bg-primary/10 text-primary"
-            : "border-muted bg-secondary text-muted-foreground"
-        )}
-      >
-        {isUnlocked ? <Icon className="h-8 w-8" /> : <Lock className="h-8 w-8" />}
-      </div>
-  );
-
-  const content = (
-    <div className="flex flex-col items-center gap-2">
-      {stationIcon}
-      <span
-        className={cn(
-          "text-center font-bold font-headline text-sm hidden md:inline", // Hide on mobile, show on md and up
-          isUnlocked ? "text-primary" : "text-muted-foreground"
-        )}
-      >
-        {station.id}. {station.title}
-      </span>
+    <div
+      className={cn(
+        "relative w-16 h-16 rounded-full transition-all duration-300 transform",
+        isUnlocked && "hover:scale-110"
+      )}
+    >
+      {isUnlocked ? (
+        <>
+          {/* Cilindro base 3D */}
+          <div className="absolute inset-x-1 top-2 h-full rounded-full bg-white/90 shadow-[0_8px_0_0_rgba(0,0,0,0.1)]" />
+          
+          {/* Tapa superior del cilindro */}
+          <div
+            className={cn(
+              "absolute inset-0 rounded-full bg-slate-700 shadow-inner-lg flex items-center justify-center border-2 border-slate-500"
+            )}
+          >
+            <span className="text-white font-bold text-2xl font-headline">
+              {station.id}
+            </span>
+          </div>
+        </>
+      ) : (
+        <>
+           {/* Cilindro base 3D bloqueado */}
+           <div className="absolute inset-x-1 top-2 h-full rounded-full bg-slate-600/50 shadow-[0_8px_0_0_rgba(0,0,0,0.1)]" />
+          
+           {/* Tapa superior bloqueada */}
+           <div className="absolute inset-0 rounded-full bg-slate-800 shadow-inner-lg flex items-center justify-center border-2 border-slate-600">
+             <Lock className="h-7 w-7 text-slate-500" />
+           </div>
+        </>
+      )}
     </div>
   );
 
@@ -53,27 +60,31 @@ export default function StationNode({ station, isUnlocked }: StationNodeProps) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Wrapper href={`/station/${station.id}`} className={cn(
-            "relative transform transition-transform duration-300",
-            isUnlocked && "hover:scale-110"
-          )}>
-            {isUnlocked && (
-                <Sparkles className="absolute -top-2 -right-2 h-5 w-5 text-yellow-500 animate-pulse" />
-            )}
-            {/* On mobile, only show the icon. On desktop, show the full content with text */}
-            <div className="md:hidden">
-              {stationIcon}
-            </div>
-            <div className="hidden md:block">
-              {content}
-            </div>
+          <Wrapper href={`/station/${station.id}`} className="relative">
+            {stationIcon}
           </Wrapper>
         </TooltipTrigger>
         <TooltipContent>
-          <p className="font-bold md:hidden">{station.id}. {station.title}</p>
+          <p className="font-bold">{station.id}. {station.title}</p>
           <p>{isUnlocked ? station.description : "Completa las estaciones anteriores para desbloquear."}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
+}
+
+// Custom shadow utility para el efecto 3D
+const plugin = require('tailwindcss/plugin')
+
+module.exports = {
+  // ...
+  plugins: [
+    plugin(function({ addUtilities }: {addUtilities: any}) {
+      addUtilities({
+        '.shadow-inner-lg': {
+          'box-shadow': 'inset 0 4px 8px 0 rgb(0 0 0 / 0.2)',
+        },
+      })
+    })
+  ],
 }
