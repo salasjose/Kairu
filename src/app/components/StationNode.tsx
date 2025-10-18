@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { type Station } from "@/lib/types";
+import type { Station } from "@/lib/types";
 import {
   Tooltip,
   TooltipContent,
@@ -22,17 +22,28 @@ export default function StationNode({ station, isUnlocked }: StationNodeProps) {
   const stationButton = (
     <div
       className={cn(
-        "relative w-12 h-12 rounded-full transition-all duration-300 transform flex items-center justify-center shadow-lg",
-        isUnlocked
-          ? "bg-slate-800/90 hover:bg-slate-700 hover:scale-110"
-          : "bg-slate-800/90 cursor-not-allowed"
+        "relative w-12 h-14 transition-transform duration-300 transform",
+        isUnlocked ? "hover:scale-110" : "cursor-not-allowed"
       )}
     >
-      {isUnlocked ? (
-        <Icon className="h-7 w-7 text-white" />
-      ) : (
-        <Lock className="h-6 w-6 text-white/80" />
-      )}
+      {/* 3D Base Effect */}
+      <div className="absolute top-2 left-0 w-full h-12 rounded-full bg-slate-400 shadow-[0_6px_0_0_#94a3b8,0_10px_10px_0_rgba(0,0,0,0.3)]"></div>
+
+      {/* Top part of the button */}
+      <div
+        className={cn(
+          "absolute top-0 left-0 w-full h-12 rounded-full flex items-center justify-center border-2",
+          isUnlocked
+            ? "bg-slate-800 border-slate-600"
+            : "bg-slate-600 border-slate-500"
+        )}
+      >
+        {isUnlocked ? (
+          <Icon className="h-7 w-7 text-white" />
+        ) : (
+          <Lock className="h-6 w-6 text-white/80" />
+        )}
+      </div>
     </div>
   );
 
