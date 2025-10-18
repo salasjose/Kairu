@@ -159,13 +159,13 @@ export default function Station3() {
 
   return (
     <>
-      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden">
         {streetBgImage && (
             <Image
               src={streetBgImage.imageUrl}
               alt={streetBgImage.description}
               fill
-              objectFit="cover"
+              style={{objectFit: 'cover'}}
               className="z-0 opacity-70"
               data-ai-hint={streetBgImage.imageHint}
             />
