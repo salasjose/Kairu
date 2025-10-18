@@ -26,6 +26,7 @@ const DesktopMap = () => {
   const { unlockedStations } = useStationProgress();
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
+  // Coordinates distributed across the map for a better visual path
   const stationPositions = [
     { top: "60%", left: "18%" }, // 1
     { top: "50%", left: "32%" }, // 2
@@ -41,6 +42,7 @@ const DesktopMap = () => {
   const generatePath = (positions: { top: string; left: string }[]) => {
     if (positions.length < 2) return "";
     
+    // Using percentages directly for SVG coordinates within a 100x100 viewBox
     const simplePath = positions.map((pos, index) => {
       const command = index === 0 ? 'M' : 'L';
       return `${command} ${pos.left.replace('%','')} ${pos.top.replace('%','')}`;
@@ -225,7 +227,7 @@ export default function Home() {
     );
   }
   
-  const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
+  const mapBgImage = PlaceHolderImages.find((p) => p.id === "mapa-juego-background");
 
 
   return (
