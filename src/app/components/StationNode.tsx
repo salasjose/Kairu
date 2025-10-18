@@ -72,19 +72,3 @@ export default function StationNode({ station, isUnlocked }: StationNodeProps) {
     </TooltipProvider>
   );
 }
-
-// Custom shadow utility para el efecto 3D
-const plugin = require('tailwindcss/plugin')
-
-module.exports = {
-  // ...
-  plugins: [
-    plugin(function({ addUtilities }: {addUtilities: any}) {
-      addUtilities({
-        '.shadow-inner-lg': {
-          'box-shadow': 'inset 0 4px 8px 0 rgb(0 0 0 / 0.2)',
-        },
-      })
-    })
-  ],
-}
