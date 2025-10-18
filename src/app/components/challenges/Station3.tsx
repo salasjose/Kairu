@@ -186,7 +186,7 @@ export default function Station3() {
                   onClick={() => setSelectedChallenge(key)}
                   className="transition-transform duration-300 hover:scale-105 group"
                 >
-                  <Card className="w-36 h-44 md:w-48 md:h-56 bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors">
+                  <Card className="w-36 h-44 md:w-48 md:h-56 bg-card/70 backdrop-blur-sm hover:bg-card/90 transition-colors">
                     <CardContent className="flex flex-col items-center justify-center text-center p-2 md:p-4 h-full">
                       <Icon className="w-10 h-10 md:w-12 md:h-12 text-primary mb-2 md:mb-3" />
                       <h2 className="font-bold font-headline text-base md:text-lg text-primary">
