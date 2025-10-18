@@ -26,7 +26,6 @@ const PLAYER_NAME_KEY = 'kairu-player-name';
 const DesktopMap = () => {
   const { unlockedStations } = useStationProgress();
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
-  const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
 
   // Coordenadas precisas dentro de un sistema de 1000x1000 para el SVG
   const stationPositions = [
@@ -43,17 +42,6 @@ const DesktopMap = () => {
 
   return (
     <div className="hidden md:block w-full h-full relative">
-       {mapBgImage && (
-        <Image
-          src={mapBgImage.imageUrl}
-          alt={mapBgImage.description}
-          layout="fill"
-          objectFit="cover"
-          className="z-0"
-          data-ai-hint={mapBgImage.imageHint}
-          priority
-        />
-      )}
       <svg viewBox="0 0 1000 1000" className="absolute inset-0 w-full h-full">
         {stations.map((station, index) => {
           const isUnlocked = unlockedStations.includes(station.id);
@@ -112,7 +100,7 @@ export default function Home() {
   const [clientLoaded, setClientLoaded] = useState(false);
   const [playerName, setPlayerName] = useState<string | null>(null);
   const [inputName, setInputName] = useState("");
-  const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
+  const mapBgImage = PlaceHolderImages.find((p) => p.id === "forest-background");
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -217,7 +205,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen w-full flex flex-col relative bg-black">
-      {isMobile && mapBgImage && (
+      {mapBgImage && (
          <Image
             src={mapBgImage.imageUrl}
             alt={mapBgImage.description}
