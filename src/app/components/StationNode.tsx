@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -20,7 +21,7 @@ export default function StationNode({ station, isUnlocked }: StationNodeProps) {
   const Icon = station.icon;
 
   const stationButton = (
-    <div className="relative w-12 h-12 transition-transform duration-300 transform hover:scale-110">
+    <div className="relative w-full h-full transition-transform duration-300 transform hover:scale-110">
       {/* Base del cilindro */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[90%] h-[60%] rounded-[50%] bg-gray-200/80 shadow-inner-lg" />
       
@@ -30,9 +31,9 @@ export default function StationNode({ station, isUnlocked }: StationNodeProps) {
         isUnlocked ? "bg-slate-800" : "bg-slate-900/80"
       )}>
         {isUnlocked ? (
-          <Icon className="w-6 h-6 text-white" />
+          <Icon className="w-6 h-6 md:w-8 md:h-8 text-white" />
         ) : (
-          <Lock className="h-6 w-6 text-white/70" />
+          <Lock className="h-6 w-6 md:h-8 md:h-8 text-white/70" />
         )}
       </div>
     </div>

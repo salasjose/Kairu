@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -65,12 +66,10 @@ const MapView = () => {
         return (
           <div 
             key={station.id} 
-            className="absolute"
+            className="absolute -translate-x-1/2 -translate-y-1/2 w-12 h-12 md:w-16 md:h-16"
             style={{ 
-              top: `calc(${pos.top} - 24px)`, 
-              left: `calc(${pos.left} - 24px)`,
-              width: '48px',
-              height: '48px',
+              top: pos.top,
+              left: pos.left,
             }}
           >
             <StationNode station={station} isUnlocked={isUnlocked} />
