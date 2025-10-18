@@ -205,7 +205,7 @@ export default function Home() {
   const mapBgImage = PlaceHolderImages.find((p) => p.id === "mapa-juego-background");
 
   return (
-    <main className="min-h-screen w-full flex flex-col relative bg-orange-300">
+    <main className="min-h-screen w-full flex flex-col relative">
       {mapBgImage && (
          <Image
             src={mapBgImage.imageUrl}
