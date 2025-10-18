@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -27,6 +26,7 @@ const PLAYER_NAME_KEY = 'kairu-player-name';
 const DesktopMap = () => {
   const { unlockedStations } = useStationProgress();
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
+  const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
 
   // Coordenadas precisas dentro de un sistema de 1000x1000 para el SVG
   const stationPositions = [
@@ -43,6 +43,17 @@ const DesktopMap = () => {
 
   return (
     <div className="hidden md:block w-full h-full relative">
+       {mapBgImage && (
+        <Image
+          src={mapBgImage.imageUrl}
+          alt={mapBgImage.description}
+          layout="fill"
+          objectFit="cover"
+          className="z-0"
+          data-ai-hint={mapBgImage.imageHint}
+          priority
+        />
+      )}
       <svg viewBox="0 0 1000 1000" className="absolute inset-0 w-full h-full">
         {stations.map((station, index) => {
           const isUnlocked = unlockedStations.includes(station.id);
@@ -75,7 +86,7 @@ const DesktopMap = () => {
 const MobileGrid = () => {
     const { unlockedStations } = useStationProgress();
     return (
-        <div className="grid grid-cols-3 gap-x-2 gap-y-8 w-full p-4 sm:p-6 md:hidden">
+        <div className="grid grid-cols-3 gap-x-2 gap-y-8 w-full p-4 sm:p-6 md:hidden z-10">
             {stations.map((station) => {
                 const isUnlocked = unlockedStations.includes(station.id);
                 return (
@@ -101,7 +112,7 @@ export default function Home() {
   const [clientLoaded, setClientLoaded] = useState(false);
   const [playerName, setPlayerName] = useState<string | null>(null);
   const [inputName, setInputName] = useState("");
-  const mapBgImage = PlaceHolderImages.find((p) => p.id === "forest-background");
+  const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -162,11 +173,12 @@ export default function Home() {
         {mapBgImage && (
             <Image
                 src={mapBgImage.imageUrl}
-                alt="Background map"
+                alt={mapBgImage.description}
                 layout="fill"
                 objectFit="cover"
                 className="z-0 opacity-50"
                 priority
+                data-ai-hint={mapBgImage.imageHint}
             />
         )}
         <div className="relative z-10 flex flex-col items-center">
@@ -205,15 +217,15 @@ export default function Home() {
 
   return (
     <main className="min-h-screen w-full flex flex-col relative bg-black">
-      {mapBgImage && (
-        <Image
-          src={mapBgImage.imageUrl}
-          alt={mapBgImage.description}
-          layout="fill"
-          objectFit="cover"
-          className="z-0"
-          data-ai-hint={mapBgImage.imageHint}
-          priority
+      {isMobile && mapBgImage && (
+         <Image
+            src={mapBgImage.imageUrl}
+            alt={mapBgImage.description}
+            layout="fill"
+            objectFit="cover"
+            className="z-0"
+            data-ai-hint={mapBgImage.imageHint}
+            priority
         />
       )}
       <header className="w-full max-w-7xl mx-auto flex justify-between items-center p-4 sm:p-6 md:p-8 z-20">
@@ -245,5 +257,3 @@ export default function Home() {
     </main>
   );
 }
-
-    
