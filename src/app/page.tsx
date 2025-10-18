@@ -47,8 +47,8 @@ const DesktopMap = () => {
           const isUnlocked = unlockedStations.includes(station.id);
           const pos = stationPositions[index];
           return (
-            <foreignObject key={station.id} x={pos.x - 32} y={pos.y - 32} width="64" height="64" className="overflow-visible">
-               <div className="w-16 h-16">
+            <foreignObject key={station.id} x={pos.x - 48} y={pos.y - 48} width="96" height="96" className="overflow-visible">
+               <div className="w-24 h-24">
                  <StationNode station={station} isUnlocked={isUnlocked} />
                </div>
             </foreignObject>
@@ -100,7 +100,7 @@ export default function Home() {
   const [clientLoaded, setClientLoaded] = useState(false);
   const [playerName, setPlayerName] = useState<string | null>(null);
   const [inputName, setInputName] = useState("");
-  const mapBgImage = PlaceHolderImages.find((p) => p.id === "forest-background");
+  const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -156,17 +156,18 @@ export default function Home() {
   }
 
   if (!playerName) {
+    const welcomeBgImage = PlaceHolderImages.find((p) => p.id === "forest-background");
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
-        {mapBgImage && (
+        {welcomeBgImage && (
             <Image
-                src={mapBgImage.imageUrl}
-                alt={mapBgImage.description}
+                src={welcomeBgImage.imageUrl}
+                alt={welcomeBgImage.description}
                 layout="fill"
                 objectFit="cover"
                 className="z-0 opacity-50"
                 priority
-                data-ai-hint={mapBgImage.imageHint}
+                data-ai-hint={welcomeBgImage.imageHint}
             />
         )}
         <div className="relative z-10 flex flex-col items-center">
@@ -204,7 +205,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen w-full flex flex-col relative bg-black">
+    <main className="min-h-screen w-full flex flex-col relative bg-background">
       {mapBgImage && (
          <Image
             src={mapBgImage.imageUrl}
