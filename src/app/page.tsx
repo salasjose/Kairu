@@ -28,16 +28,17 @@ const DesktopMap = () => {
   const mapBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
 
   const stationPositions = [
-    { top: "80%", left: "19%" }, // 1. Bionexus
-    { top: "88%", left: "37%" }, // 2. ImpacTrack
-    { top: "82%", left: "55%" }, // 3. ReNova
-    { top: "88%", left: "73%" }, // 4. TerrAzul
-    { top: "60%", left: "89%" }, // 5. ZonaCreativa
-    { top: "37%", left: "75%" }, // 6. ReGira
-    { top: "50%", left: "44%" }, // 7. VerdeLAb
-    { top: "30%", left: "60%" }, // 8. Vitalia
-    { top: "15%", left: "48%" }, // 9. Final Puzzle
-  ];
+    { top: "80%", left: "19%" },
+    { top: "88%", left: "37%" },
+    { top: "82%", left: "55%" },
+    { top: "88%", left: "73%" },
+    { top: "60%", left: "89%" },
+    { top: "37%", left: "75%" },
+    { top: "50%", left: "44%" },
+    { top_desktop: "30%", top_mobile: "30%", left: "60%" },
+    { top_desktop: "15%", top_mobile: "15%", left: "48%" },
+];
+
 
   return (
     <div className="hidden md:block w-full h-full relative">
@@ -46,7 +47,7 @@ const DesktopMap = () => {
           src={mapBgImage.imageUrl}
           alt={mapBgImage.description}
           layout="fill"
-          objectFit="contain"
+          objectFit="cover"
           className="z-0"
           data-ai-hint={mapBgImage.imageHint}
           priority
@@ -59,7 +60,10 @@ const DesktopMap = () => {
           <div
             key={station.id}
             className="absolute -translate-x-1/2 -translate-y-1/2 z-10"
-            style={{ top: position.top, left: position.left }}
+            style={{ 
+              top: (position as any).top_desktop || position.top, 
+              left: position.left 
+            }}
           >
             <StationNode station={station} isUnlocked={isUnlocked} />
           </div>
@@ -200,6 +204,17 @@ export default function Home() {
 
   return (
     <main className="min-h-screen w-full flex flex-col relative bg-black">
+       {mapBgImage && (
+        <Image
+          src={mapBgImage.imageUrl}
+          alt={mapBgImage.description}
+          layout="fill"
+          objectFit="cover"
+          className="z-0"
+          data-ai-hint={mapBgImage.imageHint}
+          priority
+        />
+      )}
       <header className="w-full max-w-5xl mx-auto flex justify-between items-center p-4 sm:p-6 md:p-8 z-20">
         <div className="flex items-center gap-2 md:gap-4 bg-background/70 p-2 rounded-md">
           <Logo className="h-10 w-10 md:h-12 md:w-12" />
@@ -222,9 +237,7 @@ export default function Home() {
 
       <div className="flex-grow w-full flex items-center justify-center relative">
           <MobileGrid />
-          <div className="hidden md:block w-full max-w-6xl mx-auto aspect-[16/9] relative">
-            <DesktopMap />
-          </div>
+          <DesktopMap />
       </div>
 
       <CompletionDialog open={allStationsCompleted} onReset={handleReset} />
