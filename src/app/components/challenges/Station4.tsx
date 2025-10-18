@@ -52,7 +52,7 @@ const PostChallenge = ({
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-full">
+    <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center flex-grow">
       <div className="w-full">
         <Button variant="ghost" onClick={onBack} className="mb-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -133,7 +133,7 @@ export default function Station4() {
       );
     }
     return (
-      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden">
         {terrazulBgImage && (
             <Image
                 src={terrazulBgImage.imageUrl}
