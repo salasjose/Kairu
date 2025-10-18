@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, CheckCircle } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import ChallengeContainer from "../ChallengeContainer";
@@ -99,7 +99,7 @@ export default function Station1() {
   }
 
   return (
-    <div className="w-full min-h-full flex flex-col items-center justify-center p-4 bg-[#A1C589] relative overflow-hidden">
+    <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {forestBgImage && (
           <Image
             src={forestBgImage.imageUrl}
