@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, CheckCircle, PartyPopper, Recycle, Trash2, Leaf } from 'lucide-react';
+import { ArrowLeft, CheckCircle, PartyPopper, Recycle, Trash2, Leaf, AlertCircle, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 
@@ -35,15 +35,35 @@ const bins: { category: WasteCategory; label: string; icon: React.ElementType; c
 ];
 
 export default function WasteClassificationGame({ onComplete, onBack }: { onComplete: () => void; onBack: () => void; }) {
-  const [wasteItems, setWasteItems] = useState(() => initialWasteItems.sort(() => Math.random() - 0.5));
+  const [wasteItems, setWasteItems] = useState(() => [...initialWasteItems].sort(() => Math.random() - 0.5));
   const [draggedItem, setDraggedItem] = useState<WasteItem | null>(null);
   const [animations, setAnimations] = useState<Record<WasteCategory, string>>({ recycle: '', organic: '', trash: '' });
+  const [timeLeft, setTimeLeft] = useState(180); // 3 minutes in seconds
+  const [isTimeUp, setIsTimeUp] = useState(false);
+
 
   const remainingItems = useMemo(() => wasteItems.filter(item => item), [wasteItems]);
+  const gameWon = remainingItems.length === 0;
+
+  useEffect(() => {
+    if (gameWon || isTimeUp) return;
+
+    if (timeLeft > 0) {
+      const timerId = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timerId);
+    } else {
+      setIsTimeUp(true);
+      toast({
+        title: "¡Se acabó el tiempo!",
+        description: "No lograste clasificar todos los residuos. ¡Inténtalo de nuevo!",
+        variant: "destructive",
+      });
+    }
+  }, [timeLeft, gameWon, isTimeUp]);
+
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, item: WasteItem) => {
     setDraggedItem(item);
-    // Use a transparent image as drag ghost
     const img = new Image();
     img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
     e.dataTransfer.setDragImage(img, 0, 0);
@@ -66,11 +86,9 @@ export default function WasteClassificationGame({ onComplete, onBack }: { onComp
     if (!draggedItem) return;
 
     if (draggedItem.category === category) {
-      // Correct drop
       setWasteItems(prevItems => prevItems.filter(item => item.id !== draggedItem.id));
       triggerAnimation(category, 'correct');
     } else {
-      // Incorrect drop
       toast({
         title: "¡Ups! Contenedor incorrecto",
         description: `"${draggedItem.name}" no va en la caneca de ${bins.find(b => b.category === category)?.label}.`,
@@ -81,9 +99,21 @@ export default function WasteClassificationGame({ onComplete, onBack }: { onComp
     setDraggedItem(null);
   };
   
-  if (remainingItems.length === 0) {
+  const handleRestart = () => {
+    setWasteItems([...initialWasteItems].sort(() => Math.random() - 0.5));
+    setTimeLeft(180);
+    setIsTimeUp(false);
+  }
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+  };
+
+  if (gameWon) {
     return (
-        <div className="w-full max-w-4xl mx-auto p-4 flex flex-col items-center justify-center text-center">
+        <div className="w-full max-w-4xl mx-auto p-4 flex flex-col items-center justify-center text-center min-h-[400px]">
             <PartyPopper className="w-24 h-24 text-yellow-500 animate-bounce mb-4" />
             <h2 className="text-4xl font-bold font-headline text-primary mb-2">¡Ganaste!</h2>
             <p className="text-muted-foreground text-lg mb-6">Has clasificado todos los residuos correctamente. ¡Eres un experto en reciclaje!</p>
@@ -94,6 +124,21 @@ export default function WasteClassificationGame({ onComplete, onBack }: { onComp
         </div>
     )
   }
+  
+  if (isTimeUp) {
+    return (
+        <div className="w-full max-w-4xl mx-auto p-4 flex flex-col items-center justify-center text-center min-h-[400px]">
+            <AlertCircle className="w-24 h-24 text-destructive mb-4" />
+            <h2 className="text-4xl font-bold font-headline text-destructive mb-2">¡Se acabó el tiempo!</h2>
+            <p className="text-muted-foreground text-lg mb-6">No te preocupes, la práctica hace al maestro. ¿Quieres intentarlo de nuevo?</p>
+            <Button onClick={handleRestart} size="lg">
+                <RefreshCw className="mr-2" />
+                Volver a Intentar
+            </Button>
+        </div>
+    )
+  }
+
 
   return (
     <div className="w-full max-w-5xl mx-auto p-4">
@@ -104,6 +149,9 @@ export default function WasteClassificationGame({ onComplete, onBack }: { onComp
         <div className="text-center mb-6">
             <h2 className="text-3xl font-bold text-primary font-headline">Juego de Clasificación</h2>
             <p className="text-muted-foreground">Arrastra cada residuo al contenedor correcto.</p>
+            <div className="mt-4 text-2xl font-bold text-primary tabular-nums">
+                Tiempo Restante: {formatTime(timeLeft)}
+            </div>
         </div>
 
         {/* Waste Items */}
