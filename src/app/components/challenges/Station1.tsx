@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Camera, CheckCircle } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle, Video, X } from "lucide-react";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import ChallengeContainer from "../ChallengeContainer";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 
 const faunaImage = PlaceHolderImages.find((p) => p.id === "fauna-capybara");
 const habitatImage = PlaceHolderImages.find((p) => p.id === "habitat-build-1");
@@ -29,6 +31,88 @@ const challenges = {
     imageHint: habitatImage?.imageHint ?? "wildlife habitat",
   },
 };
+
+const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void; onCancel: () => void; }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const getCameraPermission = async () => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error("Camera API is not supported by this browser.");
+        setHasCameraPermission(false);
+        toast({
+            variant: "destructive",
+            title: "Cámara no Soportada",
+            description: "Tu navegador no es compatible con la API de la cámara.",
+        });
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        setHasCameraPermission(true);
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (error) {
+        console.error("Error accessing camera:", error);
+        setHasCameraPermission(false);
+        toast({
+          variant: "destructive",
+          title: "Acceso a la Cámara Denegado",
+          description: "Por favor, habilita los permisos de la cámara en tu navegador.",
+        });
+      }
+    };
+
+    getCameraPermission();
+
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
+  const handleCapture = () => {
+    // In a real app, you'd capture a frame from the video.
+    // Here we'll just return a placeholder.
+    onCapture(flowerImage?.imageUrl ?? `https://picsum.photos/seed/capture${Date.now()}/200`);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4">
+      <div className="relative w-full max-w-lg aspect-[4/3] bg-black rounded-lg overflow-hidden">
+        <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
+        {hasCameraPermission === false && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black">
+                <Alert variant="destructive" className="max-w-sm">
+                  <Video className="h-4 w-4" />
+                  <AlertTitle>Acceso a la Cámara Requerido</AlertTitle>
+                  <AlertDescription>
+                    Por favor, permite el acceso a la cámara para usar esta función.
+                    Es posible que necesites cambiar los permisos en la configuración de tu navegador.
+                  </AlertDescription>
+                </Alert>
+            </div>
+        )}
+      </div>
+      <div className="flex items-center justify-center gap-4 mt-4">
+        <Button onClick={onCancel} variant="outline" size="lg" className="rounded-full">
+            <X className="h-6 w-6 mr-2"/>
+            Cancelar
+        </Button>
+        <Button onClick={handleCapture} size="lg" disabled={!hasCameraPermission} className="rounded-full">
+          <Camera className="h-6 w-6 mr-2" />
+          Tomar Foto
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 
 const PhotoSlot = ({
   imageUrl,
@@ -67,21 +151,31 @@ const PhotoSlot = ({
 const PhotoChallenge = ({ onBack, onComplete }: { onBack: () => void, onComplete: (completed: boolean) => void }) => {
   const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>(Array(4).fill(null));
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [photoToAdd, setPhotoToAdd] = useState<{type: "flora" | "fauna", index: number} | null>(null);
 
-  const handleAddPhoto = (type: "flora" | "fauna", index: number) => {
-    const newPhotos = type === "flora" ? [...floraPhotos] : [...faunaPhotos];
-    if (newPhotos[index] === null) {
-      newPhotos[index] = type === "flora" 
-        ? (flowerImage?.imageUrl ?? `https://picsum.photos/seed/flower${index}/200`)
-        : (animalImage?.imageUrl ?? `https://picsum.photos/seed/animal${index}/200`);
-      
-      if (type === "flora") {
-        setFloraPhotos(newPhotos);
-      } else {
-        setFaunaPhotos(newPhotos);
-      }
-    }
+  const handleAddPhotoClick = (type: "flora" | "fauna", index: number) => {
+    setPhotoToAdd({ type, index });
+    setIsCameraOpen(true);
   };
+
+  const handleCapture = (imageUrl: string) => {
+    if (photoToAdd) {
+        const { type, index } = photoToAdd;
+        if (type === "flora") {
+            const newPhotos = [...floraPhotos];
+            newPhotos[index] = imageUrl;
+            setFloraPhotos(newPhotos);
+        } else {
+            const newPhotos = [...faunaPhotos];
+            newPhotos[index] = imageUrl;
+            setFaunaPhotos(newPhotos);
+        }
+    }
+    setIsCameraOpen(false);
+    setPhotoToAdd(null);
+  };
+
 
   const checkCompletion = () => {
     const hasFlora = floraPhotos.some(p => p !== null);
@@ -100,6 +194,13 @@ const PhotoChallenge = ({ onBack, onComplete }: { onBack: () => void, onComplete
   }
 
   return (
+    <>
+     {isCameraOpen && photoToAdd && (
+        <CameraView 
+            onCapture={handleCapture}
+            onCancel={() => setIsCameraOpen(false)}
+        />
+     )}
      <ChallengeContainer
       stationId={1}
       title="Estación Bionexus"
@@ -117,7 +218,7 @@ const PhotoChallenge = ({ onBack, onComplete }: { onBack: () => void, onComplete
                     <h3 className="text-2xl font-bold font-headline text-primary mb-4">Flora Local</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {floraPhotos.map((photo, index) => (
-                            <PhotoSlot key={`flora-${index}`} imageUrl={photo} onAddPhoto={() => handleAddPhoto("flora", index)} />
+                            <PhotoSlot key={`flora-${index}`} imageUrl={photo} onAddPhoto={() => handleAddPhotoClick("flora", index)} />
                         ))}
                     </div>
                 </section>
@@ -126,13 +227,14 @@ const PhotoChallenge = ({ onBack, onComplete }: { onBack: () => void, onComplete
                     <h3 className="text-2xl font-bold font-headline text-primary mb-4">Fauna Local</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {faunaPhotos.map((photo, index) => (
-                            <PhotoSlot key={`fauna-${index}`} imageUrl={photo} onAddPhoto={() => handleAddPhoto("fauna", index)} />
+                            <PhotoSlot key={`fauna-${index}`} imageUrl={photo} onAddPhoto={() => handleAddPhotoClick("fauna", index)} />
                         ))}
                     </div>
                 </section>
             </div>
         </div>
     </ChallengeContainer>
+   </>
   );
 };
 
