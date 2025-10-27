@@ -484,10 +484,6 @@ export default function Station1() {
           )})}
         </div>
 
-        <div className="bg-[#D95E32] text-white font-kalam py-3 px-10 rounded-lg shadow-lg rotate-2">
-          <p className="text-xl md:text-2xl">Yara habla...</p>
-        </div>
-
         {yaraCharImage && (
           <div className="absolute bottom-4 left-4 z-20 hidden md:block">
             <Image
