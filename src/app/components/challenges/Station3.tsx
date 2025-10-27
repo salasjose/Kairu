@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
@@ -12,6 +13,8 @@ import {
   Trash2,
   Video,
   Sparkles,
+  Upload,
+  Link as LinkIcon,
 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -19,6 +22,7 @@ import { toast } from "@/hooks/use-toast";
 import RecyclingGame from "./RecyclingGame";
 import PrizeDialog from "../PrizeDialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { Input } from "@/components/ui/input";
 
 const ChallengeDetail = ({
   title,
@@ -27,6 +31,7 @@ const ChallengeDetail = ({
   onBack,
   image,
   imageHint,
+  challengeId
 }: {
   title: string;
   description: string;
@@ -34,46 +39,134 @@ const ChallengeDetail = ({
   onBack: () => void;
   image: string;
   imageHint: string;
-}) => (
-  <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-full">
-    <div className="w-full">
-      <Button variant="ghost" onClick={onBack} className="mb-4">
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Volver a los retos
-      </Button>
-      <Card className="text-center w-full shadow-lg">
-        <CardContent className="p-6">
-          <h3 className="font-bold text-2xl text-primary font-headline mb-4">
-            {title}
-          </h3>
-          <div className="flex justify-center mb-6">
-            <Image
-              src={image}
-              alt={description}
-              width={400}
-              height={300}
-              className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto"
-              data-ai-hint={imageHint}
+  challengeId: ChallengeId;
+}) => {
+  const [url, setUrl] = useState("");
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type.startsWith("video/")) {
+      setVideoFile(file);
+      toast({
+        title: "Video Seleccionado",
+        description: `Archivo: ${file.name}`,
+      });
+    } else {
+      toast({
+        title: "Archivo no válido",
+        description: "Por favor, selecciona un archivo de video.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCompleteClick = () => {
+    if (challengeId === 'video-cleanup' && !videoFile) {
+        toast({ title: "Reto Incompleto", description: "Debes cargar un video para continuar.", variant: "destructive"});
+        return;
+    }
+    if ((challengeId === 'video-separate') && !url.trim()) {
+       toast({ title: "Reto Incompleto", description: "Debes ingresar la URL de tu video.", variant: "destructive"});
+       return;
+    }
+    onComplete();
+  };
+
+
+  const renderChallengeInput = () => {
+    switch (challengeId) {
+      case 'video-cleanup':
+        return (
+          <>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept="video/*"
+            />
+            <Button onClick={() => fileInputRef.current?.click()} size="lg" variant="outline" className="w-full max-w-md mx-auto">
+              {videoFile ? (
+                <>
+                  <CheckCircle className="mr-2 text-green-500" />
+                  Video: {videoFile.name}
+                </>
+              ) : (
+                <>
+                  <Upload className="mr-2" />
+                  Cargar Video
+                </>
+              )}
+            </Button>
+          </>
+        );
+      case 'video-separate':
+        return (
+          <div className="flex gap-2 max-w-md mx-auto">
+            <LinkIcon className="h-10 text-muted-foreground" />
+            <Input
+              type="url"
+              placeholder="https://ejemplo.com/tu-video"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
             />
           </div>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            {description}
-          </p>
-          <Button onClick={onComplete} size="lg">
-            <CheckCircle className="mr-2" />
-            Completar Reto
-          </Button>
-        </CardContent>
-      </Card>
+        );
+      default:
+        // For 'game' and 'photos-crafts' this detail view might have different inputs or none
+        return null;
+    }
+  }
+
+
+  return (
+    <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-full">
+      <div className="w-full">
+        <Button variant="ghost" onClick={onBack} className="mb-4">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Volver a los retos
+        </Button>
+        <Card className="text-center w-full shadow-lg">
+          <CardContent className="p-6">
+            <h3 className="font-bold text-2xl text-primary font-headline mb-4">
+              {title}
+            </h3>
+            <div className="flex justify-center mb-6">
+              <Image
+                src={image}
+                alt={description}
+                width={400}
+                height={300}
+                className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto"
+                data-ai-hint={imageHint}
+              />
+            </div>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              {description}
+            </p>
+
+            <div className="mb-6">
+              {renderChallengeInput()}
+            </div>
+            
+            <Button onClick={handleCompleteClick} size="lg">
+              <CheckCircle className="mr-2" />
+              Completar Reto
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
-  </div>
-);
+  );
+}
 
 const challenges = {
   "video-cleanup": {
     title: "Video de Limpieza",
     description:
-      "Sube un video tuyo en una campaña de limpieza a YouTube/Instagram/TikTok y pega la URL.",
+      "Sube un video tuyo en una campaña de limpieza.",
     imageId: "cleanup-video",
     icon: Video,
   },
@@ -148,9 +241,21 @@ export default function Station3() {
       imageHint: imageInfo?.imageHint ?? "image",
     };
 
+    // Special case for photo crafts challenge, which needs a different component
+    if (selectedChallenge === 'photos-crafts') {
+        toast({
+            title: "Próximamente",
+            description: "Este reto de carga de fotos estará disponible pronto.",
+        });
+        setSelectedChallenge(null);
+        return null;
+    }
+
+
     return (
       <ChallengeDetail
         {...challengeData}
+        challengeId={selectedChallenge}
         onComplete={() => handleComplete(selectedChallenge)}
         onBack={() => setSelectedChallenge(null)}
       />
@@ -228,3 +333,5 @@ export default function Station3() {
     </>
   );
 }
+
+    
