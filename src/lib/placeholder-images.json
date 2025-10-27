@@ -19,10 +19,34 @@
       "imageHint": "frog character"
     },
     {
-      "id": "avatar-placeholder",
-      "description": "A placeholder avatar image for the player.",
-      "imageUrl": "https://images.unsplash.com/photo-1724435811349-32d27f4d5806?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwcm9maWxlJTIwYXZhdGFyfGVufDB8fHx8MTc2MDczMTI4NHww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "profile avatar"
+      "id": "avatar-1",
+      "description": "Avatar of a happy, adventurous boy with a hat.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/9c55b6c3-11a5-48b4-a4e8-466d6d2e67a6.png",
+      "imageHint": "boy avatar"
+    },
+    {
+      "id": "avatar-2",
+      "description": "Avatar of a smiling, curious girl with glasses.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/f7e0259b-54b9-4f7c-95b6-0e08c459f0f9.png",
+      "imageHint": "girl avatar"
+    },
+    {
+      "id": "avatar-3",
+      "description": "Avatar of a person with a neutral expression and curly hair.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/a8e6e5a6-7243-4a1d-9e63-44f2a7a4f944.png",
+      "imageHint": "person avatar"
+    },
+    {
+      "id": "avatar-4",
+      "description": "Avatar of a person with short hair and a friendly smile.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/6b8e3a2e-4a6b-4e0c-9f8a-5e3e4a3c1e2b.png",
+      "imageHint": "friendly avatar"
+    },
+    {
+      "id": "signup-background",
+      "description": "A lush, green cartoon forest background, with tall trees and sunlight filtering through the leaves, for the sign up screen.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/e09e23c2-f123-45c1-9293-e0750e3ac113.png",
+      "imageHint": "forest background"
     },
     {
       "id": "forest-background",
