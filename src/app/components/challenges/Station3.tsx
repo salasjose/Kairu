@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -49,7 +48,7 @@ const ChallengeDetail = ({
   useEffect(() => {
     // Cleanup the object URL to avoid memory leaks
     return () => {
-      if (videoUrl) {
+      if (videoUrl && videoUrl.startsWith('blob:')) {
         URL.revokeObjectURL(videoUrl);
       }
     };
@@ -73,6 +72,29 @@ const ChallengeDetail = ({
       });
     }
   };
+  
+  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newUrl = e.target.value;
+    setUrl(newUrl);
+
+    // Basic URL validation to show video preview
+    if (newUrl.trim() && (newUrl.startsWith("http://") || newUrl.startsWith("https://"))) {
+        // Simple logic for YouTube embeds.
+        if (newUrl.includes("youtube.com/watch?v=")) {
+            const videoId = newUrl.split('v=')[1].split('&')[0];
+            setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
+        } else if (newUrl.includes("youtu.be/")) {
+            const videoId = newUrl.split('youtu.be/')[1].split('?')[0];
+            setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
+        } else {
+            // For other URLs, try to use them directly (might not work for all services)
+            setVideoUrl(newUrl);
+        }
+    } else {
+        setVideoUrl(null); // Clear video if URL is invalid
+    }
+  };
+
 
   const handleCompleteClick = () => {
     if (challengeId === 'video-cleanup' && !videoFile) {
@@ -115,12 +137,11 @@ const ChallengeDetail = ({
               type="url"
               placeholder="https://ejemplo.com/tu-video"
               value={url}
-              onChange={(e) => setUrl(e.target.value)}
+              onChange={handleUrlChange}
             />
           </div>
         );
       default:
-        // For 'game' and 'photos-crafts' this detail view might have different inputs or none
         return null;
     }
   }
@@ -139,12 +160,21 @@ const ChallengeDetail = ({
               {title}
             </h3>
             <div className="flex justify-center mb-6">
-              {videoUrl ? (
-                <video
-                  src={videoUrl}
-                  controls
-                  className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto bg-black"
-                />
+               {videoUrl ? (
+                challengeId === 'video-cleanup' ? (
+                    <video
+                    src={videoUrl}
+                    controls
+                    className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto bg-black"
+                    />
+                ) : (
+                    <iframe
+                    src={videoUrl}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto aspect-video bg-black"
+                    ></iframe>
+                )
               ) : (
                 <Image
                   src={image}
