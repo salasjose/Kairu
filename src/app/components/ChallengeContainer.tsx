@@ -1,12 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useStationProgress } from "@/hooks/use-station-progress";
-import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
-import PrizeDialog from "./PrizeDialog";
-import { stations } from "@/lib/data";
 
 interface ChallengeContainerProps {
   stationId: number;
@@ -14,6 +9,7 @@ interface ChallengeContainerProps {
   description: string;
   children: React.ReactNode;
   onChallengeComplete: () => boolean;
+  onStationComplete: () => void;
 }
 
 export default function ChallengeContainer({
@@ -22,20 +18,12 @@ export default function ChallengeContainer({
   description,
   children,
   onChallengeComplete,
+  onStationComplete,
 }: ChallengeContainerProps) {
-  const { unlockStation } = useStationProgress();
-  const router = useRouter();
-  const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
-  const station = stations.find(s => s.id === stationId);
-
+  
   const handleComplete = () => {
     if (onChallengeComplete()) {
-      unlockStation(stationId + 1);
-      toast({
-        title: `¡${station?.title} Completada!`,
-        description: "¡Has ganado un premio!",
-      });
-      setIsPrizeModalOpen(true);
+      onStationComplete();
     } else {
         toast({
             title: "Reto Incompleto",
@@ -43,11 +31,6 @@ export default function ChallengeContainer({
             variant: "destructive",
         });
     }
-  };
-
-  const handleClaimPrize = () => {
-    setIsPrizeModalOpen(false);
-    router.push("/");
   };
 
   return (
@@ -64,15 +47,10 @@ export default function ChallengeContainer({
 
         <div className="mt-8 text-center">
           <Button size="lg" onClick={handleComplete}>
-            Completar Reto y Reclamar Premio
+            Completar Reto
           </Button>
         </div>
       </div>
-      <PrizeDialog 
-        open={isPrizeModalOpen} 
-        stationId={stationId} 
-        onClaim={handleClaimPrize} 
-      />
     </>
   );
 }

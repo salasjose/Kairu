@@ -11,6 +11,10 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import AddPhotoDialog from "./AddPhotoDialog";
+import { useChallengeProgress } from "@/hooks/use-challenge-progress";
+import { useStationProgress } from "@/hooks/use-station-progress";
+import PrizeDialog from "../PrizeDialog";
+import { useRouter } from "next/navigation";
 
 
 const faunaImage = PlaceHolderImages.find((p) => p.id === "fauna-capybara");
@@ -149,7 +153,7 @@ const PhotoSlot = ({
 };
 
 
-const PhotoChallenge = ({ onBack, onComplete }: { onBack: () => void, onComplete: (completed: boolean) => void }) => {
+const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: () => void }) => {
   const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -205,7 +209,6 @@ const PhotoChallenge = ({ onBack, onComplete }: { onBack: () => void, onComplete
     const hasFlora = floraPhotos.some(p => p !== null);
     const hasFauna = faunaPhotos.some(p => p !== null);
     if(hasFlora && hasFauna) {
-      onComplete(true);
       return true;
     }
     toast({
@@ -213,7 +216,6 @@ const PhotoChallenge = ({ onBack, onComplete }: { onBack: () => void, onComplete
       description: "Debes subir al menos una foto de flora y una de fauna para completar el reto.",
       variant: "destructive"
     })
-    onComplete(false);
     return false;
   }
 
@@ -243,6 +245,7 @@ const PhotoChallenge = ({ onBack, onComplete }: { onBack: () => void, onComplete
       title="Estación Bionexus"
       description={challenges["Reto 1"].description}
       onChallengeComplete={checkCompletion}
+      onStationComplete={onStationComplete}
     >
         <div className="w-full max-w-4xl mx-auto">
             <Button variant="ghost" onClick={onBack} className="mb-4">
@@ -275,7 +278,7 @@ const PhotoChallenge = ({ onBack, onComplete }: { onBack: () => void, onComplete
   );
 };
 
-const HabitatChallenge = ({ onBack, onComplete }: { onBack: () => void, onComplete: (completed: boolean) => void }) => {
+const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: () => void }) => {
   const [habitatPhotos, setHabitatPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAddPhotoDialogOpen, setIsAddPhotoDialogOpen] = useState(false);
@@ -321,7 +324,6 @@ const HabitatChallenge = ({ onBack, onComplete }: { onBack: () => void, onComple
   const checkCompletion = () => {
     const hasUploaded = habitatPhotos.some(p => p !== null);
     if (hasUploaded) {
-      onComplete(true);
       return true;
     }
     toast({
@@ -329,7 +331,6 @@ const HabitatChallenge = ({ onBack, onComplete }: { onBack: () => void, onComple
       description: "Debes subir al menos una foto de tu comedero/bebedero para completar el reto.",
       variant: "destructive"
     });
-    onComplete(false);
     return false;
   };
 
@@ -359,6 +360,7 @@ const HabitatChallenge = ({ onBack, onComplete }: { onBack: () => void, onComple
         title="Estación Bionexus"
         description={challenges["Reto 2"].description}
         onChallengeComplete={checkCompletion}
+        onStationComplete={onStationComplete}
       >
         <div className="w-full max-w-4xl mx-auto">
           <Button variant="ghost" onClick={onBack} className="mb-4">
@@ -382,30 +384,58 @@ const HabitatChallenge = ({ onBack, onComplete }: { onBack: () => void, onComple
 
 
 export default function Station1() {
+  const stationId = 1;
   const [selectedChallenge, setSelectedChallenge] = useState<string | null>(null);
-  const [isChallengeCompleted, setIsChallengeCompleted] = useState(false);
+  const { completedChallenges, completeChallenge } = useChallengeProgress();
+  const { unlockStation } = useStationProgress();
+  const router = useRouter();
+
+  const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
+  const stationChallenges = Object.keys(challenges);
   
   const handleChallengeSelection = (challenge: string) => {
-    setIsChallengeCompleted(false);
     setSelectedChallenge(challenge);
   }
 
-  const handleChallengeComplete = (completed: boolean) => {
-    setIsChallengeCompleted(completed);
-    // The actual completion logic is now handled inside ChallengeContainer
-    // which is used by both PhotoChallenge and HabitatChallenge
-    return completed;
+  const handleStationComplete = (challengeName: string) => {
+    completeChallenge(stationId, challengeName);
+    setSelectedChallenge(null); // Go back to challenge selection
+
+    const completedStationChallenges = completedChallenges[stationId] || [];
+    const allChallengesDone = stationChallenges.every(ch => [...completedStationChallenges, challengeName].includes(ch));
+    
+    if (allChallengesDone) {
+        unlockStation(stationId + 1);
+        toast({
+            title: `¡Estación ${stationId} Completada!`,
+            description: "¡Has completado todos los retos! Escoge tu premio.",
+        });
+        setIsPrizeModalOpen(true);
+    } else {
+        toast({
+            title: `¡Reto '${challengeName}' Completado!`,
+            description: "¡Bien hecho! Vuelve cuando quieras para completar los demás.",
+        });
+    }
+  };
+  
+  const handleClaimPrize = () => {
+    setIsPrizeModalOpen(false);
+    router.push("/");
   };
   
   if (selectedChallenge === "Reto 1") {
-    return <PhotoChallenge onBack={() => setSelectedChallenge(null)} onComplete={handleChallengeComplete} />;
+    return <PhotoChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={() => handleStationComplete("Reto 1")} />;
   }
 
   if (selectedChallenge === "Reto 2") {
-    return <HabitatChallenge onBack={() => setSelectedChallenge(null)} onComplete={handleChallengeComplete} />;
+    return <HabitatChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={() => handleStationComplete("Reto 2")} />;
   }
 
+  const stationCompletedChallenges = completedChallenges[stationId] || [];
+
   return (
+    <>
     <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {biodiversidadBgImage && (
           <Image
@@ -423,7 +453,9 @@ export default function Station1() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-8 md:gap-12 mb-8">
-          {(Object.keys(challenges) as (keyof typeof challenges)[]).map((reto, index) => (
+          {(stationChallenges as (keyof typeof challenges)[]).map((reto, index) => {
+            const isCompleted = stationCompletedChallenges.includes(reto);
+            return (
             <button
               key={reto}
               onClick={() => handleChallengeSelection(reto)}
@@ -432,6 +464,11 @@ export default function Station1() {
                 index === 0 ? "md:-rotate-6" : "md:rotate-6"
               )}
             >
+              {isCompleted && (
+                <div className="absolute -top-3 -right-3 z-10 bg-green-500 rounded-full p-2 shadow-lg">
+                    <CheckCircle className="text-white h-5 w-5" />
+                </div>
+              )}
               <div className="absolute inset-0 bg-white shadow-2xl rounded-lg transform -rotate-1"></div>
               <Card className="relative w-60 h-64 md:w-64 md:h-72 rounded-lg shadow-2xl flex flex-col items-center justify-center p-4 border-4 border-gray-200">
                 <CardHeader>
@@ -444,7 +481,7 @@ export default function Station1() {
                 </CardContent>
               </Card>
             </button>
-          ))}
+          )})}
         </div>
 
         <div className="bg-[#D95E32] text-white font-kalam py-3 px-10 rounded-lg shadow-lg rotate-2">
@@ -466,11 +503,16 @@ export default function Station1() {
 
         <div className="mt-4 max-w-md mx-auto">
           <p className="bg-background/80 p-4 rounded-md text-center">
-            Selecciona uno de los retos para completar la estación. ¡Al
-            terminar, volverás al mapa para continuar tu aventura!
+            Selecciona uno de los retos para completar la estación. ¡Debes completarlos todos para avanzar!
           </p>
         </div>
       </div>
     </div>
+    <PrizeDialog 
+        open={isPrizeModalOpen} 
+        stationId={stationId} 
+        onClaim={handleClaimPrize} 
+      />
+    </>
   );
 }
