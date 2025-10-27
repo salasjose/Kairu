@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
@@ -43,12 +43,24 @@ const ChallengeDetail = ({
 }) => {
   const [url, setUrl] = useState("");
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Cleanup the object URL to avoid memory leaks
+    return () => {
+      if (videoUrl) {
+        URL.revokeObjectURL(videoUrl);
+      }
+    };
+  }, [videoUrl]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type.startsWith("video/")) {
       setVideoFile(file);
+      const newVideoUrl = URL.createObjectURL(file);
+      setVideoUrl(newVideoUrl);
       toast({
         title: "Video Seleccionado",
         description: `Archivo: ${file.name}`,
@@ -87,19 +99,12 @@ const ChallengeDetail = ({
               className="hidden"
               accept="video/*"
             />
-            <Button onClick={() => fileInputRef.current?.click()} size="lg" variant="outline" className="w-full max-w-md mx-auto">
-              {videoFile ? (
-                <>
-                  <CheckCircle className="mr-2 text-green-500" />
-                  Video: {videoFile.name}
-                </>
-              ) : (
-                <>
+            {!videoFile && (
+              <Button onClick={() => fileInputRef.current?.click()} size="lg" variant="outline" className="w-full max-w-md mx-auto">
                   <Upload className="mr-2" />
                   Cargar Video
-                </>
-              )}
-            </Button>
+              </Button>
+            )}
           </>
         );
       case 'video-separate':
@@ -134,14 +139,22 @@ const ChallengeDetail = ({
               {title}
             </h3>
             <div className="flex justify-center mb-6">
-              <Image
-                src={image}
-                alt={description}
-                width={400}
-                height={300}
-                className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto"
-                data-ai-hint={imageHint}
-              />
+              {videoUrl ? (
+                <video
+                  src={videoUrl}
+                  controls
+                  className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto bg-black"
+                />
+              ) : (
+                <Image
+                  src={image}
+                  alt={description}
+                  width={400}
+                  height={300}
+                  className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto"
+                  data-ai-hint={imageHint}
+                />
+              )}
             </div>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               {description}
@@ -333,5 +346,3 @@ export default function Station3() {
     </>
   );
 }
-
-    
