@@ -101,8 +101,8 @@ const ChallengeDetail = ({
         toast({ title: "Reto Incompleto", description: "Debes cargar un video para continuar.", variant: "destructive"});
         return;
     }
-    if ((challengeId === 'video-separate') && !url.trim()) {
-       toast({ title: "Reto Incompleto", description: "Debes ingresar la URL de tu video.", variant: "destructive"});
+    if ((challengeId === 'video-separate' || challengeId === 'photos-crafts') && !url.trim()) {
+       toast({ title: "Reto Incompleto", description: "Debes ingresar la URL de tu video/publicación.", variant: "destructive"});
        return;
     }
     onComplete();
@@ -130,6 +130,7 @@ const ChallengeDetail = ({
           </>
         );
       case 'video-separate':
+      case 'photos-crafts':
         return (
           <div className="flex gap-2 max-w-md mx-auto">
             <LinkIcon className="h-10 text-muted-foreground" />
@@ -160,7 +161,7 @@ const ChallengeDetail = ({
               {title}
             </h3>
             <div className="flex justify-center mb-6">
-               {videoUrl ? (
+               {videoUrl && challengeId !== 'photos-crafts' ? (
                 challengeId === 'video-cleanup' ? (
                     <video
                     src={videoUrl}
@@ -230,7 +231,7 @@ const challenges = {
   "photos-crafts": {
     title: "Artesanías Recicladas",
     description:
-      "Sube 4 fotos de accesorios o adornos que hayas hecho con materiales reciclados.",
+      "Crea nuevos productos a partir de residuos reciclados. Monta un post en Instagram, etiquétanos @fundaciontekara @corpoguajira y comparte el enlace.",
     imageId: "recycled-art",
     icon: Sparkles,
   },
@@ -283,18 +284,7 @@ export default function Station3() {
       image: imageInfo?.imageUrl ?? "https://picsum.photos/seed/placeholder/400/300",
       imageHint: imageInfo?.imageHint ?? "image",
     };
-
-    // Special case for photo crafts challenge, which needs a different component
-    if (selectedChallenge === 'photos-crafts') {
-        toast({
-            title: "Próximamente",
-            description: "Este reto de carga de fotos estará disponible pronto.",
-        });
-        setSelectedChallenge(null);
-        return null;
-    }
-
-
+    
     return (
       <ChallengeDetail
         {...challengeData}
