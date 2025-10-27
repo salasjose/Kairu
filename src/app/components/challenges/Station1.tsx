@@ -3,13 +3,14 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Camera, CheckCircle, Video, X } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle, Upload, Video, X } from "lucide-react";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import ChallengeContainer from "../ChallengeContainer";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import AddPhotoDialog from "./AddPhotoDialog";
 
 
 const faunaImage = PlaceHolderImages.find((p) => p.id === "fauna-capybara");
@@ -152,11 +153,13 @@ const PhotoChallenge = ({ onBack, onComplete }: { onBack: () => void, onComplete
   const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isAddPhotoDialogOpen, setIsAddPhotoDialogOpen] = useState(false);
   const [photoToAdd, setPhotoToAdd] = useState<{type: "flora" | "fauna", index: number} | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddPhotoClick = (type: "flora" | "fauna", index: number) => {
     setPhotoToAdd({ type, index });
-    setIsCameraOpen(true);
+    setIsAddPhotoDialogOpen(true);
   };
 
   const handleCapture = (imageUrl: string) => {
@@ -174,6 +177,27 @@ const PhotoChallenge = ({ onBack, onComplete }: { onBack: () => void, onComplete
     }
     setIsCameraOpen(false);
     setPhotoToAdd(null);
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && photoToAdd) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        handleCapture(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUploadClick = () => {
+    setIsAddPhotoDialogOpen(false);
+    fileInputRef.current?.click();
+  };
+
+  const handleTakeNewPhotoClick = () => {
+    setIsAddPhotoDialogOpen(false);
+    setIsCameraOpen(true);
   };
 
 
@@ -195,12 +219,25 @@ const PhotoChallenge = ({ onBack, onComplete }: { onBack: () => void, onComplete
 
   return (
     <>
-     {isCameraOpen && photoToAdd && (
+     <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="hidden"
+        accept="image/*"
+      />
+     {isCameraOpen && (
         <CameraView 
             onCapture={handleCapture}
             onCancel={() => setIsCameraOpen(false)}
         />
      )}
+     <AddPhotoDialog
+        open={isAddPhotoDialogOpen}
+        onClose={() => setIsAddPhotoDialogOpen(false)}
+        onTakePhoto={handleTakeNewPhotoClick}
+        onUpload={handleUploadClick}
+      />
      <ChallengeContainer
       stationId={1}
       title="Estación Bionexus"
@@ -241,11 +278,13 @@ const PhotoChallenge = ({ onBack, onComplete }: { onBack: () => void, onComplete
 const HabitatChallenge = ({ onBack, onComplete }: { onBack: () => void, onComplete: (completed: boolean) => void }) => {
   const [habitatPhotos, setHabitatPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isAddPhotoDialogOpen, setIsAddPhotoDialogOpen] = useState(false);
   const [photoToAddIndex, setPhotoToAddIndex] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddPhotoClick = (index: number) => {
     setPhotoToAddIndex(index);
-    setIsCameraOpen(true);
+    setIsAddPhotoDialogOpen(true);
   };
 
   const handleCapture = (imageUrl: string) => {
@@ -256,6 +295,27 @@ const HabitatChallenge = ({ onBack, onComplete }: { onBack: () => void, onComple
     }
     setIsCameraOpen(false);
     setPhotoToAddIndex(null);
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && photoToAddIndex !== null) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        handleCapture(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUploadClick = () => {
+    setIsAddPhotoDialogOpen(false);
+    fileInputRef.current?.click();
+  };
+
+  const handleTakeNewPhotoClick = () => {
+    setIsAddPhotoDialogOpen(false);
+    setIsCameraOpen(true);
   };
 
   const checkCompletion = () => {
@@ -275,12 +335,25 @@ const HabitatChallenge = ({ onBack, onComplete }: { onBack: () => void, onComple
 
   return (
     <>
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="hidden"
+        accept="image/*"
+      />
       {isCameraOpen && (
         <CameraView 
           onCapture={handleCapture}
           onCancel={() => setIsCameraOpen(false)}
         />
       )}
+       <AddPhotoDialog
+        open={isAddPhotoDialogOpen}
+        onClose={() => setIsAddPhotoDialogOpen(false)}
+        onTakePhoto={handleTakeNewPhotoClick}
+        onUpload={handleUploadClick}
+      />
       <ChallengeContainer
         stationId={1}
         title="Estación Bionexus"
