@@ -241,15 +241,15 @@ export default function Home() {
 
   const mapBgImage = PlaceHolderImages.find((p) => p.id === "mapa-juego-background");
   const stationPositions = [
-    { top: "65%", left: "18%" }, // 1
-    { top: "55%", left: "32%" }, // 2
-    { top: "40%", left: "25%" }, // 3
-    { top: "30%", left: "45%" }, // 4
-    { top: "50%", left: "55%" }, // 5
-    { top: "35%", left: "70%" }, // 6
-    { top: "60%", left: "80%" }, // 7
-    { top: "80%", left: "70%" }, // 8
-    { top: "85%", left: "90%" }, // 9
+    { top: "65%", left: "10%" }, // 1
+    { top: "60%", left: "25%" }, // 2
+    { top: "50%", left: "38%" }, // 3
+    { top: "42%", left: "55%" }, // 4
+    { top: "60%", left: "65%" }, // 5
+    { top: "70%", left: "80%" }, // 6
+    { top: "55%", left: "88%" }, // 7
+    { top: "35%", left: "75%" }, // 8
+    { top: "25%", left: "90%" }, // 9
   ];
   const generatePath = (positions: { top: string; left: string }[]) => {
     if (positions.length < 2) return "";
@@ -281,7 +281,7 @@ export default function Home() {
       
       <header className="absolute top-0 left-0 right-0 p-2 sm:p-4 z-20">
         <div className="container mx-auto flex items-start justify-between gap-2">
-            <div className="bg-cyan-100/90 backdrop-blur-sm p-2 rounded-2xl flex items-center gap-2 shadow-md">
+            <div className="bg-white/90 backdrop-blur-sm p-2 rounded-2xl flex items-center gap-3 shadow-md">
                 <Logo className="h-8 w-8 text-green-800" />
                 <div className="pr-2">
                     <h1 className="font-bold text-green-900 leading-tight">Kairu</h1>
@@ -289,7 +289,7 @@ export default function Home() {
                         ¡Bienvenido, {playerData.name}!
                     </p>
                 </div>
-                <Avatar className="h-10 w-10 border-2 border-white">
+                <Avatar className="h-12 w-12 border-2 border-white">
                     <AvatarImage src={playerData.avatar} alt="Player Avatar" />
                     <AvatarFallback>{playerData.name.charAt(0)}</AvatarFallback>
                 </Avatar>
@@ -321,7 +321,7 @@ export default function Home() {
                 return (
                 <div 
                     key={station.id} 
-                    className="absolute -translate-x-1/2 -translate-y-1/2 w-20 h-20 md:w-24 md:h-24"
+                    className="absolute -translate-x-1/2 -translate-y-1/2 w-24 h-24"
                     style={{ 
                     top: pos.top,
                     left: pos.left,
