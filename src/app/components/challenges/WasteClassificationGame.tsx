@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, CheckCircle, PartyPopper, Recycle, Trash2, Leaf, AlertCircle, RefreshCw } from 'lucide-react';
@@ -29,25 +29,28 @@ const initialWasteItems: WasteItem[] = [
 ];
 
 const bins: { category: WasteCategory; label: string; icon: React.ElementType; color: string }[] = [
-  { category: 'recycle', label: 'Reciclaje', icon: Recycle, color: 'bg-blue-500' },
-  { category: 'organic', label: 'Orgánico', icon: Leaf, color: 'bg-green-500' },
-  { category: 'trash', label: 'Basura', icon: Trash2, color: 'bg-gray-600' },
+  { category: 'recycle', label: 'Reciclaje', icon: Recycle, color: 'text-blue-500' },
+  { category: 'organic', label: 'Orgánico', icon: Leaf, color: 'text-green-500' },
+  { category: 'trash', label: 'Basura', icon: Trash2, color: 'text-gray-600' },
 ];
 
-export default function WasteClassificationGame({ onComplete, onBack }: { onComplete: () => void; onBack: () => void; }) {
+const Game = ({ onGameWin, onRestartRequest }: { onGameWin: () => void; onRestartRequest: () => void; }) => {
   const [wasteItems, setWasteItems] = useState(() => [...initialWasteItems].sort(() => Math.random() - 0.5));
-  const [draggedItem, setDraggedItem] = useState<WasteItem | null>(null);
   const [animations, setAnimations] = useState<Record<WasteCategory, string>>({ recycle: '', organic: '', trash: '' });
-  const [timeLeft, setTimeLeft] = useState(180); // 3 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(180); // 3 minutes
   const [isTimeUp, setIsTimeUp] = useState(false);
 
-
-  const remainingItems = useMemo(() => wasteItems.filter(item => item), [wasteItems]);
-  const gameWon = remainingItems.length === 0;
+  const currentItem = wasteItems[wasteItems.length - 1];
+  const gameWon = !currentItem;
+  
+  useEffect(() => {
+    if (gameWon) {
+      onGameWin();
+    }
+  }, [gameWon, onGameWin]);
 
   useEffect(() => {
     if (gameWon || isTimeUp) return;
-
     if (timeLeft > 0) {
       const timerId = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timerId);
@@ -61,19 +64,6 @@ export default function WasteClassificationGame({ onComplete, onBack }: { onComp
     }
   }, [timeLeft, gameWon, isTimeUp]);
 
-
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, item: WasteItem) => {
-    setDraggedItem(item);
-    const img = new Image();
-    img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-    e.dataTransfer.setDragImage(img, 0, 0);
-    e.dataTransfer.setData('text/plain', item.id.toString());
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-  };
-
   const triggerAnimation = (category: WasteCategory, type: 'correct' | 'incorrect') => {
     setAnimations(prev => ({ ...prev, [category]: type }));
     setTimeout(() => {
@@ -81,57 +71,35 @@ export default function WasteClassificationGame({ onComplete, onBack }: { onComp
     }, 500);
   }
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, category: WasteCategory) => {
-    e.preventDefault();
-    if (!draggedItem) return;
+  const handleDrop = (category: WasteCategory) => {
+    if (!currentItem) return;
 
-    if (draggedItem.category === category) {
-      setWasteItems(prevItems => prevItems.filter(item => item.id !== draggedItem.id));
+    if (currentItem.category === category) {
+      setWasteItems(prevItems => prevItems.slice(0, prevItems.length - 1));
       triggerAnimation(category, 'correct');
     } else {
       toast({
         title: "¡Ups! Contenedor incorrecto",
-        description: `"${draggedItem.name}" no va en la caneca de ${bins.find(b => b.category === category)?.label}.`,
+        description: `"${currentItem.name}" no va en la caneca de ${bins.find(b => b.category === category)?.label}.`,
         variant: "destructive",
       });
       triggerAnimation(category, 'incorrect');
     }
-    setDraggedItem(null);
   };
-  
-  const handleRestart = () => {
-    setWasteItems([...initialWasteItems].sort(() => Math.random() - 0.5));
-    setTimeLeft(180);
-    setIsTimeUp(false);
-  }
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
   };
-
-  if (gameWon) {
-    return (
-        <div className="w-full max-w-4xl mx-auto p-4 flex flex-col items-center justify-center text-center min-h-[400px]">
-            <PartyPopper className="w-24 h-24 text-yellow-500 animate-bounce mb-4" />
-            <h2 className="text-4xl font-bold font-headline text-primary mb-2">¡Ganaste!</h2>
-            <p className="text-muted-foreground text-lg mb-6">Has clasificado todos los residuos correctamente. ¡Eres un experto en reciclaje!</p>
-            <Button onClick={onComplete} size="lg">
-                <CheckCircle className="mr-2" />
-                Completar y reclamar premio
-            </Button>
-        </div>
-    )
-  }
   
   if (isTimeUp) {
     return (
-        <div className="w-full max-w-4xl mx-auto p-4 flex flex-col items-center justify-center text-center min-h-[400px]">
+        <div className="w-full flex flex-col items-center justify-center text-center min-h-[300px]">
             <AlertCircle className="w-24 h-24 text-destructive mb-4" />
-            <h2 className="text-4xl font-bold font-headline text-destructive mb-2">¡Se acabó el tiempo!</h2>
-            <p className="text-muted-foreground text-lg mb-6">No te preocupes, la práctica hace al maestro. ¿Quieres intentarlo de nuevo?</p>
-            <Button onClick={handleRestart} size="lg">
+            <h2 className="text-3xl font-bold font-headline text-destructive mb-2">¡Se acabó el tiempo!</h2>
+            <p className="text-muted-foreground text-lg mb-6">No te preocupes, la práctica hace al maestro.</p>
+            <Button onClick={onRestartRequest} size="lg">
                 <RefreshCw className="mr-2" />
                 Volver a Intentar
             </Button>
@@ -139,61 +107,119 @@ export default function WasteClassificationGame({ onComplete, onBack }: { onComp
     )
   }
 
+  return (
+    <div className="flex flex-col items-center">
+      <div className="mb-6 text-center">
+        <div className="text-2xl font-bold text-primary tabular-nums">
+            Tiempo Restante: {formatTime(timeLeft)}
+        </div>
+        <p className="text-muted-foreground mt-2">Como Guardián del Planeta, tu misión es dar el destino correcto a cada residuo.</p>
+      </div>
+
+      <div className="relative mb-8 h-24 w-64 flex items-center justify-center">
+        <AnimatePresence>
+          {currentItem && (
+            <motion.div
+              key={currentItem.id}
+              drag
+              dragConstraints={{ left: -150, right: 150, top: -80, bottom: 80 }}
+              dragSnapToOrigin
+              onDragEnd={(event, info) => {
+                 const yOffset = info.offset.y;
+                 if (yOffset > 100) { // Dropped on the bins area
+                    const xOffset = info.offset.x;
+                    const binWidth = window.innerWidth / 3;
+                    if (xOffset < -50) handleDrop('recycle');
+                    else if (xOffset > 50) handleDrop('trash');
+                    else handleDrop('organic');
+                 }
+              }}
+              className="absolute p-4 bg-card border rounded-lg shadow-lg cursor-grab active:cursor-grabbing text-center"
+              initial={{ y: -50, opacity: 0, scale: 0.8 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 50, opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.3 }}
+            >
+              <p className="font-semibold text-lg">{currentItem.name}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4 md:gap-6 w-full">
+        {bins.map(({ category, label, icon: Icon, color }) => (
+          <div
+            key={category}
+            className={cn(
+              "p-4 md:p-6 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all duration-300",
+              animations[category] === 'correct' && 'border-green-500 bg-green-500/20',
+              animations[category] === 'incorrect' && 'animate-shake border-destructive bg-destructive/20'
+            )}
+          >
+            <Icon className={cn("w-12 h-12 md:w-16 md:h-16 mb-2", color)} />
+            <h3 className="text-lg md:text-xl font-bold text-center">{label}</h3>
+          </div>
+        ))}
+      </div>
+       <div className="mt-8 text-center text-sm text-muted-foreground">
+        <p><b>Pistas:</b> Observa bien los materiales. ¿Plástico limpio o sucio? ¿Vegetal o no vegetal?</p>
+        <p>No te apresures, una clasificación equivocada te hace perder tiempo.</p>
+       </div>
+    </div>
+  );
+}
+
+export default function WasteClassificationGameContainer({ onComplete, onBack }: { onComplete: () => void; onBack: () => void; }) {
+  const [gameState, setGameState] = useState<'playing' | 'won'>('playing');
+  const [key, setKey] = useState(0); // Used to force-remount the Game component on restart
+
+  const handleGameWin = useCallback(() => {
+    setGameState('won');
+    toast({
+        title: "¡Reto Superado!",
+        description: "Has clasificado todos los residuos correctamente. ¡Eres un experto en reciclaje!",
+    });
+  }, []);
+
+  const handleRestart = useCallback(() => {
+    setGameState('playing');
+    setKey(prevKey => prevKey + 1);
+  }, []);
+
+  if (gameState === 'won') {
+    return (
+        <div className="w-full max-w-4xl mx-auto p-4 flex flex-col items-center justify-center text-center min-h-[400px]">
+            <PartyPopper className="w-24 h-24 text-yellow-500 animate-bounce mb-4" />
+            <h2 className="text-4xl font-bold font-headline text-primary mb-2">¡Ganaste!</h2>
+            <p className="text-muted-foreground text-lg mb-6">Eres un verdadero Guardián del Planeta.</p>
+            <div className='flex gap-4'>
+                <Button onClick={handleRestart} variant="outline" size="lg">
+                    <RefreshCw className="mr-2" />
+                    Jugar de Nuevo
+                </Button>
+                <Button onClick={onComplete} size="lg">
+                    <CheckCircle className="mr-2" />
+                    Completar y Reclamar Premio
+                </Button>
+            </div>
+        </div>
+    )
+  }
 
   return (
     <div className="w-full max-w-5xl mx-auto p-4">
-        <Button variant="ghost" onClick={onBack} className="mb-4">
+      <div className="flex justify-between items-center mb-4">
+        <Button variant="ghost" onClick={onBack}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Volver al menú de juegos
+          Volver al menú
         </Button>
-        <div className="text-center mb-6">
-            <h2 className="text-3xl font-bold text-primary font-headline">Juego de Clasificación</h2>
-            <p className="text-muted-foreground">Arrastra cada residuo al contenedor correcto.</p>
-            <div className="mt-4 text-2xl font-bold text-primary tabular-nums">
-                Tiempo Restante: {formatTime(timeLeft)}
-            </div>
-        </div>
-
-        {/* Waste Items */}
-        <div className="mb-8 min-h-[80px] flex flex-wrap gap-3 justify-center items-center p-4 bg-muted/50 rounded-lg">
-             <AnimatePresence>
-                {remainingItems.map(item => (
-                    <motion.div
-                        key={item.id}
-                        layout
-                        initial={{ opacity: 0, scale: 0.5 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.5 }}
-                        transition={{ duration: 0.3 }}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, item)}
-                        onDragEnd={() => setDraggedItem(null)}
-                        className="p-3 bg-card border rounded-lg shadow-sm cursor-grab active:cursor-grabbing"
-                    >
-                       {item.name}
-                    </motion.div>
-                ))}
-             </AnimatePresence>
-        </div>
-
-        {/* Bins */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {bins.map(({ category, label, icon: Icon, color }) => (
-                <div
-                    key={category}
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, category)}
-                    className={cn(
-                        "p-6 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all duration-300",
-                        animations[category] === 'correct' && 'animate-pulse border-green-500 bg-green-500/20',
-                        animations[category] === 'incorrect' && 'animate-shake border-destructive bg-destructive/20'
-                    )}
-                >
-                    <Icon className={cn("w-16 h-16 mb-2", color.replace('bg-', 'text-'))} />
-                    <h3 className="text-xl font-bold">{label}</h3>
-                </div>
-            ))}
-        </div>
+        <h2 className="text-2xl md:text-3xl font-bold text-primary font-headline text-center">Clasifica tus Residuos</h2>
+        <Button onClick={handleRestart} variant="outline">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Reiniciar
+        </Button>
+      </div>
+      <Game key={key} onGameWin={handleGameWin} onRestartRequest={handleRestart} />
     </div>
   );
 }

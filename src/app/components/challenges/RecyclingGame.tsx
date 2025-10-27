@@ -13,12 +13,12 @@ const games = [
   { id: "game4", title: "Juego 4 (Próximamente)", description: "Un nuevo reto de reciclaje.", component: null, enabled: false },
 ];
 
-interface RecyclingGameProps {
+interface RecyclingGamesMenuProps {
   onComplete: () => void;
   onBack: () => void;
 }
 
-export default function RecyclingGame({ onComplete, onBack }: RecyclingGameProps) {
+export default function RecyclingGamesMenu({ onComplete, onBack }: RecyclingGamesMenuProps) {
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
 
   if (selectedGame) {
@@ -38,7 +38,7 @@ export default function RecyclingGame({ onComplete, onBack }: RecyclingGameProps
         <Card className="w-full shadow-lg">
           <CardHeader>
             <CardTitle className="text-center text-3xl font-bold text-primary font-headline">Juegos de Reciclaje</CardTitle>
-            <CardDescription className="text-center">Selecciona un juego para empezar.</CardDescription>
+            <CardDescription className="text-center">Selecciona un juego para empezar a aprender y divertirte.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {games.map(game => (
