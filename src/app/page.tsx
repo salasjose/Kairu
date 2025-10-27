@@ -241,15 +241,15 @@ export default function Home() {
 
   const mapBgImage = PlaceHolderImages.find((p) => p.id === "mapa-juego-background");
   const stationPositions = [
-    { top: "60%", left: "18%" }, // 1
-    { top: "50%", left: "32%" }, // 2
-    { top: "35%", left: "25%" }, // 3
-    { top: "25%", left: "45%" }, // 4
-    { top: "45%", left: "55%" }, // 5
-    { top: "30%", left: "70%" }, // 6
-    { top: "55%", left: "80%" }, // 7
-    { top: "75%", left: "70%" }, // 8
-    { top: "80%", left: "90%" }, // 9
+    { top: "65%", left: "18%" }, // 1
+    { top: "55%", left: "32%" }, // 2
+    { top: "40%", left: "25%" }, // 3
+    { top: "30%", left: "45%" }, // 4
+    { top: "50%", left: "55%" }, // 5
+    { top: "35%", left: "70%" }, // 6
+    { top: "60%", left: "80%" }, // 7
+    { top: "80%", left: "70%" }, // 8
+    { top: "85%", left: "90%" }, // 9
   ];
   const generatePath = (positions: { top: string; left: string }[]) => {
     if (positions.length < 2) return "";
@@ -285,7 +285,9 @@ export default function Home() {
                 <Logo className="h-8 w-8 text-green-800" />
                 <div className="pr-2">
                     <h1 className="font-bold text-green-900 leading-tight">Kairu</h1>
-                    <p className="text-xs text-green-800/80 leading-tight">¡Bienvenido, {playerData.name}!</p>
+                    <p className="text-xs text-green-800/80 leading-tight">
+                        ¡Bienvenido, {playerData.name}!
+                    </p>
                 </div>
                 <Avatar className="h-10 w-10 border-2 border-white">
                     <AvatarImage src={playerData.avatar} alt="Player Avatar" />
@@ -309,7 +311,7 @@ export default function Home() {
                     fill="none"
                     stroke="white"
                     strokeWidth="0.5"
-                    strokeDasharray="0.5 2.5"
+                    strokeDasharray="2 3"
                     strokeLinecap="round"
                 />
             </svg>
@@ -319,7 +321,7 @@ export default function Home() {
                 return (
                 <div 
                     key={station.id} 
-                    className="absolute -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-20 md:h-20"
+                    className="absolute -translate-x-1/2 -translate-y-1/2 w-20 h-20 md:w-24 md:h-24"
                     style={{ 
                     top: pos.top,
                     left: pos.left,

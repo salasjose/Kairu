@@ -23,7 +23,7 @@ export default function StationNode({ station, isUnlocked }: StationNodeProps) {
   const stationButton = (
     <div className="relative w-full h-full transition-transform duration-300 transform hover:scale-110">
       {/* Base del cilindro */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[90%] h-[60%] rounded-[50%] bg-gray-200/80 shadow-inner-lg" />
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[90%] h-[60%] rounded-[50%] bg-gray-200/50 shadow-inner-lg" />
       
       {/* Tapa superior del cilindro */}
       <div className={cn(
@@ -31,9 +31,9 @@ export default function StationNode({ station, isUnlocked }: StationNodeProps) {
         isUnlocked ? "bg-slate-800" : "bg-slate-900/80"
       )}>
         {isUnlocked ? (
-          <Icon className="w-8 h-8 md:w-10 md:h-10 text-white" />
+          <Icon className="w-10 h-10 md:w-12 md:h-12 text-white" />
         ) : (
-          <Lock className="h-8 w-8 md:w-10 md:h-10 text-white/70" />
+          <Lock className="h-10 w-10 md:w-12 md:h-12 text-white/70" />
         )}
       </div>
     </div>
