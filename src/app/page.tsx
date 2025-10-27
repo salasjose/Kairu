@@ -13,6 +13,7 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import PrizeCart from "./components/PrizeCart";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import SignUpForm from "./components/auth/SignUpForm";
+import LoginForm from "./components/auth/LoginForm";
 import { motion, AnimatePresence } from "framer-motion";
 
 const PLAYER_DATA_KEY = 'kairu-player-data';
@@ -25,6 +26,7 @@ interface PlayerData {
 const OnboardingFlow = ({ onComplete }: { onComplete: (data: PlayerData) => void }) => {
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<any>(null);
+  const [authAction, setAuthAction] = useState<'login' | 'signup' | null>(null);
 
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
   const welcomeBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
@@ -48,6 +50,12 @@ const OnboardingFlow = ({ onComplete }: { onComplete: (data: PlayerData) => void
     setStep(3);
   };
 
+  const handleLoginSubmit = (data: any) => {
+    // For now, we'll just simulate a login and create dummy data
+    const finalData = { name: data.usuario, avatar: avatarOptions[0].imageUrl };
+    onComplete(finalData);
+  }
+
   const handleAvatarSelect = (avatarUrl: string) => {
     const finalData = { name: formData.nombre, avatar: avatarUrl };
     onComplete(finalData);
@@ -70,7 +78,7 @@ const OnboardingFlow = ({ onComplete }: { onComplete: (data: PlayerData) => void
             <h1 className="text-4xl md:text-6xl font-bold text-primary mt-4 font-headline">KAIRU</h1>
           </motion.div>
         );
-      case 1: // Yara's Intro
+      case 1: // Yara's Intro & Auth Selection
         return (
           <motion.div
             key="step1"
@@ -80,12 +88,15 @@ const OnboardingFlow = ({ onComplete }: { onComplete: (data: PlayerData) => void
           >
             {yaraCharImage && <Image src={yaraCharImage.imageUrl} alt="Yara" width={150} height={150} data-ai-hint={yaraCharImage.imageHint}/>}
             <div className="bg-white/90 p-4 rounded-lg shadow-xl mt-4 max-w-sm">
-                <p className="font-bold text-lg text-primary">Me llamo YARA, te invito a crear tu usuario.</p>
+                <p className="font-bold text-lg text-primary">¡Hola! Soy Yara. ¿Ya tienes una cuenta o eres nuevo por aquí?</p>
             </div>
-            <Button onClick={() => setStep(2)} className="mt-6" size="lg">Crear Usuario</Button>
+            <div className="flex gap-4 mt-6">
+                <Button onClick={() => { setAuthAction('login'); setStep(2); }} size="lg">Iniciar Sesión</Button>
+                <Button onClick={() => { setAuthAction('signup'); setStep(2); }} size="lg" variant="secondary">Crear Cuenta</Button>
+            </div>
           </motion.div>
         );
-      case 2: // Sign Up Form
+      case 2: // Login or Sign Up Form
         return (
            <motion.div
             key="step2"
@@ -93,7 +104,11 @@ const OnboardingFlow = ({ onComplete }: { onComplete: (data: PlayerData) => void
             animate={{ opacity: 1, scale: 1 }}
             className="w-full max-w-md"
            >
-            <SignUpForm onSubmit={handleFormSubmit} />
+            {authAction === 'login' ? (
+                <LoginForm onSubmit={handleLoginSubmit} onSwitchToSignUp={() => setAuthAction('signup')} />
+            ) : (
+                <SignUpForm onSubmit={handleFormSubmit} onSwitchToLogin={() => setAuthAction('login')} />
+            )}
           </motion.div>
         );
       case 3: // Avatar Selection
@@ -195,9 +210,13 @@ export default function Home() {
       console.error("Failed to save player data to localStorage", error);
     }
     // Delay setting player data to allow welcome animation to finish
-    setTimeout(() => {
+    if (data.name) { // This check is for when login happens
+        setTimeout(() => {
+            setPlayerData(data);
+        }, 5000); // Wait 5 seconds to show welcome message before showing map
+    } else {
         setPlayerData(data);
-    }, 5000); // Wait 5 seconds to show welcome message before showing map
+    }
   };
 
   const handleReset = () => {
@@ -317,5 +336,3 @@ export default function Home() {
     </main>
   );
 }
-
-    

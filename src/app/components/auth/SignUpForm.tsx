@@ -29,9 +29,10 @@ const formSchema = z.object({
 
 interface SignUpFormProps {
     onSubmit: (data: z.infer<typeof formSchema>) => void;
+    onSwitchToLogin: () => void;
 }
 
-export default function SignUpForm({ onSubmit }: SignUpFormProps) {
+export default function SignUpForm({ onSubmit, onSwitchToLogin }: SignUpFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -171,12 +172,15 @@ export default function SignUpForm({ onSubmit }: SignUpFormProps) {
                 />
             </div>
             <Button type="submit" className="w-full" size="lg">Guardar y Continuar</Button>
+            <div className="text-center text-sm text-muted-foreground">
+                ¿Ya tienes una cuenta?{' '}
+                <Button variant="link" type="button" onClick={onSwitchToLogin} className="p-0 h-auto">
+                    Inicia Sesión
+                </Button>
+            </div>
           </form>
         </Form>
       </CardContent>
     </Card>
   );
 }
-
-
-    
