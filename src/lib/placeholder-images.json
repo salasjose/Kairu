@@ -155,6 +155,18 @@
       "description": "A close-up of a sustainable product, like a bamboo toothbrush or a reusable coffee cup.",
       "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/7510255b-4884-4458-895c-982873155700.png",
       "imageHint": "sustainable product"
+    },
+    {
+      "id": "flora-flower",
+      "description": "A vibrant, colorful flower to be used as a placeholder for flora uploads.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/0e47c13a-7a56-4c3d-8bde-8f47c34d3f3f.png",
+      "imageHint": "colorful flower"
+    },
+    {
+      "id": "fauna-animal",
+      "description": "A picture of a small, cute animal to be used as a placeholder for fauna uploads.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/8ff352d1-213c-4148-9941-454536645318.png",
+      "imageHint": "small animal"
     }
   ]
 }
