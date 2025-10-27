@@ -1,16 +1,19 @@
+
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, CheckCircle, Lock, Upload } from "lucide-react";
+import { ArrowLeft, CheckCircle, Lock, Upload, Camera, X, Video } from "lucide-react";
 import PrizeDialog from "../PrizeDialog";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import AddPhotoDialog from "./AddPhotoDialog";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const STORAGE_KEY_STATION2 = "kairu-station2-progress";
 
@@ -19,6 +22,7 @@ type DayStatus = "locked" | "unlocked" | "completed";
 interface DayState {
   status: DayStatus;
   unlockTime: number | null;
+  photoUrl?: string | null;
 }
 
 const initialDays: DayState[] = Array(7)
@@ -26,57 +30,212 @@ const initialDays: DayState[] = Array(7)
   .map((_, i) => ({
     status: i === 0 ? "unlocked" : "locked",
     unlockTime: i === 0 ? Date.now() : null,
+    photoUrl: null,
   }));
+  
+const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void; onCancel: () => void; }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const sustainablePracticeImage = PlaceHolderImages.find(p => p.id === "sustainable-practice");
+
+  useEffect(() => {
+    const getCameraPermission = async () => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error("Camera API is not supported by this browser.");
+        setHasCameraPermission(false);
+        toast({
+            variant: "destructive",
+            title: "Cámara no Soportada",
+            description: "Tu navegador no es compatible con la API de la cámara.",
+        });
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        setHasCameraPermission(true);
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (error) {
+        console.error("Error accessing camera:", error);
+        setHasCameraPermission(false);
+        toast({
+          variant: "destructive",
+          title: "Acceso a la Cámara Denegado",
+          description: "Por favor, habilita los permisos de la cámara en tu navegador.",
+        });
+      }
+    };
+
+    getCameraPermission();
+
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
+  const handleCapture = () => {
+    onCapture(sustainablePracticeImage?.imageUrl ?? `https://picsum.photos/seed/capture${Date.now()}/400/300`);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4">
+      <div className="relative w-full max-w-lg aspect-[4/3] bg-black rounded-lg overflow-hidden">
+        <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
+        {hasCameraPermission === false && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black">
+                <Alert variant="destructive" className="max-w-sm">
+                  <Video className="h-4 w-4" />
+                  <AlertTitle>Acceso a la Cámara Requerido</AlertTitle>
+                  <AlertDescription>
+                    Por favor, permite el acceso a la cámara para usar esta función.
+                    Es posible que necesites cambiar los permisos en la configuración de tu navegador.
+                  </AlertDescription>
+                </Alert>
+            </div>
+        )}
+      </div>
+      <div className="flex items-center justify-center gap-4 mt-4">
+        <Button onClick={onCancel} variant="outline" size="lg" className="rounded-full">
+            <X className="h-6 w-6 mr-2"/>
+            Cancelar
+        </Button>
+        <Button onClick={handleCapture} size="lg" disabled={!hasCameraPermission} className="rounded-full">
+          <Camera className="h-6 w-6 mr-2" />
+          Tomar Foto
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 
 const PhotoUploadChallenge = ({
   day,
+  photoUrl,
   onComplete,
   onBack,
 }: {
   day: number;
-  onComplete: () => void;
+  photoUrl: string | null;
+  onComplete: (photoUrl: string) => void;
   onBack: () => void;
 }) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(photoUrl);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isAddPhotoDialogOpen, setIsAddPhotoDialogOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const sustainablePracticeImage = PlaceHolderImages.find(p => p.id === "sustainable-practice");
+  const sustainablePracticeImage = PlaceHolderImages.find(
+    (p) => p.id === "sustainable-practice"
+  );
 
-  const handleSimulateUpload = () => {
+  const handlePhotoTaken = (url: string) => {
+    setImageUrl(url);
+    setIsCameraOpen(false);
     toast({
-      title: `Foto del Día ${day} subida`,
+      title: `Foto del Día ${day} guardada`,
       description: "¡Has completado el reto de hoy!",
     });
-    onComplete();
+    onComplete(url);
+  };
+  
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        handlePhotoTaken(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUploadClick = () => {
+    setIsAddPhotoDialogOpen(false);
+    fileInputRef.current?.click();
+  };
+
+  const handleTakeNewPhotoClick = () => {
+    setIsAddPhotoDialogOpen(false);
+    setIsCameraOpen(true);
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center h-full">
-      <Button variant="ghost" onClick={onBack} className="mb-4 self-start">
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Volver a los retos
-      </Button>
-      <Card className="text-center w-full">
-        <CardContent className="p-6">
-          <h3 className="font-bold text-2xl text-primary font-headline mb-4">
-            Reto del Día {day}
-          </h3>
-          <Image
-            src={sustainablePracticeImage?.imageUrl ?? "https://picsum.photos/seed/sustainability-day/400/300"}
-            alt={sustainablePracticeImage?.description ?? "Sustainable practice"}
-            width={400}
-            height={300}
-            className="rounded-md mx-auto mb-4 w-full max-w-sm h-auto"
-            data-ai-hint={sustainablePracticeImage?.imageHint ?? "sustainable practice"}
-          />
-          <p className="text-muted-foreground mb-6">
-            Documenta una práctica sostenible que realices hoy subiendo una foto.
-          </p>
-          <Button onClick={handleSimulateUpload} size="lg">
-            <Upload className="mr-2" />
-            Simular Subida de Foto
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
+    <>
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="hidden"
+        accept="image/*"
+      />
+      {isCameraOpen && (
+        <CameraView 
+            onCapture={handlePhotoTaken}
+            onCancel={() => setIsCameraOpen(false)}
+        />
+     )}
+     <AddPhotoDialog
+        open={isAddPhotoDialogOpen}
+        onClose={() => setIsAddPhotoDialogOpen(false)}
+        onTakePhoto={handleTakeNewPhotoClick}
+        onUpload={handleUploadClick}
+      />
+
+      <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center h-full">
+        <Button variant="ghost" onClick={onBack} className="mb-4 self-start">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Volver a los retos
+        </Button>
+        <Card className="text-center w-full">
+          <CardContent className="p-6">
+            <h3 className="font-bold text-2xl text-primary font-headline mb-4">
+              Reto del Día {day}
+            </h3>
+            
+            <div className="aspect-video w-full max-w-sm mx-auto mb-4 rounded-lg bg-card border-2 border-dashed flex items-center justify-center relative">
+                {imageUrl ? (
+                    <>
+                        <Image
+                            src={imageUrl}
+                            alt={`Reto del día ${day}`}
+                            fill
+                            className="object-cover rounded-lg"
+                        />
+                        <div className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center">
+                           <CheckCircle className="h-12 w-12 text-white" />
+                        </div>
+                    </>
+                ) : (
+                    <Image
+                        src={sustainablePracticeImage?.imageUrl ?? "https://picsum.photos/seed/sustainability-day/400/300"}
+                        alt={sustainablePracticeImage?.description ?? "Sustainable practice"}
+                        fill
+                        className="object-cover rounded-md opacity-20"
+                        data-ai-hint={sustainablePracticeImage?.imageHint ?? "sustainable practice"}
+                    />
+                )}
+            </div>
+
+            <p className="text-muted-foreground mb-6">
+              Documenta una práctica sostenible que realices hoy.
+            </p>
+            
+            {!imageUrl && (
+              <Button onClick={() => setIsAddPhotoDialogOpen(true)} size="lg">
+                <Camera className="mr-2" />
+                Añadir Foto
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 };
 
@@ -87,7 +246,9 @@ export default function Station2() {
   const { unlockStation } = useStationProgress();
   const router = useRouter();
 
-  const sostenibilidadBgImage = PlaceHolderImages.find((p) => p.id === "sostenibilidad-background");
+  const sostenibilidadBgImage = PlaceHolderImages.find(
+    (p) => p.id === "sostenibilidad-background"
+  );
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
   const updateAndSaveChanges = useCallback((newDays: DayState[]) => {
@@ -102,7 +263,7 @@ export default function Station2() {
     if (savedProgress) {
       try {
         const parsedProgress = JSON.parse(savedProgress) as DayState[];
-        if (parsedProgress.length === 7) {
+        if (Array.isArray(parsedProgress) && parsedProgress.length === 7) {
           setDays(parsedProgress);
         }
       } catch {
@@ -142,9 +303,10 @@ export default function Station2() {
     return () => clearInterval(interval);
   }, [checkUnlocks]);
 
-  const handleDayComplete = (dayIndex: number) => {
+  const handleDayComplete = (dayIndex: number, photoUrl: string) => {
     const newDays = [...days];
     newDays[dayIndex].status = "completed";
+    newDays[dayIndex].photoUrl = photoUrl;
 
     const nextDayIndex = dayIndex + 1;
     if (nextDayIndex < days.length) {
@@ -168,9 +330,10 @@ export default function Station2() {
   };
 
   const handleCompleteAllDays = () => {
-    const newDays = days.map(() => ({
+    const newDays = days.map((day, i) => ({
+      ...day,
       status: "completed",
-      unlockTime: null,
+      photoUrl: day.photoUrl ?? `https://picsum.photos/seed/sustainability-day${i}/400/300`,
     })) as DayState[];
     updateAndSaveChanges(newDays);
     unlockStation(3);
@@ -187,10 +350,13 @@ export default function Station2() {
   };
 
   if (selectedDay !== null) {
+    const dayIndex = selectedDay - 1;
+    const dayData = days[dayIndex];
     return (
       <PhotoUploadChallenge
         day={selectedDay}
-        onComplete={() => handleDayComplete(selectedDay - 1)}
+        photoUrl={dayData.photoUrl ?? null}
+        onComplete={(photoUrl) => handleDayComplete(dayIndex, photoUrl)}
         onBack={() => setSelectedDay(null)}
       />
     );
@@ -231,14 +397,14 @@ export default function Station2() {
     <>
       <div className="w-full flex-grow flex flex-col items-center p-4 relative overflow-hidden">
         {sostenibilidadBgImage && (
-            <Image
-              src={sostenibilidadBgImage.imageUrl}
-              alt={sostenibilidadBgImage.description}
-              fill
-              style={{objectFit: 'cover'}}
-              className="z-0 opacity-90"
-              data-ai-hint={sostenibilidadBgImage.imageHint}
-            />
+          <Image
+            src={sostenibilidadBgImage.imageUrl}
+            alt={sostenibilidadBgImage.description}
+            fill
+            style={{ objectFit: "cover" }}
+            className="z-0 opacity-90"
+            data-ai-hint={sostenibilidadBgImage.imageHint}
+          />
         )}
         <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
           <div className="text-[#D95E32] font-kalam text-center mb-8 bg-background/70 backdrop-blur-sm p-4 rounded-xl">
@@ -284,3 +450,5 @@ export default function Station2() {
     </>
   );
 }
+
+    
