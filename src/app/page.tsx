@@ -242,7 +242,7 @@ export default function Home() {
   const mapBgImage = PlaceHolderImages.find((p) => p.id === "mapa-juego-background");
   const stationPositions = [
     { top: "65%", left: "10%" }, // 1
-    { top: "60%", left: "28%" }, // 2
+    { top: "60%", left: "32%" }, // 2
     { top: "50%", left: "38%" }, // 3
     { top: "42%", left: "55%" }, // 4
     { top: "60%", left: "65%" }, // 5
@@ -266,7 +266,18 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen w-full flex flex-col relative">
+    <main className="relative w-full min-h-screen flex flex-col overflow-hidden">
+      {mapBgImage && (
+        <Image
+          src={mapBgImage.imageUrl}
+          alt={mapBgImage.description}
+          fill
+          className="object-cover object-center w-full h-full z-0 pointer-events-none select-none"
+          priority
+          data-ai-hint={mapBgImage.imageHint}
+        />
+      )}
+      
       <header className="absolute top-0 left-0 right-0 p-2 sm:p-4 z-20">
         <div className="container mx-auto flex items-start justify-between gap-2">
             <div className="bg-white/90 backdrop-blur-sm p-2 rounded-2xl flex items-center gap-3 shadow-md">
@@ -291,19 +302,15 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="flex-grow w-full flex items-center justify-center relative z-10">
-          <div className="relative w-full max-w-[500px] md:max-w-[700px] xl:max-w-[900px] aspect-[3/4] mx-auto">
-             {mapBgImage && (
-              <Image
-                src={mapBgImage.imageUrl}
-                alt={mapBgImage.description}
-                fill
-                className="object-contain object-center pointer-events-none select-none z-0"
-                data-ai-hint={mapBgImage.imageHint}
-                priority
-              />
-            )}
-            <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute top-0 left-0">
+      <div className="relative flex-1 w-full h-screen overflow-hidden z-10">
+        <div className="absolute inset-0">
+            <svg
+                width="100%"
+                height="100%"
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
+                className="absolute top-0 left-0"
+            >
                 <path
                     d={pathD}
                     fill="none"
@@ -319,7 +326,7 @@ export default function Home() {
                 return (
                 <div 
                     key={station.id} 
-                    className="absolute -translate-x-1/2 -translate-y-1/2 w-24 h-24"
+                    className="absolute -translate-x-1/2 -translate-y-1/2 w-16 h-16"
                     style={{ 
                     top: pos.top,
                     left: pos.left,
@@ -329,10 +336,12 @@ export default function Home() {
                 </div>
                 );
             })}
-          </div>
+        </div>
       </div>
 
       <CompletionDialog open={allStationsCompleted} onReset={handleReset} />
     </main>
   );
 }
+
+    
