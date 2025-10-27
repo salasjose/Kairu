@@ -26,7 +26,7 @@ const challenges = {
   },
   "Reto 2": {
     title: "Reto 2: Crear un Hábitat",
-    description: "¡Próximamente podrás subir fotos de cómo construyes un hogar para la vida silvestre!",
+    description: "Sube 4 fotos de cómo construyes un hogar para la vida silvestre.",
     image: habitatImage?.imageUrl ?? "https://picsum.photos/seed/habitat/400/300",
     imageHint: habitatImage?.imageHint ?? "wildlife habitat",
   },
@@ -79,7 +79,7 @@ const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void;
   const handleCapture = () => {
     // In a real app, you'd capture a frame from the video.
     // Here we'll just return a placeholder.
-    onCapture(flowerImage?.imageUrl ?? `https://picsum.photos/seed/capture${Date.now()}/200`);
+    onCapture(habitatImage?.imageUrl ?? `https://picsum.photos/seed/capture${Date.now()}/200`);
   };
 
   return (
@@ -238,58 +238,74 @@ const PhotoChallenge = ({ onBack, onComplete }: { onBack: () => void, onComplete
   );
 };
 
+const HabitatChallenge = ({ onBack, onComplete }: { onBack: () => void, onComplete: (completed: boolean) => void }) => {
+  const [habitatPhotos, setHabitatPhotos] = useState<(string | null)[]>(Array(4).fill(null));
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [photoToAddIndex, setPhotoToAddIndex] = useState<number | null>(null);
 
-const ChallengeDetail = ({
-  title,
-  description,
-  onBack,
-  image,
-  imageHint,
-  onComplete
-}: {
-  title: string;
-  description: string;
-  onBack: () => void;
-  image: string;
-  imageHint: string;
-  onComplete: (completed: boolean) => void;
-}) => (
-  <ChallengeContainer
-    stationId={1}
-    title="Estación Bionexus"
-    description="Completa uno de los retos para ganar tu insignia."
-    onChallengeComplete={() => {onComplete(true); return true;}}
-  >
-    <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-full">
-      <div className="w-full">
-        <Button variant="ghost" onClick={onBack} className="mb-4">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Volver a los retos
-        </Button>
-        <Card className="text-center w-full shadow-lg">
-          <CardContent className="p-6">
-            <h3 className="font-bold text-2xl text-primary font-headline mb-4">
-              {title}
-            </h3>
-            <div className="flex justify-center mb-6">
-              <Image
-                src={image}
-                alt={description}
-                width={400}
-                height={300}
-                className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto"
-                data-ai-hint={imageHint}
-              />
+  const handleAddPhotoClick = (index: number) => {
+    setPhotoToAddIndex(index);
+    setIsCameraOpen(true);
+  };
+
+  const handleCapture = (imageUrl: string) => {
+    if (photoToAddIndex !== null) {
+      const newPhotos = [...habitatPhotos];
+      newPhotos[photoToAddIndex] = imageUrl;
+      setHabitatPhotos(newPhotos);
+    }
+    setIsCameraOpen(false);
+    setPhotoToAddIndex(null);
+  };
+
+  const checkCompletion = () => {
+    const hasUploaded = habitatPhotos.some(p => p !== null);
+    if (hasUploaded) {
+      onComplete(true);
+      return true;
+    }
+    toast({
+      title: "Casi listo",
+      description: "Debes subir al menos una foto de tu comedero/bebedero para completar el reto.",
+      variant: "destructive"
+    });
+    onComplete(false);
+    return false;
+  };
+
+  return (
+    <>
+      {isCameraOpen && (
+        <CameraView 
+          onCapture={handleCapture}
+          onCancel={() => setIsCameraOpen(false)}
+        />
+      )}
+      <ChallengeContainer
+        stationId={1}
+        title="Estación Bionexus"
+        description={challenges["Reto 2"].description}
+        onChallengeComplete={checkCompletion}
+      >
+        <div className="w-full max-w-4xl mx-auto">
+          <Button variant="ghost" onClick={onBack} className="mb-4">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Volver a los retos
+          </Button>
+
+          <section>
+            <h3 className="text-2xl font-bold font-headline text-primary mb-4">Creación de Comedero/Bebedero</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {habitatPhotos.map((photo, index) => (
+                <PhotoSlot key={`habitat-${index}`} imageUrl={photo} onAddPhoto={() => handleAddPhotoClick(index)} />
+              ))}
             </div>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              {description}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  </ChallengeContainer>
-);
+          </section>
+        </div>
+      </ChallengeContainer>
+    </>
+  );
+};
 
 
 export default function Station1() {
@@ -304,7 +320,7 @@ export default function Station1() {
   const handleChallengeComplete = (completed: boolean) => {
     setIsChallengeCompleted(completed);
     // The actual completion logic is now handled inside ChallengeContainer
-    // which is used by both PhotoChallenge and ChallengeDetail
+    // which is used by both PhotoChallenge and HabitatChallenge
     return completed;
   };
   
@@ -313,14 +329,7 @@ export default function Station1() {
   }
 
   if (selectedChallenge === "Reto 2") {
-    const challengeData = challenges["Reto 2"];
-    return (
-      <ChallengeDetail
-        {...challengeData}
-        onBack={() => setSelectedChallenge(null)}
-        onComplete={handleChallengeComplete}
-      />
-    );
+    return <HabitatChallenge onBack={() => setSelectedChallenge(null)} onComplete={handleChallengeComplete} />;
   }
 
   return (
