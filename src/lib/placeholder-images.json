@@ -167,6 +167,66 @@
       "description": "A picture of a small, cute animal to be used as a placeholder for fauna uploads.",
       "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/8ff352d1-213c-4148-9941-454536645318.png",
       "imageHint": "small animal"
+    },
+    {
+      "id": "waste-plastic-bottle",
+      "description": "A clear plastic water bottle, empty and with its cap on.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/d1f9e8a7-3b2c-4a1d-8e4f-5b6d7a8c9d0e.png",
+      "imageHint": "plastic bottle"
+    },
+    {
+      "id": "waste-banana-peel",
+      "description": "A yellow banana peel, starting to brown.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/a2c3b4d5-6e7f-8g9h-0i1j-2k3l4m5n6o7p.png",
+      "imageHint": "banana peel"
+    },
+    {
+      "id": "waste-toilet-paper",
+      "description": "A crumpled piece of used toilet paper.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/b3c4d5e6-7f8g-9h0i-1j2k-3l4m5n6o7p8q.png",
+      "imageHint": "used tissue"
+    },
+    {
+      "id": "waste-cardboard-box",
+      "description": "A flattened brown cardboard box.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/c4d5e6f7-8g9h-0i1j-2k3l-4m5n6o7p8q9r.png",
+      "imageHint": "cardboard box"
+    },
+    {
+      "id": "waste-apple-core",
+      "description": "The core of a red apple, eaten.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/d5e6f7g8-9h0i-1j2k-3l4m-5n6o7p8q9r0s.png",
+      "imageHint": "apple core"
+    },
+    {
+      "id": "waste-soda-can",
+      "description": "An empty aluminum soda can.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/e6f7g8h9-0i1j-2k3l-4m5n-6o7p8q9r0s1t.png",
+      "imageHint": "soda can"
+    },
+    {
+      "id": "waste-diaper",
+      "description": "A used disposable diaper, folded up.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/f7g8h9i0-1j2k-3l4m-5n6o-7p8q9r0s1t2u.png",
+      "imageHint": "disposable diaper"
+    },
+    {
+      "id": "waste-newspaper",
+      "description": "A rolled-up newspaper.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/g8h9i0j1-2k3l-4m5n-6o7p-8q9r0s1t2u3v.png",
+      "imageHint": "newspaper"
+    },
+    {
+      "id": "waste-chip-bag",
+      "description": "An empty, crinkled bag of potato chips.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/h9i0j1k2-3l4m-5n6o-7p8q-9r0s1t2u3v4w.png",
+      "imageHint": "chip bag"
+    },
+    {
+      "id": "waste-garden-leaves",
+      "description": "A small pile of dry, brown garden leaves.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/i0j1k2l3-4m5n-6o7p-8q9r-0s1t2u3v4w5x.png",
+      "imageHint": "garden leaves"
     }
   ]
 }

@@ -1,5 +1,7 @@
 import type { Station } from './types';
 import { Sprout, Recycle, Trash2, Droplets, Building, RefreshCw, Store, Puzzle, Search, LucideIcon, Star, Coins, TreeDeciduous, PawPrint, Diamond, Heart } from 'lucide-react';
+import { PlaceHolderImages } from './placeholder-images';
+
 
 export const stations: Station[] = [
   { 
@@ -85,4 +87,26 @@ export const allPrizes: Prize[] = [
   { id: 4, name: "Huella", icon: PawPrint },
   { id: 5, name: "Diamante", icon: Diamond },
   { id: 6, name: "Corazón", icon: Heart },
+];
+
+type WasteCategory = 'recycle' | 'organic' | 'trash';
+
+export interface WasteItem {
+  id: number;
+  name: string;
+  category: WasteCategory;
+  imageUrl: string;
+}
+
+export const wasteItemsData: WasteItem[] = [
+  { id: 1, name: 'Botella plástica', category: 'recycle', imageUrl: PlaceHolderImages.find(p => p.id === 'waste-plastic-bottle')?.imageUrl ?? '' },
+  { id: 2, name: 'Cáscara de banano', category: 'organic', imageUrl: PlaceHolderImages.find(p => p.id === 'waste-banana-peel')?.imageUrl ?? '' },
+  { id: 3, name: 'Papel higiénico usado', category: 'trash', imageUrl: PlaceHolderImages.find(p => p.id === 'waste-toilet-paper')?.imageUrl ?? '' },
+  { id: 4, name: 'Caja de cartón', category: 'recycle', imageUrl: PlaceHolderImages.find(p => p.id === 'waste-cardboard-box')?.imageUrl ?? '' },
+  { id: 5, name: 'Restos de manzana', category: 'organic', imageUrl: PlaceHolderImages.find(p => p.id === 'waste-apple-core')?.imageUrl ?? '' },
+  { id: 6, name: 'Lata de refresco', category: 'recycle', imageUrl: PlaceHolderImages.find(p => p.id === 'waste-soda-can')?.imageUrl ?? '' },
+  { id: 7, name: 'Pañal desechable', category: 'trash', imageUrl: PlaceHolderImages.find(p => p.id === 'waste-diaper')?.imageUrl ?? '' },
+  { id: 8, name: 'Periódico', category: 'recycle', imageUrl: PlaceHolderImages.find(p => p.id === 'waste-newspaper')?.imageUrl ?? '' },
+  { id: 9, name: 'Bolsa de papas fritas', category: 'trash', imageUrl: PlaceHolderImages.find(p => p.id === 'waste-chip-bag')?.imageUrl ?? '' },
+  { id: 10, name: 'Hojas de jardín', category: 'organic', imageUrl: PlaceHolderImages.find(p => p.id === 'waste-garden-leaves')?.imageUrl ?? '' },
 ];
