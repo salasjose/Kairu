@@ -319,7 +319,7 @@ export default function Home() {
                 return (
                 <div 
                     key={station.id} 
-                    className="absolute -translate-x-1/2 -translate-y-1/2 w-12 h-12 md:w-16 md:h-16"
+                    className="absolute -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-20 md:h-20"
                     style={{ 
                     top: pos.top,
                     left: pos.left,
