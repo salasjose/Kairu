@@ -45,23 +45,25 @@ const ChallengeDetail = ({
 }) => {
   const storageKey = `${STORAGE_KEY_PREFIX}${challengeId}`;
   const [url, setUrl] = useState("");
-  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Load saved URL from local storage on mount
-    if (challengeId === 'video-separate' || challengeId === 'photos-crafts') {
-      const savedUrl = localStorage.getItem(storageKey);
-      if (savedUrl) {
-        handleUrlChange({ target: { value: savedUrl } } as React.ChangeEvent<HTMLInputElement>);
-      }
+    // Load saved data from local storage on mount
+    const savedData = localStorage.getItem(storageKey);
+    if (savedData) {
+        if (challengeId === 'video-cleanup' && savedData.startsWith('data:video')) {
+            setVideoUrl(savedData);
+        } else if (challengeId === 'video-separate' || challengeId === 'photos-crafts') {
+            handleUrlChange({ target: { value: savedData } } as React.ChangeEvent<HTMLInputElement>);
+        }
     }
   }, [challengeId, storageKey]);
 
 
   useEffect(() => {
-    // Cleanup the object URL to avoid memory leaks
+    // Cleanup the object URL to avoid memory leaks if we ever use it.
+    // Data URLs don't need cleanup.
     return () => {
       if (videoUrl && videoUrl.startsWith("blob:")) {
         URL.revokeObjectURL(videoUrl);
@@ -72,13 +74,28 @@ const ChallengeDetail = ({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type.startsWith("video/")) {
-      setVideoFile(file);
-      const newVideoUrl = URL.createObjectURL(file);
-      setVideoUrl(newVideoUrl);
-      toast({
-        title: "Video Seleccionado",
-        description: `Archivo: ${file.name}`,
-      });
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        setVideoUrl(dataUrl);
+        try {
+            localStorage.setItem(storageKey, dataUrl);
+             toast({
+                title: "Video Cargado",
+                description: "Tu video ha sido guardado para esta sesión.",
+            });
+        } catch (error) {
+            console.error("Error saving video to localStorage", error);
+            localStorage.removeItem(storageKey); // Clear item if saving failed
+            setVideoUrl(URL.createObjectURL(file)); // Fallback to blob URL for this session only
+            toast({
+                title: "Video Cargado (Temporalmente)",
+                description: "El video es muy grande para guardarlo, se perderá si sales de la página.",
+                variant: "destructive"
+            });
+        }
+      };
+      reader.readAsDataURL(file);
     } else {
       toast({
         title: "Archivo no válido",
@@ -118,7 +135,7 @@ const ChallengeDetail = ({
   };
 
   const handleCompleteClick = () => {
-    if (challengeId === "video-cleanup" && !videoFile) {
+    if (challengeId === "video-cleanup" && !videoUrl) {
       toast({
         title: "Reto Incompleto",
         description: "Debes cargar un video para continuar.",
@@ -152,7 +169,7 @@ const ChallengeDetail = ({
               className="hidden"
               accept="video/*"
             />
-            {!videoFile && (
+            {!videoUrl && (
               <Button
                 onClick={() => fileInputRef.current?.click()}
                 size="lg"
@@ -402,3 +419,5 @@ export default function Station3() {
     </>
   );
 }
+
+    
