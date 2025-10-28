@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -23,6 +24,8 @@ import PrizeDialog from "../PrizeDialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Input } from "@/components/ui/input";
 
+const STORAGE_KEY_PREFIX = "kairu-station3-challenge-";
+
 const ChallengeDetail = ({
   title,
   description,
@@ -30,7 +33,7 @@ const ChallengeDetail = ({
   onBack,
   image,
   imageHint,
-  challengeId
+  challengeId,
 }: {
   title: string;
   description: string;
@@ -40,15 +43,27 @@ const ChallengeDetail = ({
   imageHint: string;
   challengeId: ChallengeId;
 }) => {
+  const storageKey = `${STORAGE_KEY_PREFIX}${challengeId}`;
   const [url, setUrl] = useState("");
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // Load saved URL from local storage on mount
+    if (challengeId === 'video-separate' || challengeId === 'photos-crafts') {
+      const savedUrl = localStorage.getItem(storageKey);
+      if (savedUrl) {
+        handleUrlChange({ target: { value: savedUrl } } as React.ChangeEvent<HTMLInputElement>);
+      }
+    }
+  }, [challengeId, storageKey]);
+
+
+  useEffect(() => {
     // Cleanup the object URL to avoid memory leaks
     return () => {
-      if (videoUrl && videoUrl.startsWith('blob:')) {
+      if (videoUrl && videoUrl.startsWith("blob:")) {
         URL.revokeObjectURL(videoUrl);
       }
     };
@@ -72,46 +87,62 @@ const ChallengeDetail = ({
       });
     }
   };
-  
+
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newUrl = e.target.value;
     setUrl(newUrl);
 
+    if (challengeId === 'video-separate' || challengeId === 'photos-crafts') {
+      localStorage.setItem(storageKey, newUrl);
+    }
+    
     // Basic URL validation to show video preview
-    if (newUrl.trim() && (newUrl.startsWith("http://") || newUrl.startsWith("https://"))) {
-        // Simple logic for YouTube embeds.
-        if (newUrl.includes("youtube.com/watch?v=")) {
-            const videoId = newUrl.split('v=')[1].split('&')[0];
-            setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
-        } else if (newUrl.includes("youtu.be/")) {
-            const videoId = newUrl.split('youtu.be/')[1].split('?')[0];
-            setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
-        } else {
-            // For other URLs, try to use them directly (might not work for all services)
-            setVideoUrl(newUrl);
-        }
+    if (
+      newUrl.trim() &&
+      (newUrl.startsWith("http://") || newUrl.startsWith("https://"))
+    ) {
+      // Simple logic for YouTube embeds.
+      if (newUrl.includes("youtube.com/watch?v=")) {
+        const videoId = newUrl.split("v=")[1].split("&")[0];
+        setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
+      } else if (newUrl.includes("youtu.be/")) {
+        const videoId = newUrl.split("youtu.be/")[1].split("?")[0];
+        setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
+      } else {
+        // For other URLs, try to use them directly (might not work for all services)
+        setVideoUrl(newUrl);
+      }
     } else {
-        setVideoUrl(null); // Clear video if URL is invalid
+      setVideoUrl(null); // Clear video if URL is invalid
     }
   };
 
-
   const handleCompleteClick = () => {
-    if (challengeId === 'video-cleanup' && !videoFile) {
-        toast({ title: "Reto Incompleto", description: "Debes cargar un video para continuar.", variant: "destructive"});
-        return;
+    if (challengeId === "video-cleanup" && !videoFile) {
+      toast({
+        title: "Reto Incompleto",
+        description: "Debes cargar un video para continuar.",
+        variant: "destructive",
+      });
+      return;
     }
-    if ((challengeId === 'video-separate' || challengeId === 'photos-crafts') && !url.trim()) {
-       toast({ title: "Reto Incompleto", description: "Debes ingresar la URL de tu video/publicación.", variant: "destructive"});
-       return;
+    if (
+      (challengeId === "video-separate" || challengeId === "photos-crafts") &&
+      !url.trim()
+    ) {
+      toast({
+        title: "Reto Incompleto",
+        description: "Debes ingresar la URL de tu video/publicación.",
+        variant: "destructive",
+      });
+      return;
     }
     onComplete();
   };
 
-
   const renderChallengeInput = () => {
     switch (challengeId) {
-      case 'video-cleanup':
+      case "video-cleanup":
         return (
           <>
             <input
@@ -122,15 +153,20 @@ const ChallengeDetail = ({
               accept="video/*"
             />
             {!videoFile && (
-              <Button onClick={() => fileInputRef.current?.click()} size="lg" variant="outline" className="w-full max-w-md mx-auto">
-                  <Upload className="mr-2" />
-                  Cargar Video
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                size="lg"
+                variant="outline"
+                className="w-full max-w-md mx-auto"
+              >
+                <Upload className="mr-2" />
+                Cargar Video
               </Button>
             )}
           </>
         );
-      case 'video-separate':
-      case 'photos-crafts':
+      case "video-separate":
+      case "photos-crafts":
         return (
           <div className="flex gap-2 max-w-md mx-auto">
             <LinkIcon className="h-10 text-muted-foreground" />
@@ -145,8 +181,7 @@ const ChallengeDetail = ({
       default:
         return null;
     }
-  }
-
+  };
 
   return (
     <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-full">
@@ -161,20 +196,20 @@ const ChallengeDetail = ({
               {title}
             </h3>
             <div className="flex justify-center mb-6">
-               {videoUrl && challengeId !== 'photos-crafts' ? (
-                challengeId === 'video-cleanup' ? (
-                    <video
+              {videoUrl && challengeId !== "photos-crafts" ? (
+                challengeId === "video-cleanup" ? (
+                  <video
                     src={videoUrl}
                     controls
                     className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto bg-black"
-                    />
+                  />
                 ) : (
-                    <iframe
+                  <iframe
                     src={videoUrl}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                     className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto aspect-video bg-black"
-                    ></iframe>
+                  ></iframe>
                 )
               ) : (
                 <Image
@@ -191,10 +226,8 @@ const ChallengeDetail = ({
               {description}
             </p>
 
-            <div className="mb-6">
-              {renderChallengeInput()}
-            </div>
-            
+            <div className="mb-6">{renderChallengeInput()}</div>
+
             <Button onClick={handleCompleteClick} size="lg">
               <CheckCircle className="mr-2" />
               Completar Reto
@@ -204,13 +237,12 @@ const ChallengeDetail = ({
       </div>
     </div>
   );
-}
+};
 
 const challenges = {
   "video-cleanup": {
     title: "Video de Limpieza",
-    description:
-      "Sube un video tuyo en una campaña de limpieza.",
+    description: "Sube un video tuyo en una campaña de limpieza.",
     imageId: "cleanup-video",
     icon: Video,
   },
@@ -221,7 +253,7 @@ const challenges = {
     imageId: "waste-separation",
     icon: Recycle,
   },
-  "game": {
+  game: {
     title: "Juego de Reciclaje",
     description:
       "Juega un divertido juego para poner a prueba tus habilidades de clasificación de residuos.",
@@ -247,7 +279,9 @@ export default function Station3() {
   const { unlockStation } = useStationProgress();
   const router = useRouter();
 
-  const streetBgImage = PlaceHolderImages.find((p) => p.id === "renova-background");
+  const streetBgImage = PlaceHolderImages.find(
+    (p) => p.id === "renova-background"
+  );
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
   const handleComplete = (challengeId: ChallengeId) => {
@@ -281,10 +315,12 @@ export default function Station3() {
     const challengeData = {
       title: challengeInfo.title,
       description: challengeInfo.description,
-      image: imageInfo?.imageUrl ?? "https://picsum.photos/seed/placeholder/400/300",
+      image:
+        imageInfo?.imageUrl ??
+        "https://picsum.photos/seed/placeholder/400/300",
       imageHint: imageInfo?.imageHint ?? "image",
     };
-    
+
     return (
       <ChallengeDetail
         {...challengeData}
@@ -299,14 +335,14 @@ export default function Station3() {
     <>
       <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden">
         {streetBgImage && (
-            <Image
-              src={streetBgImage.imageUrl}
-              alt={streetBgImage.description}
-              fill
-              style={{objectFit: 'cover'}}
-              className="z-0 opacity-70"
-              data-ai-hint={streetBgImage.imageHint}
-            />
+          <Image
+            src={streetBgImage.imageUrl}
+            alt={streetBgImage.description}
+            fill
+            style={{ objectFit: "cover" }}
+            className="z-0 opacity-70"
+            data-ai-hint={streetBgImage.imageHint}
+          />
         )}
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
           <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
