@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { toast } from "@/hooks/use-toast";
 import { useStationProgress } from "@/hooks/use-station-progress";
@@ -29,6 +29,8 @@ const challenges = {
 
 type ChallengeId = keyof typeof challenges;
 
+const STORAGE_KEY_POST = "kairu-station4-post-url";
+
 const PostChallenge = ({
   onComplete,
   onBack,
@@ -37,7 +39,35 @@ const PostChallenge = ({
   onBack: () => void;
 }) => {
   const [url, setUrl] = useState("");
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const waterPostImage = PlaceHolderImages.find((p) => p.id === "water-post");
+  
+  useEffect(() => {
+    const savedUrl = localStorage.getItem(STORAGE_KEY_POST);
+    if (savedUrl) {
+      handleUrlChange(savedUrl);
+    }
+  }, []);
+
+  const handleUrlChange = (newUrl: string) => {
+    setUrl(newUrl);
+    localStorage.setItem(STORAGE_KEY_POST, newUrl);
+
+    if (newUrl.trim() && (newUrl.startsWith("http://") || newUrl.startsWith("https://"))) {
+      if (newUrl.includes("youtube.com/watch?v=")) {
+        const videoId = newUrl.split("v=")[1].split("&")[0];
+        setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
+      } else if (newUrl.includes("youtu.be/")) {
+        const videoId = newUrl.split("youtu.be/")[1].split("?")[0];
+        setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
+      } else {
+        setVideoUrl(newUrl); // May not render, but we store it
+      }
+    } else {
+      setVideoUrl(null);
+    }
+  };
+
 
   const handleSubmit = () => {
     if (url.trim() && (url.startsWith("http://") || url.startsWith("https://"))) {
@@ -63,14 +93,27 @@ const PostChallenge = ({
             <h3 className="font-bold text-2xl text-primary font-headline mb-4">
               Post de Conservación
             </h3>
-            <Image
-              src={waterPostImage?.imageUrl ?? "https://picsum.photos/seed/waterpost/400/300"}
-              alt={waterPostImage?.description ?? "Social media post about water conservation"}
-              width={400}
-              height={300}
-              className="rounded-lg border-4 border-white shadow-md mx-auto mb-6 w-full max-w-sm h-auto"
-              data-ai-hint={waterPostImage?.imageHint ?? "water conservation post"}
-            />
+            
+            <div className="mx-auto mb-6 w-full max-w-sm h-auto aspect-video bg-black rounded-lg border-4 border-white shadow-md flex items-center justify-center">
+              {videoUrl && videoUrl.includes("youtube.com/embed") ? (
+                 <iframe
+                    src={videoUrl}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="rounded-lg w-full h-full"
+                  ></iframe>
+              ) : (
+                <Image
+                  src={waterPostImage?.imageUrl ?? "https://picsum.photos/seed/waterpost/400/300"}
+                  alt={waterPostImage?.description ?? "Social media post about water conservation"}
+                  width={400}
+                  height={300}
+                  className="rounded-lg object-cover w-full h-full"
+                  data-ai-hint={waterPostImage?.imageHint ?? "water conservation post"}
+                />
+              )}
+            </div>
+
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               Crea un post en redes sociales sobre la conservación del agua y pega
               la URL aquí.
@@ -80,7 +123,7 @@ const PostChallenge = ({
                 type="url"
                 placeholder="https://ejemplo.com/post"
                 value={url}
-                onChange={(e) => setUrl(e.target.value)}
+                onChange={(e) => handleUrlChange(e.target.value)}
               />
               <Button onClick={handleSubmit}>Enviar</Button>
             </div>
