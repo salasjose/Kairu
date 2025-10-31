@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -49,7 +48,6 @@ const ChallengeDetail = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Load saved data from local storage on mount
     const savedData = localStorage.getItem(storageKey);
     if (savedData) {
         if (challengeId === 'video-cleanup' && savedData.startsWith('data:video')) {
@@ -62,8 +60,6 @@ const ChallengeDetail = ({
 
 
   useEffect(() => {
-    // Cleanup the object URL to avoid memory leaks if we ever use it.
-    // Data URLs don't need cleanup.
     return () => {
       if (videoUrl && videoUrl.startsWith("blob:")) {
         URL.revokeObjectURL(videoUrl);
@@ -87,7 +83,7 @@ const ChallengeDetail = ({
         } catch (error) {
             console.error("Error saving video to localStorage", error);
             localStorage.removeItem(storageKey); // Clear item if saving failed
-            setVideoUrl(URL.createObjectURL(file)); // Fallback to blob URL for this session only
+            setVideoUrl(URL.createObjectURL(file)); 
             toast({
                 title: "Video Cargado (Temporalmente)",
                 description: "El video es muy grande para guardarlo, se perderá si sales de la página.",
@@ -113,12 +109,10 @@ const ChallengeDetail = ({
       localStorage.setItem(storageKey, newUrl);
     }
     
-    // Basic URL validation to show video preview
     if (
       newUrl.trim() &&
       (newUrl.startsWith("http://") || newUrl.startsWith("https://"))
     ) {
-      // Simple logic for YouTube embeds.
       if (newUrl.includes("youtube.com/watch?v=")) {
         const videoId = newUrl.split("v=")[1].split("&")[0];
         setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
@@ -126,11 +120,10 @@ const ChallengeDetail = ({
         const videoId = newUrl.split("youtu.be/")[1].split("?")[0];
         setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
       } else {
-        // For other URLs, try to use them directly (might not work for all services)
         setVideoUrl(newUrl);
       }
     } else {
-      setVideoUrl(null); // Clear video if URL is invalid
+      setVideoUrl(null);
     }
   };
 
@@ -257,28 +250,22 @@ const ChallengeDetail = ({
 };
 
 const challenges = {
-  "video-cleanup": {
-    title: "Video de Limpieza",
-    description: "Sube un video tuyo en una campaña de limpieza.",
-    imageId: "cleanup-video",
-    icon: Video,
-  },
-  "video-separate": {
-    title: "Video de Separación",
+  "game": {
+    title: "Reto 1: Recolección",
     description:
-      "Sube un video tuyo separando residuos sólidos y pega la URL.",
-    imageId: "waste-separation",
-    icon: Recycle,
-  },
-  game: {
-    title: "Juego de Reciclaje",
-    description:
-      "Juega un divertido juego para poner a prueba tus habilidades de clasificación de residuos.",
+      "¡Qué montón de basura! Tu misión es recolectarla y disponerla en la caneca que corresponda.",
     imageId: "recycling-game",
     icon: Trash2,
   },
+  "video-separate": {
+    title: "Reto 2: Video Doméstico",
+    description:
+      "Separa los residuos sólidos en tu hogar, haz un video de cómo lo haces. ¡Estoy ansiosa por ver tu compromiso!",
+    imageId: "waste-separation",
+    icon: Recycle,
+  },
   "photos-crafts": {
-    title: "Artesanías Recicladas",
+    title: "Reto 3: Creaciones",
     description:
       "Crea nuevos productos a partir de residuos reciclados. Monta un post en Instagram, etiquétanos @fundaciontekara @corpoguajira y comparte el enlace.",
     imageId: "recycled-art",
@@ -364,10 +351,13 @@ export default function Station3() {
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
           <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
             <h1 className="text-3xl md:text-5xl">ReNova</h1>
-            <p className="text-base md:text-xl">Gestión de Residuos</p>
           </div>
+          
+           <div className="max-w-xl mx-auto bg-black/50 text-white p-4 rounded-xl mb-8">
+                <p className="font-bold text-lg">YARA: "¡Qué emoción! En ReNova descubriremos que nada se desperdicia cuando usamos la creatividad. Convierte lo viejo en nuevo, lo usado en útil y demuestra que transformar también es cuidar. ¡Manos a la obra!"</p>
+            </div>
 
-          <div className="grid grid-cols-2 gap-4 md:gap-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 mb-8">
             {(Object.keys(challenges) as ChallengeId[]).map((key) => {
               const challenge = challenges[key];
               const Icon = challenge.icon;
@@ -377,7 +367,7 @@ export default function Station3() {
                   onClick={() => setSelectedChallenge(key)}
                   className="transition-transform duration-300 hover:scale-105 group"
                 >
-                  <Card className="w-36 h-44 md:w-48 md:h-56 bg-card/70 backdrop-blur-sm hover:bg-card/90 transition-colors">
+                  <Card className="w-48 h-56 bg-card/70 backdrop-blur-sm hover:bg-card/90 transition-colors">
                     <CardContent className="flex flex-col items-center justify-center text-center p-2 md:p-4 h-full">
                       <Icon className="w-10 h-10 md:w-12 md:h-12 text-primary mb-2 md:mb-3" />
                       <h2 className="font-bold font-headline text-base md:text-lg text-primary">
@@ -397,18 +387,6 @@ export default function Station3() {
             </p>
           </div>
 
-          {yaraCharImage && (
-            <div className="absolute bottom-4 -left-8 z-20 hidden md:block">
-              <Image
-                src={yaraCharImage.imageUrl}
-                alt={yaraCharImage.description}
-                width={140}
-                height={140}
-                className="transform -scale-x-100"
-                data-ai-hint={yaraCharImage.imageHint}
-              />
-            </div>
-          )}
         </div>
       </div>
       <PrizeDialog
@@ -419,5 +397,3 @@ export default function Station3() {
     </>
   );
 }
-
-    

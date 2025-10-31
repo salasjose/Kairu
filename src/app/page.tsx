@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -62,6 +61,13 @@ const OnboardingFlow = ({ onComplete }: { onComplete: (data: PlayerData) => void
     setStep(4);
   };
 
+  const handleStartJourney = () => {
+     if (formData) {
+        const finalData = { name: formData.nombre, avatar: formData.avatar };
+        onComplete(finalData);
+     }
+  }
+
 
   const renderStep = () => {
     switch (step) {
@@ -88,11 +94,11 @@ const OnboardingFlow = ({ onComplete }: { onComplete: (data: PlayerData) => void
           >
             {yaraCharImage && <Image src={yaraCharImage.imageUrl} alt="Yara" width={150} height={150} data-ai-hint={yaraCharImage.imageHint}/>}
             <div className="bg-white/90 p-4 rounded-lg shadow-xl mt-4 max-w-sm">
-                <p className="font-bold text-lg text-primary">¡Hola! Soy Yara. ¿Ya tienes una cuenta o eres nuevo por aquí?</p>
+                <p className="font-bold text-lg text-primary">¡Hola! Me llamo Yara. Soy la guardiana de los ecosistemas de Kairu, ¡y te tengo una invitación que cambiará tu mundo! Te invito a unirte a nuestra misión y a crear tu usuario ahora mismo.</p>
             </div>
             <div className="flex gap-4 mt-6">
                 <Button onClick={() => { setAuthAction('login'); setStep(2); }} size="lg">Iniciar Sesión</Button>
-                <Button onClick={() => { setAuthAction('signup'); setStep(2); }} size="lg" variant="secondary">Crear Cuenta</Button>
+                <Button onClick={() => { setAuthAction('signup'); setStep(2); }} size="lg" variant="secondary">Crear Usuario</Button>
             </div>
           </motion.div>
         );
@@ -126,7 +132,10 @@ const OnboardingFlow = ({ onComplete }: { onComplete: (data: PlayerData) => void
                         key={index}
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => handleAvatarSelect(avatar.imageUrl)}
+                        onClick={() => {
+                            setFormData({...formData, avatar: avatar.imageUrl });
+                            setStep(4);
+                        }}
                         className="border-4 border-transparent hover:border-primary rounded-full transition-colors"
                     >
                         <Avatar className="w-24 h-24 md:w-32 md:h-32">
@@ -147,14 +156,15 @@ const OnboardingFlow = ({ onComplete }: { onComplete: (data: PlayerData) => void
                     className="flex flex-col md:flex-row items-center text-center md:text-left gap-6 max-w-2xl"
                 >
                     {yaraCharImage && <Image src={yaraCharImage.imageUrl} alt="Yara" width={180} height={180} className="flex-shrink-0" data-ai-hint={yaraCharImage.imageHint} />}
-                    <div className="bg-white/90 p-6 rounded-lg shadow-xl">
-                        <h2 className="text-2xl font-bold text-primary mb-2">¡Hola, {formData.nombre}!</h2>
-                        <p className="text-muted-foreground space-y-2">
-                           <span>Soy Yara, una rana muy curiosa y estaré contigo en este emocionante recorrido por Kairu.</span><br/>
-                           <span>A lo largo del camino conocerás 8 estaciones sorprendentes donde cada desafío superado abrirá nuevas etapas llenas de descubrimientos, aprendizajes y diversión. En el siguiente paso tendrás la oportunidad de escoger el lienzo que te permitirá crear tu propia estación.</span><br/>
-                           <span>En cada avance ganaras recompensas especiales que tú mismo elegirás para completar la estación ideal que elijas.</span><br/>
-                           <span>Cada paso te conectará más a la naturaleza y te mostrará cómo tus acciones pueden transformar el mundo que te rodea.</span>
-                        </p>
+                    <div className="bg-white/90 p-6 rounded-lg shadow-xl space-y-4">
+                        <h2 className="text-2xl font-bold text-primary">¡Hola, {formData.nombre}! ¡Me emociona que te unas a nosotros!</h2>
+                        <div className="text-muted-foreground space-y-2">
+                           <p>Soy Yara, una rana muy curiosa y estaré contigo en este emocionante recorrido por Kairu. A lo largo del camino, conocerás 8 estaciones sorprendentes donde cada desafío superado abrirá nuevas etapas llenas de descubrimientos, aprendizajes y diversión.</p>
+                           <p>En el siguiente paso, tendrás la oportunidad de escoger el lienzo que te permitirá crear tu propia estación, tu refugio final de la sostenibilidad.</p>
+                           <p>Recuerda: En cada avance, ganarás recompensas especiales que tú mismo elegirás para completar la estación ideal que diseñes. Cada paso te conectará más a la naturaleza y te mostrará cómo tus acciones pueden transformar el mundo que te rodea.</p>
+                           <p className="font-bold text-primary">¿Listo para comenzar este viaje conmigo?</p>
+                        </div>
+                        <Button onClick={handleStartJourney} size="lg">¡Sí!</Button>
                     </div>
                 </motion.div>
             );
@@ -209,14 +219,7 @@ export default function Home() {
     } catch (error) {
       console.error("Failed to save player data to localStorage", error);
     }
-    // Delay setting player data to allow welcome animation to finish
-    if (data.name) { // This check is for when login happens
-        setTimeout(() => {
-            setPlayerData(data);
-        }, 5000); // Wait 5 seconds to show welcome message before showing map
-    } else {
-        setPlayerData(data);
-    }
+    setPlayerData(data);
   };
 
   const handleReset = () => {
@@ -241,9 +244,9 @@ export default function Home() {
 
   const mapBgImage = PlaceHolderImages.find((p) => p.id === "mapa-juego-background");
   const stationPositions = [
-    { top: "65%", left: "10%" }, // 1
+    { top: "65%", left: "12%" }, // 1
     { top: "60%", left: "32%" }, // 2
-    { top: "50%", left: "38%" }, // 3
+    { top: "48%", left: "38%" }, // 3
     { top: "42%", left: "55%" }, // 4
     { top: "60%", left: "65%" }, // 5
     { top: "70%", left: "80%" }, // 6
@@ -326,7 +329,7 @@ export default function Home() {
                 return (
                 <div 
                     key={station.id} 
-                    className="absolute -translate-x-1/2 -translate-y-1/2 w-16 h-16"
+                    className="absolute -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-20 md:h-20"
                     style={{ 
                     top: pos.top,
                     left: pos.left,
@@ -343,5 +346,3 @@ export default function Home() {
     </main>
   );
 }
-
-    

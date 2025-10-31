@@ -1,239 +1,136 @@
-
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import ChallengeContainer from "@/app/components/ChallengeContainer";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import type { CrosswordData } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ArrowLeft, Lightbulb, Zap } from "lucide-react";
+import PrizeDialog from "../PrizeDialog";
+import { useRouter } from "next/navigation";
+import { useStationProgress } from "@/hooks/use-station-progress";
 
-const staticPuzzle: CrosswordData = {
-  grid: [
-    ["#", "#", "F", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
-    ["#", "#", "L", "#", "V", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
-    ["#", "#", "O", "#", "E", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
-    ["S", "U", "E", "L", "O", "#", "#", "A", "#", "#", "#", "B", "#", "#", "#"],
-    ["#", "#", "A", "#", "R", "#", "S", "#", "A", "G", "U", "A", "#", "C", "#"],
-    ["#", "F", "A", "U", "N", "A", "#", "L", "B", "O", "S", "Q", "U", "E", "#"],
-    ["R", "E", "C", "I", "C", "L", "A", "R", "#", "#", "#", "E", "#", "M", "#"],
-    ["I", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "P", "#"],
-    ["O", "#", "H", "U", "E", "L", "L", "A", "#", "#", "#", "#", "#", "O", "#"],
-    ["#", "#", "#", "#", "#", "#", "#", "#", "#", "V", "I", "D", "A", "#", "T"],
-    ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
-    ["S", "O", "S", "T", "E", "N", "I", "B", "L", "E", "#", "#", "#", "#", "#"],
-    ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
-    ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
-    ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"],
-  ],
-  across: [
-    { number: 4, clue: "Capa superior de la tierra, vital para la agricultura.", answer: "SUELO" },
-    { number: 6, clue: "Conjunto de animales de una región.", answer: "FAUNA" },
-    { number: 7, clue: "Proceso para convertir residuos en nuevos productos.", answer: "RECICLAR" },
-    { number: 9, clue: "Recurso hídrico esencial para la vida.", answer: "AGUA" },
-    { number: 8, clue: "Medida del impacto humano en el ambiente (____ ecológica).", answer: "HUELLA" },
-    { number: 10, clue: "La biodiversidad es la variedad de...", answer: "VIDA" },
-    { number: 12, clue: "Desarrollo que satisface las necesidades del presente sin comprometer las del futuro.", answer: "SOSTENIBLE" },
-    { number: 5, clue: "Extensa área de árboles.", answer: "BOSQUE" },
-    { number: 2, clue: "Corriente de agua natural.", answer: "RIO" },
-  ],
-  down: [
-    { number: 1, clue: "Organismos que realizan la fotosíntesis.", answer: "FLORA" },
-    { number: 3, clue: "Sinónimo de ecológico.", answer: "VERDE" },
-    { number: 4, clue: "Capa gaseosa que rodea la Tierra.", answer: "AIRE" },
-    { number: 5, clue: "Astro rey que nos da energía.", answer: "SOL" },
-    { number: 11, clue: "Proceso por el cual los residuos se descomponen naturalmente.", answer: "COMPOST" },
-    { number: 2, clue: "Corriente de agua natural.", answer: "RIO" },
-  ],
+
+const challenges = {
+  learn: {
+    title: "Aprende",
+    description: "Energías que mueven el mundo: Descubre cómo la naturaleza nos enseña a producir energía sin agotarla (videos).",
+    icon: Lightbulb,
+    imageId: "sustainable-design-video"
+  },
+  capture: {
+    title: "Captura Solar",
+    description: "Usa un medidor de radiación y capta cómo se aprovecha su energía.",
+    icon: Zap,
+    imageId: "solar-panel-field"
+  },
 };
 
-const cluePositions: { [key: string]: number } = {
-  "0-2": 1, 
-  "3-0": 4, 
-  "1-4": 3, 
-  "5-1": 6, 
-  "6-0": 7, 
-  "8-2": 8, 
-  "4-8": 9,
-  "9-9": 10,
-  "4-13": 11,
-  "11-0": 12,
-  "5-7": 5,
-  "6-1": 2, // RIO horizontal
+type ChallengeId = keyof typeof challenges;
+
+const ChallengeScreen = ({ challengeId, onBack, onComplete }: { challengeId: ChallengeId, onBack: () => void, onComplete: () => void }) => {
+    const challenge = challenges[challengeId];
+    const imageInfo = PlaceHolderImages.find(p => p.id === challenge.imageId);
+
+    return (
+        <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center flex-grow">
+            <div className="w-full">
+                <Button variant="ghost" onClick={onBack} className="mb-4">
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Volver
+                </Button>
+                <Card className="w-full shadow-lg">
+                    <CardHeader>
+                        <CardTitle className="text-center">{challenge.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 text-center">
+                        {imageInfo && (
+                            <Image 
+                                src={imageInfo.imageUrl} 
+                                alt={imageInfo.description} 
+                                width={400} 
+                                height={300} 
+                                className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto mx-auto"
+                                data-ai-hint={imageInfo.imageHint}
+                            />
+                        )}
+                        <p className="text-muted-foreground">{challenge.description}</p>
+                        <p className="text-sm text-primary font-bold">¡Contenido próximamente!</p>
+                        <Button onClick={onComplete} size="lg">Simular y Completar</Button>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    );
 };
 
 
 export default function Station8() {
-  const [puzzle, setPuzzle] = useState<CrosswordData | null>(staticPuzzle);
-  const [userGrid, setUserGrid] = useState<string[][] | null>(staticPuzzle.grid.map(row => row.map(cell => (cell === "#" || !/^[A-Z]$/.test(cell) ? "#" : ""))));
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-  const inputRefs = useRef<(HTMLInputElement | null)[][]>([]);
+  const [selectedChallenge, setSelectedChallenge] = useState<ChallengeId | null>(null);
+  const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
+  const { unlockStation } = useStationProgress();
+  const router = useRouter();
 
-  useEffect(() => {
-    if (puzzle) {
-      const numRows = puzzle.grid.length;
-      const numCols = puzzle.grid[0]?.length || 0;
-      inputRefs.current = Array(numRows).fill(null).map(() => Array(numCols).fill(null));
-    }
-  }, [puzzle]);
-
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, row: number, col: number) => {
-    if (!userGrid) return;
-    const value = e.target.value.toUpperCase().slice(-1);
-    const newUserGrid = userGrid.map(r => [...r]);
-    newUserGrid[row][col] = value;
-    setUserGrid(newUserGrid);
-    setIsCorrect(null); // Reset correctness check on change
-
-    if (value && col < userGrid[0].length - 1 && inputRefs.current[row][col + 1]) {
-      inputRefs.current[row][col + 1]?.focus();
-    }
-  };
-
-   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, row: number, col: number) => {
-    if (!userGrid) return;
-    let nextRow = row, nextCol = col;
-    let moved = false;
-    
-    let numRows = userGrid.length;
-    let numCols = userGrid[0]?.length || 0;
-
-    switch (e.key) {
-        case 'ArrowUp': e.preventDefault(); nextRow = row > 0 ? row - 1 : numRows - 1; moved = true; break;
-        case 'ArrowDown': e.preventDefault(); nextRow = row < numRows - 1 ? row + 1 : 0; moved = true; break;
-        case 'ArrowLeft': e.preventDefault(); nextCol = col > 0 ? col - 1 : numCols - 1; moved = true; break;
-        case 'ArrowRight': e.preventDefault(); nextCol = col < numCols - 1 ? col + 1 : 0; moved = true; break;
-        case 'Backspace':
-            if (!userGrid[row][col] && col > 0) {
-              const prevRef = inputRefs.current[row][col-1];
-               if(prevRef) {
-                  e.preventDefault();
-                  prevRef.focus();
-               }
-            }
-            return;
-        default: return;
-    }
-
-    if (moved) {
-       for(let i = 0; i < numRows * numCols; i++) {
-            const targetRef = inputRefs.current[nextRow]?.[nextCol];
-            if(targetRef) {
-                targetRef.focus();
-                return;
-            }
-            switch (e.key) {
-                case 'ArrowUp': nextRow = nextRow > 0 ? nextRow - 1 : numRows - 1; break;
-                case 'ArrowDown': nextRow = nextRow < numRows - 1 ? nextRow + 1 : 0; break;
-                case 'ArrowLeft': nextCol = nextCol > 0 ? nextCol - 1 : numCols - 1; break;
-                case 'ArrowRight': nextCol = nextCol < numCols - 1 ? nextCol + 1 : 0; break;
-            }
-        }
-    }
-}, [userGrid]);
-
-
-  const checkSolution = () => {
-    if (!puzzle || !userGrid) return;
-    for (let r = 0; r < puzzle.grid.length; r++) {
-      for (let c = 0; c < puzzle.grid[r].length; c++) {
-        const cell = puzzle.grid[r][c];
-        if (/^[A-Z]$/.test(cell) && cell !== userGrid[r][c]) {
-          setIsCorrect(false);
-          toast({ title: "No del todo...", description: "Algunas letras son incorrectas. ¡Sigue intentando!", variant: "destructive" });
-          return;
-        }
-      }
-    }
-    setIsCorrect(true);
-    toast({ title: "¡Correcto!", description: "¡Has resuelto el crucigrama!" });
+  const handleComplete = (challengeId: ChallengeId) => {
+    unlockStation(9);
+    toast({
+      title: "¡Estación Vitalia Completada!",
+      description: `¡Reto '${challenges[challengeId].title}' superado!`,
+    });
+    setIsPrizeModalOpen(true);
   };
   
-  const solvePuzzle = () => {
-    if (!puzzle) return;
-    const solvedGrid = puzzle.grid.map(row => row.map(cell => /^[A-Z]$/.test(cell) ? cell : ''));
-    setUserGrid(solvedGrid);
-    setIsCorrect(true);
-    toast({ title: "¡Crucigrama Resuelto!", description: "Las respuestas han sido reveladas." });
+  const handleClaimPrize = () => {
+    setIsPrizeModalOpen(false);
+    router.push("/");
   };
-
-  const handleComplete = () => {
-    if (isCorrect !== true) {
-      checkSolution();
-      return false;
-    }
-    return isCorrect === true;
-  }
   
-  const renderCell = (cell: string, r: number, c: number) => {
-    if (cell === "#") {
-        return <div key={`${r}-${c}`} className="bg-foreground/20 aspect-square" />;
-    }
-    
-    const clueNumber = cluePositions[`${r}-${c}`];
-
-    return (
-        <div key={`${r}-${c}`} className="relative bg-card">
-            {clueNumber && <span className="absolute top-0 left-0.5 text-xxs text-muted-foreground font-bold">{clueNumber}</span>}
-            <input
-                ref={el => {
-                    if (!inputRefs.current[r]) inputRefs.current[r] = [];
-                    inputRefs.current[r][c] = el;
-                }}
-                type="text"
-                maxLength={1}
-                value={userGrid?.[r]?.[c] || ""}
-                onChange={(e) => handleInputChange(e, r, c)}
-                onKeyDown={(e) => handleKeyDown(e, r, c)}
-                className={cn("w-full h-full aspect-square text-center uppercase font-bold text-sm md:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-primary z-10",
-                isCorrect === false && userGrid?.[r]?.[c] && cell !== userGrid?.[r]?.[c] ? "bg-destructive/20 text-destructive" : "",
-                isCorrect === true ? "bg-primary/20 text-primary" : ""
-                )}
-                disabled={isCorrect === true}
-            />
-        </div>
-    );
+  if (selectedChallenge) {
+    return <ChallengeScreen challengeId={selectedChallenge} onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete(selectedChallenge)} />
   }
 
   return (
-    <ChallengeContainer
-      stationId={8}
-      title="Estación 8: Vitalia"
-      description="Pon a prueba tu vocabulario ambiental resolviendo este crucigrama."
-      onChallengeComplete={handleComplete}
-    >
-      {!puzzle || !userGrid ? (
-        <p className="text-center">Cargando crucigrama...</p>
-      ) : (
-        <div className="grid md:grid-cols-2 gap-8 items-start">
-          <div className="flex justify-center">
-            <div className="grid grid-cols-15 gap-0.5 bg-muted-foreground p-1 rounded-md aspect-square max-w-lg w-full" style={{ gridTemplateColumns: 'repeat(15, minmax(0, 1fr))' }}>
-              {puzzle.grid.map((row, r) =>
-                row.map((cell, c) => renderCell(cell, r, c))
-              )}
-            </div>
+    <>
+      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-amber-100 to-yellow-200">
+        <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
+          <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
+            <h1 className="text-3xl md:text-5xl">Vitalia</h1>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <div>
-              <h3 className="font-bold text-lg mb-2 font-headline text-primary">Horizontales</h3>
-              <ul className="space-y-1">
-                {puzzle.across.map(clue => <li key={`a-${clue.number}`}><b>{clue.number}.</b> {clue.clue}</li>)}
-              </ul>
+            <div className="max-w-xl mx-auto bg-black/50 text-white p-4 rounded-xl mb-8">
+              <p className="font-bold text-lg">YARA: "¡Has llegado a Vitalia! La energía del sol, del viento y del agua nos impulsa hacia un futuro más limpio. Recarga tu energía, comparte tu luz y sigue construyendo un planeta lleno de vida. ¡Tu fuerza también renueva el mundo!"</p>
             </div>
-            <div>
-              <h3 className="font-bold text-lg mb-2 font-headline text-primary">Verticales</h3>
-              <ul className="space-y-1">
-                {puzzle.down.map(clue => <li key={`d-${clue.number}`}><b>{clue.number}.</b> {clue.clue}</li>)}
-              </ul>
-            </div>
+
+          <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
+            {(Object.keys(challenges) as ChallengeId[]).map((key) => {
+              const challenge = challenges[key];
+              const Icon = challenge.icon;
+              return (
+                <button
+                  key={key}
+                  onClick={() => setSelectedChallenge(key)}
+                  className="transition-transform duration-300 hover:scale-105 group"
+                >
+                  <Card className="w-60 md:w-64 h-auto bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors">
+                    <CardContent className="flex flex-col items-center justify-center text-center p-4 h-full">
+                      <Icon className="w-12 h-12 md:w-16 md:h-16 text-primary mb-3" />
+                      <h2 className="font-bold font-headline text-xl md:text-2xl text-primary">
+                        {challenge.title}
+                      </h2>
+                    </CardContent>
+                  </Card>
+                </button>
+              );
+            })}
           </div>
-           <div className="md:col-span-2 text-center mt-4 flex justify-center gap-4">
-              <Button onClick={checkSolution} disabled={isCorrect === true}>Verificar mis Respuestas</Button>
-              <Button onClick={solvePuzzle} variant="outline" disabled={isCorrect === true}>Resolver Crucigrama</Button>
-           </div>
         </div>
-      )}
-    </ChallengeContainer>
+      </div>
+      <PrizeDialog
+        open={isPrizeModalOpen}
+        stationId={8}
+        onClaim={handleClaimPrize}
+      />
+    </>
   );
 }

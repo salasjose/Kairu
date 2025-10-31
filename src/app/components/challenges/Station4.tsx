@@ -7,7 +7,7 @@ import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BrainCircuit, Link as LinkIcon } from "lucide-react";
+import { ArrowLeft, BrainCircuit, Link as LinkIcon, Upload } from "lucide-react";
 import WaterQuiz from "@/app/components/challenges/WaterQuiz";
 import { Input } from "@/components/ui/input";
 import PrizeDialog from "../PrizeDialog";
@@ -15,14 +15,14 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 const challenges = {
   quiz: {
-    title: "Water Quiz",
+    title: "Quiz",
     description:
-      "Pon a prueba tus conocimientos sobre el agua en un emocionante juego de preguntas.",
+      "Pon a prueba tus conocimientos sobre el agua en un emocionante juego de preguntas. ¡Demuestra todo lo que sabes!",
     icon: BrainCircuit,
   },
   post: {
-    title: "Post de Conservación",
-    description: "Crea un post sobre la conservación del agua y comparte el enlace.",
+    title: "Post",
+    description: "Crea un post de conservación del agua, carga tu foto de evidencia, etiquétanos @fundaciontekara y @corpoguajira y comparte el enlace.",
     icon: LinkIcon,
   },
 };
@@ -61,7 +61,7 @@ const PostChallenge = ({
         const videoId = newUrl.split("youtu.be/")[1].split("?")[0];
         setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
       } else {
-        setVideoUrl(newUrl); // May not render, but we store it
+        setVideoUrl(newUrl); 
       }
     } else {
       setVideoUrl(null);
@@ -115,17 +115,20 @@ const PostChallenge = ({
             </div>
 
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Crea un post en redes sociales sobre la conservación del agua y pega
-              la URL aquí.
+              {challenges.post.description}
             </p>
-            <div className="flex gap-2 max-w-md mx-auto">
-              <Input
-                type="url"
-                placeholder="https://ejemplo.com/post"
-                value={url}
-                onChange={(e) => handleUrlChange(e.target.value)}
-              />
-              <Button onClick={handleSubmit}>Enviar</Button>
+            <div className="flex flex-col gap-4 max-w-md mx-auto">
+                <Button size="lg" variant="outline"><Upload className="mr-2"/> Cargar Foto de Evidencia</Button>
+                <div className="flex gap-2">
+                    <LinkIcon className="h-10 text-muted-foreground" />
+                    <Input
+                        type="url"
+                        placeholder="https://ejemplo.com/post"
+                        value={url}
+                        onChange={(e) => handleUrlChange(e.target.value)}
+                    />
+                    <Button onClick={handleSubmit}>Enviar</Button>
+                </div>
             </div>
           </CardContent>
         </Card>
@@ -190,8 +193,10 @@ export default function Station4() {
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
           <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
             <h1 className="text-3xl md:text-5xl">TerrAzul</h1>
-            <p className="text-base md:text-xl">Recursos Hídricos</p>
           </div>
+            <div className="max-w-xl mx-auto bg-black/50 text-white p-4 rounded-xl mb-8">
+                <p className="font-bold text-lg">YARA: "¡Bienvenido a TerrAzul! Aquí fluye la vida. El agua recorre montañas, ríos y mares, y depende de nosotros mantener su pureza. ¡Cuidemos cada gota y protejamos los territorios que le dan vida al planeta!"</p>
+            </div>
 
           <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
             {(Object.keys(challenges) as ChallengeId[]).map((key) => {
@@ -226,18 +231,6 @@ export default function Station4() {
             </p>
           </div>
 
-          {yaraCharImage && (
-            <div className="absolute bottom-4 -left-8 z-20 hidden md:block">
-              <Image
-                src={yaraCharImage.imageUrl}
-                alt={yaraCharImage.description}
-                width={140}
-                height={140}
-                className="transform -scale-x-100"
-                data-ai-hint={yaraCharImage.imageHint}
-              />
-            </div>
-          )}
         </div>
       </div>
     );

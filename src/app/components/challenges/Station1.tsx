@@ -26,12 +26,12 @@ const animalImage = PlaceHolderImages.find((p) => p.id === "fauna-animal");
 
 const challenges = {
   "Reto 1": {
-    title: "Reto 1: Censo Fotográfico",
-    description: "Sube 4 fotos de flora y 4 de fauna local.",
+    title: "Reto 1: Fauna y Flora",
+    description: "Identifica las especies nativas de fauna y flora de tu región y carga tus fotos en cada espacio.",
   },
   "Reto 2": {
-    title: "Reto 2: Crear un Hábitat",
-    description: "Sube 4 fotos de cómo construyes un hogar para la vida silvestre.",
+    title: "Reto 2: Cuidado Animal",
+    description: "¡Tienes una gran misión! Crea e instala un bebedero o comedero para animales y compártenos cómo te quedó.",
     image: habitatImage?.imageUrl ?? "https://picsum.photos/seed/habitat/400/300",
     imageHint: habitatImage?.imageHint ?? "wildlife habitat",
   },
@@ -369,7 +369,7 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
           </Button>
 
           <section>
-            <h3 className="text-2xl font-bold font-headline text-primary mb-4">Creación de Comedero/Bebedero</h3>
+            <h3 className="text-2xl font-bold font-headline text-primary mb-4">Tu Bebedero/Comedero</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {habitatPhotos.map((photo, index) => (
                 <PhotoSlot key={`habitat-${index}`} imageUrl={photo} onAddPhoto={() => handleAddPhotoClick(index)} />
@@ -448,8 +448,12 @@ export default function Station1() {
           />
       )}
       <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
-        <div className="bg-[#D95E32] text-white font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
+        <div className="bg-white/90 backdrop-blur-sm text-primary font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
           <h1 className="text-4xl md:text-5xl">Bionexus</h1>
+        </div>
+        
+        <div className="max-w-xl mx-auto bg-black/50 text-white p-4 rounded-xl mb-8">
+            <p className="font-bold text-lg">YARA: "¡Bienvenido a Bionexus! Aquí comienza nuestra gran aventura. Prepárate para descubrir los secretos que conectan toda la vida del planeta. Cada especie, cada árbol, cada gota… todos formamos parte de la misma red. ¡Vamos a explorarla juntos!"</p>
         </div>
 
         <div className="flex flex-col md:flex-row gap-8 md:gap-12 mb-8">
@@ -472,7 +476,7 @@ export default function Station1() {
               <div className="absolute inset-0 bg-white shadow-2xl rounded-lg transform -rotate-1"></div>
               <Card className="relative w-60 h-64 md:w-64 md:h-72 rounded-lg shadow-2xl flex flex-col items-center justify-center p-4 border-4 border-gray-200">
                 <CardHeader>
-                    <CardTitle className="font-kalam text-3xl md:text-4xl text-orange-600">
+                    <CardTitle className="font-kalam text-3xl md:text-4xl text-primary-600">
                         {challenges[reto].title}
                     </CardTitle>
                 </CardHeader>
@@ -483,19 +487,6 @@ export default function Station1() {
             </button>
           )})}
         </div>
-
-        {yaraCharImage && (
-          <div className="absolute bottom-4 left-4 z-20 hidden md:block">
-            <Image
-              src={yaraCharImage.imageUrl}
-              alt={yaraCharImage.description}
-              width={140}
-              height={140}
-              className="transform -scale-x-100"
-              data-ai-hint={yaraCharImage.imageHint}
-            />
-          </div>
-        )}
 
         <div className="mt-4 max-w-md mx-auto">
           <p className="bg-background/80 p-4 rounded-md text-center">

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -223,15 +222,16 @@ const PhotoUploadChallenge = ({
             </div>
 
             <p className="text-muted-foreground mb-6">
-              Documenta una práctica sostenible que realices hoy.
+              Durante una semana, cada día registrarás tus prácticas sostenibles (Separar residuos, usar productos reutilizables, hacer compost, salir en bicicleta, reutilizar el papel, entre otras).
             </p>
             
             {!imageUrl && (
               <Button onClick={() => setIsAddPhotoDialogOpen(true)} size="lg">
                 <Camera className="mr-2" />
-                Añadir Foto
+                Registrar Práctica
               </Button>
             )}
+             <p className="text-xs text-muted-foreground mt-4">RECORDATORIO: “Tus acciones del presente beneficiarán a las generaciones del futuro.”</p>
           </CardContent>
         </Card>
       </div>
@@ -329,21 +329,6 @@ export default function Station2() {
     }
   };
 
-  const handleCompleteAllDays = () => {
-    const newDays = days.map((day, i) => ({
-      ...day,
-      status: "completed",
-      photoUrl: day.photoUrl ?? `https://picsum.photos/seed/sustainability-day${i}/400/300`,
-    })) as DayState[];
-    updateAndSaveChanges(newDays);
-    unlockStation(3);
-    toast({
-      title: "¡Estación ImpacTrack Completada!",
-      description: "¡Has completado todos los retos de la semana!",
-    });
-    setIsPrizeModalOpen(true);
-  };
-
   const handleClaimPrize = () => {
     setIsPrizeModalOpen(false);
     router.push("/");
@@ -373,7 +358,7 @@ export default function Station2() {
       >
         <div
           className={cn(
-            "relative w-24 h-20 md:w-32 md:h-24 bg-[#D95E32] rounded-lg shadow-lg flex items-center justify-center border-4 border-white/80 group-hover:scale-105 group-disabled:scale-100 group-disabled:bg-orange-500/60 transition-transform",
+            "relative w-24 h-20 md:w-32 md:h-24 bg-primary/80 rounded-lg shadow-lg flex items-center justify-center border-4 border-white/80 group-hover:scale-105 group-disabled:scale-100 group-disabled:bg-primary/40 transition-transform",
             "transform -rotate-3"
           )}
         >
@@ -406,14 +391,14 @@ export default function Station2() {
             data-ai-hint={sostenibilidadBgImage.imageHint}
           />
         )}
-        <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
-          <div className="text-[#D95E32] font-kalam text-center mb-8 bg-background/70 backdrop-blur-sm p-4 rounded-xl">
-            <h1 className="text-5xl md:text-7xl leading-none">Reto de la</h1>
-            <p className="text-4xl md:text-6xl">Semana</p>
-          </div>
-          <p className="absolute top-5 right-5 font-kalam text-3xl md:text-4xl text-[#D95E32] font-bold rotate-12 bg-background/70 backdrop-blur-sm p-2 rounded-lg">
-            ImpacTrack
-          </p>
+        <div className="relative z-10 w-full h-full flex flex-col items-center justify-center text-center">
+            <div className="bg-white/90 backdrop-blur-sm text-primary font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
+                <h1 className="text-4xl md:text-5xl">ImpacTrack</h1>
+            </div>
+            
+            <div className="max-w-xl mx-auto bg-black/50 text-white p-4 rounded-xl mb-8">
+                <p className="font-bold text-lg">YARA: "¡Llegamos a ImpacTrack! Aquí aprenderás que cada acción deja huella. Observa tu entorno, registra tus buenas prácticas y demuestra que tu impacto puede ser positivo. ¡Haz que tus pasos cuenten por el planeta!"</p>
+            </div>
 
           <div className="flex flex-col items-center gap-4 md:gap-6 bg-background/70 backdrop-blur-sm p-6 rounded-xl">
             <div className="flex flex-wrap justify-center gap-4 md:gap-6">
@@ -422,24 +407,9 @@ export default function Station2() {
             <div className="flex flex-wrap justify-center gap-4 md:gap-6">
               {days.slice(4, 7).map((_, index) => renderDayButton(index + 4))}
             </div>
+             <p className="text-sm text-muted-foreground mt-4">MECÁNICA: Cada vez que subas tu foto, pasadas 24 horas se activará el siguiente candado para continuar.</p>
           </div>
-
-          <div className="absolute bottom-[8%] left-1/2 -translate-x-1/2 w-full flex flex-col items-center gap-4">
-            <Button onClick={handleCompleteAllDays}>Reto Completado</Button>
-          </div>
-
-          {yaraCharImage && (
-            <div className="absolute bottom-0 left-4 z-20 hidden md:block">
-              <Image
-                src={yaraCharImage.imageUrl}
-                alt={yaraCharImage.description}
-                width={140}
-                height={140}
-                className="transform -scale-x-100"
-                data-ai-hint={yaraCharImage.imageHint}
-              />
-            </div>
-          )}
+          
         </div>
       </div>
       <PrizeDialog
@@ -450,5 +420,3 @@ export default function Station2() {
     </>
   );
 }
-
-    
