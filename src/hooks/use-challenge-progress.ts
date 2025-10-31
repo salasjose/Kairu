@@ -1,11 +1,19 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
 
 const CHALLENGE_PROGRESS_KEY = 'kairu-challenge-progress';
 
+type ChallengeInfo = {
+  completed: boolean;
+  imageUrl?: string | null;
+};
+
 type ChallengeProgress = {
-  [stationId: number]: string[]; // Array of completed challenge names
+  [stationId: number]: {
+    [challengeName: string]: ChallengeInfo;
+  };
 };
 
 export function useChallengeProgress() {
@@ -25,12 +33,14 @@ export function useChallengeProgress() {
     setIsLoaded(true);
   }, []);
 
-  const completeChallenge = useCallback((stationId: number, challengeName: string) => {
+  const completeChallenge = useCallback((stationId: number, challengeName: string, imageUrl: string | null = null) => {
     setCompletedChallenges(prev => {
-      const stationProgress = prev[stationId] ? [...prev[stationId]] : [];
-      if (!stationProgress.includes(challengeName)) {
-        stationProgress.push(challengeName);
-      }
+      const stationProgress = prev[stationId] ? { ...prev[stationId] } : {};
+      
+      stationProgress[challengeName] = {
+        completed: true,
+        imageUrl: imageUrl,
+      };
       
       const newProgress = { ...prev, [stationId]: stationProgress };
 

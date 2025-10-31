@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -20,9 +21,6 @@ import { useRouter } from "next/navigation";
 const faunaImage = PlaceHolderImages.find((p) => p.id === "fauna-capybara");
 const habitatImage = PlaceHolderImages.find((p) => p.id === "habitat-build-1");
 const biodiversidadBgImage = PlaceHolderImages.find((p) => p.id === "biodiversidad-background");
-const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
-const flowerImage = PlaceHolderImages.find((p) => p.id === "flora-flower");
-const animalImage = PlaceHolderImages.find((p) => p.id === "fauna-animal");
 
 const challenges = {
   "Reto 1": {
@@ -153,7 +151,7 @@ const PhotoSlot = ({
 };
 
 
-const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: () => void }) => {
+const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: (imageUrl: string | null) => void }) => {
   const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -209,6 +207,8 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
     const hasFlora = floraPhotos.some(p => p !== null);
     const hasFauna = faunaPhotos.some(p => p !== null);
     if(hasFlora && hasFauna) {
+      const firstFlora = floraPhotos.find(p => p !== null);
+      onStationComplete(firstFlora ?? null);
       return true;
     }
     toast({
@@ -245,7 +245,7 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
       title="Estación Bionexus"
       description={challenges["Reto 1"].description}
       onChallengeComplete={checkCompletion}
-      onStationComplete={onStationComplete}
+      onStationComplete={() => {}}
     >
         <div className="w-full max-w-4xl mx-auto">
             <Button variant="ghost" onClick={onBack} className="mb-4">
@@ -278,7 +278,7 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
   );
 };
 
-const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: () => void }) => {
+const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: (imageUrl: string | null) => void }) => {
   const [habitatPhotos, setHabitatPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAddPhotoDialogOpen, setIsAddPhotoDialogOpen] = useState(false);
@@ -322,8 +322,9 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
   };
 
   const checkCompletion = () => {
-    const hasUploaded = habitatPhotos.some(p => p !== null);
-    if (hasUploaded) {
+    const firstPhoto = habitatPhotos.find(p => p !== null);
+    if (firstPhoto) {
+      onStationComplete(firstPhoto);
       return true;
     }
     toast({
@@ -360,7 +361,7 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
         title="Estación Bionexus"
         description={challenges["Reto 2"].description}
         onChallengeComplete={checkCompletion}
-        onStationComplete={onStationComplete}
+        onStationComplete={() => {}}
       >
         <div className="w-full max-w-4xl mx-auto">
           <Button variant="ghost" onClick={onBack} className="mb-4">
@@ -397,12 +398,12 @@ export default function Station1() {
     setSelectedChallenge(challenge);
   }
 
-  const handleStationComplete = (challengeName: string) => {
-    completeChallenge(stationId, challengeName);
+  const handleStationComplete = (challengeName: string, imageUrl: string | null) => {
+    completeChallenge(stationId, challengeName, imageUrl);
     setSelectedChallenge(null); // Go back to challenge selection
 
-    const completedStationChallenges = completedChallenges[stationId] || [];
-    const allChallengesDone = stationChallenges.every(ch => [...completedStationChallenges, challengeName].includes(ch));
+    const currentCompleted = Object.keys(completedChallenges[stationId] || {});
+    const allChallengesDone = stationChallenges.every(ch => [...currentCompleted, challengeName].includes(ch));
     
     if (allChallengesDone) {
         unlockStation(stationId + 1);
@@ -425,14 +426,14 @@ export default function Station1() {
   };
   
   if (selectedChallenge === "Reto 1") {
-    return <PhotoChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={() => handleStationComplete("Reto 1")} />;
+    return <PhotoChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={(imageUrl) => handleStationComplete("Reto 1", imageUrl)} />;
   }
 
   if (selectedChallenge === "Reto 2") {
-    return <HabitatChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={() => handleStationComplete("Reto 2")} />;
+    return <HabitatChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={(imageUrl) => handleStationComplete("Reto 2", imageUrl)} />;
   }
 
-  const stationCompletedChallenges = completedChallenges[stationId] || [];
+  const stationCompletedChallenges = completedChallenges[stationId] || {};
 
   return (
     <>
@@ -458,7 +459,10 @@ export default function Station1() {
 
         <div className="flex flex-col md:flex-row gap-8 md:gap-12 mb-8">
           {(stationChallenges as (keyof typeof challenges)[]).map((reto, index) => {
-            const isCompleted = stationCompletedChallenges.includes(reto);
+            const challengeProgress = stationCompletedChallenges[reto];
+            const isCompleted = !!challengeProgress;
+            const imageUrl = challengeProgress?.imageUrl;
+
             return (
             <button
               key={reto}
@@ -468,21 +472,37 @@ export default function Station1() {
                 index === 0 ? "md:-rotate-6" : "md:rotate-6"
               )}
             >
-              {isCompleted && (
-                <div className="absolute -top-3 -right-3 z-10 bg-green-500 rounded-full p-2 shadow-lg">
-                    <CheckCircle className="text-white h-5 w-5" />
-                </div>
-              )}
               <div className="absolute inset-0 bg-white shadow-2xl rounded-lg transform -rotate-1"></div>
-              <Card className="relative w-60 h-64 md:w-64 md:h-72 rounded-lg shadow-2xl flex flex-col items-center justify-center p-4 border-4 border-gray-200">
-                <CardHeader>
-                    <CardTitle className="font-kalam text-3xl md:text-4xl text-primary-600">
-                        {challenges[reto].title}
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground">{challenges[reto].description}</p>
-                </CardContent>
+              <Card className="relative w-60 h-64 md:w-64 md:h-72 rounded-lg shadow-2xl flex flex-col items-center justify-center p-4 border-4 border-gray-200 overflow-hidden">
+                 {isCompleted && imageUrl && (
+                  <>
+                    <Image
+                      src={imageUrl}
+                      alt={`Completado: ${challenges[reto].title}`}
+                      fill
+                      className="object-cover z-0"
+                    />
+                    <div className="absolute inset-0 bg-black/40 z-10"></div>
+                  </>
+                )}
+                <div className="relative z-20 text-center">
+                    <CardHeader>
+                        <CardTitle className={cn(
+                            "font-kalam text-3xl md:text-4xl text-primary-600",
+                            isCompleted && imageUrl && "text-white"
+                        )}>
+                            {challenges[reto].title}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className={cn(isCompleted && imageUrl && "text-gray-200")}>
+                        <p>{challenges[reto].description}</p>
+                    </CardContent>
+                </div>
+                 {isCompleted && (
+                    <div className="absolute top-2 right-2 z-30 bg-green-500 rounded-full p-2 shadow-lg">
+                        <CheckCircle className="text-white h-5 w-5" />
+                    </div>
+                )}
               </Card>
             </button>
           )})}
