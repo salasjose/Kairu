@@ -24,11 +24,11 @@ const biodiversidadBgImage = PlaceHolderImages.find((p) => p.id === "biodiversid
 
 const challenges = {
   "Reto 1": {
-    title: "Reto 1: Fauna y Flora",
+    title: "Fauna y Flora",
     description: "Identifica las especies nativas de fauna y flora de tu región y carga tus fotos en cada espacio.",
   },
   "Reto 2": {
-    title: "Reto 2: Cuidado Animal",
+    title: "Cuidado Animal",
     description: "¡Tienes una gran misión! Crea e instala un bebedero o comedero para animales y compártenos cómo te quedó.",
     image: habitatImage?.imageUrl ?? "https://picsum.photos/seed/habitat/400/300",
     imageHint: habitatImage?.imageHint ?? "wildlife habitat",
@@ -488,8 +488,8 @@ export default function Station1() {
                 <div className="relative z-20 text-center">
                     <CardHeader>
                         <CardTitle className={cn(
-                            "font-kalam text-3xl md:text-4xl text-primary-600",
-                            isCompleted && imageUrl && "text-white"
+                            "font-kalam text-3xl md:text-4xl",
+                            isCompleted && imageUrl ? "text-white" : "text-primary"
                         )}>
                             {challenges[reto].title}
                         </CardTitle>
