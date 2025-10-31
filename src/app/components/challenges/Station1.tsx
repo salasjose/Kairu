@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -23,11 +22,11 @@ const habitatImage = PlaceHolderImages.find((p) => p.id === "habitat-build-1");
 const biodiversidadBgImage = PlaceHolderImages.find((p) => p.id === "biodiversidad-background");
 
 const challenges = {
-  "Reto 1": {
+  "Fauna y Flora": {
     title: "Fauna y Flora",
     description: "Identifica las especies nativas de fauna y flora de tu región y carga tus fotos en cada espacio.",
   },
-  "Reto 2": {
+  "Cuidado Animal": {
     title: "Cuidado Animal",
     description: "¡Tienes una gran misión! Crea e instala un bebedero o comedero para animales y compártenos cómo te quedó.",
     image: habitatImage?.imageUrl ?? "https://picsum.photos/seed/habitat/400/300",
@@ -80,9 +79,16 @@ const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void;
   }, []);
 
   const handleCapture = () => {
-    // In a real app, you'd capture a frame from the video.
-    // Here we'll just return a placeholder.
-    onCapture(habitatImage?.imageUrl ?? `https://picsum.photos/seed/capture${Date.now()}/200`);
+    if (videoRef.current) {
+        const canvas = document.createElement('canvas');
+        canvas.width = videoRef.current.videoWidth;
+        canvas.height = videoRef.current.videoHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+            onCapture(canvas.toDataURL('image/jpeg'));
+        }
+    }
   };
 
   return (
@@ -243,7 +249,7 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
      <ChallengeContainer
       stationId={1}
       title="Estación Bionexus"
-      description={challenges["Reto 1"].description}
+      description={challenges["Fauna y Flora"].description}
       onChallengeComplete={checkCompletion}
       onStationComplete={() => {}}
     >
@@ -359,7 +365,7 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
       <ChallengeContainer
         stationId={1}
         title="Estación Bionexus"
-        description={challenges["Reto 2"].description}
+        description={challenges["Cuidado Animal"].description}
         onChallengeComplete={checkCompletion}
         onStationComplete={() => {}}
       >
@@ -425,12 +431,12 @@ export default function Station1() {
     router.push("/");
   };
   
-  if (selectedChallenge === "Reto 1") {
-    return <PhotoChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={(imageUrl) => handleStationComplete("Reto 1", imageUrl)} />;
+  if (selectedChallenge === "Fauna y Flora") {
+    return <PhotoChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={(imageUrl) => handleStationComplete("Fauna y Flora", imageUrl)} />;
   }
 
-  if (selectedChallenge === "Reto 2") {
-    return <HabitatChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={(imageUrl) => handleStationComplete("Reto 2", imageUrl)} />;
+  if (selectedChallenge === "Cuidado Animal") {
+    return <HabitatChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={(imageUrl) => handleStationComplete("Cuidado Animal", imageUrl)} />;
   }
 
   const stationCompletedChallenges = completedChallenges[stationId] || {};
