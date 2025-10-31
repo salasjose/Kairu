@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -45,7 +46,13 @@ const OnboardingFlow = ({ onComplete }: { onComplete: (data: PlayerData) => void
     }
     if (step === 1) {
         const messageTimer = setTimeout(() => setShowMessage(true), 500);
-        const fadeoutTimer = setTimeout(() => setShowMessage(false), 5500);
+        const fadeoutTimer = setTimeout(() => {
+            setShowMessage(false);
+            // After message fades, show buttons
+            setTimeout(() => {
+                 setStep(1.5); // A temporary state to trigger button animation
+            }, 500);
+        }, 4500); // show message for 4s
         return () => {
             clearTimeout(messageTimer);
             clearTimeout(fadeoutTimer);
@@ -93,7 +100,7 @@ const OnboardingFlow = ({ onComplete }: { onComplete: (data: PlayerData) => void
             <h1 className="text-4xl md:text-6xl font-bold text-primary mt-4 font-headline">KAIRU</h1>
           </motion.div>
         );
-      case 1: // Yara's Intro & Auth Selection
+      case 1: // Yara's Intro
         return (
           <motion.div
             key="step1"
@@ -112,22 +119,26 @@ const OnboardingFlow = ({ onComplete }: { onComplete: (data: PlayerData) => void
                   transition={{ duration: 0.5 }}
                   className="bg-white/90 p-4 rounded-lg shadow-xl mt-4 max-w-sm"
                 >
-                  <p className="font-bold text-lg text-primary">¡Hola! Soy Yara. Si tienes una cuenta, dale al botón Iniciar Sesión. Si no, ¡te invito a crear tu usuario!</p>
+                  <p className="font-bold text-lg text-primary">¡Hola! Soy Yara. si tiene una cuenta dale al boton inicio de Sesion si no te invito a crear tu usuario</p>
                 </motion.div>
               )}
             </AnimatePresence>
-            
-            {!showMessage && (
-                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0, transition: { delay: 0.5 } }}
-                    className="flex gap-4 mt-6"
-                >
+          </motion.div>
+        );
+      case 1.5: // Auth Selection
+        return (
+            <motion.div
+                key="step1.5"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0, transition: { delay: 0.2 } }}
+                className="flex flex-col items-center"
+            >
+                {yaraCharImage && <Image src={yaraCharImage.imageUrl} alt="Yara" width={150} height={150} data-ai-hint={yaraCharImage.imageHint}/>}
+                <div className="flex gap-4 mt-6">
                     <Button onClick={() => { setAuthAction('login'); setStep(2); }} size="lg">Iniciar Sesión</Button>
                     <Button onClick={() => { setAuthAction('signup'); setStep(2); }} size="lg" variant="secondary">Crear Usuario</Button>
-                </motion.div>
-            )}
-          </motion.div>
+                </div>
+            </motion.div>
         );
       case 2: // Login or Sign Up Form
         return (
@@ -201,19 +212,18 @@ const OnboardingFlow = ({ onComplete }: { onComplete: (data: PlayerData) => void
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
+    <main className="relative w-full min-h-screen flex flex-col overflow-hidden">
       {welcomeBgImage && (
         <Image
           src={welcomeBgImage.imageUrl}
           alt={welcomeBgImage.description}
           fill
-          style={{objectFit: 'cover'}}
-          className="z-0 opacity-50"
+          className="object-cover object-center w-full h-full z-0"
           priority
           data-ai-hint={welcomeBgImage.imageHint}
         />
       )}
-      <div className="relative z-10 flex flex-col items-center">
+      <div className="relative z-10 flex flex-col items-center justify-center flex-grow p-4">
         <AnimatePresence mode="wait">
             {renderStep()}
         </AnimatePresence>
