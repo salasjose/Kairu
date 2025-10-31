@@ -26,6 +26,7 @@ const OnboardingFlow = ({ onComplete }: { onComplete: (data: PlayerData) => void
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<any>(null);
   const [authAction, setAuthAction] = useState<'login' | 'signup' | null>(null);
+  const [showMessage, setShowMessage] = useState(false);
 
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
   const welcomeBgImage = PlaceHolderImages.find((p) => p.id === "map-background");
@@ -41,6 +42,14 @@ const OnboardingFlow = ({ onComplete }: { onComplete: (data: PlayerData) => void
     if (step === 0) {
       const timer = setTimeout(() => setStep(1), 2500);
       return () => clearTimeout(timer);
+    }
+    if (step === 1) {
+        const messageTimer = setTimeout(() => setShowMessage(true), 500);
+        const fadeoutTimer = setTimeout(() => setShowMessage(false), 5500);
+        return () => {
+            clearTimeout(messageTimer);
+            clearTimeout(fadeoutTimer);
+        }
     }
   }, [step]);
   
@@ -93,13 +102,31 @@ const OnboardingFlow = ({ onComplete }: { onComplete: (data: PlayerData) => void
             className="flex flex-col items-center text-center"
           >
             {yaraCharImage && <Image src={yaraCharImage.imageUrl} alt="Yara" width={150} height={150} data-ai-hint={yaraCharImage.imageHint}/>}
-            <div className="bg-white/90 p-4 rounded-lg shadow-xl mt-4 max-w-sm">
-                <p className="font-bold text-lg text-primary">¡Hola! Me llamo Yara. Soy la guardiana de los ecosistemas de Kairu, ¡y te tengo una invitación que cambiará tu mundo! Te invito a unirte a nuestra misión y a crear tu usuario ahora mismo.</p>
-            </div>
-            <div className="flex gap-4 mt-6">
-                <Button onClick={() => { setAuthAction('login'); setStep(2); }} size="lg">Iniciar Sesión</Button>
-                <Button onClick={() => { setAuthAction('signup'); setStep(2); }} size="lg" variant="secondary">Crear Usuario</Button>
-            </div>
+            
+            <AnimatePresence>
+              {showMessage && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.9 }}
+                  transition={{ duration: 0.5 }}
+                  className="bg-white/90 p-4 rounded-lg shadow-xl mt-4 max-w-sm"
+                >
+                  <p className="font-bold text-lg text-primary">¡Hola! Soy Yara. Si tienes una cuenta, dale al botón Iniciar Sesión. Si no, ¡te invito a crear tu usuario!</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+            {!showMessage && (
+                 <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0, transition: { delay: 0.5 } }}
+                    className="flex gap-4 mt-6"
+                >
+                    <Button onClick={() => { setAuthAction('login'); setStep(2); }} size="lg">Iniciar Sesión</Button>
+                    <Button onClick={() => { setAuthAction('signup'); setStep(2); }} size="lg" variant="secondary">Crear Usuario</Button>
+                </motion.div>
+            )}
           </motion.div>
         );
       case 2: // Login or Sign Up Form
