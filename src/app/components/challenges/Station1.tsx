@@ -158,12 +158,39 @@ const PhotoSlot = ({
 
 
 const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: (imageUrl: string | null) => void }) => {
-  const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>(Array(4).fill(null));
-  const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>(Array(4).fill(null));
+  const STORAGE_KEY_FLORA = "kairu-station1-flora";
+  const STORAGE_KEY_FAUNA = "kairu-station1-fauna";
+
+  const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>([]);
+  const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>([]);
+
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAddPhotoDialogOpen, setIsAddPhotoDialogOpen] = useState(false);
   const [photoToAdd, setPhotoToAdd] = useState<{type: "flora" | "fauna", index: number} | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    try {
+      const savedFlora = localStorage.getItem(STORAGE_KEY_FLORA);
+      const savedFauna = localStorage.getItem(STORAGE_KEY_FAUNA);
+      setFloraPhotos(savedFlora ? JSON.parse(savedFlora) : Array(4).fill(null));
+      setFaunaPhotos(savedFauna ? JSON.parse(savedFauna) : Array(4).fill(null));
+    } catch (e) {
+      console.error("Failed to load photos from localStorage", e);
+      setFloraPhotos(Array(4).fill(null));
+      setFaunaPhotos(Array(4).fill(null));
+    }
+  }, []);
+
+  const updatePhotos = (type: "flora" | "fauna", newPhotos: (string | null)[]) => {
+    if (type === "flora") {
+      setFloraPhotos(newPhotos);
+      localStorage.setItem(STORAGE_KEY_FLORA, JSON.stringify(newPhotos));
+    } else {
+      setFaunaPhotos(newPhotos);
+      localStorage.setItem(STORAGE_KEY_FAUNA, JSON.stringify(newPhotos));
+    }
+  };
 
   const handleAddPhotoClick = (type: "flora" | "fauna", index: number) => {
     setPhotoToAdd({ type, index });
@@ -173,15 +200,9 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
   const handleCapture = (imageUrl: string) => {
     if (photoToAdd) {
         const { type, index } = photoToAdd;
-        if (type === "flora") {
-            const newPhotos = [...floraPhotos];
-            newPhotos[index] = imageUrl;
-            setFloraPhotos(newPhotos);
-        } else {
-            const newPhotos = [...faunaPhotos];
-            newPhotos[index] = imageUrl;
-            setFaunaPhotos(newPhotos);
-        }
+        const currentPhotos = type === "flora" ? [...floraPhotos] : [...faunaPhotos];
+        currentPhotos[index] = imageUrl;
+        updatePhotos(type, currentPhotos);
     }
     setIsCameraOpen(false);
     setPhotoToAdd(null);
@@ -189,7 +210,7 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && photoToAdd) {
+    if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
         handleCapture(e.target?.result as string);
@@ -285,11 +306,29 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
 };
 
 const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: (imageUrl: string | null) => void }) => {
-  const [habitatPhotos, setHabitatPhotos] = useState<(string | null)[]>(Array(4).fill(null));
+  const STORAGE_KEY_HABITAT = "kairu-station1-habitat";
+  
+  const [habitatPhotos, setHabitatPhotos] = useState<(string | null)[]>([]);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAddPhotoDialogOpen, setIsAddPhotoDialogOpen] = useState(false);
   const [photoToAddIndex, setPhotoToAddIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    try {
+      const savedPhotos = localStorage.getItem(STORAGE_KEY_HABITAT);
+      setHabitatPhotos(savedPhotos ? JSON.parse(savedPhotos) : Array(4).fill(null));
+    } catch (e) {
+      console.error("Failed to load photos from localStorage", e);
+      setHabitatPhotos(Array(4).fill(null));
+    }
+  }, []);
+
+  const updatePhotos = (newPhotos: (string | null)[]) => {
+    setHabitatPhotos(newPhotos);
+    localStorage.setItem(STORAGE_KEY_HABITAT, JSON.stringify(newPhotos));
+  };
+
 
   const handleAddPhotoClick = (index: number) => {
     setPhotoToAddIndex(index);
@@ -300,7 +339,7 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
     if (photoToAddIndex !== null) {
       const newPhotos = [...habitatPhotos];
       newPhotos[photoToAddIndex] = imageUrl;
-      setHabitatPhotos(newPhotos);
+      updatePhotos(newPhotos);
     }
     setIsCameraOpen(false);
     setPhotoToAddIndex(null);
@@ -308,7 +347,7 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && photoToAddIndex !== null) {
+    if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
         handleCapture(e.target?.result as string);
@@ -529,3 +568,5 @@ export default function Station1() {
     </>
   );
 }
+
+    
