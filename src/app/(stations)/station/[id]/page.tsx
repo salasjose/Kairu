@@ -35,9 +35,3 @@ export default function StationPage({ params }: { params: { id: string } }) {
 
   return getStationComponent();
 }
-
-export function generateStaticParams() {
-  return stations.map(station => ({
-    id: station.id.toString(),
-  }));
-}

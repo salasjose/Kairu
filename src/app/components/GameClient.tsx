@@ -36,7 +36,7 @@ export default function GameClient() {
   useEffect(() => {
     if (!db || !user) {
       // Firebase might not be ready yet, wait for the provider
-      return; 
+      return;
     }
 
     setIsPlayerStateLoading(true);
@@ -70,7 +70,7 @@ export default function GameClient() {
       await setDoc(doc(db, 'players', user.uid), newState);
       setPlayerState(newState);
       setIsNewUser(false);
-    } catch (error) => {
+    } catch (error) {
       console.error("Failed to save player data:", error);
     }
   };
