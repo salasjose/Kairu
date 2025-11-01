@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { stations } from '@/lib/data';
 import StationNode from '@/app/components/StationNode';
 import CompletionDialog from '@/app/components/CompletionDialog';
@@ -11,118 +11,114 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import PrizeCart from './PrizeCart';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import OnboardingFlow from './auth/OnboardingFlow';
-import { useFirebase } from '@/firebase/provider';
 import { AnimatePresence } from 'framer-motion';
+import { useUser, useFirestore } from '@/firebase/hooks';
 
 interface PlayerState {
   name: string;
   avatar: string;
   unlockedStations: number[];
   chosenScenario: string | null;
-  isNew: boolean;
 }
 
-const initialPlayerState: PlayerState = {
-  name: '',
-  avatar: '',
+const initialPlayerState: Omit<PlayerState, 'name' | 'avatar' | 'chosenScenario'> = {
   unlockedStations: [1],
-  chosenScenario: null,
-  isNew: true,
 };
 
 export default function GameClient() {
-  const { db, user, loading: isFirebaseLoading } = useFirebase();
+  const { user } = useUser();
+  const db = useFirestore();
+
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isPlayerStateLoading, setIsPlayerStateLoading] = useState(true);
+  const [isNewUser, setIsNewUser] = useState(false);
 
   useEffect(() => {
-    if (!db || !user) return;
+    if (!db || !user) {
+      // Firebase might not be ready yet, wait for the provider
+      return; 
+    }
 
+    setIsPlayerStateLoading(true);
     const playerDocRef = doc(db, 'players', user.uid);
 
-    const getPlayerState = async () => {
-      try {
-        const docSnap = await getDoc(playerDocRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data() as Omit<PlayerState, 'isNew'>;
-          setPlayerState({ ...data, isNew: false });
-        } else {
-          // If the document doesn't exist, it's a new player.
-          // The onboarding flow will handle creating the document.
-          setPlayerState(initialPlayerState);
-        }
-      } catch (error) {
-        console.error("Error fetching player state:", error);
-        // Handle error case, maybe show a retry button or an error message
-      } finally {
-        setIsLoading(false);
+    const unsubscribe = onSnapshot(playerDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data() as PlayerState;
+        setPlayerState(data);
+        setIsNewUser(false);
+      } else {
+        setIsNewUser(true);
+        setPlayerState(null); // Clear old state if user is new
       }
-    };
+      setIsPlayerStateLoading(false);
+    }, (error) => {
+      console.error("Error fetching player state:", error);
+      setIsPlayerStateLoading(false);
+    });
 
-    getPlayerState();
-  }, [db, user]);
+    return () => unsubscribe();
+  }, [user, db]);
 
-  const handleOnboardingComplete = async (data: Omit<PlayerState, 'unlockedStations' | 'isNew'>) => {
-    if (!db || !user) return;
+  const handleOnboardingComplete = async (data: Omit<PlayerState, 'unlockedStations'>) => {
+    if (!user || !db) return;
     const newState: PlayerState = {
       ...initialPlayerState,
       ...data,
-      isNew: false,
     };
     try {
-      await setDoc(doc(db, 'players', user.uid), {
-        name: newState.name,
-        avatar: newState.avatar,
-        unlockedStations: newState.unlockedStations,
-        chosenScenario: newState.chosenScenario,
-      });
+      await setDoc(doc(db, 'players', user.uid), newState);
       setPlayerState(newState);
-    } catch (error) {
+      setIsNewUser(false);
+    } catch (error) => {
       console.error("Failed to save player data:", error);
     }
   };
-
+  
   const handleReset = async () => {
-    if (!db || !user) return;
-    setIsLoading(true);
+    if (!user || !db) return;
+    setIsPlayerStateLoading(true);
     try {
-      // Instead of deleting, just reset the state
-      await setDoc(doc(db, 'players', user.uid), initialPlayerState);
-      setPlayerState(initialPlayerState);
+       const playerDocRef = doc(db, 'players', user.uid);
+       const initialData = {
+         unlockedStations: [1],
+         name: playerState?.name ?? 'Jugador',
+         avatar: playerState?.avatar ?? '',
+         chosenScenario: playerState?.chosenScenario ?? null,
+       };
+       await setDoc(playerDocRef, initialData);
+
     } catch (error) {
       console.error("Failed to reset player state:", error);
     } finally {
-      setIsLoading(false);
+       setIsNewUser(false);
+       setIsPlayerStateLoading(false);
     }
   };
 
-  const unlockStation = async (stationId: number) => {
-    if (!db || !user || !playerState) return;
-
-    setPlayerState(prev => {
-        if (!prev) return null;
-        const newStations = new Set([...prev.unlockedStations, stationId]);
-        const sortedStations = Array.from(newStations).sort((a, b) => a - b);
-        const newState = { ...prev, unlockedStations: sortedStations };
-
-        // Save to Firestore without waiting
-        setDoc(doc(db, 'players', user.uid), { unlockedStations: sortedStations }, { merge: true })
-            .catch(err => console.error("Failed to unlock station:", err));
-
-        return newState;
-    });
-  };
-
-
-  if (isLoading || isFirebaseLoading) {
+  if (isPlayerStateLoading) {
     return (
       <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background">
         <Logo className="h-24 w-24 animate-pulse text-primary" />
-        <p className="text-primary/70 mt-4">Cargando Aventura...</p>
+        <p className="text-primary/70 mt-4">Cargando datos del jugador...</p>
       </main>
     );
   }
   
+  if (!user || isNewUser) {
+    return <OnboardingFlow onComplete={handleOnboardingComplete} />;
+  }
+  
+  if (!playerState) {
+       return (
+         <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background">
+           <Logo className="h-24 w-24 text-destructive" />
+           <p className="text-destructive/70 mt-4">Error al cargar los datos del jugador.</p>
+           <Button onClick={() => window.location.reload()} className="mt-4">Reintentar</Button>
+         </main>
+       );
+  }
+
   const mapBgImage = PlaceHolderImages.find((p) => p.id === 'mapa-juego-background');
   const stationPositions = [
     { top: "65%", left: "12%" }, // 1
@@ -144,23 +140,6 @@ export default function GameClient() {
     }).join(' ');
   };
   const pathD = generatePath(stations.map(s => stationPositions[s.id - 1]));
-
-
-  if (playerState?.isNew) {
-    return <OnboardingFlow onComplete={handleOnboardingComplete} />;
-  }
-  
-  if (!playerState) {
-       // This case should ideally not happen if loading is handled correctly,
-       // but it's a good fallback.
-       return (
-         <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background">
-           <Logo className="h-24 w-24 text-destructive" />
-           <p className="text-destructive/70 mt-4">Error al cargar los datos del jugador.</p>
-           <Button onClick={() => window.location.reload()} className="mt-4">Reintentar</Button>
-         </main>
-       );
-  }
 
   const allStationsCompleted = playerState.unlockedStations.length >= stations.length;
 
@@ -240,7 +219,7 @@ export default function GameClient() {
 
       <AnimatePresence>
         {allStationsCompleted && (
-          <CompletionDialog onReset={handleReset} />
+          <CompletionDialog onReset={handleReset} open={allStationsCompleted}/>
         )}
       </AnimatePresence>
     </main>

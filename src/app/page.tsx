@@ -2,7 +2,7 @@
 import dynamic from 'next/dynamic';
 import Logo from './components/Logo';
 
-// Dynamically import the GameClient component with SSR turned off
+// GameClient will now be responsible for its own loading state and Firebase connection.
 const GameClient = dynamic(() => import('@/app/components/GameClient'), {
   ssr: false,
   loading: () => (
