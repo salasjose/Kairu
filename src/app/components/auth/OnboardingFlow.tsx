@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -61,23 +61,28 @@ export default function OnboardingFlow({ onComplete, onLogin }: OnboardingFlowPr
     const avatars = useMemo(() => PlaceHolderImages.filter(p => p.id.startsWith('avatar-')), []);
     const scenarios = useMemo(() => PlaceHolderImages.slice(0, 4), []);
 
-    const handleAnonymousSignIn = async () => {
-        if (!auth) return;
-        setIsLoading(true);
-        try {
-            await signInAnonymously(auth);
-            onLogin();
-        } catch (error) {
-            console.error("Anonymous sign in failed:", error);
-            toast({
-                title: "Error de Conexión",
-                description: "No se pudo conectar al servicio. Por favor, intenta de nuevo más tarde.",
-                variant: "destructive"
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    useEffect(() => {
+        const checkUser = async () => {
+            if (!auth) return;
+            if (!auth.currentUser) {
+                setIsLoading(true);
+                try {
+                    await signInAnonymously(auth);
+                } catch (error) {
+                    console.error("Anonymous sign in failed:", error);
+                     toast({
+                        title: "Error de Conexión",
+                        description: "No se pudo conectar al servicio. Por favor, intenta de nuevo más tarde.",
+                        variant: "destructive"
+                    });
+                } finally {
+                    setIsLoading(false);
+                }
+            }
+        };
+        checkUser();
+    }, [auth]);
+
 
     const handleSignUpSubmit = async (data: SignUpData) => {
         if (!auth) return;
@@ -232,9 +237,7 @@ export default function OnboardingFlow({ onComplete, onLogin }: OnboardingFlowPr
         }
     };
 
-    // If auth is not ready, we can start with anonymous sign-in to get things rolling
-    if (!auth) {
-        handleAnonymousSignIn();
+    if (isLoading) {
         return (
              <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background">
                 <Logo className="h-24 w-24 animate-pulse text-primary" />
