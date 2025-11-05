@@ -1,0 +1,174 @@
+
+'use client';
+
+import { useState, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { AnimatePresence, motion } from 'framer-motion';
+import Image from 'next/image';
+
+import Logo from '@/app/components/Logo';
+import SignUpForm from './SignUpForm';
+import { Button } from '@/components/ui/button';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
+
+const signUpSchema = z.object({
+  nombre: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres." }),
+  apellido: z.string().min(2, { message: "El apellido debe tener al menos 2 caracteres." }),
+  usuario: z.string().min(4, { message: "El usuario debe tener al menos 4 caracteres." }),
+  email: z.string().email({ message: "Por favor ingresa un correo válido." }),
+  clave: z.string().min(6, { message: "La clave debe tener al menos 6 caracteres." }),
+  telefono: z.string().regex(/^\d{7,10}$/, { message: "Ingresa un número de teléfono válido (7-10 dígitos)." }),
+  edad: z.coerce.number().int().positive({ message: "La edad debe ser un número positivo." }).min(5, { message: "Debes ser mayor de 5 años."}),
+});
+
+type SignUpData = z.infer<typeof signUpSchema>;
+
+interface OnboardingFlowProps {
+    onComplete: (data: {
+        name: string;
+        avatar: string;
+        chosenScenario: string | null;
+    }) => void;
+}
+
+export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
+    const [step, setStep] = useState(0);
+    const [userData, setUserData] = useState<SignUpData | null>(null);
+    const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
+    const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
+    
+    const yaraCharImage = useMemo(() => PlaceHolderImages.find((p) => p.id === 'char-yara'), []);
+    const avatars = useMemo(() => PlaceHolderImages.filter(p => p.id.startsWith('avatar-')), []);
+    const scenarios = useMemo(() => PlaceHolderImages.slice(0, 4), []);
+
+    const form = useForm<SignUpData>({
+        resolver: zodResolver(signUpSchema),
+        defaultValues: {
+            nombre: "",
+            apellido: "",
+            usuario: "",
+            email: "",
+            clave: "",
+            telefono: "",
+            edad: undefined,
+        },
+    });
+
+    const handleSignUpSubmit = (data: SignUpData) => {
+        setUserData(data);
+        setStep(2); // Move to avatar selection
+    };
+
+    const handleAvatarSelect = (avatarUrl: string) => {
+        setSelectedAvatar(avatarUrl);
+        setStep(3); // Move to Yara's welcome message
+    };
+
+    const handleScenarioSelect = (scenarioUrl: string) => {
+        setSelectedScenario(scenarioUrl);
+        if (userData && selectedAvatar) {
+            onComplete({
+                name: userData.nombre,
+                avatar: selectedAvatar,
+                chosenScenario: scenarioUrl,
+            });
+        } else {
+            toast({
+                title: "Error",
+                description: "Faltan datos para completar el registro.",
+                variant: "destructive"
+            });
+        }
+    };
+    
+    const renderStep = () => {
+        switch (step) {
+            case 0: // Welcome screen
+                return (
+                    <motion.div key="step0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center">
+                        <Logo className="h-32 w-32 mx-auto text-primary" />
+                        <h1 className="text-6xl font-bold font-headline text-primary mt-4">KAIRU</h1>
+                        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1, transition: { delay: 1 } }} className="mt-8">
+                           {yaraCharImage && <Image src={yaraCharImage.imageUrl} alt="Yara" width={150} height={150} className="mx-auto" />}
+                           <p className="mt-4 text-xl font-bold bg-white/80 p-3 rounded-lg shadow-md">Me llamo YARA, te invito a crear tu usuario.</p>
+                           <Button onClick={() => setStep(1)} className="mt-4" size="lg">Crear Usuario</Button>
+                        </motion.div>
+                    </motion.div>
+                );
+            case 1: // Sign Up Form
+                return (
+                    <motion.div key="step1" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} className="w-full max-w-lg">
+                        <SignUpForm onSubmit={handleSignUpSubmit} onSwitchToLogin={() => { /* Not implemented for this flow */ }} />
+                    </motion.div>
+                );
+            case 2: // Avatar Selection
+                 return (
+                    <motion.div key="step2" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center w-full max-w-2xl">
+                        <h2 className="text-3xl font-bold font-headline text-primary mb-6">Escoge tu Avatar</h2>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                            {avatars.map(avatar => (
+                                <Card key={avatar.id} onClick={() => handleAvatarSelect(avatar.imageUrl)} className="p-2 cursor-pointer hover:border-primary hover:scale-105 transition-transform duration-300">
+                                    <Image src={avatar.imageUrl} alt={avatar.description} width={200} height={200} className="rounded-md" />
+                                </Card>
+                            ))}
+                        </div>
+                    </motion.div>
+                 );
+            case 3: // Yara's Welcome
+                return (
+                     <motion.div key="step3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center max-w-2xl">
+                        {yaraCharImage && <Image src={yaraCharImage.imageUrl} alt="Yara" width={150} height={150} className="mx-auto mb-4" />}
+                        <Card className="p-6 shadow-xl">
+                            <h2 className="text-2xl font-bold font-headline text-primary">¡Hola, {userData?.nombre}!</h2>
+                            <p className="mt-4 text-muted-foreground">Soy Yara, una rana muy curiosa y estaré contigo en este emocionante recorrido por Kairu.</p>
+                            <p className="mt-2 text-muted-foreground">A lo largo del camino conocerás 8 estaciones sorprendentes donde cada desafío superado abrirá nuevas etapas llenas de descubrimientos, aprendizajes y diversión. En el siguiente paso tendrás la oportunidad de escoger el lienzo que te permitirá crear tu propia estación.</p>
+                            <p className="mt-2 text-muted-foreground">En cada avance ganarás recompensas especiales que tú mismo elegirás para completar la estación ideal que elijas.</p>
+                            <p className="mt-2 text-muted-foreground">Cada paso te conectará más a la naturaleza y te mostrará cómo tus acciones pueden transformar el mundo que te rodea.</p>
+                             <p className="mt-4 font-bold text-lg text-primary">¿Listo para comenzar este viaje conmigo?</p>
+                            <Button onClick={() => setStep(4)} className="mt-6" size="lg">¡Sí!</Button>
+                        </Card>
+                     </motion.div>
+                );
+            case 4: // Scenario Selection
+                return (
+                    <motion.div key="step4" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center w-full max-w-3xl">
+                        <h2 className="text-3xl font-bold font-headline text-primary mb-2">Elige tu Lienzo</h2>
+                        <p className="text-muted-foreground mb-6">Selecciona el escenario para tu estación personalizada.</p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                            {scenarios.map((scenario, index) => (
+                                <Card 
+                                    key={scenario.id} 
+                                    onClick={() => handleScenarioSelect(scenario.imageUrl)} 
+                                    className={cn(
+                                        "p-2 cursor-pointer hover:border-primary hover:scale-105 transition-transform duration-300",
+                                        selectedScenario === scenario.imageUrl && "border-primary border-4"
+                                    )}
+                                >
+                                    <Image src={scenario.imageUrl} alt={scenario.description} width={200} height={200} className="rounded-md aspect-square object-cover" />
+                                     <p className="font-bold mt-2 text-sm">Escenario {index + 1}</p>
+                                </Card>
+                            ))}
+                        </div>
+                    </motion.div>
+                );
+            default:
+                return null;
+        }
+    };
+
+    return (
+        <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background relative overflow-hidden">
+             <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{backgroundImage: `url(${PlaceHolderImages.find(p => p.id === 'forest-background')?.imageUrl})`}}></div>
+            <div className="relative z-10 w-full flex items-center justify-center">
+                 <AnimatePresence mode="wait">
+                    {renderStep()}
+                </AnimatePresence>
+            </div>
+        </main>
+    );
+}
