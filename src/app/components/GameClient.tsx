@@ -15,62 +15,59 @@ import { AnimatePresence } from 'framer-motion';
 import { useUser, useFirestore } from '@/firebase/hooks';
 
 interface PlayerState {
+  id: string;
   name: string;
   avatar: string;
   unlockedStations: number[];
   chosenScenario: string | null;
 }
 
-const initialPlayerState: Omit<PlayerState, 'name' | 'avatar' | 'chosenScenario'> = {
+const initialPlayerState: Omit<PlayerState, 'id' | 'name' | 'avatar' | 'chosenScenario'> = {
   unlockedStations: [1],
 };
 
 export default function GameClient() {
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
   const db = useFirestore();
 
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
-  const [isPlayerStateLoading, setIsPlayerStateLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [isNewUser, setIsNewUser] = useState(false);
 
   useEffect(() => {
-    if (!db || !user) {
+    if (userLoading || !db) return;
+
+    if (!user) {
+      setIsLoading(false);
       return;
     }
 
-    const fetchPlayerState = async () => {
-      setIsPlayerStateLoading(true);
-      const playerDocRef = doc(db, 'players', user.uid);
+    const playerDocRef = doc(db, 'users', user.uid);
 
-      try {
-        const docSnap = await getDoc(playerDocRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data() as PlayerState;
-          setPlayerState(data);
-          setIsNewUser(false);
-        } else {
-          setIsNewUser(true);
-          setPlayerState(null);
-        }
-      } catch (error) {
-        console.error("Error fetching player state:", error);
-        setPlayerState(null); 
-      } finally {
-        setIsPlayerStateLoading(false);
+    getDoc(playerDocRef).then(docSnap => {
+      if (docSnap.exists()) {
+        setPlayerState(docSnap.data() as PlayerState);
+        setIsNewUser(false);
+      } else {
+        setIsNewUser(true);
       }
-    };
+      setIsLoading(false);
+    }).catch(error => {
+      console.error("Error fetching player state:", error);
+      setIsLoading(false);
+    });
 
-    fetchPlayerState();
-  }, [user, db]);
+  }, [user, db, userLoading]);
 
-  const handleOnboardingComplete = async (data: Omit<PlayerState, 'unlockedStations'>) => {
+  const handleOnboardingComplete = async (data: Omit<PlayerState, 'unlockedStations' | 'id'>) => {
     if (!user || !db) return;
     const newState: PlayerState = {
+      id: user.uid,
       ...initialPlayerState,
       ...data,
     };
     try {
-      await setDoc(doc(db, 'players', user.uid), newState);
+      await setDoc(doc(db, 'users', user.uid), newState);
       setPlayerState(newState);
       setIsNewUser(false);
     } catch (error) {
@@ -81,20 +78,21 @@ export default function GameClient() {
   const handleReset = async () => {
     if (!user || !db || !playerState) return;
     const initialData: PlayerState = {
+      id: user.uid,
       unlockedStations: [1],
       name: playerState.name,
       avatar: playerState.avatar,
       chosenScenario: playerState.chosenScenario,
     };
     try {
-       await setDoc(doc(db, 'players', user.uid), initialData);
-       setPlayerState(initialData); // Update local state immediately
+       await setDoc(doc(db, 'users', user.uid), initialData);
+       setPlayerState(initialData);
     } catch (error) {
       console.error("Failed to reset player state:", error);
     }
   };
 
-  if (isPlayerStateLoading) {
+  if (isLoading || userLoading) {
     return (
       <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background">
         <Logo className="h-24 w-24 animate-pulse text-primary" />
