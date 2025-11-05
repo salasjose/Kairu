@@ -18,7 +18,6 @@ import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { signUp, login } from '@/firebase/auth';
 import { useAuth } from '@/firebase/hooks';
-import { signInAnonymously } from 'firebase/auth';
 
 const signUpSchema = z.object({
   nombre: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres." }),
@@ -60,29 +59,6 @@ export default function OnboardingFlow({ onComplete, onLogin }: OnboardingFlowPr
     const yaraCharImage = useMemo(() => PlaceHolderImages.find((p) => p.id === 'char-yara'), []);
     const avatars = useMemo(() => PlaceHolderImages.filter(p => p.id.startsWith('avatar-')), []);
     const scenarios = useMemo(() => PlaceHolderImages.slice(0, 4), []);
-
-    useEffect(() => {
-        const checkUser = async () => {
-            if (!auth) return;
-            if (!auth.currentUser) {
-                setIsLoading(true);
-                try {
-                    await signInAnonymously(auth);
-                } catch (error) {
-                    console.error("Anonymous sign in failed:", error);
-                     toast({
-                        title: "Error de Conexión",
-                        description: "No se pudo conectar al servicio. Por favor, intenta de nuevo más tarde.",
-                        variant: "destructive"
-                    });
-                } finally {
-                    setIsLoading(false);
-                }
-            }
-        };
-        checkUser();
-    }, [auth]);
-
 
     const handleSignUpSubmit = async (data: SignUpData) => {
         if (!auth) return;

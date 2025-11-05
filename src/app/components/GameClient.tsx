@@ -33,13 +33,11 @@ export default function GameClient() {
   const auth = useAuth();
 
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isNewUser, setIsNewUser] = useState(false);
   
   const fetchPlayerState = useCallback(async () => {
     if (!user || !db) return;
 
-    setIsLoading(true);
     const playerDocRef = doc(db, 'users', user.uid);
     
     try {
@@ -53,20 +51,19 @@ export default function GameClient() {
       }
     } catch (error) {
       console.error("Error fetching player state:", error);
-    } finally {
-      setIsLoading(false);
+      setPlayerState(null); // Set to null on error
     }
   }, [user, db]);
 
   useEffect(() => {
     if (userLoading) return;
-    if (!user) {
-      // If there's no user at all after loading, start onboarding.
+    
+    if (user) {
+      fetchPlayerState();
+    } else {
+      // No user is logged in, show the onboarding flow
       setIsNewUser(true);
-      setIsLoading(false);
-      return;
     }
-    fetchPlayerState();
   }, [user, userLoading, fetchPlayerState]);
 
   const handleOnboardingComplete = async (data: Omit<PlayerState, 'unlockedStations' | 'id'>) => {
@@ -109,7 +106,8 @@ export default function GameClient() {
     setIsNewUser(true);
   }
 
-  if (isLoading || userLoading) {
+  // userLoading comes from the provider and tells us if Firebase Auth is ready
+  if (userLoading) {
     return (
       <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background">
         <Logo className="h-24 w-24 animate-pulse text-primary" />
@@ -118,18 +116,17 @@ export default function GameClient() {
     );
   }
   
-  // A user exists but needs to go through onboarding (either new signup or existing user with no profile)
+  // If not loading and there's no user OR we've determined it's a new user who needs onboarding
   if (isNewUser) {
     return <OnboardingFlow onComplete={handleOnboardingComplete} onLogin={fetchPlayerState} />;
   }
   
-  // A user is logged in, but we failed to fetch their data for some reason.
+  // If we have a user but their state hasn't loaded yet.
   if (!playerState) {
        return (
          <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background">
-           <Logo className="h-24 w-24 text-destructive" />
-           <p className="text-destructive/70 mt-4">Error al cargar los datos del jugador.</p>
-           <Button onClick={() => window.location.reload()} className="mt-4">Reintentar</Button>
+           <Logo className="h-24 w-24 animate-pulse text-primary" />
+           <p className="text-primary/70 mt-4">Cargando mapa...</p>
          </main>
        );
   }
