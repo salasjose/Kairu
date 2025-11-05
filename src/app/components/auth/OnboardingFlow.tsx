@@ -51,7 +51,7 @@ type Step = 'welcome' | 'signup' | 'login' | 'avatar' | 'yara' | 'scenario';
 export default function OnboardingFlow({ onComplete, onLogin }: OnboardingFlowProps) {
     const auth = useAuth();
     const [step, setStep] = useState<Step>('welcome');
-    const [userData, setUserData] = useState<SignUpData | null>(null);
+    const [formName, setFormName] = useState<string>(''); // To pass the name to the next step
     const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
     const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -65,7 +65,7 @@ export default function OnboardingFlow({ onComplete, onLogin }: OnboardingFlowPr
         setIsLoading(true);
         try {
             await signUp(auth, data.email, data.clave);
-            setUserData(data);
+            setFormName(data.nombre);
             setStep('avatar');
         } catch (error: any) {
             console.error("Sign up failed:", error);
@@ -113,9 +113,9 @@ export default function OnboardingFlow({ onComplete, onLogin }: OnboardingFlowPr
     };
 
     const handleScenarioConfirm = () => {
-        if (userData && selectedAvatar && selectedScenario) {
+        if (formName && selectedAvatar && selectedScenario) {
             onComplete({
-                name: userData.nombre,
+                name: formName,
                 avatar: selectedAvatar,
                 chosenScenario: selectedScenario,
             });
@@ -169,7 +169,7 @@ export default function OnboardingFlow({ onComplete, onLogin }: OnboardingFlowPr
                      <motion.div key="yara" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center max-w-2xl">
                         {yaraCharImage && <Image src={yaraCharImage.imageUrl} alt="Yara" width={150} height={150} className="mx-auto mb-4" />}
                         <Card className="p-6 shadow-xl">
-                            <h2 className="text-2xl font-bold font-headline text-primary">¡Hola, {userData?.nombre}!</h2>
+                            <h2 className="text-2xl font-bold font-headline text-primary">¡Hola, {formName}!</h2>
                             <p className="mt-4 text-muted-foreground">Soy Yara, una rana muy curiosa y estaré contigo en este emocionante recorrido por Kairu.</p>
                             <p className="mt-2 text-muted-foreground">A lo largo del camino conocerás 8 estaciones sorprendentes donde cada desafío superado abrirá nuevas etapas llenas de descubrimientos, aprendizajes y diversión. En el siguiente paso tendrás la oportunidad de escoger el lienzo que te permitirá crear tu propia estación.</p>
                             <p className="mt-2 text-muted-foreground">En cada avance ganarás recompensas especiales que tú mismo elegirás para completar la estación ideal que elijas.</p>
