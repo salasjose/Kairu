@@ -1,37 +1,5 @@
 {
   "entities": {
-    "User": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "User",
-      "type": "object",
-      "description": "Represents a user within the EcoQuest Explorers application.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the User entity."
-        },
-        "username": {
-          "type": "string",
-          "description": "The user's chosen username."
-        },
-        "email": {
-          "type": "string",
-          "description": "The user's email address.",
-          "format": "email"
-        },
-        "registrationDate": {
-          "type": "string",
-          "description": "Date and time the user registered.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "username",
-        "email",
-        "registrationDate"
-      ]
-    },
     "StationProgress": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "StationProgress",
