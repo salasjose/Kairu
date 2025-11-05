@@ -43,7 +43,7 @@ export default function SignUpForm({ onSubmit, onSwitchToLogin, isLoading }: Sig
       email: "",
       clave: "",
       telefono: "",
-      edad: '' as unknown as number, // Initialize with empty string to make it controlled
+      edad: '' as any,
     },
   });
 
