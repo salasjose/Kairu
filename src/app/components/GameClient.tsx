@@ -152,7 +152,7 @@ export default function GameClient() {
   };
   const pathD = generatePath(stations.map(s => stationPositions[s.id - 1]));
 
-  const allStationsCompleted = playerState.unlockedStations.length >= stations.length;
+  const allStationsCompleted = playerState?.unlockedStations?.length >= stations.length;
 
   return (
     <main className="relative w-full min-h-screen flex flex-col overflow-hidden">
