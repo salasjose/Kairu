@@ -213,7 +213,7 @@ export default function GameClient() {
                 />
             </svg>
             {stations.map((station) => {
-                const isUnlocked = playerState.unlockedStations.includes(station.id);
+                const isUnlocked = playerState?.unlockedStations?.includes(station.id);
                 const pos = stationPositions[station.id - 1];
                 return (
                 <div 
