@@ -2,129 +2,241 @@
  * @fileoverview Firestore Security Rules for EcoQuest Explorers.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for user profiles, station progress, and content submissions.
- * Each user can only create, read, update, and delete their own data.
- * Stations data are public read-only.
+ * This ruleset enforces a strict user-ownership model. Each user has full control over their own data tree,
+ * and no user can access another user's data.
  *
  * Data Structure:
- * - /users/{userId}: Stores user profile information.
- * - /stations/{stationId}: Stores information about game stations (publicly readable).
- * - /users/{userId}/stationProgress/{stationProgressId}: Stores user's progress for each station.
- * - /users/{userId}/stationProgress/{stationProgressId}/contentSubmissions/{contentSubmissionId}: Stores user's content submissions for each station.
+ * All data is nested under /users/{userId}, ensuring clear ownership.  Subcollections track user progress and
+ * submissions. The data model is designed for authorization independence; all subcollections include the userId.
  *
  * Key Security Decisions:
- * - Users can only manage their own profile and associated data.
- * - Stations are publicly readable but not writable through the client.
- * - Listing of users is not permitted.
- *
- * Denormalization for Authorization:
- * - The `userId` is present in both the path and the `StationProgress` and `ContentSubmission` documents, enabling efficient ownership checks without extra reads.
- *
- * Structural Segregation:
- * - Private user data is stored under the `/users/{userId}` path, ensuring only the owning user can access it. Public station data is stored in the top-level `/stations/{stationId}` collection.
+ * - User listing is disallowed to protect user privacy.
+ * - Anonymous authentication is supported.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user profile information. Only the user can read, update, or delete their own profile.
-     * @path /databases/{database}/documents/users/{userId}
-     * @allow (create) User 'user_abc' can create their profile if request.auth.uid == userId.
-     * @allow (get) User 'user_abc' can read their profile.
-     * @allow (update) User 'user_abc' can update their profile.
-     * @allow (delete) User 'user_abc' can delete their profile.
-     * @deny (create) User 'user_xyz' cannot create a profile with userId 'user_abc'.
-     * @deny (get) User 'user_xyz' cannot read user 'user_abc' profile.
-     * @deny (update) User 'user_xyz' cannot update user 'user_abc' profile.
-     * @deny (delete) User 'user_xyz' cannot delete user 'user_abc' profile.
-     * @principle Enforces document ownership for writes.  Validates the 'id' field on create and enforces immutability on update to prevent unauthorized changes.
+     * @description Enforces access control for user profiles.
+     * @path /users/{userId}
+     * @allow (create) User with matching ID can create their profile.
+     * @allow (get, update, delete) User with matching ID can read, update, and delete their profile.
+     * @deny (create, get, update, delete) Any other user cannot access this profile.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
+      function isSignedIn() {
+        return request.auth != null;
       }
+
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
-
-      allow get: if isOwner(userId);
-      allow list: if false;
-
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Controls access to station information. Stations are publicly readable, but only server can create, update, or delete them.
-     * @path /databases/{database}/documents/stations/{stationId}
-     * @allow (get) Any user can read station information.
-     * @allow (list) Any user can list stations.
-     * @deny (create) No client can create station documents.
-     * @deny (update) No client can update station documents.
-     * @deny (delete) No client can delete station documents.
-     * @principle Stations are read-only for users, with server-side management.
-     */
-    match /stations/{stationId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Controls access to user's station progress. Only the user can create, read, update, or delete their own progress.
-     * @path /databases/{database}/documents/users/{userId}/stationProgress/{stationProgressId}
-     * @allow (create) User 'user_abc' can create station progress if request.auth.uid == userId.
-     * @allow (get) User 'user_abc' can read their station progress.
-     * @allow (update) User 'user_abc' can update their station progress.
-     * @allow (delete) User 'user_abc' can delete their station progress.
-     * @deny (create) User 'user_xyz' cannot create station progress for user 'user_abc'.
-     * @deny (get) User 'user_xyz' cannot read user 'user_abc' station progress.
-     * @deny (update) User 'user_xyz' cannot update user 'user_abc' station progress.
-     * @deny (delete) User 'user_xyz' cannot delete user 'user_abc' station progress.
-     * @principle Enforces document ownership for writes. Validates the 'userId' field on create and enforces immutability on update to prevent unauthorized changes.
-     */
-    match /users/{userId}/stationProgress/{stationProgressId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Controls access to user's content submissions for a station. Only the user can create, read, update, or delete their own submissions.
-     * @path /databases/{database}/documents/users/{userId}/stationProgress/{stationProgressId}/contentSubmissions/{contentSubmissionId}
-     * @allow (create) User 'user_abc' can create content submission if request.auth.uid == userId.
-     * @allow (get) User 'user_abc' can read their content submission.
-     * @allow (update) User 'user_abc' can update their content submission.
-     * @allow (delete) User 'user_abc' can delete their content submission.
-     * @deny (create) User 'user_xyz' cannot create content submission for user 'user_abc'.
-     * @deny (get) User 'user_xyz' cannot read user 'user_abc' content submission.
-     * @deny (update) User 'user_xyz' cannot update user 'user_abc' content submission.
-     * @deny (delete) User 'user_xyz' cannot delete user 'user_abc' content submission.
-     * @principle Enforces document ownership for writes. Validates the 'userId' field on create and enforces immutability on update to prevent unauthorized changes.
-     */
-    match /users/{userId}/stationProgress/{stationProgressId}/contentSubmissions/{contentSubmissionId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
 
       allow create: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Enforces access control for station progress.
+     * @path /users/{userId}/stationProgress/{stationProgressId}
+     * @allow (create) User with matching ID can create station progress.
+     * @allow (get, list, update, delete) User with matching ID can read, update, and delete their station progress.
+     * @deny (create, get, list, update, delete) Any other user cannot access this station progress.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/stationProgress/{stationProgressId} {
+       function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow create: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+     /**
+      * @description Enforces access control for biodiversity challenge submissions.
+      * @path /users/{userId}/stationProgress/{stationProgressId}/biodiversityChallengeSubmissions/{biodiversityChallengeSubmissionId}
+      * @allow (create) User with matching ID can create a biodiversity challenge submission.
+      * @allow (get, list, update, delete) User with matching ID can read, update, and delete their biodiversity challenge submission.
+      * @deny (create, get, list, update, delete) Any other user cannot access this biodiversity challenge submission.
+      * @principle Enforces document ownership for all operations.
+      */
+    match /users/{userId}/stationProgress/{stationProgressId}/biodiversityChallengeSubmissions/{biodiversityChallengeSubmissionId} {
+       function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow create: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Enforces access control for habitat creation submissions.
+     * @path /users/{userId}/stationProgress/{stationProgressId}/habitatCreationSubmissions/{habitatCreationSubmissionId}
+     * @allow (create) User with matching ID can create a habitat creation submission.
+     * @allow (get, list, update, delete) User with matching ID can read, update, and delete their habitat creation submission.
+     * @deny (create, get, list, update, delete) Any other user cannot access this habitat creation submission.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/stationProgress/{stationProgressId}/habitatCreationSubmissions/{habitatCreationSubmissionId} {
+       function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow create: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Enforces access control for sustainability practices.
+     * @path /users/{userId}/stationProgress/{stationProgressId}/sustainabilityPractices/{sustainabilityPracticeId}
+     * @allow (create) User with matching ID can create a sustainability practice.
+     * @allow (get, list, update, delete) User with matching ID can read, update, and delete their sustainability practice.
+     * @deny (create, get, list, update, delete) Any other user cannot access this sustainability practice.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/stationProgress/{stationProgressId}/sustainabilityPractices/{sustainabilityPracticeId} {
+       function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow create: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Enforces access control for content submissions.
+     * @path /users/{userId}/stationProgress/{stationProgressId}/contentSubmissions/{contentSubmissionId}
+     * @allow (create) User with matching ID can create a content submission.
+     * @allow (get, list, update, delete) User with matching ID can read, update, and delete their content submission.
+     * @deny (create, get, list, update, delete) Any other user cannot access this content submission.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/stationProgress/{stationProgressId}/contentSubmissions/{contentSubmissionId} {
+       function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow create: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Enforces access control for quiz results.
+     * @path /users/{userId}/stationProgress/{stationProgressId}/quizResults/{quizResultId}
+     * @allow (create) User with matching ID can create a quiz result.
+     * @allow (get, list, update, delete) User with matching ID can read, update, and delete their quiz result.
+     * @deny (create, get, list, update, delete) Any other user cannot access this quiz result.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/stationProgress/{stationProgressId}/quizResults/{quizResultId} {
+       function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow create: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Enforces access control for crossword puzzles.
+     * @path /users/{userId}/stationProgress/{stationProgressId}/crosswordPuzzles/{crosswordPuzzleId}
+     * @allow (create) User with matching ID can create a crossword puzzle.
+     * @allow (get, list, update, delete) User with matching ID can read, update, and delete their crossword puzzle.
+     * @deny (create, get, list, update, delete) Any other user cannot access this crossword puzzle.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/stationProgress/{stationProgressId}/crosswordPuzzles/{crosswordPuzzleId} {
+       function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow create: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }

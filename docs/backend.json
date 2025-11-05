@@ -1,15 +1,523 @@
 {
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user within the EcoQuest Explorers application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "username": {
+          "type": "string",
+          "description": "The user's chosen username."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "registrationDate": {
+          "type": "string",
+          "description": "Date and time the user registered.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "email",
+        "registrationDate"
+      ]
+    },
+    "StationProgress": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StationProgress",
+      "type": "object",
+      "description": "Represents a user's progress within a specific station.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the StationProgress entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N StationProgress)"
+        },
+        "stationNumber": {
+          "type": "number",
+          "description": "The number of the station (1-9)."
+        },
+        "isCompleted": {
+          "type": "boolean",
+          "description": "Indicates whether the station is completed or not."
+        },
+        "completionDate": {
+          "type": "string",
+          "description": "The date that this station was completed",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "stationNumber",
+        "isCompleted"
+      ]
+    },
+    "BiodiversityChallengeSubmission": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "BiodiversityChallengeSubmission",
+      "type": "object",
+      "description": "Represents a user's submission for the Biodiversity Challenge (identifying flora/fauna).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the BiodiversityChallengeSubmission entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N BiodiversityChallengeSubmission)"
+        },
+        "submissionDate": {
+          "type": "string",
+          "description": "Date and time of the submission.",
+          "format": "date-time"
+        },
+        "isSuccessful": {
+          "type": "boolean",
+          "description": "Indicates whether the submission was successful (all species identified correctly)."
+        },
+        "stationProgressId": {
+          "type": "string",
+          "description": "Reference to StationProgress. (Relationship: StationProgress 1:1 BiodiversityChallengeSubmission)"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "submissionDate",
+        "isSuccessful",
+        "stationProgressId"
+      ]
+    },
+    "HabitatCreationSubmission": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "HabitatCreationSubmission",
+      "type": "object",
+      "description": "Represents a user's submission for the Habitat Creation challenge (uploading feeder/watering station photos).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the HabitatCreationSubmission entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N HabitatCreationSubmission)"
+        },
+        "photo1Url": {
+          "type": "string",
+          "description": "URL of the first photo (construction phase).",
+          "format": "uri"
+        },
+        "photo2Url": {
+          "type": "string",
+          "description": "URL of the second photo (construction phase).",
+          "format": "uri"
+        },
+        "photo3Url": {
+          "type": "string",
+          "description": "URL of the third photo (installation phase).",
+          "format": "uri"
+        },
+        "photo4Url": {
+          "type": "string",
+          "description": "URL of the fourth photo (installation phase).",
+          "format": "uri"
+        },
+        "submissionDate": {
+          "type": "string",
+          "description": "Date and time of the submission.",
+          "format": "date-time"
+        },
+        "stationProgressId": {
+          "type": "string",
+          "description": "Reference to StationProgress. (Relationship: StationProgress 1:1 HabitatCreationSubmission)"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "photo1Url",
+        "photo2Url",
+        "photo3Url",
+        "photo4Url",
+        "submissionDate",
+        "stationProgressId"
+      ]
+    },
+    "SustainabilityPractice": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SustainabilityPractice",
+      "type": "object",
+      "description": "Represents a daily sustainable practice documented by the user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SustainabilityPractice entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N SustainabilityPractice)"
+        },
+        "dayNumber": {
+          "type": "number",
+          "description": "The day number of the sustainability practice (1-7)."
+        },
+        "photoUrl": {
+          "type": "string",
+          "description": "URL of the photo documenting the sustainable practice.",
+          "format": "uri"
+        },
+        "practiceDescription": {
+          "type": "string",
+          "description": "A description of the sustainable practice."
+        },
+        "dateRecorded": {
+          "type": "string",
+          "description": "Date when the practice was recorded.",
+          "format": "date-time"
+        },
+        "stationProgressId": {
+          "type": "string",
+          "description": "Reference to StationProgress. (Relationship: StationProgress 1:N SustainabilityPractice)"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "dayNumber",
+        "photoUrl",
+        "practiceDescription",
+        "dateRecorded",
+        "stationProgressId"
+      ]
+    },
+    "ContentSubmission": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ContentSubmission",
+      "type": "object",
+      "description": "Represents user-generated content submissions (videos, photos) for various challenges.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ContentSubmission entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N ContentSubmission)"
+        },
+        "contentType": {
+          "type": "string",
+          "description": "Type of content (e.g., 'video', 'photo')."
+        },
+        "contentUrl": {
+          "type": "string",
+          "description": "URL of the submitted content (video link, photo URL).",
+          "format": "uri"
+        },
+        "submissionDate": {
+          "type": "string",
+          "description": "Date and time of the submission.",
+          "format": "date-time"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional description of the content."
+        },
+        "stationProgressId": {
+          "type": "string",
+          "description": "Reference to StationProgress. (Relationship: StationProgress 1:1 ContentSubmission)"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "contentType",
+        "contentUrl",
+        "submissionDate",
+        "stationProgressId"
+      ]
+    },
+    "QuizResult": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "QuizResult",
+      "type": "object",
+      "description": "Represents the result of a quiz taken by the user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the QuizResult entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N QuizResult)"
+        },
+        "quizType": {
+          "type": "string",
+          "description": "Type of quiz taken (e.g., 'water conservation')."
+        },
+        "score": {
+          "type": "number",
+          "description": "The user's score on the quiz."
+        },
+        "completionDate": {
+          "type": "string",
+          "description": "Date and time the quiz was completed.",
+          "format": "date-time"
+        },
+        "stationProgressId": {
+          "type": "string",
+          "description": "Reference to StationProgress. (Relationship: StationProgress 1:1 QuizResult)"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "quizType",
+        "score",
+        "completionDate",
+        "stationProgressId"
+      ]
+    },
+    "CrosswordPuzzle": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CrosswordPuzzle",
+      "type": "object",
+      "description": "Represents the generated crossword puzzle.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the CrosswordPuzzle entity."
+        },
+        "gridData": {
+          "type": "string",
+          "description": "Stringified representation of the generated crossword puzzle grid."
+        },
+        "clues": {
+          "type": "string",
+          "description": "Stringified JSON array of the crossword puzzle clues."
+        },
+        "generationDate": {
+          "type": "string",
+          "description": "Date when the crossword was generated.",
+          "format": "date-time"
+        },
+        "stationProgressId": {
+          "type": "string",
+          "description": "Reference to StationProgress. (Relationship: StationProgress 1:1 CrosswordPuzzle)"
+        }
+      },
+      "required": [
+        "id",
+        "gridData",
+        "clues",
+        "generationDate",
+        "stationProgressId"
+      ]
+    }
+  },
   "auth": {
     "providers": [
+      "password",
       "anonymous"
     ]
   },
   "firestore": {
-    "/users/{userId}": {
-      "schema": {
-        "$ref": "#/backend/entities/UserProfile"
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information. Includes the 'userId' parameter for path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
       },
-      "description": "Stores individual user profiles and their game progress."
-    }
+      {
+        "path": "/users/{userId}/stationProgress/{stationProgressId}",
+        "definition": {
+          "entityName": "StationProgress",
+          "schema": {
+            "$ref": "#/backend/entities/StationProgress"
+          },
+          "description": "Stores user's progress for each station. Includes the 'userId' parameter for path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "stationProgressId",
+              "description": "The unique identifier for the station progress."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/stationProgress/{stationProgressId}/biodiversityChallengeSubmissions/{biodiversityChallengeSubmissionId}",
+        "definition": {
+          "entityName": "BiodiversityChallengeSubmission",
+          "schema": {
+            "$ref": "#/backend/entities/BiodiversityChallengeSubmission"
+          },
+          "description": "Stores user's submissions for the biodiversity challenge. Includes the 'userId' parameter for path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "stationProgressId",
+              "description": "The unique identifier for the station progress."
+            },
+            {
+              "name": "biodiversityChallengeSubmissionId",
+              "description": "The unique identifier for the biodiversity challenge submission."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/stationProgress/{stationProgressId}/habitatCreationSubmissions/{habitatCreationSubmissionId}",
+        "definition": {
+          "entityName": "HabitatCreationSubmission",
+          "schema": {
+            "$ref": "#/backend/entities/HabitatCreationSubmission"
+          },
+          "description": "Stores user's submissions for the habitat creation challenge. Includes the 'userId' parameter for path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "stationProgressId",
+              "description": "The unique identifier for the station progress."
+            },
+            {
+              "name": "habitatCreationSubmissionId",
+              "description": "The unique identifier for the habitat creation submission."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/stationProgress/{stationProgressId}/sustainabilityPractices/{sustainabilityPracticeId}",
+        "definition": {
+          "entityName": "SustainabilityPractice",
+          "schema": {
+            "$ref": "#/backend/entities/SustainabilityPractice"
+          },
+          "description": "Stores user's documented sustainability practices. Includes the 'userId' parameter for path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "stationProgressId",
+              "description": "The unique identifier for the station progress."
+            },
+            {
+              "name": "sustainabilityPracticeId",
+              "description": "The unique identifier for the sustainability practice."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/stationProgress/{stationProgressId}/contentSubmissions/{contentSubmissionId}",
+        "definition": {
+          "entityName": "ContentSubmission",
+          "schema": {
+            "$ref": "#/backend/entities/ContentSubmission"
+          },
+          "description": "Stores user's content submissions (videos, photos). Includes the 'userId' parameter for path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "stationProgressId",
+              "description": "The unique identifier for the station progress."
+            },
+            {
+              "name": "contentSubmissionId",
+              "description": "The unique identifier for the content submission."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/stationProgress/{stationProgressId}/quizResults/{quizResultId}",
+        "definition": {
+          "entityName": "QuizResult",
+          "schema": {
+            "$ref": "#/backend/entities/QuizResult"
+          },
+          "description": "Stores quiz results for each user. Includes the 'userId' parameter for path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "stationProgressId",
+              "description": "The unique identifier for the station progress."
+            },
+            {
+              "name": "quizResultId",
+              "description": "The unique identifier for the quiz result."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/stationProgress/{stationProgressId}/crosswordPuzzles/{crosswordPuzzleId}",
+        "definition": {
+          "entityName": "CrosswordPuzzle",
+          "schema": {
+            "$ref": "#/backend/entities/CrosswordPuzzle"
+          },
+          "description": "Stores crossword puzzle. Includes the 'userId' parameter for path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "stationProgressId",
+              "description": "The unique identifier for the station progress."
+            },
+            {
+              "name": "crosswordPuzzleId",
+              "description": "The unique identifier for the crossword puzzle."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the EcoQuest Explorers application, focusing on scalability, security, and ease of querying. The structure prioritizes authorization independence by denormalizing the `userId` into all subcollections, eliminating the need for `get()` calls in security rules. Path-based ownership (`/users/{userId}/...`) is used for most data to ensure clear ownership and simplified security rules. \n\nThe `users/{userId}` collection stores core user information. Subcollections under each user (e.g., `stationProgress`, `biodiversityChallengeSubmissions`, etc.) track their progress and submissions related to the game. This hierarchical structure enables easy querying of user-specific data.\n\nThis structure directly supports the QAPs (Rules are not Filters) principle. Since data is segregated by user ID, list operations can be performed securely without needing to filter based on user identity within the rules themselves. Each subcollection is designed to hold data with a homogeneous security posture, further simplifying security rules.\n\nThe design enforces invariants by using explicit state modeling (`isCompleted` in `StationProgress`). Timestamp fields (`registrationDate`, `submissionDate`, `completionDate`, etc.) are included for auditing and chronological ordering. Standardized naming conventions (e.g., `userId` for user references) are used throughout the structure for consistency and readability."
   }
 }
