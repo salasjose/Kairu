@@ -157,7 +157,7 @@ const PhotoSlot = ({
 };
 
 
-const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: (imageUrl: string | null) => void }) => {
+const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: () => void }) => {
   const STORAGE_KEY_FLORA = "kairu-station1-flora";
   const STORAGE_KEY_FAUNA = "kairu-station1-fauna";
 
@@ -230,12 +230,13 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
   };
 
 
-  const checkCompletion = () => {
+  const onChallengeComplete = () => {
     const hasFlora = floraPhotos.some(p => p !== null);
     const hasFauna = faunaPhotos.some(p => p !== null);
     if(hasFlora && hasFauna) {
       const firstFlora = floraPhotos.find(p => p !== null);
-      onStationComplete(firstFlora ?? null);
+      // Pass a representative image URL to the station completion logic
+      onStationComplete();
       return true;
     }
     toast({
@@ -271,8 +272,6 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
       stationId={1}
       title="Estación Bionexus"
       description={challenges["Fauna y Flora"].description}
-      onChallengeComplete={checkCompletion}
-      onStationComplete={() => {}}
     >
         <div className="w-full max-w-4xl mx-auto">
             <Button variant="ghost" onClick={onBack} className="mb-4">
@@ -299,13 +298,18 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
                     </div>
                 </section>
             </div>
+             <div className="mt-8 text-center">
+                <Button size="lg" onClick={onChallengeComplete}>
+                    Completar Reto
+                </Button>
+            </div>
         </div>
     </ChallengeContainer>
    </>
   );
 };
 
-const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: (imageUrl: string | null) => void }) => {
+const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: () => void }) => {
   const STORAGE_KEY_HABITAT = "kairu-station1-habitat";
   
   const [habitatPhotos, setHabitatPhotos] = useState<(string | null)[]>([]);
@@ -366,10 +370,10 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
     setIsCameraOpen(true);
   };
 
-  const checkCompletion = () => {
+  const onChallengeComplete = () => {
     const firstPhoto = habitatPhotos.find(p => p !== null);
     if (firstPhoto) {
-      onStationComplete(firstPhoto);
+      onStationComplete();
       return true;
     }
     toast({
@@ -405,8 +409,6 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
         stationId={1}
         title="Estación Bionexus"
         description={challenges["Cuidado Animal"].description}
-        onChallengeComplete={checkCompletion}
-        onStationComplete={() => {}}
       >
         <div className="w-full max-w-4xl mx-auto">
           <Button variant="ghost" onClick={onBack} className="mb-4">
@@ -422,6 +424,11 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
               ))}
             </div>
           </section>
+        </div>
+         <div className="mt-8 text-center">
+            <Button size="lg" onClick={onChallengeComplete}>
+                Completar Reto
+            </Button>
         </div>
       </ChallengeContainer>
     </>
@@ -443,12 +450,13 @@ export default function Station1() {
     setSelectedChallenge(challenge);
   }
 
-  const handleStationComplete = (challengeName: string, imageUrl: string | null) => {
+  const handleStationComplete = (challengeName: string, imageUrl?: string | null) => {
     completeChallenge(stationId, challengeName, imageUrl);
     setSelectedChallenge(null); // Go back to challenge selection
 
-    const currentCompleted = Object.keys(completedChallenges[stationId] || {});
-    const allChallengesDone = stationChallenges.every(ch => [...currentCompleted, challengeName].includes(ch));
+    // Use a callback with setCompletedChallenges to get the most up-to-date state
+    const currentCompleted = [...Object.keys(completedChallenges[stationId] || {}), challengeName];
+    const allChallengesDone = stationChallenges.every(ch => currentCompleted.includes(ch));
     
     if (allChallengesDone) {
         unlockStation(stationId + 1);
@@ -471,11 +479,11 @@ export default function Station1() {
   };
   
   if (selectedChallenge === "Fauna y Flora") {
-    return <PhotoChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={(imageUrl) => handleStationComplete("Fauna y Flora", imageUrl)} />;
+    return <PhotoChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={() => handleStationComplete("Fauna y Flora")} />;
   }
 
   if (selectedChallenge === "Cuidado Animal") {
-    return <HabitatChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={(imageUrl) => handleStationComplete("Cuidado Animal", imageUrl)} />;
+    return <HabitatChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={() => handleStationComplete("Cuidado Animal")} />;
   }
 
   const stationCompletedChallenges = completedChallenges[stationId] || {};
@@ -568,5 +576,3 @@ export default function Station1() {
     </>
   );
 }
-
-    

@@ -1,15 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { toast } from "@/hooks/use-toast";
-
 interface ChallengeContainerProps {
   stationId: number;
   title: string;
   description: string;
   children: React.ReactNode;
-  onChallengeComplete: () => boolean;
-  onStationComplete: () => void;
 }
 
 export default function ChallengeContainer({
@@ -17,21 +12,7 @@ export default function ChallengeContainer({
   title,
   description,
   children,
-  onChallengeComplete,
-  onStationComplete,
 }: ChallengeContainerProps) {
-  
-  const handleComplete = () => {
-    if (onChallengeComplete()) {
-      onStationComplete();
-    } else {
-        toast({
-            title: "Reto Incompleto",
-            description: "Por favor, completa el reto para poder continuar.",
-            variant: "destructive",
-        });
-    }
-  };
 
   return (
     <>
@@ -45,11 +26,6 @@ export default function ChallengeContainer({
           {children}
         </div>
 
-        <div className="mt-8 text-center">
-          <Button size="lg" onClick={handleComplete}>
-            Completar Reto
-          </Button>
-        </div>
       </div>
     </>
   );
