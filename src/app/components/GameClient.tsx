@@ -179,7 +179,7 @@ export default function GameClient() {
                 </div>
                 <Avatar className="h-12 w-12 border-2 border-white">
                     <AvatarImage src={playerState.avatar} alt="Player Avatar" />
-                    <AvatarFallback>{playerState.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{playerState?.name?.charAt(0)}</AvatarFallback>
                 </Avatar>
             </div>
             <div className="flex items-center gap-2">
