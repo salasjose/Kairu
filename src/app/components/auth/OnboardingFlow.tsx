@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -71,11 +70,14 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
     const handleScenarioSelect = (scenarioUrl: string) => {
         setSelectedScenario(scenarioUrl);
-        if (userData && selectedAvatar) {
+    };
+
+    const handleScenarioConfirm = () => {
+        if (userData && selectedAvatar && selectedScenario) {
             onComplete({
                 name: userData.nombre,
                 avatar: selectedAvatar,
-                chosenScenario: scenarioUrl,
+                chosenScenario: selectedScenario,
             });
         } else {
             toast({
@@ -154,6 +156,13 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                                 </Card>
                             ))}
                         </div>
+                        {selectedScenario && (
+                            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="mt-8">
+                                <Button onClick={handleScenarioConfirm} size="lg">
+                                    Confirmar y Empezar Aventura
+                                </Button>
+                            </motion.div>
+                        )}
                     </motion.div>
                 );
             default:
