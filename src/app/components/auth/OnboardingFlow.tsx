@@ -9,6 +9,8 @@ import Image from 'next/image';
 
 import Logo from '@/app/components/Logo';
 import SignUpForm from './SignUpForm';
+import LoginForm from './LoginForm';
+import WelcomeScreen from './WelcomeScreen';
 import { Button } from '@/components/ui/button';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card } from '@/components/ui/card';
@@ -25,18 +27,26 @@ const signUpSchema = z.object({
   edad: z.coerce.number().int().positive({ message: "La edad debe ser un número positivo." }).min(5, { message: "Debes ser mayor de 5 años."}),
 });
 
+const loginSchema = z.object({
+  usuario: z.string().min(1, { message: "El usuario no puede estar vacío." }),
+  clave: z.string().min(1, { message: "La clave no puede estar vacía." }),
+});
+
 type SignUpData = z.infer<typeof signUpSchema>;
+type LoginData = z.infer<typeof loginSchema>;
 
 interface OnboardingFlowProps {
     onComplete: (data: {
         name: string;
         avatar: string;
-        chosenScenario: string | null;
+        chosenScenario: string;
     }) => void;
 }
 
+type Step = 'welcome' | 'signup' | 'login' | 'avatar' | 'yara' | 'scenario';
+
 export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
-    const [step, setStep] = useState(0);
+    const [step, setStep] = useState<Step>('welcome');
     const [userData, setUserData] = useState<SignUpData | null>(null);
     const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
     const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
@@ -45,27 +55,23 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     const avatars = useMemo(() => PlaceHolderImages.filter(p => p.id.startsWith('avatar-')), []);
     const scenarios = useMemo(() => PlaceHolderImages.slice(0, 4), []);
 
-    const form = useForm<SignUpData>({
-        resolver: zodResolver(signUpSchema),
-        defaultValues: {
-            nombre: "",
-            apellido: "",
-            usuario: "",
-            email: "",
-            clave: "",
-            telefono: "",
-            edad: undefined,
-        },
-    });
-
     const handleSignUpSubmit = (data: SignUpData) => {
         setUserData(data);
-        setStep(2); // Move to avatar selection
+        setStep('avatar');
+    };
+
+    const handleLoginSubmit = (data: LoginData) => {
+        // NOTE: This is a placeholder. Real login logic will be implemented later.
+        console.log("Login data:", data);
+        toast({
+            title: "Función en Desarrollo",
+            description: "El inicio de sesión se implementará pronto.",
+        });
     };
 
     const handleAvatarSelect = (avatarUrl: string) => {
         setSelectedAvatar(avatarUrl);
-        setStep(3); // Move to Yara's welcome message
+        setStep('yara'); 
     };
 
     const handleScenarioSelect = (scenarioUrl: string) => {
@@ -90,27 +96,30 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     
     const renderStep = () => {
         switch (step) {
-            case 0: // Welcome screen
+            case 'welcome':
                 return (
-                    <motion.div key="step0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center">
-                        <Logo className="h-32 w-32 mx-auto text-primary" />
-                        <h1 className="text-6xl font-bold font-headline text-primary mt-4">KAIRU</h1>
-                        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1, transition: { delay: 1 } }} className="mt-8">
-                           {yaraCharImage && <Image src={yaraCharImage.imageUrl} alt="Yara" width={150} height={150} className="mx-auto" />}
-                           <p className="mt-4 text-xl font-bold bg-white/80 p-3 rounded-lg shadow-md">Me llamo YARA, te invito a crear tu usuario.</p>
-                           <Button onClick={() => setStep(1)} className="mt-4" size="lg">Crear Usuario</Button>
-                        </motion.div>
+                     <motion.div key="welcome" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <WelcomeScreen
+                            onLoginClick={() => setStep('login')}
+                            onCreateUserClick={() => setStep('signup')}
+                        />
                     </motion.div>
                 );
-            case 1: // Sign Up Form
+            case 'signup':
                 return (
-                    <motion.div key="step1" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} className="w-full max-w-lg">
-                        <SignUpForm onSubmit={handleSignUpSubmit} onSwitchToLogin={() => { /* Not implemented for this flow */ }} />
+                    <motion.div key="signup" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} className="w-full max-w-lg">
+                        <SignUpForm onSubmit={handleSignUpSubmit} onSwitchToLogin={() => setStep('login')} />
                     </motion.div>
                 );
-            case 2: // Avatar Selection
+            case 'login':
+                return (
+                    <motion.div key="login" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} className="w-full max-w-lg">
+                        <LoginForm onSubmit={handleLoginSubmit} onSwitchToSignUp={() => setStep('signup')} />
+                    </motion.div>
+                );
+            case 'avatar':
                  return (
-                    <motion.div key="step2" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center w-full max-w-2xl">
+                    <motion.div key="avatar" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center w-full max-w-2xl">
                         <h2 className="text-3xl font-bold font-headline text-primary mb-6">Escoge tu Avatar</h2>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                             {avatars.map(avatar => (
@@ -121,9 +130,9 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                         </div>
                     </motion.div>
                  );
-            case 3: // Yara's Welcome
+            case 'yara':
                 return (
-                     <motion.div key="step3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center max-w-2xl">
+                     <motion.div key="yara" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center max-w-2xl">
                         {yaraCharImage && <Image src={yaraCharImage.imageUrl} alt="Yara" width={150} height={150} className="mx-auto mb-4" />}
                         <Card className="p-6 shadow-xl">
                             <h2 className="text-2xl font-bold font-headline text-primary">¡Hola, {userData?.nombre}!</h2>
@@ -132,13 +141,13 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                             <p className="mt-2 text-muted-foreground">En cada avance ganarás recompensas especiales que tú mismo elegirás para completar la estación ideal que elijas.</p>
                             <p className="mt-2 text-muted-foreground">Cada paso te conectará más a la naturaleza y te mostrará cómo tus acciones pueden transformar el mundo que te rodea.</p>
                              <p className="mt-4 font-bold text-lg text-primary">¿Listo para comenzar este viaje conmigo?</p>
-                            <Button onClick={() => setStep(4)} className="mt-6" size="lg">¡Sí!</Button>
+                            <Button onClick={() => setStep('scenario')} className="mt-6" size="lg">¡Sí!</Button>
                         </Card>
                      </motion.div>
                 );
-            case 4: // Scenario Selection
+            case 'scenario':
                 return (
-                    <motion.div key="step4" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center w-full max-w-3xl">
+                    <motion.div key="scenario" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center w-full max-w-3xl">
                         <h2 className="text-3xl font-bold font-headline text-primary mb-2">Elige tu Lienzo</h2>
                         <p className="text-muted-foreground mb-6">Selecciona el escenario para tu estación personalizada.</p>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
