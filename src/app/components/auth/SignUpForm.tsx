@@ -43,7 +43,7 @@ export default function SignUpForm({ onSubmit, onSwitchToLogin, isLoading }: Sig
       email: "",
       clave: "",
       telefono: "",
-      edad: undefined,
+      edad: '' as unknown as number, // Initialize with empty string to make it controlled
     },
   });
 
@@ -66,7 +66,7 @@ export default function SignUpForm({ onSubmit, onSwitchToLogin, isLoading }: Sig
                     <FormControl>
                         <div className="relative flex items-center">
                             <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="Tu nombre" {...field} className="pl-10" />
+                            <Input placeholder="Tu nombre" {...field} />
                         </div>
                     </FormControl>
                     <FormMessage />
@@ -82,7 +82,7 @@ export default function SignUpForm({ onSubmit, onSwitchToLogin, isLoading }: Sig
                     <FormControl>
                          <div className="relative flex items-center">
                             <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="Tu apellido" {...field} className="pl-10" />
+                            <Input placeholder="Tu apellido" {...field} />
                         </div>
                     </FormControl>
                     <FormMessage />
@@ -99,7 +99,7 @@ export default function SignUpForm({ onSubmit, onSwitchToLogin, isLoading }: Sig
                   <FormControl>
                     <div className="relative flex items-center">
                         <UserSquare className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="Elige un usuario" {...field} className="pl-10" />
+                        <Input placeholder="Elige un usuario" {...field} />
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -115,7 +115,7 @@ export default function SignUpForm({ onSubmit, onSwitchToLogin, isLoading }: Sig
                   <FormControl>
                      <div className="relative flex items-center">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input type="email" placeholder="tu@correo.com" {...field} className="pl-10" />
+                        <Input type="email" placeholder="tu@correo.com" {...field} />
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -131,7 +131,7 @@ export default function SignUpForm({ onSubmit, onSwitchToLogin, isLoading }: Sig
                   <FormControl>
                     <div className="relative flex items-center">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input type="password" placeholder="••••••" {...field} className="pl-10" />
+                        <Input type="password" placeholder="••••••" {...field} />
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -148,7 +148,7 @@ export default function SignUpForm({ onSubmit, onSwitchToLogin, isLoading }: Sig
                     <FormControl>
                         <div className="relative flex items-center">
                             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input type="tel" placeholder="3001234567" {...field} className="pl-10" />
+                            <Input type="tel" placeholder="3001234567" {...field} />
                         </div>
                     </FormControl>
                     <FormMessage />
@@ -164,7 +164,7 @@ export default function SignUpForm({ onSubmit, onSwitchToLogin, isLoading }: Sig
                     <FormControl>
                         <div className="relative flex items-center">
                             <Cake className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input type="number" placeholder="Tu edad" {...field} className="pl-10" />
+                            <Input type="number" placeholder="Tu edad" {...field} />
                         </div>
                     </FormControl>
                     <FormMessage />
