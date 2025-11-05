@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { stations } from '@/lib/data';
 import StationNode from '@/app/components/StationNode';
 import CompletionDialog from '@/app/components/CompletionDialog';
@@ -35,29 +35,32 @@ export default function GameClient() {
 
   useEffect(() => {
     if (!db || !user) {
-      // Firebase might not be ready yet, wait for the provider
       return;
     }
 
-    setIsPlayerStateLoading(true);
-    const playerDocRef = doc(db, 'players', user.uid);
+    const fetchPlayerState = async () => {
+      setIsPlayerStateLoading(true);
+      const playerDocRef = doc(db, 'players', user.uid);
 
-    const unsubscribe = onSnapshot(playerDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data() as PlayerState;
-        setPlayerState(data);
-        setIsNewUser(false);
-      } else {
-        setIsNewUser(true);
-        setPlayerState(null); // Clear old state if user is new
+      try {
+        const docSnap = await getDoc(playerDocRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data() as PlayerState;
+          setPlayerState(data);
+          setIsNewUser(false);
+        } else {
+          setIsNewUser(true);
+          setPlayerState(null);
+        }
+      } catch (error) {
+        console.error("Error fetching player state:", error);
+        setPlayerState(null); 
+      } finally {
+        setIsPlayerStateLoading(false);
       }
-      setIsPlayerStateLoading(false);
-    }, (error) => {
-      console.error("Error fetching player state:", error);
-      setIsPlayerStateLoading(false);
-    });
+    };
 
-    return () => unsubscribe();
+    fetchPlayerState();
   }, [user, db]);
 
   const handleOnboardingComplete = async (data: Omit<PlayerState, 'unlockedStations'>) => {
@@ -76,23 +79,18 @@ export default function GameClient() {
   };
   
   const handleReset = async () => {
-    if (!user || !db) return;
-    setIsPlayerStateLoading(true);
+    if (!user || !db || !playerState) return;
+    const initialData: PlayerState = {
+      unlockedStations: [1],
+      name: playerState.name,
+      avatar: playerState.avatar,
+      chosenScenario: playerState.chosenScenario,
+    };
     try {
-       const playerDocRef = doc(db, 'players', user.uid);
-       const initialData = {
-         unlockedStations: [1],
-         name: playerState?.name ?? 'Jugador',
-         avatar: playerState?.avatar ?? '',
-         chosenScenario: playerState?.chosenScenario ?? null,
-       };
-       await setDoc(playerDocRef, initialData);
-
+       await setDoc(doc(db, 'players', user.uid), initialData);
+       setPlayerState(initialData); // Update local state immediately
     } catch (error) {
       console.error("Failed to reset player state:", error);
-    } finally {
-       setIsNewUser(false);
-       setIsPlayerStateLoading(false);
     }
   };
 
