@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { signUp, login } from '@/firebase/auth';
 import { useAuth } from '@/firebase/hooks';
+import { signInAnonymously } from 'firebase/auth';
 
 const signUpSchema = z.object({
   nombre: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres." }),
@@ -59,6 +60,24 @@ export default function OnboardingFlow({ onComplete, onLogin }: OnboardingFlowPr
     const yaraCharImage = useMemo(() => PlaceHolderImages.find((p) => p.id === 'char-yara'), []);
     const avatars = useMemo(() => PlaceHolderImages.filter(p => p.id.startsWith('avatar-')), []);
     const scenarios = useMemo(() => PlaceHolderImages.slice(0, 4), []);
+
+    const handleAnonymousSignIn = async () => {
+        if (!auth) return;
+        setIsLoading(true);
+        try {
+            await signInAnonymously(auth);
+            onLogin();
+        } catch (error) {
+            console.error("Anonymous sign in failed:", error);
+            toast({
+                title: "Error de Conexión",
+                description: "No se pudo conectar al servicio. Por favor, intenta de nuevo más tarde.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleSignUpSubmit = async (data: SignUpData) => {
         if (!auth) return;
@@ -212,6 +231,17 @@ export default function OnboardingFlow({ onComplete, onLogin }: OnboardingFlowPr
                 return null;
         }
     };
+
+    // If auth is not ready, we can start with anonymous sign-in to get things rolling
+    if (!auth) {
+        handleAnonymousSignIn();
+        return (
+             <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background">
+                <Logo className="h-24 w-24 animate-pulse text-primary" />
+                <p className="text-primary/70 mt-4">Conectando con el servidor...</p>
+            </main>
+        )
+    }
 
     return (
         <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background relative overflow-hidden">
