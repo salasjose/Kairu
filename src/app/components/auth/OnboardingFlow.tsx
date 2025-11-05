@@ -16,6 +16,8 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
+import { signUp, login } from '@/firebase/auth';
+import { useAuth } from '@/firebase/hooks';
 
 const signUpSchema = z.object({
   nombre: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres." }),
@@ -28,7 +30,7 @@ const signUpSchema = z.object({
 });
 
 const loginSchema = z.object({
-  usuario: z.string().min(1, { message: "El usuario no puede estar vacío." }),
+  email: z.string().email({ message: "Por favor ingresa un correo válido." }),
   clave: z.string().min(1, { message: "La clave no puede estar vacía." }),
 });
 
@@ -41,32 +43,64 @@ interface OnboardingFlowProps {
         avatar: string;
         chosenScenario: string;
     }) => void;
+    onLogin: () => void;
 }
 
 type Step = 'welcome' | 'signup' | 'login' | 'avatar' | 'yara' | 'scenario';
 
-export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
+export default function OnboardingFlow({ onComplete, onLogin }: OnboardingFlowProps) {
+    const auth = useAuth();
     const [step, setStep] = useState<Step>('welcome');
     const [userData, setUserData] = useState<SignUpData | null>(null);
     const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
     const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
     
     const yaraCharImage = useMemo(() => PlaceHolderImages.find((p) => p.id === 'char-yara'), []);
     const avatars = useMemo(() => PlaceHolderImages.filter(p => p.id.startsWith('avatar-')), []);
     const scenarios = useMemo(() => PlaceHolderImages.slice(0, 4), []);
 
-    const handleSignUpSubmit = (data: SignUpData) => {
-        setUserData(data);
-        setStep('avatar');
+    const handleSignUpSubmit = async (data: SignUpData) => {
+        if (!auth) return;
+        setIsLoading(true);
+        try {
+            await signUp(auth, data.email, data.clave);
+            setUserData(data);
+            setStep('avatar');
+        } catch (error: any) {
+            console.error("Sign up failed:", error);
+            const message = error.code === 'auth/email-already-in-use'
+                ? "Este correo electrónico ya está en uso."
+                : "No se pudo crear la cuenta. Inténtalo de nuevo.";
+            toast({
+                title: "Error de Registro",
+                description: message,
+                variant: "destructive"
+            });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleLoginSubmit = (data: LoginData) => {
-        // NOTE: This is a placeholder. Real login logic will be implemented later.
-        console.log("Login data:", data);
-        toast({
-            title: "Función en Desarrollo",
-            description: "El inicio de sesión se implementará pronto.",
-        });
+    const handleLoginSubmit = async (data: LoginData) => {
+        if (!auth) return;
+        setIsLoading(true);
+        try {
+            await login(auth, data.email, data.clave);
+            onLogin(); // Notify GameClient to reload user data
+        } catch (error: any) {
+            console.error("Login failed:", error);
+            const message = (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential')
+                ? "Correo o contraseña incorrectos."
+                : "No se pudo iniciar sesión. Inténtalo de nuevo.";
+            toast({
+                title: "Error de Inicio de Sesión",
+                description: message,
+                variant: "destructive"
+            });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleAvatarSelect = (avatarUrl: string) => {
@@ -108,13 +142,13 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             case 'signup':
                 return (
                     <motion.div key="signup" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} className="w-full max-w-lg">
-                        <SignUpForm onSubmit={handleSignUpSubmit} onSwitchToLogin={() => setStep('login')} />
+                        <SignUpForm onSubmit={handleSignUpSubmit} onSwitchToLogin={() => setStep('login')} isLoading={isLoading} />
                     </motion.div>
                 );
             case 'login':
                 return (
                     <motion.div key="login" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} className="w-full max-w-lg">
-                        <LoginForm onSubmit={handleLoginSubmit} onSwitchToSignUp={() => setStep('signup')} />
+                        <LoginForm onSubmit={handleLoginSubmit} onSwitchToSignUp={() => setStep('signup')} isLoading={isLoading} />
                     </motion.div>
                 );
             case 'avatar':

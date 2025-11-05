@@ -1,10 +1,9 @@
 'use client';
 import { createContext, useState, useEffect, ReactNode } from 'react';
-import { onAuthStateChanged, signInAnonymously, Auth, User } from 'firebase/auth';
-import { Firestore, getFirestore } from 'firebase/firestore';
-import { FirebaseApp, initializeApp, getApps } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { firebaseConfig } from './config'; 
+import { onAuthStateChanged, Auth, User } from 'firebase/auth';
+import { Firestore } from 'firebase/firestore';
+import { FirebaseApp } from 'firebase/app';
+import { initializeFirebase } from './index';
 import Logo from '@/app/components/Logo';
 
 interface FirebaseContextType {
@@ -25,36 +24,21 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let firebaseApp: FirebaseApp;
-    if (!getApps().length) {
-      firebaseApp = initializeApp(firebaseConfig);
+    const { app, auth, db } = initializeFirebase();
+    setApp(app);
+    setAuth(auth);
+    setDb(db);
+
+    if (auth) {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+            setLoading(false);
+        });
+        return () => unsubscribe();
     } else {
-      firebaseApp = getApps()[0];
+        // Handle the case where auth is not available (e.g., on server)
+        setLoading(false);
     }
-    
-    const initializedAuth = getAuth(firebaseApp);
-    const initializedDb = getFirestore(firebaseApp);
-
-    setApp(firebaseApp);
-    setAuth(initializedAuth);
-    setDb(initializedDb);
-
-    const unsubscribe = onAuthStateChanged(initializedAuth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-      } else {
-        try {
-          const userCredential = await signInAnonymously(initializedAuth);
-          setUser(userCredential.user);
-        } catch (error) {
-          console.error("Anonymous sign-in failed", error);
-          setUser(null);
-        }
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
   }, []);
 
   if (loading) {

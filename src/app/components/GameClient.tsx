@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { stations } from '@/lib/data';
@@ -12,7 +12,8 @@ import PrizeCart from './PrizeCart';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import OnboardingFlow from './auth/OnboardingFlow';
 import { AnimatePresence } from 'framer-motion';
-import { useUser, useFirestore } from '@/firebase/hooks';
+import { useUser, useFirestore, useAuth } from '@/firebase/hooks';
+import { signOut } from 'firebase/auth';
 
 interface PlayerState {
   id: string;
@@ -29,35 +30,44 @@ const initialPlayerState: Omit<PlayerState, 'id' | 'name' | 'avatar' | 'chosenSc
 export default function GameClient() {
   const { user, loading: userLoading } = useUser();
   const db = useFirestore();
+  const auth = useAuth();
 
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isNewUser, setIsNewUser] = useState(false);
+  
+  const fetchPlayerState = useCallback(async () => {
+    if (!user || !db) return;
 
-  useEffect(() => {
-    if (userLoading || !db) return;
-
-    if (!user) {
-      setIsLoading(false);
-      return;
-    }
-
+    setIsLoading(true);
     const playerDocRef = doc(db, 'users', user.uid);
-
-    getDoc(playerDocRef).then(docSnap => {
+    
+    try {
+      const docSnap = await getDoc(playerDocRef);
       if (docSnap.exists()) {
         setPlayerState(docSnap.data() as PlayerState);
         setIsNewUser(false);
       } else {
+        // This is a new user (or existing user with no profile data yet)
         setIsNewUser(true);
       }
-      setIsLoading(false);
-    }).catch(error => {
+    } catch (error) {
       console.error("Error fetching player state:", error);
+    } finally {
       setIsLoading(false);
-    });
+    }
+  }, [user, db]);
 
-  }, [user, db, userLoading]);
+  useEffect(() => {
+    if (userLoading) return;
+    if (!user) {
+      // If there's no user at all after loading, start onboarding.
+      setIsNewUser(true);
+      setIsLoading(false);
+      return;
+    }
+    fetchPlayerState();
+  }, [user, userLoading, fetchPlayerState]);
 
   const handleOnboardingComplete = async (data: Omit<PlayerState, 'unlockedStations' | 'id'>) => {
     if (!user || !db) return;
@@ -92,6 +102,13 @@ export default function GameClient() {
     }
   };
 
+  const handleLogout = async () => {
+    if (!auth) return;
+    await signOut(auth);
+    setPlayerState(null);
+    setIsNewUser(true);
+  }
+
   if (isLoading || userLoading) {
     return (
       <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background">
@@ -101,10 +118,12 @@ export default function GameClient() {
     );
   }
   
-  if (!user || isNewUser) {
-    return <OnboardingFlow onComplete={handleOnboardingComplete} />;
+  // A user exists but needs to go through onboarding (either new signup or existing user with no profile)
+  if (isNewUser) {
+    return <OnboardingFlow onComplete={handleOnboardingComplete} onLogin={fetchPlayerState} />;
   }
   
+  // A user is logged in, but we failed to fetch their data for some reason.
   if (!playerState) {
        return (
          <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background">
@@ -170,6 +189,9 @@ export default function GameClient() {
             <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm" onClick={handleReset} className="rounded-full bg-white/90 shadow-md h-10 w-auto px-4">
                   Reiniciar
+                </Button>
+                 <Button variant="destructive" size="sm" onClick={handleLogout} className="rounded-full bg-white/90 shadow-md h-10 w-auto px-4">
+                  Salir
                 </Button>
                 <PrizeCart />
             </div>
