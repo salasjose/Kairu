@@ -31,12 +31,12 @@ interface OnboardingFlowProps {
         avatar: string;
         chosenScenario: string;
     }) => void;
-    onLogin: () => void;
+    onLoginSuccess: () => void;
 }
 
 type Step = 'welcome' | 'signup' | 'login' | 'avatar' | 'yara' | 'scenario';
 
-export default function OnboardingFlow({ onComplete, onLogin }: OnboardingFlowProps) {
+export default function OnboardingFlow({ onComplete, onLoginSuccess }: OnboardingFlowProps) {
     const auth = useAuth();
     const [step, setStep] = useState<Step>('welcome');
     const [formName, setFormName] = useState<string>('');
@@ -56,8 +56,8 @@ export default function OnboardingFlow({ onComplete, onLogin }: OnboardingFlowPr
         setIsLoading(true);
         try {
             await signUp(auth, data.email, data.clave);
-            // After successful sign-up, Firebase onAuthStateChanged will trigger
-            // The GameClient will then fetch the user data. Since it won't exist, it will keep isNewUser=true
+            // After successful sign-up, onAuthStateChanged in FirebaseProvider will trigger.
+            // GameClient will detect the new user, fetchPlayerState will see no doc, and keep isNewUser=true.
             // We can then proceed with the rest of the onboarding.
             setFormName(data.nombre);
             setStep('avatar');
@@ -84,9 +84,9 @@ export default function OnboardingFlow({ onComplete, onLogin }: OnboardingFlowPr
         setIsLoading(true);
         try {
             await login(auth, data.email, data.clave);
-            // onAuthStateChanged in the provider will handle the rest.
-            // onLogin will be called by GameClient to fetch the profile.
-            onLogin(); 
+            // onAuthStateChanged in the provider will handle setting the user.
+            // GameClient will see the user and call fetchPlayerState, which will find the existing doc.
+            onLoginSuccess();
         } catch (error: any) {
             console.error("Login failed:", error);
             const message = (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential')

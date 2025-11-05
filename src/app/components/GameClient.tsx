@@ -60,7 +60,6 @@ export default function GameClient() {
     if (user) {
       fetchPlayerState();
     } else {
-      // No user is logged in, show the onboarding flow
       setPlayerState(null);
       setIsNewUser(true);
     }
@@ -68,6 +67,7 @@ export default function GameClient() {
 
   const handleOnboardingComplete = async (data: { name: string; avatar: string; chosenScenario: string; }) => {
     if (!user || !db) return;
+
     const newState: PlayerState = {
       id: user.uid,
       name: data.name,
@@ -108,7 +108,6 @@ export default function GameClient() {
     setIsNewUser(true);
   }
 
-  // userLoading comes from the provider and tells us if Firebase Auth is ready
   if (userLoading) {
     return (
       <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background">
@@ -119,7 +118,7 @@ export default function GameClient() {
   }
   
   if (isNewUser) {
-    return <OnboardingFlow onComplete={handleOnboardingComplete} onLogin={fetchPlayerState} />;
+    return <OnboardingFlow onComplete={handleOnboardingComplete} onLoginSuccess={fetchPlayerState} />;
   }
   
   if (!playerState) {
@@ -133,15 +132,15 @@ export default function GameClient() {
 
   const mapBgImage = PlaceHolderImages.find((p) => p.id === 'mapa-juego-background');
   const stationPositions = [
-    { top: "65%", left: "12%" }, // 1
-    { top: "60%", left: "32%" }, // 2
-    { top: "48%", left: "38%" }, // 3
-    { top: "42%", left: "55%" }, // 4
-    { top: "60%", left: "65%" }, // 5
-    { top: "70%", left: "80%" }, // 6
-    { top: "55%", left: "88%" }, // 7
-    { top: "35%", left: "75%" }, // 8
-    { top: "25%", left: "90%" }, // 9
+    { top: "65%", left: "12%" },
+    { top: "60%", left: "32%" },
+    { top: "48%", left: "38%" },
+    { top: "42%", left: "55%" },
+    { top: "60%", left: "65%" },
+    { top: "70%", left: "80%" },
+    { top: "55%", left: "88%" },
+    { top: "35%", left: "75%" },
+    { top: "25%", left: "90%" },
   ];
   
   const generatePath = (positions: { top: string; left: string }[]) => {

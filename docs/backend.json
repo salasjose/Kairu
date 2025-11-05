@@ -1,36 +1,8 @@
 {
-  "entities": {
-    "UserProfile": {
-      "title": "User Profile",
-      "description": "Stores user profile information and game state.",
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "The user's unique ID, same as the document ID."
-        },
-        "name": {
-          "type": "string",
-          "description": "The user's chosen name."
-        },
-        "avatar": {
-          "type": "string",
-          "description": "URL of the user's chosen avatar."
-        },
-        "chosenScenario": {
-          "type": "string",
-          "description": "URL of the user's chosen scenario for their custom station."
-        },
-        "unlockedStations": {
-          "type": "array",
-          "description": "An array of station IDs that the user has unlocked."
-        }
-      },
-      "required": ["id", "name", "avatar", "unlockedStations"]
-    }
-  },
   "auth": {
-    "providers": ["anonymous"]
+    "providers": [
+      "anonymous"
+    ]
   },
   "firestore": {
     "/users/{userId}": {
