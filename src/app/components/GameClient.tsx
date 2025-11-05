@@ -7,7 +7,6 @@ import StationNode from '@/app/components/StationNode';
 import CompletionDialog from '@/app/components/CompletionDialog';
 import Logo from '@/app/components/Logo';
 import { Button } from '@/components/ui/button';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import PrizeCart from './PrizeCart';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import OnboardingFlow from './auth/OnboardingFlow';
@@ -110,7 +109,7 @@ export default function GameClient() {
 
   if (userLoading) {
     return (
-      <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background">
+      <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background/80 backdrop-blur-sm">
         <Logo className="h-24 w-24 animate-pulse text-primary" />
         <p className="text-primary/70 mt-4">Cargando datos del jugador...</p>
       </main>
@@ -123,14 +122,13 @@ export default function GameClient() {
   
   if (!playerState) {
        return (
-         <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background">
+         <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background/80 backdrop-blur-sm">
            <Logo className="h-24 w-24 animate-pulse text-primary" />
            <p className="text-primary/70 mt-4">Cargando mapa...</p>
          </main>
        );
   }
 
-  const mapBgImage = PlaceHolderImages.find((p) => p.id === 'mapa-juego-background');
   const stationPositions = [
     { top: "65%", left: "12%" },
     { top: "60%", left: "32%" },
@@ -156,17 +154,6 @@ export default function GameClient() {
 
   return (
     <main className="relative w-full min-h-screen flex flex-col overflow-hidden">
-      {mapBgImage && (
-        <Image
-          src={mapBgImage.imageUrl}
-          alt={mapBgImage.description}
-          fill
-          className="object-cover object-center w-full h-full z-0 pointer-events-none select-none"
-          priority
-          data-ai-hint={mapBgImage.imageHint}
-        />
-      )}
-      
       <header className="absolute top-0 left-0 right-0 p-2 sm:p-4 z-20">
         <div className="container mx-auto flex items-start justify-between gap-2">
             <div className="bg-white/90 backdrop-blur-sm p-2 rounded-2xl flex items-center gap-3 shadow-md">
