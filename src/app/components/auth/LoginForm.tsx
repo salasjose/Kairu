@@ -17,20 +17,20 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Mail, Lock } from "lucide-react";
 
-const formSchema = z.object({
+export const LoginFormSchema = z.object({
   email: z.string().email({ message: "Por favor ingresa un correo válido." }),
   clave: z.string().min(1, { message: "La clave no puede estar vacía." }),
 });
 
 interface LoginFormProps {
-    onSubmit: (data: z.infer<typeof formSchema>) => void;
+    onSubmit: (data: z.infer<typeof LoginFormSchema>) => void;
     onSwitchToSignUp: () => void;
     isLoading: boolean;
 }
 
 export default function LoginForm({ onSubmit, onSwitchToSignUp, isLoading }: LoginFormProps) {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof LoginFormSchema>>({
+    resolver: zodResolver(LoginFormSchema),
     defaultValues: {
       email: "",
       clave: "",

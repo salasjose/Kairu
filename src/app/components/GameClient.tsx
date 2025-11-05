@@ -46,12 +46,11 @@ export default function GameClient() {
         setPlayerState(docSnap.data() as PlayerState);
         setIsNewUser(false);
       } else {
-        // This is a new user (or existing user with no profile data yet)
         setIsNewUser(true);
       }
     } catch (error) {
       console.error("Error fetching player state:", error);
-      setPlayerState(null); // Set to null on error
+      setIsNewUser(true);
     }
   }, [user, db]);
 
@@ -62,16 +61,19 @@ export default function GameClient() {
       fetchPlayerState();
     } else {
       // No user is logged in, show the onboarding flow
+      setPlayerState(null);
       setIsNewUser(true);
     }
   }, [user, userLoading, fetchPlayerState]);
 
-  const handleOnboardingComplete = async (data: Omit<PlayerState, 'unlockedStations' | 'id'>) => {
+  const handleOnboardingComplete = async (data: { name: string; avatar: string; chosenScenario: string; }) => {
     if (!user || !db) return;
     const newState: PlayerState = {
       id: user.uid,
-      ...initialPlayerState,
-      ...data,
+      name: data.name,
+      avatar: data.avatar,
+      chosenScenario: data.chosenScenario,
+      unlockedStations: [1],
     };
     try {
       await setDoc(doc(db, 'users', user.uid), newState);
@@ -116,12 +118,10 @@ export default function GameClient() {
     );
   }
   
-  // If not loading and there's no user OR we've determined it's a new user who needs onboarding
   if (isNewUser) {
     return <OnboardingFlow onComplete={handleOnboardingComplete} onLogin={fetchPlayerState} />;
   }
   
-  // If we have a user but their state hasn't loaded yet.
   if (!playerState) {
        return (
          <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background">

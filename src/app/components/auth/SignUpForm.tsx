@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Mail, User, Lock, Phone, Cake, UserSquare } from "lucide-react";
 
-const formSchema = z.object({
+export const SignUpFormSchema = z.object({
   nombre: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres." }),
   apellido: z.string().min(2, { message: "El apellido debe tener al menos 2 caracteres." }),
   usuario: z.string().min(4, { message: "El usuario debe tener al menos 4 caracteres." }),
@@ -28,14 +28,14 @@ const formSchema = z.object({
 });
 
 interface SignUpFormProps {
-    onSubmit: (data: z.infer<typeof formSchema>) => void;
+    onSubmit: (data: z.infer<typeof SignUpFormSchema>) => void;
     onSwitchToLogin: () => void;
     isLoading: boolean;
 }
 
 export default function SignUpForm({ onSubmit, onSwitchToLogin, isLoading }: SignUpFormProps) {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof SignUpFormSchema>>({
+    resolver: zodResolver(SignUpFormSchema),
     defaultValues: {
       nombre: "",
       apellido: "",

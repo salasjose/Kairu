@@ -1,9 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useState, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 
@@ -18,24 +15,15 @@ import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { signUp, login } from '@/firebase/auth';
 import { useAuth } from '@/firebase/hooks';
+import type { z } from "zod";
 
-const signUpSchema = z.object({
-  nombre: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres." }),
-  apellido: z.string().min(2, { message: "El apellido debe tener al menos 2 caracteres." }),
-  usuario: z.string().min(4, { message: "El usuario debe tener al menos 4 caracteres." }),
-  email: z.string().email({ message: "Por favor ingresa un correo válido." }),
-  clave: z.string().min(6, { message: "La clave debe tener al menos 6 caracteres." }),
-  telefono: z.string().regex(/^\d{7,10}$/, { message: "Ingresa un número de teléfono válido (7-10 dígitos)." }),
-  edad: z.coerce.number().int().positive({ message: "La edad debe ser un número positivo." }).min(5, { message: "Debes ser mayor de 5 años."}),
-});
+// We can infer the types from the SignUpForm's schema directly
+import { type SignUpFormSchema } from './SignUpForm';
+import { type LoginFormSchema } from './LoginForm';
 
-const loginSchema = z.object({
-  email: z.string().email({ message: "Por favor ingresa un correo válido." }),
-  clave: z.string().min(1, { message: "La clave no puede estar vacía." }),
-});
 
-type SignUpData = z.infer<typeof signUpSchema>;
-type LoginData = z.infer<typeof loginSchema>;
+type SignUpData = z.infer<typeof SignUpFormSchema>;
+type LoginData = z.infer<typeof LoginFormSchema>;
 
 interface OnboardingFlowProps {
     onComplete: (data: {
@@ -51,7 +39,7 @@ type Step = 'welcome' | 'signup' | 'login' | 'avatar' | 'yara' | 'scenario';
 export default function OnboardingFlow({ onComplete, onLogin }: OnboardingFlowProps) {
     const auth = useAuth();
     const [step, setStep] = useState<Step>('welcome');
-    const [formName, setFormName] = useState<string>(''); // To pass the name to the next step
+    const [formName, setFormName] = useState<string>('');
     const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
     const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -61,14 +49,20 @@ export default function OnboardingFlow({ onComplete, onLogin }: OnboardingFlowPr
     const scenarios = useMemo(() => PlaceHolderImages.slice(0, 4), []);
 
     const handleSignUpSubmit = async (data: SignUpData) => {
-        if (!auth) return;
+        if (!auth) {
+            toast({ title: "Error", description: "Servicio de autenticación no disponible.", variant: "destructive" });
+            return;
+        }
         setIsLoading(true);
         try {
             await signUp(auth, data.email, data.clave);
+            // After successful sign-up, Firebase onAuthStateChanged will trigger
+            // The GameClient will then fetch the user data. Since it won't exist, it will keep isNewUser=true
+            // We can then proceed with the rest of the onboarding.
             setFormName(data.nombre);
             setStep('avatar');
         } catch (error: any) {
-            console.error("Sign up failed:", error);
+            console.error("Sign up failed:", error.code, error.message);
             const message = error.code === 'auth/email-already-in-use'
                 ? "Este correo electrónico ya está en uso."
                 : "No se pudo crear la cuenta. Inténtalo de nuevo.";
@@ -83,11 +77,16 @@ export default function OnboardingFlow({ onComplete, onLogin }: OnboardingFlowPr
     };
 
     const handleLoginSubmit = async (data: LoginData) => {
-        if (!auth) return;
+        if (!auth) {
+             toast({ title: "Error", description: "Servicio de autenticación no disponible.", variant: "destructive" });
+            return;
+        }
         setIsLoading(true);
         try {
             await login(auth, data.email, data.clave);
-            onLogin(); // Notify GameClient to reload user data
+            // onAuthStateChanged in the provider will handle the rest.
+            // onLogin will be called by GameClient to fetch the profile.
+            onLogin(); 
         } catch (error: any) {
             console.error("Login failed:", error);
             const message = (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential')
