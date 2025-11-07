@@ -58,11 +58,7 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
 
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setStep('welcome');
-        }, 5000); // 5-second splash screen
-
-        return () => clearTimeout(timer);
+        setStep('welcome');
     }, []);
 
     const handleSignUpSubmit = async (data: SignUpData) => {
