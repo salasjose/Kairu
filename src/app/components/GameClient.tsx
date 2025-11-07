@@ -1,7 +1,7 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc as setFirestoreDoc } from 'firebase/firestore';
 import { stations } from '@/lib/data';
 import StationNode from '@/app/components/StationNode';
 import CompletionDialog from '@/app/components/CompletionDialog';
@@ -15,9 +15,11 @@ import { useUser, useFirestore, useAuth } from '@/firebase/hooks';
 import { signOut } from 'firebase/auth';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useStationProgress } from '@/hooks/use-station-progress';
-import { setDoc, doc as createDoc } from 'firebase/firestore';
-import { useRouter } from 'next/navigation';
 import { usePrizeCart } from '@/hooks/use-prize-cart';
+import { Settings } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
 
 
 interface PlayerState {
@@ -28,6 +30,67 @@ interface PlayerState {
   chosenScenario: string | null;
 }
 
+const SettingsPanel = ({ playerState, setPlayerState }: { playerState: PlayerState; setPlayerState: (state: PlayerState) => void; }) => {
+    const db = useFirestore();
+    const avatars = useMemo(() => PlaceHolderImages.filter(p => p.id.startsWith('avatar-')), []);
+
+    const handleAvatarChange = async (newAvatarUrl: string) => {
+        if (!playerState || !db) {
+             toast({ title: "Error", description: "No se pudo actualizar el avatar. Intenta más tarde.", variant: "destructive" });
+             return;
+        };
+
+        const updatedState = { ...playerState, avatar: newAvatarUrl };
+        setPlayerState(updatedState);
+        toast({ title: "Avatar Actualizado", description: "Tu nuevo avatar ha sido guardado." });
+        
+        try {
+            const playerDocRef = doc(db, 'users', playerState.id);
+            await setFirestoreDoc(playerDocRef, { avatar: newAvatarUrl }, { merge: true });
+        } catch (error) {
+            console.error("Failed to update avatar in Firestore:", error);
+            toast({ title: "Error de Sincronización", description: "No se pudo guardar el avatar en la nube.", variant: "destructive" });
+            // Optionally, revert the local state if the cloud save fails
+            // setPlayerState(playerState); 
+        }
+    };
+    
+    return (
+        <SheetContent>
+            <SheetHeader>
+                <SheetTitle>Configuración</SheetTitle>
+                <SheetDescription>Personaliza tu experiencia en Kairu.</SheetDescription>
+            </SheetHeader>
+            <div className="py-4">
+                <h3 className="font-semibold mb-4">Cambiar Avatar</h3>
+                <div className="grid grid-cols-2 gap-4">
+                    {avatars.map(avatar => (
+                         <button 
+                           key={avatar.id} 
+                           onClick={() => handleAvatarChange(avatar.imageUrl)}
+                           className={cn(
+                            "p-2 rounded-lg border-2 transition-all",
+                            playerState.avatar === avatar.imageUrl 
+                                ? "border-primary bg-primary/10 shadow-lg scale-105"
+                                : "border-border hover:bg-accent"
+                           )}
+                         >
+                            <Image 
+                                src={avatar.imageUrl} 
+                                alt={avatar.description} 
+                                width={150} 
+                                height={150} 
+                                className="rounded-md w-full h-auto aspect-square object-cover" 
+                            />
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </SheetContent>
+    );
+};
+
+
 export default function GameClient() {
   const { user, loading: userLoading } = useUser();
   const db = useFirestore();
@@ -35,7 +98,6 @@ export default function GameClient() {
   const { resetProgress } = useStationProgress();
   const { clearCart } = usePrizeCart();
   const mapBackground = PlaceHolderImages.find(p => p.id === 'map-background');
-  const router = useRouter();
 
 
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
@@ -62,7 +124,9 @@ export default function GameClient() {
         setPlayerState(newState);
         setIsNewUser(false);
 
-        if (newState.unlockedStations.includes(10)) { // Using 10 as completion flag
+        const allStationsComplete = stations.every(s => newState.unlockedStations?.includes(s.id));
+
+        if (allStationsComplete) {
             setIsCompletionDialogOpen(true);
         } else {
             setIsCompletionDialogOpen(false);
@@ -110,17 +174,11 @@ export default function GameClient() {
       unlockedStations: [1],
     };
     try {
-      await setDoc(createDoc(db, 'users', user.uid), newState);
+      await setFirestoreDoc(doc(db, 'users', user.uid), newState);
       setIsNewUser(false);
     } catch (error) {
       console.error("Failed to save player data:", error);
     }
-  };
-  
-  const handleReset = async () => {
-    await resetProgress();
-    clearCart();
-    setIsCompletionDialogOpen(false);
   };
 
   const handleLogout = async () => {
@@ -201,9 +259,15 @@ export default function GameClient() {
                 </Avatar>
             </div>
             <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={handleReset} className="rounded-full bg-white/90 shadow-md h-10 w-auto px-4">
-                  Reiniciar
-                </Button>
+                <Sheet>
+                    <SheetTrigger asChild>
+                        <Button variant="outline" size="icon" className="rounded-full bg-white/90 shadow-md h-10 w-10">
+                            <Settings />
+                        </Button>
+                    </SheetTrigger>
+                    <SettingsPanel playerState={playerState} setPlayerState={setPlayerState} />
+                </Sheet>
+
                  <Button variant="destructive" size="sm" onClick={handleLogout} className="rounded-full bg-white/90 shadow-md h-10 w-auto px-4">
                   Salir
                 </Button>

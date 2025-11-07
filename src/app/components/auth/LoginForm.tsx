@@ -16,6 +16,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Mail, Lock } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/firebase/hooks";
+import { resetPassword } from "@/firebase/auth";
 
 export const LoginFormSchema = z.object({
   email: z.string().email({ message: "Por favor ingresa un correo válido." }),
@@ -36,6 +39,35 @@ export default function LoginForm({ onSubmit, onSwitchToSignUp, isLoading }: Log
       clave: "",
     },
   });
+  const auth = useAuth();
+  const { toast } = useToast();
+
+  const handleForgotPassword = async () => {
+    const email = form.getValues("email");
+    if (!email) {
+      form.setError("email", { type: "manual", message: "Ingresa tu correo para restablecer la clave." });
+      return;
+    }
+    if (!auth) {
+        toast({ title: "Error", description: "Servicio de autenticación no disponible.", variant: "destructive" });
+        return;
+    }
+
+    try {
+        await resetPassword(auth, email);
+        toast({
+            title: "Correo enviado",
+            description: "Revisa tu bandeja de entrada para restablecer tu contraseña.",
+        });
+    } catch (error: any) {
+        console.error("Password reset failed:", error);
+        toast({
+            title: "Error",
+            description: "No se pudo enviar el correo de restablecimiento. Verifica el correo e inténtalo de nuevo.",
+            variant: "destructive",
+        });
+    }
+  }
 
   return (
     <Card className="w-full max-w-lg shadow-2xl">
@@ -68,6 +100,11 @@ export default function LoginForm({ onSubmit, onSwitchToSignUp, isLoading }: Log
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Clave</FormLabel>
+                   <div className="flex justify-end">
+                       <Button variant="link" type="button" onClick={handleForgotPassword} className="p-0 h-auto text-xs" disabled={isLoading}>
+                            ¿Olvidaste tu contraseña?
+                        </Button>
+                    </div>
                   <FormControl>
                     <div className="relative flex items-center">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
