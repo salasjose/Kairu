@@ -23,6 +23,7 @@ export default function Station6() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const circularEconomyImage = PlaceHolderImages.find((p) => p.id === "circular-economy-product");
+  const regiraBgImage = PlaceHolderImages.find(p => p.id === 'regira-background');
 
   useEffect(() => {
     const savedVideo = localStorage.getItem(STORAGE_KEY_STATION6);
@@ -96,7 +97,17 @@ export default function Station6() {
         className="hidden"
         accept="video/*"
       />
-      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-indigo-200 to-purple-200 relative overflow-hidden">
+      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
+         {regiraBgImage && (
+            <Image
+                src={regiraBgImage.imageUrl}
+                alt={regiraBgImage.description}
+                fill
+                style={{objectFit: 'cover'}}
+                className="z-0"
+                data-ai-hint={regiraBgImage.imageHint}
+            />
+        )}
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full max-w-4xl mx-auto">
           <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
             <h1 className="text-3xl md:text-5xl">ReGira</h1>
@@ -105,7 +116,7 @@ export default function Station6() {
               <p className="font-bold text-lg">YARA: "¡Estamos en ReGira! Aquí aprenderás que todo en la naturaleza gira y se renueva. Cada recurso tiene una segunda oportunidad. ¡Es momento de cerrar el ciclo y darle nueva vida a lo que parecía terminar!"</p>
             </div>
             
-            <Card className="w-full shadow-lg">
+            <Card className="w-full shadow-lg bg-card/80 backdrop-blur-sm">
                 <CardHeader>
                     <CardTitle className="text-center text-2xl font-bold">Reto: Negocios Exitosos</CardTitle>
                 </CardHeader>

@@ -109,6 +109,12 @@
       "imageHint": "solid waste"
     },
     {
+      "id": "regira-background",
+      "description": "Fondo para la estación de economía circular con un negocio verde.",
+      "imageUrl": "/backgrounds/Negocio_Verde.png",
+      "imageHint": "green business"
+    },
+    {
       "id": "terrazul-background",
       "description": "Fondo para la estación TerrAzul con un río.",
       "imageUrl": "/backgrounds/Rio.png",
