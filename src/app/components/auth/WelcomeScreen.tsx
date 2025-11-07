@@ -1,11 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 import Logo from '@/app/components/Logo';
 import { Button } from '@/components/ui/button';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { useMemo } from 'react';
 
 interface WelcomeScreenProps {
   onLoginClick: () => void;
@@ -13,25 +10,16 @@ interface WelcomeScreenProps {
 }
 
 export default function WelcomeScreen({ onLoginClick, onCreateUserClick }: WelcomeScreenProps) {
-  const yaraCharImage = useMemo(() => PlaceHolderImages.find((p) => p.id === 'char-yara'), []);
-
   return (
-    <div className="text-center flex flex-col md:flex-row items-center justify-center min-h-screen p-4 w-full gap-16">
+    <div className="flex flex-col md:flex-row items-center justify-between min-h-screen p-4 w-full">
       <motion.div
         initial={{ opacity: 0, x: -100 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.5, duration: 0.8 }}
-        className="relative"
+        className="absolute left-4 top-1/3 md:left-8 md:top-1/4"
       >
-        {yaraCharImage && <Image src={yaraCharImage.imageUrl} alt="Yara" width={180} height={180} className="mx-auto" />}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1, duration: 0.5 }}
-          className="relative"
-        >
-          <motion.div 
-            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max"
+        <motion.div 
+            className="w-max"
             animate={{ y: [0, -8, 0] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           >
@@ -40,10 +28,9 @@ export default function WelcomeScreen({ onLoginClick, onCreateUserClick }: Welco
               <div className="absolute left-1/2 -translate-x-1/2 top-full h-0 w-0 border-x-8 border-x-transparent border-t-[10px] border-t-white/90"></div>
             </div>
           </motion.div>
-        </motion.div>
       </motion.div>
       
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center justify-center w-full text-center">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
