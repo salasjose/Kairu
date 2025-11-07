@@ -168,8 +168,8 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
                 return (
                      <motion.div key="welcome" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                         <AnimatedWelcome
-                            onLoginClick={() => handleInteraction(() => setStep('login'))}
-                            onCreateUserClick={() => handleInteraction(() => setStep('signup'))}
+                            onLoginClick={() => setStep('login')}
+                            onCreateUserClick={() => setStep('signup')}
                         />
                     </motion.div>
                 );
@@ -278,5 +278,3 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         </main>
     );
 }
-
-    
