@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -487,6 +488,19 @@ export default function Station1() {
   }
 
   const stationCompletedChallenges = completedChallenges[stationId] || {};
+  
+    const handleSimulateComplete = () => {
+    stationChallenges.forEach(challenge => {
+      completeChallenge(stationId, challenge, null);
+    });
+    unlockStation(stationId + 1);
+    toast({
+      title: `¡Estación ${stationId} Completada!`,
+      description: "¡Has completado todos los retos! Escoge tu premio.",
+    });
+    setIsPrizeModalOpen(true);
+  };
+
 
   return (
     <>
@@ -561,10 +575,11 @@ export default function Station1() {
           )})}
         </div>
 
-        <div className="mt-4 max-w-md mx-auto">
+        <div className="mt-4 max-w-md mx-auto space-y-4">
           <p className="bg-background/80 p-4 rounded-md text-center">
             Selecciona uno de los retos para completar la estación. ¡Debes completarlos todos para avanzar!
           </p>
+           <Button onClick={handleSimulateComplete}>Simular Finalización</Button>
         </div>
       </div>
     </div>
@@ -576,3 +591,5 @@ export default function Station1() {
     </>
   );
 }
+
+    

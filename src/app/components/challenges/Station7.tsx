@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -15,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 
 export default function Station7() {
+  const stationId = 7;
   const [listContent, setListContent] = useState("");
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
@@ -31,9 +33,9 @@ export default function Station7() {
         })
         return;
     }
-    unlockStation(8);
+    unlockStation(stationId + 1);
     toast({
-      title: "¡Estación VerdeLAb Completada!",
+      title: `¡Estación ${stationId} Completada!`,
       description: `¡Buen trabajo investigando negocios verdes!`,
     });
     setIsPrizeModalOpen(true);
@@ -42,6 +44,15 @@ export default function Station7() {
   const handleClaimPrize = () => {
     setIsPrizeModalOpen(false);
     router.push("/");
+  };
+  
+  const handleSimulateComplete = () => {
+    unlockStation(stationId + 1);
+    toast({
+      title: `¡Estación ${stationId} Completada!`,
+      description: "Has simulado la finalización. ¡Escoge tu premio!",
+    });
+    setIsPrizeModalOpen(true);
   };
 
 
@@ -79,7 +90,10 @@ export default function Station7() {
                         className="max-w-lg mx-auto"
                         rows={5}
                      />
-                     <Button onClick={handleComplete} size="lg">Completar y Continuar</Button>
+                     <div className="flex justify-center gap-4">
+                        <Button onClick={handleComplete} size="lg">Completar Reto</Button>
+                        <Button onClick={handleSimulateComplete} size="lg" variant="secondary">Simular Finalización</Button>
+                     </div>
                 </CardContent>
             </Card>
 
@@ -87,9 +101,11 @@ export default function Station7() {
       </div>
       <PrizeDialog
         open={isPrizeModalOpen}
-        stationId={7}
+        stationId={stationId}
         onClaim={handleClaimPrize}
       />
     </>
   );
 }
+
+    

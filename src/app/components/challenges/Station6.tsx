@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -12,6 +13,7 @@ import PrizeDialog from "../PrizeDialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function Station6() {
+  const stationId = 6;
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
   const router = useRouter();
@@ -20,9 +22,9 @@ export default function Station6() {
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
   const handleComplete = () => {
-    unlockStation(7);
+    unlockStation(stationId + 1);
     toast({
-      title: "¡Estación ReGira Completada!",
+      title: `¡Estación ${stationId} Completada!`,
       description: `Has aprendido sobre economía circular.`,
     });
     setIsPrizeModalOpen(true);
@@ -62,7 +64,7 @@ export default function Station6() {
                         />
                      )}
                      <p className="text-muted-foreground mb-4">Próximamente: Videos de estrategias de comercialización y promoción.</p>
-                     <Button onClick={handleComplete} size="lg">Completar y Continuar</Button>
+                     <Button onClick={handleComplete} size="lg">Simular Finalización</Button>
                 </CardContent>
             </Card>
 
@@ -70,9 +72,11 @@ export default function Station6() {
       </div>
       <PrizeDialog
         open={isPrizeModalOpen}
-        stationId={6}
+        stationId={stationId}
         onClaim={handleClaimPrize}
       />
     </>
   );
 }
+
+    

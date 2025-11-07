@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -240,6 +241,7 @@ const PhotoUploadChallenge = ({
 };
 
 export default function Station2() {
+  const stationId = 2;
   const [days, setDays] = useState<DayState[]>(initialDays);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
@@ -320,9 +322,9 @@ export default function Station2() {
 
     const allCompleted = newDays.every((d) => d.status === "completed");
     if (allCompleted) {
-      unlockStation(3);
+      unlockStation(stationId + 1);
       toast({
-        title: "¡Estación ImpacTrack Completada!",
+        title: `¡Estación ${stationId} Completada!`,
         description: "¡Fantástico! Sigue con esos hábitos sostenibles.",
       });
       setIsPrizeModalOpen(true);
@@ -332,6 +334,15 @@ export default function Station2() {
   const handleClaimPrize = () => {
     setIsPrizeModalOpen(false);
     router.push("/");
+  };
+  
+  const handleSimulateComplete = () => {
+    unlockStation(stationId + 1);
+    toast({
+      title: `¡Estación ${stationId} Completada!`,
+      description: "Has simulado la finalización. ¡Escoge tu premio!",
+    });
+    setIsPrizeModalOpen(true);
   };
 
   if (selectedDay !== null) {
@@ -408,15 +419,18 @@ export default function Station2() {
               {days.slice(4, 7).map((_, index) => renderDayButton(index + 4))}
             </div>
              <p className="text-sm text-muted-foreground mt-4">MECÁNICA: Cada vez que subas tu foto, pasadas 24 horas se activará el siguiente candado para continuar.</p>
+             <Button onClick={handleSimulateComplete} className="mt-4">Simular Finalización</Button>
           </div>
           
         </div>
       </div>
       <PrizeDialog
         open={isPrizeModalOpen}
-        stationId={2}
+        stationId={stationId}
         onClaim={handleClaimPrize}
       />
     </>
   );
 }
+
+    

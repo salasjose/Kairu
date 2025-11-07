@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -68,15 +69,16 @@ const ChallengeScreen = ({ challengeId, onBack, onComplete }: { challengeId: Cha
 
 
 export default function Station8() {
+  const stationId = 8;
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeId | null>(null);
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
   const router = useRouter();
 
   const handleComplete = (challengeId: ChallengeId) => {
-    unlockStation(9);
+    unlockStation(stationId + 1);
     toast({
-      title: "¡Estación Vitalia Completada!",
+      title: `¡Estación ${stationId} Completada!`,
       description: `¡Reto '${challenges[challengeId].title}' superado!`,
     });
     setIsPrizeModalOpen(true);
@@ -85,6 +87,15 @@ export default function Station8() {
   const handleClaimPrize = () => {
     setIsPrizeModalOpen(false);
     router.push("/");
+  };
+  
+  const handleSimulateComplete = () => {
+    unlockStation(stationId + 1);
+    toast({
+      title: `¡Estación ${stationId} Completada!`,
+      description: "Has simulado la finalización. ¡Escoge tu premio!",
+    });
+    setIsPrizeModalOpen(true);
   };
   
   if (selectedChallenge) {
@@ -124,13 +135,16 @@ export default function Station8() {
               );
             })}
           </div>
+           <Button onClick={handleSimulateComplete}>Simular Finalización</Button>
         </div>
       </div>
       <PrizeDialog
         open={isPrizeModalOpen}
-        stationId={8}
+        stationId={stationId}
         onClaim={handleClaimPrize}
       />
     </>
   );
 }
+
+    

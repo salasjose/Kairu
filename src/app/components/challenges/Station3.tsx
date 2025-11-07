@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -276,6 +277,7 @@ const challenges = {
 type ChallengeId = keyof typeof challenges;
 
 export default function Station3() {
+  const stationId = 3;
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeId | null>(
     null
   );
@@ -289,9 +291,9 @@ export default function Station3() {
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
   const handleComplete = (challengeId: ChallengeId) => {
-    unlockStation(4);
+    unlockStation(stationId + 1);
     toast({
-      title: "¡Estación ReNova Completada!",
+      title: `¡Estación ${stationId} Completada!`,
       description: `¡Buen trabajo con el reto '${challenges[challengeId].title}'!`,
     });
     setIsPrizeModalOpen(true);
@@ -300,6 +302,15 @@ export default function Station3() {
   const handleClaimPrize = () => {
     setIsPrizeModalOpen(false);
     router.push("/");
+  };
+  
+  const handleSimulateComplete = () => {
+    unlockStation(stationId + 1);
+    toast({
+      title: `¡Estación ${stationId} Completada!`,
+      description: "Has simulado la finalización. ¡Escoge tu premio!",
+    });
+    setIsPrizeModalOpen(true);
   };
 
   if (selectedChallenge === "game") {
@@ -380,20 +391,23 @@ export default function Station3() {
             })}
           </div>
 
-          <div className="mt-4 max-w-md mx-auto">
+          <div className="mt-4 max-w-md mx-auto space-y-4">
             <p className="bg-background/80 p-4 rounded-md text-center">
               Selecciona uno de los retos para demostrar cómo gestionas los
               residuos. ¡Al terminar, volverás al mapa!
             </p>
+            <Button onClick={handleSimulateComplete}>Simular Finalización</Button>
           </div>
 
         </div>
       </div>
       <PrizeDialog
         open={isPrizeModalOpen}
-        stationId={3}
+        stationId={stationId}
         onClaim={handleClaimPrize}
       />
     </>
   );
 }
+
+    

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -70,16 +71,16 @@ const LearnChallenge = ({ onBack, onComplete }: { onBack: () => void; onComplete
 
 
 export default function Station5() {
+  const stationId = 5;
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeId | null>(null);
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
   const router = useRouter();
 
   const handleComplete = (challengeId: ChallengeId) => {
-    // For now, any challenge completion unlocks the station
-    unlockStation(6);
+    unlockStation(stationId + 1);
     toast({
-      title: "¡Estación ZonaCreativa Completada!",
+      title: `¡Estación ${stationId} Completada!`,
       description: `¡Reto '${challenges[challengeId].title}' superado!`,
     });
     setIsPrizeModalOpen(true);
@@ -88,6 +89,15 @@ export default function Station5() {
    const handleClaimPrize = () => {
     setIsPrizeModalOpen(false);
     router.push("/");
+  };
+  
+    const handleSimulateComplete = () => {
+    unlockStation(stationId + 1);
+    toast({
+      title: `¡Estación ${stationId} Completada!`,
+      description: "Has simulado la finalización. ¡Escoge tu premio!",
+    });
+    setIsPrizeModalOpen(true);
   };
   
   if (selectedChallenge === "learn") {
@@ -138,13 +148,16 @@ export default function Station5() {
               );
             })}
           </div>
+          <Button onClick={handleSimulateComplete}>Simular Finalización</Button>
         </div>
       </div>
        <PrizeDialog
         open={isPrizeModalOpen}
-        stationId={5}
+        stationId={stationId}
         onClaim={handleClaimPrize}
       />
     </>
   );
 }
+
+    

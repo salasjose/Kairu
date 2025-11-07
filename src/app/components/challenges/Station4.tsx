@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -138,6 +139,7 @@ const PostChallenge = ({
 };
 
 export default function Station4() {
+  const stationId = 4;
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeId | null>(null);
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
@@ -147,9 +149,9 @@ export default function Station4() {
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
   const handleComplete = (challengeId: ChallengeId) => {
-    unlockStation(5);
+    unlockStation(stationId + 1);
     toast({
-      title: "¡Estación TerrAzul Completada!",
+      title: `¡Estación ${stationId} Completada!`,
       description: `¡Reto '${challenges[challengeId].title}' superado!`,
     });
     setIsPrizeModalOpen(true);
@@ -158,6 +160,15 @@ export default function Station4() {
   const handleClaimPrize = () => {
     setIsPrizeModalOpen(false);
     router.push("/");
+  };
+  
+  const handleSimulateComplete = () => {
+    unlockStation(stationId + 1);
+    toast({
+      title: `¡Estación ${stationId} Completada!`,
+      description: "Has simulado la finalización. ¡Escoge tu premio!",
+    });
+    setIsPrizeModalOpen(true);
   };
 
   const renderContent = () => {
@@ -224,11 +235,12 @@ export default function Station4() {
             })}
           </div>
 
-          <div className="mt-4 max-w-md mx-auto">
+          <div className="mt-4 max-w-md mx-auto space-y-4">
             <p className="bg-background/80 p-4 rounded-md text-center">
               Selecciona uno de los retos para demostrar tu compromiso con la
               conservación del agua.
             </p>
+            <Button onClick={handleSimulateComplete}>Simular Finalización</Button>
           </div>
 
         </div>
@@ -241,9 +253,11 @@ export default function Station4() {
       {renderContent()}
       <PrizeDialog
         open={isPrizeModalOpen}
-        stationId={4}
+        stationId={stationId}
         onClaim={handleClaimPrize}
       />
     </>
   );
 }
+
+    
