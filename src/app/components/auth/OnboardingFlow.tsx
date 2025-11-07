@@ -75,7 +75,6 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
             setFormName(data.nombre);
             setStep('avatar');
         } catch (error: any) {
-            console.error("Sign up failed:", error.code, error.message);
             const message = error.code === 'auth/email-already-in-use'
                 ? "Este correo electrónico ya está en uso."
                 : "No se pudo crear la cuenta. Inténtalo de nuevo.";
@@ -276,5 +275,3 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         </main>
     );
 }
-
-    
