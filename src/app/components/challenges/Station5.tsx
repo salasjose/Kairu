@@ -116,13 +116,13 @@ export default function Station5() {
 
   return (
      <>
-      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background">
         {sostenibilidadBgImage && (
             <Image
                 src={sostenibilidadBgImage.imageUrl}
                 alt={sostenibilidadBgImage.description}
                 fill
-                style={{objectFit: 'cover'}}
+                style={{objectFit: 'contain'}}
                 className="z-0"
                 data-ai-hint={sostenibilidadBgImage.imageHint}
             />
@@ -171,4 +171,3 @@ export default function Station5() {
     </>
   );
 }
-
