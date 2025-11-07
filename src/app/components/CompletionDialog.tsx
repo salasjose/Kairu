@@ -9,7 +9,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { PartyPopper, Home } from "lucide-react";
+import { PartyPopper, Home, MapIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface CompletionDialogProps {
   open: boolean;
@@ -17,6 +18,12 @@ interface CompletionDialogProps {
 }
 
 export default function CompletionDialog({ open, onGoToStation9 }: CompletionDialogProps) {
+  const router = useRouter();
+
+  const handleGoToMap = () => {
+    router.push('/');
+  };
+
   return (
     <Dialog open={open}>
       <DialogContent>
@@ -32,8 +39,12 @@ export default function CompletionDialog({ open, onGoToStation9 }: CompletionDia
             ¡Gracias por completar la aventura de Kairu!
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter>
-          <Button onClick={onGoToStation9} className="w-full">
+        <DialogFooter className="sm:flex-row sm:justify-center space-y-2 sm:space-y-0 sm:space-x-2">
+          <Button onClick={handleGoToMap} variant="outline" className="w-full sm:w-auto">
+            <MapIcon className="mr-2 h-4 w-4" />
+            Volver al Mapa
+          </Button>
+          <Button onClick={onGoToStation9} className="w-full sm:w-auto">
             <Home className="mr-2 h-4 w-4" />
             Ir a mi Estación
           </Button>
