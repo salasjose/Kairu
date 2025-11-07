@@ -103,7 +103,7 @@ export default function Station9() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full w-full bg-background">
+      <div className="flex items-center justify-center h-screen w-screen bg-background">
         Cargando tu estación personalizada...
       </div>
     );
@@ -181,7 +181,7 @@ export default function Station9() {
       </div>
       <CompletionDialog 
         open={isCompletionDialogOpen}
-        onGoToStation9={() => setIsCompletionDialogOpen(false)}
+        onOpenChange={setIsCompletionDialogOpen}
       />
     </>
   );

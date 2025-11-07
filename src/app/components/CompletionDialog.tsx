@@ -14,18 +14,24 @@ import { useRouter } from "next/navigation";
 
 interface CompletionDialogProps {
   open: boolean;
-  onGoToStation9: () => void;
+  onOpenChange: (open: boolean) => void;
 }
 
-export default function CompletionDialog({ open, onGoToStation9 }: CompletionDialogProps) {
+export default function CompletionDialog({ open, onOpenChange }: CompletionDialogProps) {
   const router = useRouter();
 
   const handleGoToMap = () => {
+    onOpenChange(false);
     router.push('/');
+  };
+  
+  const handleGoToStation9 = () => {
+    onOpenChange(false);
+    router.push('/station/9');
   };
 
   return (
-    <Dialog open={open}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl justify-center text-center">
@@ -44,7 +50,7 @@ export default function CompletionDialog({ open, onGoToStation9 }: CompletionDia
             <MapIcon className="mr-2 h-4 w-4" />
             Volver al Mapa
           </Button>
-          <Button onClick={onGoToStation9} className="w-full sm:w-auto">
+          <Button onClick={handleGoToStation9} className="w-full sm:w-auto">
             <Home className="mr-2 h-4 w-4" />
             Ir a mi Estación
           </Button>

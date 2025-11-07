@@ -123,11 +123,6 @@ export default function GameClient() {
     setIsCompletionDialogOpen(false);
   };
 
-  const handleGoToStation9 = () => {
-    setIsCompletionDialogOpen(false);
-    router.push('/station/9');
-  };
-
   const handleLogout = async () => {
     if (!auth) return;
     await signOut(auth);
@@ -256,7 +251,10 @@ export default function GameClient() {
 
       <AnimatePresence>
         {isCompletionDialogOpen && (
-          <CompletionDialog onGoToStation9={handleGoToStation9} open={isCompletionDialogOpen}/>
+          <CompletionDialog 
+            open={isCompletionDialogOpen}
+            onOpenChange={setIsCompletionDialogOpen}
+          />
         )}
       </AnimatePresence>
     </main>
