@@ -149,7 +149,7 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
             role="status"
             aria-live="polite"
           >
-            <div className="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg relative max-w-xs">
+            <div className="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg relative max-w-sm">
               <p className="text-lg font-bold text-primary">Me llamo YARA, te invito a crear tu usuario.</p>
               <div className="absolute right-8 -bottom-2 h-0 w-0 border-x-8 border-x-transparent border-t-[10px] border-t-white/90"></div>
             </div>
