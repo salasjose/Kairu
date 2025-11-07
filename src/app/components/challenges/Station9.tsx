@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { useUser, useFirestore } from "@/firebase/hooks";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { usePrizeCart } from "@/hooks/use-prize-cart";
-import { motion, useDragControls } from "framer-motion";
+import { motion, useDragControls, PanInfo } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import CompletionDialog from "../CompletionDialog";
+import type { Prize } from "@/lib/data";
 
 const DRAGGABLE_AREA_ID = "station-9-canvas";
 
@@ -18,7 +19,37 @@ type PlacedPrize = {
   name: string;
   x: number;
   y: number;
+  stationId: number;
 };
+
+// New component for the draggable prize item
+const DraggablePrize = ({ 
+  prize, 
+  onDragEnd, 
+  constraints 
+}: { 
+  prize: Prize, 
+  onDragEnd: (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => void,
+  constraints: React.RefObject<HTMLElement> 
+}) => {
+  const controls = useDragControls();
+  return (
+    <motion.div
+        key={prize.id}
+        drag
+        dragMomentum={false}
+        dragControls={controls}
+        onDragEnd={onDragEnd}
+        dragConstraints={constraints}
+        className="w-full aspect-square bg-white/20 rounded-md p-1 cursor-grab active:cursor-grabbing"
+    >
+        <div className="relative w-full h-full" onPointerDown={(e) => controls.start(e)}>
+            <Image src={prize.imageUrl} alt={prize.name} fill style={{objectFit: 'contain'}}/>
+        </div>
+    </motion.div>
+  );
+}
+
 
 export default function Station9() {
   const [chosenScenario, setChosenScenario] = useState<string | null>(null);
@@ -150,24 +181,14 @@ export default function Station9() {
         <div className="absolute top-0 right-0 h-full w-24 md:w-32 bg-black/50 backdrop-blur-sm p-2 z-30 flex flex-col items-center">
             <h3 className="text-white font-bold text-sm mb-2 text-center">Insignias</h3>
             <div className="flex-grow overflow-y-auto space-y-2 w-full">
-                {unplacedPrizes.map(prize => {
-                    const controls = useDragControls();
-                    return (
-                        <motion.div
-                            key={prize.id}
-                            drag
-                            dragMomentum={false}
-                            dragControls={controls}
-                            onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
-                            dragConstraints={canvasRef}
-                            className="w-full aspect-square bg-white/20 rounded-md p-1 cursor-grab active:cursor-grabbing"
-                        >
-                            <div className="relative w-full h-full" onPointerDown={(e) => controls.start(e)}>
-                                <Image src={prize.imageUrl} alt={prize.name} fill style={{objectFit: 'contain'}}/>
-                            </div>
-                        </motion.div>
-                    )
-                })}
+                {unplacedPrizes.map(prize => (
+                    <DraggablePrize 
+                      key={prize.id}
+                      prize={prize} 
+                      onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
+                      constraints={canvasRef}
+                    />
+                ))}
                  {unplacedPrizes.length === 0 && (
                     <p className="text-white/70 text-xs text-center pt-4">No tienes más insignias por colocar.</p>
                 )}
