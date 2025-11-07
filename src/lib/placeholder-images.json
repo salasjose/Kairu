@@ -15,13 +15,13 @@
     {
       "id": "char-yara-magnifying",
       "description": "Yara the frog with a magnifying glass.",
-      "imageUrl": "/characters/Rana_con_lupa.png",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/e142e055-6c70-4228-b80c-e274c31168bd.png",
       "imageHint": "frog magnifying glass"
     },
     {
       "id": "char-yara-3",
       "description": "Yara the frog, version 3.",
-      "imageUrl": "/characters/YARA_3.png",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/184b22c7-0128-4034-9279-509f6e1fdfa6.png",
       "imageHint": "frog character"
     },
     {
