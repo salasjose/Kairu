@@ -122,7 +122,7 @@ export default function Station5() {
                 src={sostenibilidadBgImage.imageUrl}
                 alt={sostenibilidadBgImage.description}
                 fill
-                style={{objectFit: 'contain'}}
+                style={{objectFit: 'cover'}}
                 className="z-0"
                 data-ai-hint={sostenibilidadBgImage.imageHint}
             />
