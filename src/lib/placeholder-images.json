@@ -7,6 +7,12 @@
       "imageHint": "game map background"
     },
     {
+      "id": "vitalia-background",
+      "description": "Fondo para la estación Vitalia con energía renovable.",
+      "imageUrl": "/backgrounds/Energia_Renovable.png",
+      "imageHint": "renewable energy"
+    },
+    {
       "id": "char-yara-talking",
       "description": "Yara the frog speaking.",
       "imageUrl": "/characters/Rana_hablando_2.png",
@@ -269,6 +275,12 @@
       "description": "A small pile of dry, brown garden leaves.",
       "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/i0j1k2l3-4m5n-6o7p-8q9r-0s1t2u3v4w5x.png",
       "imageHint": "garden leaves"
+    },
+    {
+      "id": "solar-panel-field",
+      "description": "A field of solar panels.",
+      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/19ff9a84-023a-4467-b52e-c764e6f4a868.png",
+      "imageHint": "solar panels"
     }
   ]
 }

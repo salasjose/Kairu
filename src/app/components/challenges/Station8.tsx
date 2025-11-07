@@ -74,6 +74,7 @@ export default function Station8() {
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
   const router = useRouter();
+  const vitaliaBgImage = PlaceHolderImages.find(p => p.id === 'vitalia-background');
 
   const handleComplete = (challengeId: ChallengeId) => {
     unlockStation(stationId + 1);
@@ -104,7 +105,17 @@ export default function Station8() {
 
   return (
     <>
-      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-amber-100 to-yellow-200">
+      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        {vitaliaBgImage && (
+            <Image
+                src={vitaliaBgImage.imageUrl}
+                alt={vitaliaBgImage.description}
+                fill
+                style={{objectFit: 'cover'}}
+                className="z-0"
+                data-ai-hint={vitaliaBgImage.imageHint}
+            />
+        )}
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
           <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
             <h1 className="text-3xl md:text-5xl">Vitalia</h1>
