@@ -16,6 +16,8 @@ import { useAuth } from '@/firebase/hooks';
 import type { z } from "zod";
 import { Button } from '@/components/ui/button';
 import AnimatedWelcome from './AnimatedWelcome';
+import TypewriterText from './TypewriterText';
+
 
 // We can infer the types from the SignUpForm's schema directly
 import { type SignUpFormSchema } from './SignUpForm';
@@ -137,6 +139,11 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         }
     };
     
+    const yaraDialogText1 = "Soy Yara, una rana muy curiosa y estaré contigo en este emocionante recorrido por Kairu.";
+    const yaraDialogText2 = "A lo largo del camino conocerás 8 estaciones sorprendentes donde cada desafío superado abrirá nuevas etapas llenas de descubrimientos, aprendizajes y diversión. En el siguiente paso tendrás la oportunidad de escoger el lienzo que te permitirá crear tu propia estación.";
+    const yaraDialogText3 = "En cada avance ganarás recompensas especiales que tú mismo elegirás para completar la estación ideal que elijas.";
+    const yaraDialogText4 = "Cada paso te conectará más a la naturaleza y te mostrará cómo tus acciones pueden transformar el mundo que te rodea.";
+    
     const renderStep = () => {
         switch (step) {
              case 'loading':
@@ -192,10 +199,14 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
                         {yaraCharImage && <Image src={yaraCharImage.imageUrl} alt="Yara" width={150} height={150} className="mx-auto mb-4" />}
                         <Card className="p-6 shadow-xl">
                             <h2 className="text-2xl font-bold font-headline text-primary">¡Hola, {formName}!</h2>
-                            <p className="mt-4 text-muted-foreground">Soy Yara, una rana muy curiosa y estaré contigo en este emocionante recorrido por Kairu.</p>
-                            <p className="mt-2 text-muted-foreground">A lo largo del camino conocerás 8 estaciones sorprendentes donde cada desafío superado abrirá nuevas etapas llenas de descubrimientos, aprendizajes y diversión. En el siguiente paso tendrás la oportunidad de escoger el lienzo que te permitirá crear tu propia estación.</p>
-                            <p className="mt-2 text-muted-foreground">En cada avance ganarás recompensas especiales que tú mismo elegirás para completar la estación ideal que elijas.</p>
-                            <p className="mt-2 text-muted-foreground">Cada paso te conectará más a la naturaleza y te mostrará cómo tus acciones pueden transformar el mundo que te rodea.</p>
+                            
+                            <div className='text-muted-foreground text-left'>
+                                <TypewriterText text={yaraDialogText1} el="p" className="mt-4" />
+                                <TypewriterText text={yaraDialogText2} el="p" className="mt-2" delay={yaraDialogText1.length * 0.02} />
+                                <TypewriterText text={yaraDialogText3} el="p" className="mt-2" delay={(yaraDialogText1.length + yaraDialogText2.length) * 0.02} />
+                                <TypewriterText text={yaraDialogText4} el="p" className="mt-2" delay={(yaraDialogText1.length + yaraDialogText2.length + yaraDialogText3.length) * 0.02} />
+                            </div>
+
                              <p className="mt-4 font-bold text-lg text-primary">¿Listo para comenzar este viaje conmigo?</p>
                             <Button onClick={() => setStep('scenario')} className="mt-6" size="lg">¡Sí!</Button>
                         </Card>
