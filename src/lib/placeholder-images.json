@@ -7,6 +7,30 @@
       "imageHint": "game map background"
     },
     {
+      "id": "avatar-1",
+      "description": "Avatar of a happy, adventurous boy with a hat.",
+      "imageUrl": "/avatars/Avatar1.png",
+      "imageHint": "boy avatar"
+    },
+    {
+      "id": "avatar-2",
+      "description": "Avatar of a cheerful girl with pigtails.",
+      "imageUrl": "/avatars/Avatar2.png",
+      "imageHint": "girl avatar"
+    },
+    {
+      "id": "avatar-3",
+      "description": "Avatar of a cool boy with sunglasses.",
+      "imageUrl": "/avatars/Avatar3.png",
+      "imageHint": "cool boy avatar"
+    },
+    {
+      "id": "avatar-4",
+      "description": "Avatar of a friendly girl with a headband.",
+      "imageUrl": "/avatars/Avatar4.png",
+      "imageHint": "friendly girl avatar"
+    },
+    {
       "id": "vitalia-background",
       "description": "Fondo para la estación Vitalia con energía renovable.",
       "imageUrl": "/backgrounds/Energia_Renovable.png",
@@ -35,30 +59,6 @@
       "description": "A friendly, smiling cartoon frog character named Yara, ready for adventure.",
       "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/9ac22228-5690-482c-9a4f-560447339d29.png",
       "imageHint": "frog character"
-    },
-    {
-      "id": "avatar-1",
-      "description": "Avatar of a happy, adventurous boy with a hat.",
-      "imageUrl": "/avatars/Avatar1.png",
-      "imageHint": "boy avatar"
-    },
-    {
-      "id": "avatar-2",
-      "description": "Avatar of a smiling, curious girl with glasses.",
-      "imageUrl": "/avatars/Avatar2.png",
-      "imageHint": "girl avatar"
-    },
-    {
-      "id": "avatar-3",
-      "description": "Avatar of a person with a neutral expression and curly hair.",
-      "imageUrl": "/avatars/Avatar3.png",
-      "imageHint": "person avatar"
-    },
-    {
-      "id": "avatar-4",
-      "description": "Avatar of a person with short hair and a friendly smile.",
-      "imageUrl": "/avatars/Avatar4.png",
-      "imageHint": "friendly avatar"
     },
     {
       "id": "scenario-bosque-seco",

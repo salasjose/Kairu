@@ -23,7 +23,6 @@ import TypewriterText from './TypewriterText';
 import { type SignUpFormSchema } from './SignUpForm';
 import { type LoginFormSchema } from './LoginForm';
 
-
 type SignUpData = z.infer<typeof SignUpFormSchema>;
 type LoginData = z.infer<typeof LoginFormSchema>;
 
@@ -48,7 +47,8 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
     
     const background = useMemo(() => PlaceHolderImages.find(p => p.id === 'map-background'), []);
     const yaraCharImage = useMemo(() => PlaceHolderImages.find((p) => p.id === 'char-yara'), []);
-    const avatars = useMemo(() => PlaceHolderImages.filter(p => p.id.startsWith('avatar-')).sort((a, b) => a.id.localeCompare(b.id)), []);
+    const avatars = useMemo(() => PlaceHolderImages.filter(p => p.id.startsWith('avatar-')).sort((a,b) => a.id.localeCompare(b.id)), []);
+
     const scenarios = useMemo(() => [
         PlaceHolderImages.find(p => p.id === 'scenario-bosque-seco'),
         PlaceHolderImages.find(p => p.id === 'scenario-ciudad'),
@@ -100,7 +100,6 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
             // GameClient will see the user and call fetchPlayerState, which will find the existing doc.
             onLoginSuccess();
         } catch (error: any) {
-            console.error("Login failed:", error);
             const message = (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential')
                 ? "Correo o contraseña incorrectos."
                 : "No se pudo iniciar sesión. Inténtalo de nuevo.";
@@ -188,7 +187,13 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
                             {avatars.map(avatar => (
                                 <Card key={avatar.id} onClick={() => handleAvatarSelect(avatar.imageUrl)} className="p-2 cursor-pointer hover:border-primary hover:scale-105 transition-transform duration-300">
                                     <div className="relative aspect-square w-full">
-                                        <Image src={avatar.imageUrl} alt={avatar.description} fill style={{objectFit: 'cover'}} className="rounded-md" />
+                                        <Image
+                                            src={avatar.imageUrl}
+                                            alt={avatar.description}
+                                            fill
+                                            style={{objectFit: 'cover'}}
+                                            className="rounded-md"
+                                        />
                                     </div>
                                 </Card>
                             ))}

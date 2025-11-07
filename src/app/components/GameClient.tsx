@@ -21,7 +21,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescri
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 
-
 interface PlayerState {
   id: string;
   name: string;
@@ -32,7 +31,7 @@ interface PlayerState {
 
 const SettingsPanel = ({ playerState, setPlayerState }: { playerState: PlayerState; setPlayerState: (state: PlayerState) => void; }) => {
     const db = useFirestore();
-    const avatars = useMemo(() => PlaceHolderImages.filter(p => p.id.startsWith('avatar-')), []);
+    const avatars = useMemo(() => PlaceHolderImages.filter(p => p.id.startsWith('avatar-')).sort((a,b) => a.id.localeCompare(b.id)), []);
 
     const handleAvatarChange = async (newAvatarUrl: string) => {
         if (!playerState || !db) {
