@@ -76,6 +76,8 @@ export default function Station5() {
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
   const router = useRouter();
+  const sostenibilidadBgImage = PlaceHolderImages.find(p => p.id === 'sostenibilidad-background');
+
 
   const handleComplete = (challengeId: ChallengeId) => {
     unlockStation(stationId + 1);
@@ -114,7 +116,17 @@ export default function Station5() {
 
   return (
      <>
-      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-yellow-100 to-orange-200">
+      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        {sostenibilidadBgImage && (
+            <Image
+                src={sostenibilidadBgImage.imageUrl}
+                alt={sostenibilidadBgImage.description}
+                fill
+                style={{objectFit: 'cover'}}
+                className="z-0"
+                data-ai-hint={sostenibilidadBgImage.imageHint}
+            />
+        )}
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
           <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
             <h1 className="text-3xl md:text-5xl">ZonaCreativa</h1>
@@ -160,4 +172,3 @@ export default function Station5() {
   );
 }
 
-    
