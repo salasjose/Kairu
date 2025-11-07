@@ -26,17 +26,18 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
     callback();
   }, []);
 
+  // Secuencia con limpieza + pausa si la pestaña no está visible
   useEffect(() => {
     if (userInteracted) return;
 
-    let dialogTimer: NodeJS.Timeout;
-    let lupaTimer: NodeJS.Timeout;
-    let idleTimer: NodeJS.Timeout;
+    let dialogTimer: ReturnType<typeof setTimeout> | null = null;
+    let lupaTimer: ReturnType<typeof setTimeout> | null = null;
+    let idleTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const startSequence = () => {
+    const start = () => {
       setScene('enter');
       dialogTimer = setTimeout(() => {
-        if (document.hidden) return;
+        if (document.hidden) return; // evita saltos al volver la pestaña
         setScene('dialog');
         lupaTimer = setTimeout(() => {
           if (document.hidden) return;
@@ -44,33 +45,41 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
           idleTimer = setTimeout(() => {
             if (document.hidden) return;
             setScene('idle');
-            startSequence(); // Loop
-          }, 45000); // 45 seconds idle time
-        }, 20000); // 20 seconds dialog display
-      }, 5000); // 5 seconds initial wait
+            start(); // loop suave
+          }, 45000);
+        }, 20000);
+      }, 5000);
     };
 
-    startSequence();
+    start();
+
+    const onVisibility = () => {
+      // cuando vuelve visible, reinicia para no “perder” escenas
+      if (!document.hidden && !userInteracted) {
+        [dialogTimer, lupaTimer, idleTimer].forEach(t => t && clearTimeout(t));
+        start();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
-      clearTimeout(dialogTimer);
-      clearTimeout(lupaTimer);
-      clearTimeout(idleTimer);
+      [dialogTimer, lupaTimer, idleTimer].forEach(t => t && clearTimeout(t));
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   }, [userInteracted]);
 
 
   return (
-    <div className="relative w-full min-h-screen flex items-center justify-center p-4 overflow-hidden">
+    <div className="relative w-full min-h-[70vh] flex items-center justify-center p-4 overflow-hidden">
 
-      {/* Central Logo and Auth Buttons */}
+      {/* Centro: logo + botones */}
       <div className="flex flex-col items-center justify-center w-full text-center z-10">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <Logo className="h-24 w-24 md:h-32 md:w-32 mx-auto text-primary" />
+          <Logo className="h-24 w-24 md:h-32 md:w-32 mx-auto text-primary" aria-hidden="true" />
           <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mt-4 text-3d">KAIRU</h1>
         </motion.div>
 
@@ -84,55 +93,61 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
         </motion.div>
       </div>
 
-      {/* Animated Frog Character */}
+      {/* Personaje YARA (hablando / idle) */}
       <AnimatePresence>
         {(scene === 'enter' || scene === 'dialog' || scene === 'idle') && talkingFrog && (
           <motion.div
             key="talking-frog"
             initial={{ opacity: 0, x: -100 }}
-            animate={{ opacity: 1, x: 0, transition: { delay: 1, duration: 0.8 } }}
-            exit={{ opacity: 0, x: -100, transition: { duration: 0.5 } }}
-            className="absolute left-4 top-1/2 -translate-y-1/2 md:left-8 z-20"
+            animate={{ opacity: 1, x: 0, transition: { delay: 0.6, duration: 0.6 } }}
+            exit={{ opacity: 0, x: -100, transition: { duration: 0.4 } }}
+            className="absolute left-3 md:left-8 top-1/2 -translate-y-1/2 z-20 pointer-events-none"
+            aria-hidden="true"
           >
             <Image
               src={talkingFrog.imageUrl}
               alt={talkingFrog.description}
-              width={200}
-              height={200}
-              className="w-32 md:w-48 h-auto"
+              width={240}
+              height={240}
+              className="w-28 md:w-60 h-auto select-none"
               priority
             />
           </motion.div>
         )}
+        
+        {/* Personaje con lupa */}
         {scene === 'lupa' && lupaFrog && (
           <motion.div
             key="lupa-frog"
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            className="absolute left-4 top-1/2 -translate-y-1/2 md:left-8 z-20"
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="absolute left-3 md:left-8 top-1/2 -translate-y-1/2 z-20 pointer-events-none"
+            aria-hidden="true"
           >
             <Image
               src={lupaFrog.imageUrl}
               alt={lupaFrog.description}
-              width={200}
-              height={200}
-              className="w-32 md:w-48 h-auto"
+              width={240}
+              height={240}
+              className="w-28 md:w-60 h-auto select-none"
               priority
             />
           </motion.div>
         )}
       </AnimatePresence>
       
-      {/* Dialog Box */}
+      {/* Globo de diálogo */}
       <AnimatePresence>
-        {(scene === 'dialog') && (
+        {scene === 'dialog' && (
           <motion.div
             key="dialog-box"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20, transition: { duration: 0.3 } }}
-            className="absolute left-4 md:left-40 top-1/3 md:top-1/4 z-30"
+            exit={{ opacity: 0, y: 20, transition: { duration: 0.25 } }}
+            className="absolute left-[calc(theme(spacing.3)+theme(spacing.28))] md:left-[calc(theme(spacing.8)+theme(spacing.60))] top-[22%] md:top-[18%] z-30"
+            role="status"
+            aria-live="polite"
           >
             <div className="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg relative max-w-xs">
               <p className="text-lg font-bold text-primary">Me llamo YARA, te invito a crear tu usuario.</p>

@@ -10,10 +10,10 @@
     --card-foreground: 141 29% 20%;
     --popover: 140 50% 100%;
     --popover-foreground: 141 29% 20%;
-    --primary: 218 89% 20%;
+    --primary: 220 90% 20%;
     --primary-foreground: 0 0% 98%;
     --secondary: 141 15% 90%;
-    --secondary-foreground: 218 89% 20%;
+    --secondary-foreground: 220 90% 20%;
     --muted: 141 15% 90%;
     --muted-foreground: 141 15% 40%;
     --accent: 218 80% 92%;
@@ -22,7 +22,7 @@
     --destructive-foreground: 0 0% 98%;
     --border: 141 15% 85%;
     --input: 141 15% 85%;
-    --ring: 218 89% 20%;
+    --ring: 220 90% 20%;
     --radius: 0.8rem;
   }
 
@@ -68,5 +68,11 @@
       2px 2px 0px hsl(var(--primary) / 0.6),
       3px 3px 0px hsl(var(--primary) / 0.4),
       4px 4px 0px hsl(var(--primary) / 0.2);
+  }
+  
+  /* Evita seleccionar imágenes decorativas */
+  .select-none {
+    user-select: none;
+    -webkit-user-drag: none;
   }
 }

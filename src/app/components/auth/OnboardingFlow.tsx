@@ -234,10 +234,23 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
     };
 
     return (
-        <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background relative overflow-hidden">
-            <div className="absolute inset-0 bg-cover bg-center" style={{backgroundImage: `url(${PlaceHolderImages.find(p => p.id === 'map-background')?.imageUrl})`}}></div>
-            <div className="absolute inset-0 bg-black/30"></div>
-            <div className="relative z-10 w-full flex items-center justify-center">
+        <main className="relative flex flex-col items-center justify-center min-h-screen w-full overflow-hidden">
+            {/* Fondo ocupando todo con Next/Image fill (mejor performance que CSS url) */}
+            <div className="absolute inset-0 -z-10">
+                <Image
+                    src={PlaceHolderImages.find(p => p.id === 'map-background')?.imageUrl ?? '/backgrounds/Mapa.png'}
+                    alt="Fondo KAIRU"
+                    fill
+                    priority
+                    sizes="100vw"
+                    className="object-cover"
+                />
+                {/* Veladura para contraste de UI */}
+                <div className="absolute inset-0 bg-black/30" />
+            </div>
+
+            {/* Contenido */}
+            <div className="relative z-10 w-full flex items-center justify-center p-4">
                  <AnimatePresence mode="wait">
                     {renderStep()}
                 </AnimatePresence>
