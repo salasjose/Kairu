@@ -3,6 +3,8 @@
 import { motion } from 'framer-motion';
 import Logo from '@/app/components/Logo';
 import { Button } from '@/components/ui/button';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import Image from 'next/image';
 
 interface WelcomeScreenProps {
   onLoginClick: () => void;
@@ -10,22 +12,48 @@ interface WelcomeScreenProps {
 }
 
 export default function WelcomeScreen({ onLoginClick, onCreateUserClick }: WelcomeScreenProps) {
+  const yaraImage = PlaceHolderImages.find(p => p.id === 'char-yara-talking');
+
   return (
     <div className="flex flex-col md:flex-row items-center justify-between min-h-screen p-4 w-full">
+
       <motion.div
         initial={{ opacity: 0, x: -100 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.5, duration: 0.8 }}
-        className="absolute left-4 top-1/3 md:left-8 md:top-1/4"
+        transition={{ delay: 1, duration: 0.8 }}
+        className="absolute left-4 top-1/2 -translate-y-1/2 md:left-8"
+      >
+        {yaraImage && (
+          <motion.div 
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <Image 
+              src={yaraImage.imageUrl}
+              alt={yaraImage.description}
+              width={200}
+              height={200}
+              className="w-32 md:w-48 h-auto"
+              priority
+            />
+          </motion.div>
+        )}
+      </motion.div>
+      
+      <motion.div
+        initial={{ opacity: 0, x: -100 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 1.5, duration: 0.8 }}
+        className="absolute left-4 top-1/3 md:left-40 md:top-1/4"
       >
         <motion.div 
             className="w-max"
             animate={{ y: [0, -8, 0] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
           >
             <div className="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg relative">
               <p className="text-lg font-bold text-primary">Me llamo YARA, te invito a crear tu usuario.</p>
-              <div className="absolute left-1/2 -translate-x-1/2 top-full h-0 w-0 border-x-8 border-x-transparent border-t-[10px] border-t-white/90"></div>
+              <div className="absolute left-8 -bottom-2 h-0 w-0 border-x-8 border-x-transparent border-t-[10px] border-t-white/90"></div>
             </div>
           </motion.div>
       </motion.div>

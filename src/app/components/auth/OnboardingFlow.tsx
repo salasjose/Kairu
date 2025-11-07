@@ -1,14 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 
 import Logo from '@/app/components/Logo';
 import SignUpForm from './SignUpForm';
 import LoginForm from './LoginForm';
-import WelcomeScreen from './WelcomeScreen';
-import { Button } from '@/components/ui/button';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -16,6 +14,8 @@ import { toast } from '@/hooks/use-toast';
 import { signUp, login } from '@/firebase/auth';
 import { useAuth } from '@/firebase/hooks';
 import type { z } from "zod";
+import { Button } from '@/components/ui/button';
+import AnimatedWelcome from './AnimatedWelcome';
 
 // We can infer the types from the SignUpForm's schema directly
 import { type SignUpFormSchema } from './SignUpForm';
@@ -34,11 +34,11 @@ interface OnboardingFlowProps {
     onLoginSuccess: () => void;
 }
 
-type Step = 'welcome' | 'signup' | 'login' | 'avatar' | 'yara' | 'scenario';
+type Step = 'loading' | 'welcome' | 'signup' | 'login' | 'avatar' | 'yara' | 'scenario';
 
 export default function OnboardingFlow({ onComplete, onLoginSuccess }: OnboardingFlowProps) {
     const auth = useAuth();
-    const [step, setStep] = useState<Step>('welcome');
+    const [step, setStep] = useState<Step>('loading');
     const [formName, setFormName] = useState<string>('');
     const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
     const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
@@ -47,6 +47,14 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
     const yaraCharImage = useMemo(() => PlaceHolderImages.find((p) => p.id === 'char-yara'), []);
     const avatars = useMemo(() => PlaceHolderImages.filter(p => p.id.startsWith('avatar-')), []);
     const scenarios = useMemo(() => PlaceHolderImages.slice(0, 4), []);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setStep('welcome');
+        }, 5000); // 5-second splash screen
+
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleSignUpSubmit = async (data: SignUpData) => {
         if (!auth) {
@@ -129,10 +137,23 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
     
     const renderStep = () => {
         switch (step) {
+             case 'loading':
+                return (
+                    <motion.div
+                        key="loading"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="flex flex-col items-center justify-center text-center"
+                    >
+                        <Logo className="h-24 w-24 md:h-32 md:w-32 mx-auto text-primary animate-pulse" />
+                        <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mt-4">KAIRU</h1>
+                    </motion.div>
+                );
             case 'welcome':
                 return (
                      <motion.div key="welcome" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                        <WelcomeScreen
+                        <AnimatedWelcome
                             onLoginClick={() => setStep('login')}
                             onCreateUserClick={() => setStep('signup')}
                         />
@@ -212,18 +233,10 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         }
     };
 
-    if (isLoading) {
-        return (
-             <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background">
-                <Logo className="h-24 w-24 animate-pulse text-primary" />
-                <p className="text-primary/70 mt-4">Conectando con el servidor...</p>
-            </main>
-        )
-    }
-
     return (
         <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background relative overflow-hidden">
-             <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{backgroundImage: `url(${PlaceHolderImages.find(p => p.id === 'forest-background')?.imageUrl})`}}></div>
+            <div className="absolute inset-0 bg-cover bg-center" style={{backgroundImage: `url(${PlaceHolderImages.find(p => p.id === 'map-background')?.imageUrl})`}}></div>
+            <div className="absolute inset-0 bg-black/30"></div>
             <div className="relative z-10 w-full flex items-center justify-center">
                  <AnimatePresence mode="wait">
                     {renderStep()}

@@ -2,15 +2,21 @@
   "placeholderImages": [
     {
       "id": "map-background",
-      "description": "Fondo de bienvenida del juego Kairu.",
-      "imageUrl": "/backgrounds/Mapa.png",
-      "imageHint": "game map"
-    },
-    {
-      "id": "mapa-juego-background",
       "description": "Fondo del mapa principal del juego Kairu.",
       "imageUrl": "/backgrounds/Mapa.png",
       "imageHint": "game map background"
+    },
+    {
+      "id": "char-yara-talking",
+      "description": "Yara the frog speaking.",
+      "imageUrl": "/characters/Rana_hablando_2.png",
+      "imageHint": "talking frog"
+    },
+    {
+      "id": "char-yara-magnifying",
+      "description": "Yara the frog with a magnifying glass.",
+      "imageUrl": "/characters/Rana_con_lupa.png",
+      "imageHint": "frog magnifying glass"
     },
     {
       "id": "char-yara",
@@ -51,7 +57,7 @@
     {
       "id": "forest-background",
       "description": "A lush, green cartoon forest background, with tall trees and sunlight filtering through the leaves.",
-      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/e09e23c2-f123-45c1-9293-e0750e3ac113.png",
+      "imageUrl": "/backgrounds/Inicio.png",
       "imageHint": "forest background"
     },
     {

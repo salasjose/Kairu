@@ -25,10 +25,6 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400;700&family=PT+Sans:wght@400;700&family=Kalam:wght@700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased bg-background min-h-screen flex flex-col">
-        <div 
-          className="fixed inset-0 w-full h-full bg-cover bg-center bg-no-repeat -z-10" 
-          style={{ backgroundImage: `url(${mapBg?.imageUrl})` }}
-        ></div>
         <FirebaseClientProvider>
           <PrizeCartProvider>
             {children}
