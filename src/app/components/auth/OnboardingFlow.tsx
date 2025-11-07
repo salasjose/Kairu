@@ -48,7 +48,7 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
     
     const background = useMemo(() => PlaceHolderImages.find(p => p.id === 'map-background'), []);
     const yaraCharImage = useMemo(() => PlaceHolderImages.find((p) => p.id === 'char-yara'), []);
-    const avatars = useMemo(() => PlaceHolderImages.filter(p => p.id.startsWith('avatar-')), []);
+    const avatars = useMemo(() => PlaceHolderImages.filter(p => p.id.startsWith('avatar-')).sort((a, b) => a.id.localeCompare(b.id)), []);
     const scenarios = useMemo(() => [
         PlaceHolderImages.find(p => p.id === 'scenario-bosque-seco'),
         PlaceHolderImages.find(p => p.id === 'scenario-ciudad'),
