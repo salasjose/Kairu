@@ -17,7 +17,6 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
   const yaraImage = useMemo(() => PlaceHolderImages.find(p => p.id === 'char-yara-3'), []);
 
   useEffect(() => {
-    // Show the dialog after 5 seconds
     const dialogTimer = setTimeout(() => {
       setShowDialog(true);
     }, 5000);
@@ -30,7 +29,7 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
   return (
     <div className="relative w-full min-h-[70vh] flex items-center justify-center p-4 overflow-hidden">
 
-      {/* Centro: logo + botones + yara */}
+      {/* Centro: logo + botones (capa intermedia) */}
       <div className="flex flex-col items-center justify-center w-full text-center z-10">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -49,42 +48,42 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
           <Button onClick={onCreateUserClick} size="lg">Crear Usuario</Button>
           <Button onClick={onLoginClick} size="lg" variant="outline" className="bg-white/80">Iniciar Sesión</Button>
         </motion.div>
+      </div>
 
+       {/* Imagen de Yara (capa superior) */}
         {yaraImage && (
              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0, transition: { delay: 1.5, duration: 0.5 } }}
-                className="mt-8"
+                initial={{ opacity: 0, y: 100, x: 100 }}
+                animate={{ opacity: 1, y: 0, x: 0, transition: { delay: 1.5, duration: 0.8, type: 'spring' } }}
+                className="absolute bottom-0 right-0 md:right-8 w-40 md:w-56 z-20 pointer-events-none"
              >
                 <Image
                     src={yaraImage.imageUrl}
                     alt={yaraImage.description}
-                    width={128}
-                    height={128}
-                    className="w-28 md:w-32 h-auto select-none"
+                    width={224}
+                    height={224}
+                    className="h-auto w-full select-none"
                     priority
                     aria-hidden="true"
                 />
             </motion.div>
         )}
-      </div>
 
-       {/* Globo de diálogo a la derecha */}
+       {/* Globo de diálogo (capa más alta) */}
       <AnimatePresence>
         {showDialog && (
             <motion.div
                 key="dialog-box"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0, transition: { delay: 0.2 } }}
-                exit={{ opacity: 0, y: 20 }}
-                className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-30"
+                initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1, transition: { delay: 0.2, type: 'spring' } }}
+                exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                className="absolute right-4 md:right-8 top-1/2 -translate-y-full z-30"
                 role="status"
                 aria-live="polite"
             >
                 <div className="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg relative max-w-sm">
-                <p className="text-lg font-bold text-primary">Me llamo YARA, te invito a crear tu usuario.</p>
-                {/* Flecha del diálogo apuntando a la izquierda */}
-                <div className="absolute right-full top-1/2 -translate-y-1/2 h-0 w-0 border-y-8 border-y-transparent border-r-[10px] border-r-white/90"></div>
+                  <p className="text-lg font-bold text-primary">Me llamo YARA, te invito a crear tu usuario.</p>
+                  <div className="absolute right-1/2 translate-x-1/2 bottom-[-8px] h-0 w-0 border-x-8 border-x-transparent border-t-[10px] border-t-white/90"></div>
                 </div>
             </motion.div>
         )}
