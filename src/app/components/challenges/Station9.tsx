@@ -93,17 +93,17 @@ export default function Station9() {
 
   return (
     <>
-      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      <div className="w-full min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
         {chosenScenario && (
           <Image
             src={chosenScenario}
             alt="Lienzo de estación personalizada"
-            layout="fill"
-            objectFit="cover"
+            fill
+            style={{objectFit: 'cover'}}
             className="z-0"
           />
         )}
-        <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
+        <div className="relative z-10 flex flex-col items-center justify-center text-center w-full p-4">
             <AnimatePresence>
             {showMessages && (
                  <motion.div
