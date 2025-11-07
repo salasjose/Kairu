@@ -18,7 +18,7 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
   const [scene, setScene] = useState<Scene>('enter');
   const [userInteracted, setUserInteracted] = useState(false);
 
-  const talkingFrog = useMemo(() => PlaceHolderImages.find(p => p.id === 'char-yara-3'), []);
+  const talkingFrog = useMemo(() => PlaceHolderImages.find(p => p.id === 'char-yara-talking'), []);
   const lupaFrog = useMemo(() => PlaceHolderImages.find(p => p.id === 'char-yara-magnifying'), []);
 
   const handleInteraction = useCallback((callback: () => void) => {
@@ -30,11 +30,11 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
   useEffect(() => {
     if (userInteracted) return;
 
-    let dialogTimer: ReturnType<typeof setTimeout> | null = null;
-    let lupaTimer: ReturnType<typeof setTimeout> | null = null;
-    let idleTimer: ReturnType<typeof setTimeout> | null = null;
+    let dialogTimer: ReturnType<typeof setTimeout>;
+    let lupaTimer: ReturnType<typeof setTimeout>;
+    let idleTimer: ReturnType<typeof setTimeout>;
 
-    const start = () => {
+    const startSequence = () => {
       setScene('enter');
       dialogTimer = setTimeout(() => {
         if (document.hidden) return; // evita saltos al volver la pestaña
@@ -45,26 +45,31 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
           idleTimer = setTimeout(() => {
             if (document.hidden) return;
             setScene('idle');
-            start(); // loop suave
+            startSequence(); // loop suave
           }, 45000);
         }, 20000);
       }, 5000);
     };
 
-    start();
+    startSequence();
 
-    const onVisibility = () => {
+    const onVisibilityChange = () => {
       // cuando vuelve visible, reinicia para no “perder” escenas
       if (!document.hidden && !userInteracted) {
-        [dialogTimer, lupaTimer, idleTimer].forEach(t => t && clearTimeout(t));
-        start();
+        clearTimeout(dialogTimer);
+        clearTimeout(lupaTimer);
+        clearTimeout(idleTimer);
+        startSequence();
       }
     };
-    document.addEventListener('visibilitychange', onVisibility);
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
-      [dialogTimer, lupaTimer, idleTimer].forEach(t => t && clearTimeout(t));
-      document.removeEventListener('visibilitychange', onVisibility);
+      clearTimeout(dialogTimer);
+      clearTimeout(lupaTimer);
+      clearTimeout(idleTimer);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, [userInteracted]);
 
@@ -98,10 +103,10 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
         {(scene === 'enter' || scene === 'dialog' || scene === 'idle') && talkingFrog && (
           <motion.div
             key="talking-frog"
-            initial={{ opacity: 0, x: 100 }}
+            initial={{ opacity: 0, x: -100 }}
             animate={{ opacity: 1, x: 0, transition: { delay: 0.6, duration: 0.6 } }}
-            exit={{ opacity: 0, x: 100, transition: { duration: 0.4 } }}
-            className="absolute right-0 bottom-0 md:right-8 md:bottom-8 z-20 pointer-events-none"
+            exit={{ opacity: 0, x: -100, transition: { duration: 0.4 } }}
+            className="absolute left-3 md:left-8 top-1/2 -translate-y-1/2 z-20 pointer-events-none"
             aria-hidden="true"
           >
             <Image
@@ -109,7 +114,7 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
               alt={talkingFrog.description}
               width={240}
               height={240}
-              className="w-48 md:w-60 h-auto select-none"
+              className="w-28 md:w-60 h-auto select-none"
               priority
             />
           </motion.div>
@@ -122,7 +127,7 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="absolute right-0 bottom-0 md:right-8 md:bottom-8 z-20 pointer-events-none"
+            className="absolute left-3 md:left-8 top-1/2 -translate-y-1/2 z-20 pointer-events-none"
             aria-hidden="true"
           >
             <Image
@@ -130,7 +135,7 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
               alt={lupaFrog.description}
               width={240}
               height={240}
-              className="w-48 md:w-60 h-auto select-none"
+              className="w-28 md:w-60 h-auto select-none"
               priority
             />
           </motion.div>
@@ -145,13 +150,13 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20, transition: { duration: 0.25 } }}
-            className="absolute right-[calc(theme(spacing.4)+theme(spacing.40))] md:right-[calc(theme(spacing.8)+theme(spacing.56))] bottom-[calc(theme(spacing.4)+theme(spacing.20))] md:bottom-[calc(theme(spacing.8)+theme(spacing.48))] z-30"
+            className="absolute left-[calc(theme(spacing.3)+theme(spacing.28))] md:left-[calc(theme(spacing.8)+theme(spacing.60))] top-[22%] md:top-[18%] z-30"
             role="status"
             aria-live="polite"
           >
-            <div className="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg relative max-w-sm">
+            <div className="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg relative max-w-xs">
               <p className="text-lg font-bold text-primary">Me llamo YARA, te invito a crear tu usuario.</p>
-              <div className="absolute right-8 -bottom-2 h-0 w-0 border-x-8 border-x-transparent border-t-[10px] border-t-white/90"></div>
+              <div className="absolute left-8 -bottom-2 h-0 w-0 border-x-8 border-x-transparent border-t-[10px] border-t-white/90"></div>
             </div>
           </motion.div>
         )}
