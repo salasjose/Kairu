@@ -13,6 +13,8 @@ import OnboardingFlow from './auth/OnboardingFlow';
 import { AnimatePresence } from 'framer-motion';
 import { useUser, useFirestore, useAuth } from '@/firebase/hooks';
 import { signOut } from 'firebase/auth';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+
 
 interface PlayerState {
   id: string;
@@ -30,6 +32,8 @@ export default function GameClient() {
   const { user, loading: userLoading } = useUser();
   const db = useFirestore();
   const auth = useAuth();
+  const mapBackground = PlaceHolderImages.find(p => p.id === 'map-background');
+
 
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
   const [isNewUser, setIsNewUser] = useState(false);
@@ -42,7 +46,12 @@ export default function GameClient() {
     try {
       const docSnap = await getDoc(playerDocRef);
       if (docSnap.exists()) {
-        setPlayerState(docSnap.data() as PlayerState);
+        const data = docSnap.data() as PlayerState;
+        // Ensure chosenScenario is not undefined from old data structures
+        if (!data.chosenScenario) {
+            data.chosenScenario = null;
+        }
+        setPlayerState(data);
         setIsNewUser(false);
       } else {
         setIsNewUser(true);
@@ -154,6 +163,16 @@ export default function GameClient() {
 
   return (
     <main className="relative w-full min-h-screen flex flex-col overflow-hidden">
+      {mapBackground && (
+        <Image
+          src={mapBackground.imageUrl}
+          alt={mapBackground.description}
+          layout="fill"
+          objectFit="cover"
+          className="z-0"
+          priority
+        />
+      )}
       <header className="absolute top-0 left-0 right-0 p-2 sm:p-4 z-20">
         <div className="container mx-auto flex items-start justify-between gap-2">
             <div className="bg-white/90 backdrop-blur-sm p-2 rounded-2xl flex items-center gap-3 shadow-md">

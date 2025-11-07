@@ -15,7 +15,7 @@
     {
       "id": "char-yara-magnifying",
       "description": "Yara the frog with a magnifying glass.",
-      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/e142e055-6c70-4228-b80c-e274c31168bd.png",
+      "imageUrl": "/characters/Rana_lupa_1.png",
       "imageHint": "frog magnifying glass"
     },
     {
@@ -33,26 +33,50 @@
     {
       "id": "avatar-1",
       "description": "Avatar of a happy, adventurous boy with a hat.",
-      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/9c55b6c3-11a5-48b4-a4e8-466d6d2e67a6.png",
+      "imageUrl": "/avatars/Avatar_1.png",
       "imageHint": "boy avatar"
     },
     {
       "id": "avatar-2",
       "description": "Avatar of a smiling, curious girl with glasses.",
-      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/f7e0259b-54b9-4f7c-95b6-0e08c459f0f9.png",
+      "imageUrl": "/avatars/Avatar_2.png",
       "imageHint": "girl avatar"
     },
     {
       "id": "avatar-3",
       "description": "Avatar of a person with a neutral expression and curly hair.",
-      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/a8e6e5a6-7243-4a1d-9e63-44f2a7a4f944.png",
+      "imageUrl": "/avatars/Avatar_3.png",
       "imageHint": "person avatar"
     },
     {
       "id": "avatar-4",
       "description": "Avatar of a person with short hair and a friendly smile.",
-      "imageUrl": "https://storage.googleapis.com/project-spark-34117.appspot.com/static/assets/6b8e3a2e-4a6b-4e0c-9f8a-5e3e4a3c1e2b.png",
+      "imageUrl": "/avatars/Avatar_4.png",
       "imageHint": "friendly avatar"
+    },
+    {
+      "id": "scenario-bosque-seco",
+      "description": "Un escenario de bosque seco tropical para la estación final.",
+      "imageUrl": "/backgrounds/Bosque_Seco_Tropical.png",
+      "imageHint": "tropical dry forest"
+    },
+    {
+      "id": "scenario-ciudad",
+      "description": "Un escenario de ciudad sostenible para la estación final.",
+      "imageUrl": "/backgrounds/Ciudad_Sostenible.png",
+      "imageHint": "sustainable city"
+    },
+    {
+      "id": "scenario-manglares",
+      "description": "Un escenario de manglares para la estación final.",
+      "imageUrl": "/backgrounds/Manglares.png",
+      "imageHint": "mangrove forest"
+    },
+    {
+      "id": "scenario-mar-costero",
+      "description": "Un escenario marino y costero para la estación final.",
+      "imageUrl": "/backgrounds/Mar_Costero.png",
+      "imageHint": "coastal sea"
     },
     {
       "id": "signup-background",
