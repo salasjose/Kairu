@@ -20,6 +20,7 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
 
   const talkingFrog = useMemo(() => PlaceHolderImages.find(p => p.id === 'char-yara-talking'), []);
   const lupaFrog = useMemo(() => PlaceHolderImages.find(p => p.id === 'char-yara-magnifying'), []);
+  const yara3Frog = useMemo(() => PlaceHolderImages.find(p => p.id === 'char-yara-3'), []);
 
   const handleInteraction = useCallback((callback: () => void) => {
     setUserInteracted(true);
@@ -100,18 +101,18 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
 
       {/* Personaje YARA (hablando / idle) */}
       <AnimatePresence>
-        {(scene === 'enter' || scene === 'dialog' || scene === 'idle') && talkingFrog && (
+        {(scene === 'enter' || scene === 'dialog' || scene === 'idle') && yara3Frog && (
           <motion.div
             key="talking-frog"
-            initial={{ opacity: 0, x: -100 }}
+            initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0, transition: { delay: 0.6, duration: 0.6 } }}
-            exit={{ opacity: 0, x: -100, transition: { duration: 0.4 } }}
-            className="absolute left-3 md:left-8 top-1/2 -translate-y-1/2 z-20 pointer-events-none"
+            exit={{ opacity: 0, x: 100, transition: { duration: 0.4 } }}
+            className="absolute right-3 bottom-0 md:right-8 z-20 pointer-events-none"
             aria-hidden="true"
           >
             <Image
-              src={talkingFrog.imageUrl}
-              alt={talkingFrog.description}
+              src={yara3Frog.imageUrl}
+              alt={yara3Frog.description}
               width={240}
               height={240}
               className="w-28 md:w-60 h-auto select-none"
@@ -124,10 +125,10 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
         {scene === 'lupa' && lupaFrog && (
           <motion.div
             key="lupa-frog"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="absolute left-3 md:left-8 top-1/2 -translate-y-1/2 z-20 pointer-events-none"
+            initial={{ opacity: 0, scale: 0.9, x:100 }}
+            animate={{ opacity: 1, scale: 1, x:0 }}
+            exit={{ opacity: 0, scale: 0.9, x:100 }}
+            className="absolute right-3 bottom-0 md:right-8 z-20 pointer-events-none"
             aria-hidden="true"
           >
             <Image
@@ -150,11 +151,11 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20, transition: { duration: 0.25 } }}
-            className="absolute left-[calc(theme(spacing.3)+theme(spacing.28))] md:left-[calc(theme(spacing.8)+theme(spacing.60))] top-[22%] md:top-[18%] z-30"
+            className="absolute right-0 bottom-1/4 md:right-[15%] z-30"
             role="status"
             aria-live="polite"
           >
-            <div className="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg relative max-w-xs">
+            <div className="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg relative max-w-sm">
               <p className="text-lg font-bold text-primary">Me llamo YARA, te invito a crear tu usuario.</p>
               <div className="absolute left-8 -bottom-2 h-0 w-0 border-x-8 border-x-transparent border-t-[10px] border-t-white/90"></div>
             </div>
