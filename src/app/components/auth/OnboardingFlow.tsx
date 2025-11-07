@@ -49,7 +49,12 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
     const background = useMemo(() => PlaceHolderImages.find(p => p.id === 'map-background'), []);
     const yaraCharImage = useMemo(() => PlaceHolderImages.find((p) => p.id === 'char-yara'), []);
     const avatars = useMemo(() => PlaceHolderImages.filter(p => p.id.startsWith('avatar-')), []);
-    const scenarios = useMemo(() => PlaceHolderImages.slice(0, 4), []);
+    const scenarios = useMemo(() => [
+        PlaceHolderImages.find(p => p.id === 'scenario-bosque-seco'),
+        PlaceHolderImages.find(p => p.id === 'scenario-ciudad'),
+        PlaceHolderImages.find(p => p.id === 'scenario-mar-costero'),
+        PlaceHolderImages.find(p => p.id === 'scenario-manglares'),
+    ].filter(Boolean) as any[], []);
 
 
     useEffect(() => {
@@ -163,8 +168,8 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
                 return (
                      <motion.div key="welcome" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                         <AnimatedWelcome
-                            onLoginClick={() => setStep('login')}
-                            onCreateUserClick={() => setStep('signup')}
+                            onLoginClick={() => handleInteraction(() => setStep('login'))}
+                            onCreateUserClick={() => handleInteraction(() => setStep('signup'))}
                         />
                     </motion.div>
                 );
@@ -273,3 +278,5 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         </main>
     );
 }
+
+    
