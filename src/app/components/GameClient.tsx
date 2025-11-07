@@ -16,6 +16,7 @@ import { signOut } from 'firebase/auth';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useStationProgress } from '@/hooks/use-station-progress';
 import { doc as createDoc, setDoc } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
 
 
 interface PlayerState {
@@ -32,6 +33,7 @@ export default function GameClient() {
   const auth = useAuth();
   const { resetProgress } = useStationProgress();
   const mapBackground = PlaceHolderImages.find(p => p.id === 'map-background');
+  const router = useRouter();
 
 
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
@@ -110,6 +112,10 @@ export default function GameClient() {
     // resetProgress hook now handles all logic
     await resetProgress();
     // onSnapshot will automatically update the UI.
+  };
+
+  const handleGoToStation9 = () => {
+    router.push('/station/9');
   };
 
   const handleLogout = async () => {
@@ -242,7 +248,7 @@ export default function GameClient() {
 
       <AnimatePresence>
         {allStationsCompleted && (
-          <CompletionDialog onReset={handleReset} open={allStationsCompleted}/>
+          <CompletionDialog onGoToStation9={handleGoToStation9} open={allStationsCompleted}/>
         )}
       </AnimatePresence>
     </main>

@@ -9,14 +9,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { PartyPopper } from "lucide-react";
+import { PartyPopper, Home } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface CompletionDialogProps {
   open: boolean;
-  onReset: () => void;
+  onGoToStation9: () => void;
 }
 
-export default function CompletionDialog({ open, onReset }: CompletionDialogProps) {
+export default function CompletionDialog({ open, onGoToStation9 }: CompletionDialogProps) {
   return (
     <Dialog open={open}>
       <DialogContent>
@@ -33,8 +34,9 @@ export default function CompletionDialog({ open, onReset }: CompletionDialogProp
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button onClick={onReset} className="w-full">
-            Jugar de Nuevo
+          <Button onClick={onGoToStation9} className="w-full">
+            <Home className="mr-2 h-4 w-4" />
+            Ir a mi Estación
           </Button>
         </DialogFooter>
       </DialogContent>
