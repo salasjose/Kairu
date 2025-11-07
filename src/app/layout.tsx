@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
 import { PrizeCartProvider } from '@/hooks/use-prize-cart.tsx';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const mapBg = PlaceHolderImages.find(p => p.id === 'map-background');
   return (
     <html lang="es" className="h-full">
       <head>
@@ -25,7 +27,7 @@ export default function RootLayout({
       <body className="font-body antialiased bg-background min-h-screen flex flex-col">
         <div 
           className="fixed inset-0 w-full h-full bg-cover bg-center bg-no-repeat -z-10" 
-          style={{ backgroundImage: "url('/backgrounds/Mapa.png')" }}
+          style={{ backgroundImage: `url(${mapBg?.imageUrl})` }}
         ></div>
         <FirebaseClientProvider>
           <PrizeCartProvider>
