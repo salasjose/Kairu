@@ -1,28 +1,26 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import type { Prize } from '@/lib/data';
 
-const PRIZE_CART_STORAGE_KEY = 'kairu-prize-cart';
+const PRIZE_CART_STORAGE_KEY = 'kairu-prize-cart-v2';
 
 interface PrizeCartContextType {
-  prizes: number[];
-  addPrize: (prizeId: number) => void;
-  removePrize: (prizeId: number) => void;
+  prizes: Prize[];
+  addPrize: (prize: Prize) => void;
   clearCart: () => void;
-  isLoaded: boolean;
 }
 
 const PrizeCartContext = createContext<PrizeCartContextType | undefined>(undefined);
 
 export function PrizeCartProvider({ children }: { children: ReactNode }) {
-  const [prizes, setPrizes] = useState<number[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [prizes, setPrizes] = useState<Prize[]>([]);
 
   useEffect(() => {
     try {
       const savedPrizes = localStorage.getItem(PRIZE_CART_STORAGE_KEY);
       if (savedPrizes) {
-        const parsedPrizes = JSON.parse(savedPrizes);
+        const parsedPrizes = JSON.parse(savedPrizes) as Prize[];
         if (Array.isArray(parsedPrizes)) {
           setPrizes(parsedPrizes);
         }
@@ -30,10 +28,9 @@ export function PrizeCartProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Failed to load prize cart from localStorage", error);
     }
-    setIsLoaded(true);
   }, []);
 
-  const saveToLocalStorage = (items: number[]) => {
+  const saveToLocalStorage = (items: Prize[]) => {
       try {
         localStorage.setItem(PRIZE_CART_STORAGE_KEY, JSON.stringify(items));
       } catch (error) {
@@ -41,31 +38,23 @@ export function PrizeCartProvider({ children }: { children: ReactNode }) {
       }
   }
 
-  const addPrize = useCallback((prizeId: number) => {
+  const addPrize = useCallback((newPrize: Prize) => {
     setPrizes(prevPrizes => {
-      if (prevPrizes.includes(prizeId)) {
-        return prevPrizes;
-      }
-      const newPrizes = [...prevPrizes, prizeId];
+      // Each station can only contribute one prize. Replace if one from same station exists.
+      const otherStationPrizes = prevPrizes.filter(p => p.stationId !== newPrize.stationId);
+      const newPrizes = [...otherStationPrizes, newPrize];
       saveToLocalStorage(newPrizes);
       return newPrizes;
     });
   }, []);
 
-  const removePrize = useCallback((prizeId: number) => {
-    setPrizes(prevPrizes => {
-        const newPrizes = prevPrizes.filter(id => id !== prizeId);
-        saveToLocalStorage(newPrizes);
-        return newPrizes;
-    });
-  }, []);
 
   const clearCart = useCallback(() => {
     setPrizes([]);
     saveToLocalStorage([]);
   }, []);
 
-  const value = { prizes, addPrize, removePrize, clearCart, isLoaded };
+  const value = { prizes, addPrize, clearCart };
 
   return (
     <PrizeCartContext.Provider value={value}>

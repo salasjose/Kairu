@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PartyPopper, Home } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 interface CompletionDialogProps {
   open: boolean;

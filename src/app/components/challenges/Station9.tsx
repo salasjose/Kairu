@@ -1,34 +1,39 @@
-
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import PrizeDialog from "../PrizeDialog";
-import { useRouter } from "next/navigation";
 import { useUser, useFirestore } from "@/firebase/hooks";
-import { doc, getDoc } from "firebase/firestore";
-import { toast } from "@/hooks/use-toast";
-import { useStationProgress } from "@/hooks/use-station-progress";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { usePrizeCart } from "@/hooks/use-prize-cart";
-import { allPrizes } from "@/lib/data";
-import { Card, CardContent } from "@/components/ui/card";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, useDragControls } from "framer-motion";
+import { toast } from "@/hooks/use-toast";
+import CompletionDialog from "../CompletionDialog";
+
+const DRAGGABLE_AREA_ID = "station-9-canvas";
+
+type PlacedPrize = {
+  id: string;
+  imageUrl: string;
+  name: string;
+  x: number;
+  y: number;
+};
 
 export default function Station9() {
-  const stationId = 9;
   const [chosenScenario, setChosenScenario] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showMessages, setShowMessages] = useState(true);
+  const [placedPrizes, setPlacedPrizes] = useState<PlacedPrize[]>([]);
+  const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
+  
   const { user } = useUser();
   const db = useFirestore();
-  const router = useRouter();
-  const { unlockStation } = useStationProgress();
-  const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
-  const { prizes: prizeIds } = usePrizeCart();
+  const { prizes: collectedPrizes } = usePrizeCart();
+  const collectedPrizesFromStations1to8 = collectedPrizes.filter(p => p.stationId <= 8);
 
-  const collectedPrizes = allPrizes.filter(p => prizeIds.includes(p.id));
+  const canvasRef = useRef<HTMLDivElement>(null);
 
+  // Fetch initial data (scenario and placed prizes)
   useEffect(() => {
     const fetchPlayerData = async () => {
       if (!user || !db) {
@@ -38,8 +43,10 @@ export default function Station9() {
       try {
         const userDocRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(userDocRef);
-        if (docSnap.exists() && docSnap.data().chosenScenario) {
-          setChosenScenario(docSnap.data().chosenScenario);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setChosenScenario(data.chosenScenario || null);
+          setPlacedPrizes(data.placedPrizes || []);
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -47,45 +54,56 @@ export default function Station9() {
         setIsLoading(false);
       }
     };
-
     fetchPlayerData();
   }, [user, db]);
+
+  const handlePrizeDrop = async (prizeId: string, info: any) => {
+    if (!canvasRef.current || !user || !db) return;
+
+    const canvasRect = canvasRef.current.getBoundingClientRect();
+    const x = info.point.x - canvasRect.left;
+    const y = info.point.y - canvasRect.top;
+
+    const prizeData = collectedPrizes.find(p => p.id === prizeId);
+    if (!prizeData) return;
+
+    const newPlacedPrize: PlacedPrize = { ...prizeData, x, y };
+
+    const newPlacedPrizes = [
+      ...placedPrizes.filter(p => p.id !== prizeId),
+      newPlacedPrize,
+    ];
+    
+    setPlacedPrizes(newPlacedPrizes);
+
+    // Save to Firestore
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      await setDoc(userDocRef, { placedPrizes: newPlacedPrizes }, { merge: true });
+    } catch (error) {
+      console.error("Failed to save prize position", error);
+      toast({
+        title: "Error al guardar",
+        description: "No se pudo guardar la posición de la insignia.",
+        variant: "destructive",
+      });
+    }
+  };
   
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowMessages(false);
-    }, 60000); // 60 seconds
+  const handleCompleteChallenge = () => {
+    setIsCompletionDialogOpen(true);
+  }
 
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleComplete = () => {
-    unlockStation(stationId); // Technically station 9 is the last one
-    toast({
-      title: "¡Aventura Completada!",
-      description: "Has finalizado todos los retos de Kairu. ¡Gracias por jugar!",
-    });
-    // This will trigger the main completion dialog in GameClient
-  };
-
-  const handleClaimPrize = () => {
-    setIsPrizeModalOpen(false);
-    router.push("/");
-  };
+  const unplacedPrizes = collectedPrizesFromStations1to8.filter(
+    p => !placedPrizes.some(pp => pp.id === p.id)
+  );
   
-   const handleSimulateComplete = () => {
-    unlockStation(stationId + 1); // Unlock a virtual "10" to trigger completion
-    toast({
-      title: `¡Estación ${stationId} Completada!`,
-      description: "Has simulado la finalización. ¡Escoge tu premio!",
-    });
-    setIsPrizeModalOpen(true);
-  };
-
+  const allPrizesPlaced = collectedPrizesFromStations1to8.length > 0 && 
+                          collectedPrizesFromStations1to8.length === placedPrizes.length;
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full w-full bg-background">
         Cargando tu estación personalizada...
       </div>
     );
@@ -93,84 +111,77 @@ export default function Station9() {
 
   return (
     <>
-      <div className="w-full min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
-        {chosenScenario && (
-          <Image
-            src={chosenScenario}
-            alt="Lienzo de estación personalizada"
-            fill
-            style={{objectFit: 'cover'}}
-            className="z-0"
-          />
-        )}
-        <div className="relative z-10 flex flex-col items-center justify-center text-center w-full p-4">
-            <AnimatePresence>
-            {showMessages && (
-                 <motion.div
-                    key="messages"
-                    initial={{ opacity: 1 }}
-                    exit={{ opacity: 0, transition: { duration: 0.5 } }}
-                    className="flex flex-col items-center"
-                 >
-                    <div className="bg-primary text-white font-headline py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
-                        <h1 className="text-4xl md:text-5xl">Tu Estación Final</h1>
-                    </div>
+      <div className="relative w-screen h-screen overflow-hidden bg-background">
+        {/* Canvas Area */}
+        <div id={DRAGGABLE_AREA_ID} ref={canvasRef} className="absolute inset-0">
+          {chosenScenario ? (
+            <Image
+              src={chosenScenario}
+              alt="Lienzo de estación personalizada"
+              fill
+              style={{objectFit: 'cover'}}
+              className="z-0"
+              priority
+            />
+          ) : (
+            <div className="w-full h-full bg-muted flex items-center justify-center">
+                <p>No se encontró el lienzo. Por favor, vuelve a empezar.</p>
+            </div>
+          )}
 
-                    <div className="max-w-xl mx-auto bg-black/50 text-white p-4 rounded-xl mb-8">
-                        <p className="font-bold text-lg">
-                        YARA: "¡Lo lograste! Bienvenido a tu propia estación, el lienzo
-                        que escogiste al empezar tu viaje. Este es tu espacio para crear y
-                        aplicar todo lo que has aprendido. ¡Haz de él un verdadero
-                        santuario para la naturaleza!"
-                        </p>
-                    </div>
-                    
-                    <div className="mt-4 max-w-md mx-auto space-y-4">
-                        <p className="bg-background/80 p-4 rounded-md text-center">
-                            ¡Coloca aquí las insignias que has ganado! (Funcionalidad próximamente)
-                        </p>
-                        <Button onClick={handleSimulateComplete} size="lg">Completar Aventura</Button>
-                    </div>
-                 </motion.div>
+          {/* Placed Prizes */}
+          {placedPrizes.map((prize) => (
+            <motion.div
+              key={prize.id}
+              drag
+              dragMomentum={false}
+              onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
+              dragConstraints={canvasRef}
+              className="absolute w-16 h-16 md:w-20 md:h-20 cursor-grab active:cursor-grabbing z-20"
+              style={{ x: prize.x, y: prize.y }}
+              initial={{ x: prize.x, y: prize.y }}
+            >
+              <Image src={prize.imageUrl} alt={prize.name} fill style={{objectFit:'contain'}} />
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Sidebar with unplaced prizes */}
+        <div className="absolute top-0 right-0 h-full w-24 md:w-32 bg-black/50 backdrop-blur-sm p-2 z-30 flex flex-col items-center">
+            <h3 className="text-white font-bold text-sm mb-2 text-center">Insignias</h3>
+            <div className="flex-grow overflow-y-auto space-y-2 w-full">
+                {unplacedPrizes.map(prize => {
+                    const controls = useDragControls();
+                    return (
+                        <motion.div
+                            key={prize.id}
+                            drag
+                            dragMomentum={false}
+                            dragControls={controls}
+                            onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
+                            dragConstraints={canvasRef}
+                            className="w-full aspect-square bg-white/20 rounded-md p-1 cursor-grab active:cursor-grabbing"
+                        >
+                            <div className="relative w-full h-full" onPointerDown={(e) => controls.start(e)}>
+                                <Image src={prize.imageUrl} alt={prize.name} fill style={{objectFit: 'contain'}}/>
+                            </div>
+                        </motion.div>
+                    )
+                })}
+                 {unplacedPrizes.length === 0 && (
+                    <p className="text-white/70 text-xs text-center pt-4">No tienes más insignias por colocar.</p>
+                )}
+            </div>
+             {allPrizesPlaced && (
+                <Button onClick={handleCompleteChallenge} className="mt-4 w-full">
+                    Completar Aventura
+                </Button>
             )}
-            </AnimatePresence>
-            <AnimatePresence>
-            {!showMessages && (
-                <motion.div
-                    key="prizes"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1, transition: { duration: 0.5, delay: 0.5 } }}
-                    className="w-full max-w-2xl"
-                >
-                     <Card className="bg-background/80 backdrop-blur-sm">
-                        <CardContent className="p-6">
-                            <h2 className="text-2xl font-bold text-primary text-center mb-4">Tus Insignias Ganadas</h2>
-                             {collectedPrizes.length > 0 ? (
-                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
-                                {collectedPrizes.map(prize => {
-                                    const Icon = prize.icon;
-                                    return (
-                                        <div key={prize.id} className="flex flex-col items-center justify-center p-2 border rounded-lg bg-card/50">
-                                            <Icon className="h-10 w-10 mb-1 text-primary" />
-                                            <span className="text-xs text-center font-medium">{prize.name}</span>
-                                        </div>
-                                    )
-                                })}
-                                </div>
-                             ) : (
-                                <p className="text-center text-muted-foreground">Aún no has ganado insignias. ¡Completa estaciones para coleccionarlas!</p>
-                             )}
-                        </CardContent>
-                     </Card>
-                </motion.div>
-            )}
-            </AnimatePresence>
         </div>
       </div>
-      <PrizeDialog
-        open={isPrizeModalOpen}
-        stationId={stationId}
-        onClaim={handleClaimPrize}
+      <CompletionDialog 
+        open={isCompletionDialogOpen}
+        onGoToStation9={() => setIsCompletionDialogOpen(false)}
       />
     </>
   );

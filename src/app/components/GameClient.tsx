@@ -15,8 +15,9 @@ import { useUser, useFirestore, useAuth } from '@/firebase/hooks';
 import { signOut } from 'firebase/auth';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useStationProgress } from '@/hooks/use-station-progress';
-import { doc as createDoc, setDoc } from 'firebase/firestore';
+import { setDoc, doc as createDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
+import { usePrizeCart } from '@/hooks/use-prize-cart';
 
 
 interface PlayerState {
@@ -32,6 +33,7 @@ export default function GameClient() {
   const db = useFirestore();
   const auth = useAuth();
   const { resetProgress } = useStationProgress();
+  const { clearCart } = usePrizeCart();
   const mapBackground = PlaceHolderImages.find(p => p.id === 'map-background');
   const router = useRouter();
 
@@ -39,32 +41,40 @@ export default function GameClient() {
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
   const [isNewUser, setIsNewUser] = useState(false);
   const [isFetchingPlayer, setIsFetchingPlayer] = useState(true);
+  const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
   
   const fetchInitialPlayerState = useCallback(async () => {
     if (!user || !db) return;
 
-    // Use onSnapshot for real-time updates
     const playerDocRef = doc(db, 'users', user.uid);
     const unsubscribe = onSnapshot(playerDocRef, (docSnap) => {
       setIsFetchingPlayer(false);
       if (docSnap.exists()) {
-        const data = docSnap.data() as PlayerState;
-        // Ensure chosenScenario is not undefined from old data structures
-        if (!data.chosenScenario) {
-            data.chosenScenario = null;
-        }
-        if (!data.unlockedStations) {
-            data.unlockedStations = [1];
-        }
-        setPlayerState(data);
+        const data = docSnap.data() as Partial<PlayerState>;
+        
+        const newState: PlayerState = {
+            id: user.uid,
+            name: data.name || "Jugador",
+            avatar: data.avatar || "",
+            chosenScenario: data.chosenScenario || null,
+            unlockedStations: data.unlockedStations || [1],
+        };
+        setPlayerState(newState);
         setIsNewUser(false);
+
+        if (newState.unlockedStations.includes(10)) { // Using 10 as completion flag
+            setIsCompletionDialogOpen(true);
+        } else {
+            setIsCompletionDialogOpen(false);
+        }
+
       } else {
         setIsNewUser(true);
       }
     }, (error) => {
       console.error("Error fetching player state:", error);
       setIsFetchingPlayer(false);
-      setIsNewUser(true); // Assume new user on error
+      setIsNewUser(true);
     });
 
     return unsubscribe;
@@ -100,7 +110,6 @@ export default function GameClient() {
       unlockedStations: [1],
     };
     try {
-      // We don't need to set playerState here, onSnapshot will do it.
       await setDoc(createDoc(db, 'users', user.uid), newState);
       setIsNewUser(false);
     } catch (error) {
@@ -109,12 +118,13 @@ export default function GameClient() {
   };
   
   const handleReset = async () => {
-    // resetProgress hook now handles all logic
     await resetProgress();
-    // onSnapshot will automatically update the UI.
+    clearCart();
+    setIsCompletionDialogOpen(false);
   };
 
   const handleGoToStation9 = () => {
+    setIsCompletionDialogOpen(false);
     router.push('/station/9');
   };
 
@@ -167,8 +177,6 @@ export default function GameClient() {
     }).join(' ');
   };
   const pathD = generatePath(stations.map(s => stationPositions[s.id - 1]));
-
-  const allStationsCompleted = playerState?.unlockedStations?.length >= stations.length;
 
   return (
     <main className="relative w-full min-h-screen flex flex-col overflow-hidden">
@@ -247,8 +255,8 @@ export default function GameClient() {
       </div>
 
       <AnimatePresence>
-        {allStationsCompleted && (
-          <CompletionDialog onGoToStation9={handleGoToStation9} open={allStationsCompleted}/>
+        {isCompletionDialogOpen && (
+          <CompletionDialog onGoToStation9={handleGoToStation9} open={isCompletionDialogOpen}/>
         )}
       </AnimatePresence>
     </main>

@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from "@/components/ui/sheet";
 import { Gift, ShoppingCart } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { allPrizes } from "@/lib/data";
+import Image from "next/image";
 
 export default function PrizeCart() {
     const { prizes, clearCart } = usePrizeCart();
-    const collectedPrizes = allPrizes.filter(p => prizes.includes(p.id));
+    const collectedPrizes = prizes;
 
     return (
         <Sheet>
@@ -38,18 +38,22 @@ export default function PrizeCart() {
                     <div className="flex flex-col h-[calc(100%-80px)]">
                         <ScrollArea className="flex-grow my-4">
                             <div className="grid grid-cols-3 gap-4 pr-4">
-                                {collectedPrizes.map((prize) => {
-                                    const Icon = prize.icon;
-                                    return (
+                                {collectedPrizes.map((prize) => (
                                     <div
                                         key={prize.id}
-                                        className="flex flex-col items-center justify-center p-2 border rounded-lg bg-card"
+                                        className="flex flex-col items-center justify-center p-2 border rounded-lg bg-card aspect-square"
                                     >
-                                        <Icon className="h-8 w-8 mb-1 text-primary" />
+                                        <div className="relative w-full flex-grow mb-1">
+                                            <Image 
+                                              src={prize.imageUrl} 
+                                              alt={prize.name}
+                                              fill
+                                              style={{objectFit: 'contain'}}
+                                            />
+                                        </div>
                                         <span className="text-xs text-center font-medium">{prize.name}</span>
                                     </div>
-                                    )
-                                })}
+                                ))}
                             </div>
                         </ScrollArea>
                         <Button variant="destructive" onClick={clearCart} className="mt-auto">
