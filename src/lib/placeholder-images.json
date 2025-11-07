@@ -3,7 +3,7 @@
     {
       "id": "map-background",
       "description": "Fondo de bienvenida del juego Kairu.",
-      "imageUrl": "/backgrounds/Inicio.png",
+      "imageUrl": "/backgrounds/Mapa.png",
       "imageHint": "game map"
     },
     {
