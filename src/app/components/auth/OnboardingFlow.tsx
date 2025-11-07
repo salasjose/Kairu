@@ -147,7 +147,7 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
                         className="flex flex-col items-center justify-center text-center"
                     >
                         <Logo className="h-24 w-24 md:h-32 md:w-32 mx-auto text-primary animate-pulse" />
-                        <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mt-4">KAIRU</h1>
+                        <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mt-4 text-3d">KAIRU</h1>
                     </motion.div>
                 );
             case 'welcome':
