@@ -11,8 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import PrizeDialog from "../PrizeDialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-
-const STORAGE_KEY_STATION6 = "kairu-station6-video";
+import { useUser, useFirestore } from "@/firebase/hooks";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export default function Station6() {
   const stationId = 6;
@@ -21,38 +21,67 @@ export default function Station6() {
   const { unlockStation } = useStationProgress();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useUser();
+  const db = useFirestore();
+  const [isLoading, setIsLoading] = useState(true);
 
   const circularEconomyImage = PlaceHolderImages.find((p) => p.id === "circular-economy-product");
   const regiraBgImage = PlaceHolderImages.find(p => p.id === 'regira-background');
 
   useEffect(() => {
-    const savedVideo = localStorage.getItem(STORAGE_KEY_STATION6);
-    if (savedVideo) {
-      setVideoUrl(savedVideo);
-    }
-  }, []);
+    const fetchVideo = async () => {
+      if (!user || !db) {
+          setIsLoading(false);
+          return;
+      };
+      
+      const userDocRef = doc(db, 'users', user.uid);
+      try {
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists() && docSnap.data().station6VideoUrl) {
+          setVideoUrl(docSnap.data().station6VideoUrl);
+        }
+      } catch (error) {
+        console.error("Error fetching video URL from Firestore:", error);
+        toast({
+            title: "Error",
+            description: "No se pudo cargar el video guardado.",
+            variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchVideo();
+  }, [user, db]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type.startsWith("video/")) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const dataUrl = e.target?.result as string;
+        if (!user || !db) {
+            toast({ title: "Error", description: "Debes iniciar sesión para guardar tu progreso.", variant: "destructive" });
+            return;
+        }
+
+        const userDocRef = doc(db, 'users', user.uid);
+
         try {
-          localStorage.setItem(STORAGE_KEY_STATION6, dataUrl);
+          await setDoc(userDocRef, { station6VideoUrl: dataUrl }, { merge: true });
           setVideoUrl(dataUrl);
           toast({
-            title: "Video Cargado",
-            description: "Tu video ha sido guardado para esta sesión.",
+            title: "Video Guardado",
+            description: "Tu video ha sido guardado en tu perfil.",
           });
         } catch (error) {
-          console.error("Error saving video to localStorage", error);
-          setVideoUrl(URL.createObjectURL(file));
-          toast({
-            title: "Video Cargado (Temporalmente)",
-            description: "El video es muy grande para guardarlo, se perderá si sales de la página.",
-            variant: "destructive"
-          });
+           console.error("Error saving video to Firestore", error);
+           toast({
+             title: "Error al Guardar",
+             description: "No se pudo guardar el video. Inténtalo de nuevo.",
+             variant: "destructive"
+           });
         }
       };
       reader.readAsDataURL(file);
@@ -78,6 +107,15 @@ export default function Station6() {
     toast({
       title: `¡Estación ${stationId} Completada!`,
       description: `Has aprendido sobre economía circular.`,
+    });
+    setIsPrizeModalOpen(true);
+  };
+  
+  const handleSimulateComplete = () => {
+    unlockStation(stationId + 1);
+    toast({
+      title: `¡Estación ${stationId} Completada!`,
+      description: "Has simulado la finalización. ¡Escoge tu premio!",
     });
     setIsPrizeModalOpen(true);
   };
@@ -124,7 +162,9 @@ export default function Station6() {
                     <p className="text-muted-foreground mb-4">Descubre cómo emprendimientos aplican la Economía Circular para transformar residuos en oportunidades. Graba y carga un video explicando tu hallazgo.</p>
                      
                     <div className="bg-black rounded-lg border-4 border-white shadow-md mx-auto mb-6 w-full max-w-sm h-auto aspect-video flex items-center justify-center">
-                      {videoUrl ? (
+                      {isLoading ? (
+                        <p className="text-white">Cargando video...</p>
+                      ) : videoUrl ? (
                         <video src={videoUrl} controls className="w-full h-full rounded-md" />
                       ) : (
                          circularEconomyImage && (
@@ -149,6 +189,7 @@ export default function Station6() {
                             Completar Reto
                         </Button>
                      </div>
+                      <Button onClick={handleSimulateComplete} className="mt-4">Simular Finalización</Button>
                 </CardContent>
             </Card>
 
