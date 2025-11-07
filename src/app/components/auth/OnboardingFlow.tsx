@@ -44,10 +44,10 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
     const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     
+    const background = useMemo(() => PlaceHolderImages.find(p => p.id === 'map-background'), []);
     const yaraCharImage = useMemo(() => PlaceHolderImages.find((p) => p.id === 'char-yara'), []);
     const avatars = useMemo(() => PlaceHolderImages.filter(p => p.id.startsWith('avatar-')), []);
     const scenarios = useMemo(() => PlaceHolderImages.slice(0, 4), []);
-    const backgroundImage = useMemo(() => PlaceHolderImages.find(p => p.id === 'map-background')?.imageUrl, []);
 
 
     useEffect(() => {
@@ -239,10 +239,10 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         <main className="relative flex flex-col items-center justify-center min-h-screen w-full overflow-hidden">
             {/* Fondo ocupando todo con Next/Image fill (mejor performance que CSS url) */}
             <div className="absolute inset-0 -z-10">
-                 {backgroundImage && (
+                 {background?.imageUrl && (
                     <Image
-                        src={backgroundImage}
-                        alt="Fondo KAIRU"
+                        src={background.imageUrl}
+                        alt={background.description}
                         fill
                         priority
                         sizes="100vw"

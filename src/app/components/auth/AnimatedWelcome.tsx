@@ -31,35 +31,37 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
   useEffect(() => {
     if (userInteracted) return;
 
-    let dialogTimer: ReturnType<typeof setTimeout>;
-    let lupaTimer: ReturnType<typeof setTimeout>;
-    let idleTimer: ReturnType<typeof setTimeout>;
+    let timers: NodeJS.Timeout[] = [];
 
     const startSequence = () => {
       setScene('enter');
-      dialogTimer = setTimeout(() => {
-        if (document.hidden) return; // evita saltos al volver la pestaña
+
+      const dialogTimer = setTimeout(() => {
+        if (document.hidden) return;
         setScene('dialog');
-        lupaTimer = setTimeout(() => {
+
+        const lupaTimer = setTimeout(() => {
           if (document.hidden) return;
           setScene('lupa');
-          idleTimer = setTimeout(() => {
+
+          const idleTimer = setTimeout(() => {
             if (document.hidden) return;
             setScene('idle');
-            startSequence(); // loop suave
-          }, 45000);
-        }, 20000);
-      }, 5000);
+            startSequence(); // Loop
+          }, 45000); // 45 seconds idle time
+          timers.push(idleTimer);
+        }, 20000); // 20 seconds dialog display
+        timers.push(lupaTimer);
+      }, 5000); // 5 seconds initial wait
+      timers.push(dialogTimer);
     };
 
     startSequence();
 
     const onVisibilityChange = () => {
-      // cuando vuelve visible, reinicia para no “perder” escenas
       if (!document.hidden && !userInteracted) {
-        clearTimeout(dialogTimer);
-        clearTimeout(lupaTimer);
-        clearTimeout(idleTimer);
+        timers.forEach(clearTimeout);
+        timers = [];
         startSequence();
       }
     };
@@ -67,9 +69,7 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
     document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
-      clearTimeout(dialogTimer);
-      clearTimeout(lupaTimer);
-      clearTimeout(idleTimer);
+      timers.forEach(clearTimeout);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, [userInteracted]);

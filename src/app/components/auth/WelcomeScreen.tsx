@@ -17,44 +17,42 @@ export default function WelcomeScreen({ onLoginClick, onCreateUserClick }: Welco
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
-        {/* Background Image - Nueva capa de fondo */}
-        {backgroundImage && (
-            <div className="absolute inset-0 z-0">
-                <Image
-                src={backgroundImage}
-                alt="Background"
-                fill
-                className="object-cover"
-                priority
-                />
-                <div className="absolute inset-0 bg-black/30"></div>
-            </div>
-        )}
+      {/* Background Image - Nueva capa de fondo */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src={backgroundImage || ''}
+          alt="Background"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-black/30"></div>
+      </div>
       
       <div className="relative z-10 flex flex-col md:flex-row items-center justify-between min-h-screen p-4 w-full">
         {/* Animated Yara Character */}
-        {yaraImage && (
-            <motion.div
-            initial={{ opacity: 0, x: -100 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 1, duration: 0.8 }}
-            className="absolute left-4 top-1/2 -translate-y-1/2 md:left-8"
+        <motion.div 
+          initial={{ opacity: 0, x: -100 }} 
+          animate={{ opacity: 1, x: 0 }} 
+          transition={{ delay: 1, duration: 0.8 }} 
+          className="absolute left-4 top-1/2 -translate-y-1/2 md:left-8"
+        >
+          {yaraImage && (
+            <motion.div 
+              animate={{ y: [0, -10, 0] }} 
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             >
-                <motion.div 
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                >
-                    <Image 
-                        src={yaraImage.imageUrl} 
-                        alt={yaraImage.description} 
-                        width={200} 
-                        height={200} 
-                        className="w-32 md:w-48 h-auto" 
-                        priority 
-                    />
-                </motion.div>
+              <Image 
+                src={yaraImage.imageUrl} 
+                alt={yaraImage.description} 
+                width={200} 
+                height={200} 
+                className="w-32 md:w-48 h-auto" 
+                priority 
+              />
             </motion.div>
-        )}
+          )}
+        </motion.div>
       
         <motion.div
             initial={{ opacity: 0, x: -100 }}
