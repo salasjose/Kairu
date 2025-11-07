@@ -188,7 +188,9 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                             {avatars.map(avatar => (
                                 <Card key={avatar.id} onClick={() => handleAvatarSelect(avatar.imageUrl)} className="p-2 cursor-pointer hover:border-primary hover:scale-105 transition-transform duration-300">
-                                    <Image src={avatar.imageUrl} alt={avatar.description} width={200} height={200} className="rounded-md" />
+                                    <div className="relative aspect-square w-full">
+                                        <Image src={avatar.imageUrl} alt={avatar.description} fill style={{objectFit: 'cover'}} className="rounded-md" />
+                                    </div>
                                 </Card>
                             ))}
                         </div>
@@ -274,3 +276,5 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         </main>
     );
 }
+
+    
