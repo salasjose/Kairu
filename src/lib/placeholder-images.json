@@ -39,25 +39,25 @@
     {
       "id": "avatar-1",
       "description": "Avatar of a happy, adventurous boy with a hat.",
-      "imageUrl": "/avatars/Avatar_1.png",
+      "imageUrl": "/avatars/Avatar1.png",
       "imageHint": "boy avatar"
     },
     {
       "id": "avatar-2",
       "description": "Avatar of a smiling, curious girl with glasses.",
-      "imageUrl": "/avatars/Avatar_2.png",
+      "imageUrl": "/avatars/Avatar2.png",
       "imageHint": "girl avatar"
     },
     {
       "id": "avatar-3",
       "description": "Avatar of a person with a neutral expression and curly hair.",
-      "imageUrl": "/avatars/Avatar_3.png",
+      "imageUrl": "/avatars/Avatar3.png",
       "imageHint": "person avatar"
     },
     {
       "id": "avatar-4",
       "description": "Avatar of a person with short hair and a friendly smile.",
-      "imageUrl": "/avatars/Avatar_4.png",
+      "imageUrl": "/avatars/Avatar4.png",
       "imageHint": "friendly avatar"
     },
     {
