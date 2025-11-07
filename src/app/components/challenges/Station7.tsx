@@ -23,6 +23,8 @@ export default function Station7() {
   const router = useRouter();
 
   const greenBusinessImage = PlaceHolderImages.find((p) => p.id === "green-business");
+  const verdeLabBgImage = PlaceHolderImages.find(p => p.id === 'regira-background');
+
 
   const handleComplete = () => {
     if(listContent.trim().length < 10) {
@@ -58,7 +60,17 @@ export default function Station7() {
 
   return (
     <>
-      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-teal-200 to-green-200 relative overflow-hidden">
+      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        {verdeLabBgImage && (
+            <Image
+                src={verdeLabBgImage.imageUrl}
+                alt={verdeLabBgImage.description}
+                fill
+                style={{objectFit: 'cover'}}
+                className="z-0"
+                data-ai-hint={verdeLabBgImage.imageHint}
+            />
+        )}
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full max-w-4xl mx-auto">
           <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
             <h1 className="text-3xl md:text-5xl">VerdeLAb</h1>
@@ -67,7 +79,7 @@ export default function Station7() {
               <p className="font-bold text-lg">YARA: "¡Te doy la bienvenida a VerdeLab! Este es el laboratorio donde los sueños sostenibles se convierten en proyectos reales. ¡Emprende con propósito, crea con el corazón y demuestra que cuidar también puede ser una gran idea!"</p>
             </div>
           
-           <Card className="w-full shadow-lg">
+           <Card className="w-full shadow-lg bg-card/80 backdrop-blur-sm">
                 <CardHeader>
                     <CardTitle className="text-center text-2xl font-bold">Reto: Negocios Verdes en Acción</CardTitle>
                 </CardHeader>
@@ -107,5 +119,3 @@ export default function Station7() {
     </>
   );
 }
-
-    
