@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { stations } from '@/lib/data';
 import StationNode from '@/app/components/StationNode';
 import CompletionDialog from '@/app/components/CompletionDialog';
@@ -14,6 +14,8 @@ import { AnimatePresence } from 'framer-motion';
 import { useUser, useFirestore, useAuth } from '@/firebase/hooks';
 import { signOut } from 'firebase/auth';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useStationProgress } from '@/hooks/use-station-progress';
+import { doc as createDoc, setDoc } from 'firebase/firestore';
 
 
 interface PlayerState {
@@ -24,54 +26,66 @@ interface PlayerState {
   chosenScenario: string | null;
 }
 
-const initialPlayerState: Omit<PlayerState, 'id' | 'name' | 'avatar' | 'chosenScenario'> = {
-  unlockedStations: [1],
-};
-
 export default function GameClient() {
   const { user, loading: userLoading } = useUser();
   const db = useFirestore();
   const auth = useAuth();
+  const { resetProgress } = useStationProgress();
   const mapBackground = PlaceHolderImages.find(p => p.id === 'map-background');
 
 
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
   const [isNewUser, setIsNewUser] = useState(false);
+  const [isFetchingPlayer, setIsFetchingPlayer] = useState(true);
   
-  const fetchPlayerState = useCallback(async () => {
+  const fetchInitialPlayerState = useCallback(async () => {
     if (!user || !db) return;
 
+    // Use onSnapshot for real-time updates
     const playerDocRef = doc(db, 'users', user.uid);
-    
-    try {
-      const docSnap = await getDoc(playerDocRef);
+    const unsubscribe = onSnapshot(playerDocRef, (docSnap) => {
+      setIsFetchingPlayer(false);
       if (docSnap.exists()) {
         const data = docSnap.data() as PlayerState;
         // Ensure chosenScenario is not undefined from old data structures
         if (!data.chosenScenario) {
             data.chosenScenario = null;
         }
+        if (!data.unlockedStations) {
+            data.unlockedStations = [1];
+        }
         setPlayerState(data);
         setIsNewUser(false);
       } else {
         setIsNewUser(true);
       }
-    } catch (error) {
+    }, (error) => {
       console.error("Error fetching player state:", error);
-      setIsNewUser(true);
-    }
+      setIsFetchingPlayer(false);
+      setIsNewUser(true); // Assume new user on error
+    });
+
+    return unsubscribe;
+
   }, [user, db]);
 
   useEffect(() => {
-    if (userLoading) return;
+    if (userLoading) {
+      setIsFetchingPlayer(true);
+      return;
+    };
     
     if (user) {
-      fetchPlayerState();
+      const unsubPromise = fetchInitialPlayerState();
+      return () => {
+        unsubPromise?.then(unsub => unsub && unsub());
+      }
     } else {
       setPlayerState(null);
       setIsNewUser(true);
+      setIsFetchingPlayer(false);
     }
-  }, [user, userLoading, fetchPlayerState]);
+  }, [user, userLoading, fetchInitialPlayerState]);
 
   const handleOnboardingComplete = async (data: { name: string; avatar: string; chosenScenario: string; }) => {
     if (!user || !db) return;
@@ -84,8 +98,8 @@ export default function GameClient() {
       unlockedStations: [1],
     };
     try {
-      await setDoc(doc(db, 'users', user.uid), newState);
-      setPlayerState(newState);
+      // We don't need to set playerState here, onSnapshot will do it.
+      await setDoc(createDoc(db, 'users', user.uid), newState);
       setIsNewUser(false);
     } catch (error) {
       console.error("Failed to save player data:", error);
@@ -93,20 +107,9 @@ export default function GameClient() {
   };
   
   const handleReset = async () => {
-    if (!user || !db || !playerState) return;
-    const initialData: PlayerState = {
-      id: user.uid,
-      unlockedStations: [1],
-      name: playerState.name,
-      avatar: playerState.avatar,
-      chosenScenario: playerState.chosenScenario,
-    };
-    try {
-       await setDoc(doc(db, 'users', user.uid), initialData);
-       setPlayerState(initialData);
-    } catch (error) {
-      console.error("Failed to reset player state:", error);
-    }
+    // resetProgress hook now handles all logic
+    await resetProgress();
+    // onSnapshot will automatically update the UI.
   };
 
   const handleLogout = async () => {
@@ -116,7 +119,7 @@ export default function GameClient() {
     setIsNewUser(true);
   }
 
-  if (userLoading) {
+  if (userLoading || isFetchingPlayer) {
     return (
       <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background/80 backdrop-blur-sm">
         <Logo className="h-24 w-24 animate-pulse text-primary" />
@@ -126,7 +129,7 @@ export default function GameClient() {
   }
   
   if (isNewUser) {
-    return <OnboardingFlow onComplete={handleOnboardingComplete} onLoginSuccess={fetchPlayerState} />;
+    return <OnboardingFlow onComplete={handleOnboardingComplete} onLoginSuccess={fetchInitialPlayerState} />;
   }
   
   if (!playerState) {
@@ -167,8 +170,8 @@ export default function GameClient() {
         <Image
           src={mapBackground.imageUrl}
           alt={mapBackground.description}
-          layout="fill"
-          objectFit="cover"
+          fill
+          style={{objectFit: 'cover'}}
           className="z-0"
           priority
         />

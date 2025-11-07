@@ -18,7 +18,6 @@ type ChallengeProgress = {
 
 export function useChallengeProgress() {
   const [completedChallenges, setCompletedChallenges] = useState<ChallengeProgress>({});
-  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     try {
@@ -30,7 +29,6 @@ export function useChallengeProgress() {
     } catch (error) {
       console.error("Failed to load challenge progress from localStorage", error);
     }
-    setIsLoaded(true);
   }, []);
 
   const completeChallenge = useCallback((stationId: number, challengeName: string, imageUrl: string | null = null) => {
@@ -64,5 +62,5 @@ export function useChallengeProgress() {
     }
   }, []);
 
-  return { completedChallenges, completeChallenge, isLoaded, resetChallengeProgress };
+  return { completedChallenges, completeChallenge, resetChallengeProgress };
 }

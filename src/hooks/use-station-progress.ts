@@ -1,71 +1,54 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { usePrizeCart } from './use-prize-cart.tsx';
-
-const STORAGE_KEY = 'kairu-progress';
+import { useCallback } from 'react';
+import { useUser, useFirestore } from '@/firebase/hooks';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 export function useStationProgress() {
-  const [unlockedStations, setUnlockedStations] = useState<number[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const { clearCart: clearPrizes } = usePrizeCart();
+  const { user } = useUser();
+  const db = useFirestore();
 
+  const unlockStation = useCallback(async (stationId: number) => {
+    if (!user || !db) return;
+    
+    const playerDocRef = doc(db, 'users', user.uid);
 
-  useEffect(() => {
-    // This effect runs only on the client
     try {
-      const savedProgress = localStorage.getItem(STORAGE_KEY);
-      if (savedProgress) {
-        const parsedProgress = JSON.parse(savedProgress);
-        if (Array.isArray(parsedProgress) && parsedProgress.length > 0) {
-            setUnlockedStations(parsedProgress);
-        } else {
-          // Handle case where localStorage has an empty array or invalid data
-          setUnlockedStations([1]);
-        }
-      } else {
-        // If no saved progress, set initial state with station 1 unlocked
-        setUnlockedStations([1]);
-      }
-    } catch (error) {
-      console.error("Failed to load progress from localStorage", error);
-      setUnlockedStations([1]);
-    }
-    setIsLoaded(true);
-  }, []);
+      const docSnap = await getDoc(playerDocRef);
+      let currentStations: number[] = [1];
 
-  const unlockStation = useCallback((stationId: number) => {
-    setUnlockedStations(prev => {
-      const newStations = new Set([...prev, stationId]);
-      const sortedStations = Array.from(newStations).sort((a, b) => a - b);
-      
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(sortedStations));
-      } catch (error) {
-        console.error("Failed to save progress to localStorage", error);
+      if (docSnap.exists() && docSnap.data().unlockedStations) {
+        currentStations = docSnap.data().unlockedStations;
       }
       
-      return sortedStations;
-    });
-  }, []);
+      const newStations = new Set([...currentStations, stationId]);
+      const sortedStations = Array.from(newStations).sort((a, b) => a - b);
+
+      await setDoc(playerDocRef, { unlockedStations: sortedStations }, { merge: true });
+
+    } catch (error) {
+      console.error("Failed to unlock station in Firestore", error);
+    }
+  }, [user, db]);
   
-  const resetProgress = useCallback(() => {
-      const initialStations = [1];
-      setUnlockedStations(initialStations);
-      clearPrizes(); // Clear prizes when resetting progress
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(initialStations));
+  const resetProgress = useCallback(async () => {
+    if (!user || !db) return;
+    
+    const playerDocRef = doc(db, 'users', user.uid);
+    try {
+        await setDoc(playerDocRef, { unlockedStations: [1] }, { merge: true });
         // also clear other station-specific data
         Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('kairu-station')) {
+            if (key.startsWith('kairu-station') || key.startsWith('kairu-challenge')) {
                 localStorage.removeItem(key);
             }
         });
+    } catch (error) {
+        console.error("Failed to reset progress in Firestore", error);
+    }
+  }, [user, db]);
 
-      } catch (error) {
-        console.error("Failed to reset progress in localStorage", error);
-      }
-  }, [clearPrizes]);
-
-  return { unlockedStations, unlockStation, isLoaded, resetProgress };
+  // unlockedStations will now be read directly from the playerState in GameClient.
+  // This hook is now primarily for writing/updating progress.
+  return { unlockStation, resetProgress };
 }
