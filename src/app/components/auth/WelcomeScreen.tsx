@@ -23,7 +23,7 @@ export default function WelcomeScreen({ onLogin, onSignUp }: WelcomeScreenProps)
         animate={{ y: 0, opacity: 1, transition: { delay: 0.2, duration: 0.5 } }}
         className="flex flex-col items-center justify-center"
       >
-        <Logo className="h-24 w-24 md:h-32 md:w-32 text-blue-900" />
+        <Logo className="h-24 w-24 md:h-32 md:w-32" />
         <h1 className="text-6xl md:text-8xl font-bold text-blue-900 text-3d mt-2 font-headline">
           KAIRU
         </h1>

@@ -20,6 +20,7 @@ import { Settings } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
+import { SignUpFormSchema } from './auth/SignUpForm';
 
 interface PlayerState {
   id: string;
@@ -31,7 +32,13 @@ interface PlayerState {
 
 const SettingsPanel = ({ playerState, setPlayerState }: { playerState: PlayerState; setPlayerState: (state: PlayerState) => void; }) => {
     const db = useFirestore();
-    const avatars = useMemo(() => PlaceHolderImages.filter(p => p.id.startsWith('avatar-')).sort((a,b) => a.id.localeCompare(b.id)), []);
+    const avatars = useMemo(() => {
+        return PlaceHolderImages.filter(p => p.id.startsWith('avatar-')).map(p => ({
+            id: p.id,
+            imageUrl: p.imageUrl,
+            description: p.description
+        })).sort((a,b) => a.id.localeCompare(b.id));
+    }, []);
 
     const handleAvatarChange = async (newAvatarUrl: string) => {
         if (!playerState || !db) {
@@ -74,13 +81,14 @@ const SettingsPanel = ({ playerState, setPlayerState }: { playerState: PlayerSta
                                 : "border-border hover:bg-accent"
                            )}
                          >
-                            <Image 
-                                src={avatar.imageUrl} 
-                                alt={avatar.description} 
-                                width={150} 
-                                height={150} 
-                                className="rounded-md w-full h-auto aspect-square object-contain" 
-                            />
+                            <div className="relative w-full aspect-square">
+                                <Image 
+                                    src={avatar.imageUrl} 
+                                    alt={avatar.description} 
+                                    fill
+                                    className="rounded-md object-contain" 
+                                />
+                            </div>
                         </button>
                     ))}
                 </div>
@@ -111,11 +119,11 @@ export default function GameClient() {
     const unsubscribe = onSnapshot(playerDocRef, (docSnap) => {
       setIsFetchingPlayer(false);
       if (docSnap.exists()) {
-        const data = docSnap.data() as Partial<PlayerState>;
+        const data = docSnap.data() as Partial<PlayerState & z.infer<typeof SignUpFormSchema>>;
         
         const newState: PlayerState = {
             id: user.uid,
-            name: data.name || "Jugador",
+            name: data.nombre || "Jugador",
             avatar: data.avatar || "",
             chosenScenario: data.chosenScenario || null,
             unlockedStations: data.unlockedStations || [1],
@@ -162,18 +170,19 @@ export default function GameClient() {
     }
   }, [user, userLoading, fetchInitialPlayerState]);
 
-  const handleOnboardingComplete = async (data: { name: string; avatar: string; chosenScenario: string; }) => {
+  const handleOnboardingComplete = async (data: { name: string; avatar: string; chosenScenario: string; signupData: z.infer<typeof SignUpFormSchema>}) => {
     if (!user || !db) return;
 
-    const newState: PlayerState = {
+    const newState: Partial<PlayerState> & Partial<z.infer<typeof SignUpFormSchema>> = {
       id: user.uid,
-      name: data.name,
+      nombre: data.name,
       avatar: data.avatar,
       chosenScenario: data.chosenScenario,
       unlockedStations: [1],
+      ...data.signupData
     };
     try {
-      await setFirestoreDoc(doc(db, 'users', user.uid), newState);
+      await setFirestoreDoc(doc(db, 'users', user.uid), newState, { merge: true });
       setIsNewUser(false);
     } catch (error) {
       console.error("Failed to save player data:", error);
@@ -190,7 +199,7 @@ export default function GameClient() {
   if (userLoading || isFetchingPlayer) {
     return (
       <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background/80 backdrop-blur-sm">
-        <Logo className="h-24 w-24 animate-pulse text-primary" />
+        <Logo className="h-24 w-24 animate-pulse" />
         <p className="text-primary/70 mt-4">Cargando datos del jugador...</p>
       </main>
     );
@@ -203,7 +212,7 @@ export default function GameClient() {
   if (!playerState) {
        return (
          <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background/80 backdrop-blur-sm">
-           <Logo className="h-24 w-24 animate-pulse text-primary" />
+           <Logo className="h-24 w-24 animate-pulse" />
            <p className="text-primary/70 mt-4">Cargando mapa...</p>
          </main>
        );
@@ -245,7 +254,7 @@ export default function GameClient() {
       <header className="absolute top-0 left-0 right-0 p-2 sm:p-4 z-20">
         <div className="container mx-auto flex items-start justify-between gap-2">
             <div className="bg-white/90 backdrop-blur-sm p-2 rounded-2xl flex items-center gap-3 shadow-md">
-                <Logo className="h-8 w-8 text-primary" />
+                <Logo className="h-8 w-8" />
                 <div className="pr-2 hidden sm:block">
                     <h1 className="font-bold text-primary leading-tight font-kalam text-xl">Kairu</h1>
                     <p className="text-xs text-primary/80 leading-tight">
