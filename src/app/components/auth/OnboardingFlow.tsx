@@ -15,7 +15,7 @@ import { signUp, login } from '@/firebase/auth';
 import { useAuth } from '@/firebase/hooks';
 import type { z } from "zod";
 import { Button } from '@/components/ui/button';
-import AnimatedWelcome from './AnimatedWelcome';
+import WelcomeScreen from './WelcomeScreen';
 import TypewriterText from './TypewriterText';
 
 
@@ -161,7 +161,7 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
             case 'welcome':
                 return (
                      <motion.div key="welcome" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                        <AnimatedWelcome
+                        <WelcomeScreen
                             onLoginClick={() => setStep('login')}
                             onCreateUserClick={() => setStep('signup')}
                         />
