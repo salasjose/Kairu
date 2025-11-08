@@ -15,11 +15,6 @@ import { signUp, login } from '@/firebase/auth';
 import { useAuth } from '@/firebase/hooks';
 import type { z } from "zod";
 import { Button } from '@/components/ui/button';
-import avatar1 from '@/assets/avatars/Avatar1.png';
-import avatar2 from '@/assets/avatars/Avatar2.png';
-import avatar3 from '@/assets/avatars/Avatar3.png';
-import avatar4 from '@/assets/avatars/Avatar4.png';
-
 
 // We can infer the types from the SignUpForm's schema directly
 import { type SignUpFormSchema } from './SignUpForm';

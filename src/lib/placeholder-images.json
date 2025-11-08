@@ -37,6 +37,12 @@
       "imageHint": "renewable energy"
     },
     {
+      "id": "char-yara-hat",
+      "description": "Yara the frog wearing an explorer hat, sitting in the water.",
+      "imageUrl": "/characters/Yara_Sombrero.png",
+      "imageHint": "frog hat"
+    },
+    {
       "id": "char-yara",
       "description": "A friendly, smiling cartoon frog character named Yara, ready for adventure.",
       "imageUrl": "/characters/YARA_3.png",
