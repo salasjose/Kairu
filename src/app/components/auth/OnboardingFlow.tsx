@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 
 import SignUpForm from './SignUpForm';
 import LoginForm from './LoginForm';
-import WelcomeScreen from './WelcomeScreen'; // Import the new component
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -15,8 +14,8 @@ import { signUp, login } from '@/firebase/auth';
 import { useAuth } from '@/firebase/hooks';
 import type { z } from "zod";
 import { Button } from '@/components/ui/button';
+import AnimatedWelcome from './AnimatedWelcome';
 
-// We can infer the types from the SignUpForm's schema directly
 import { type SignUpFormSchema } from './SignUpForm';
 import { type LoginFormSchema } from './LoginForm';
 
@@ -28,6 +27,7 @@ interface OnboardingFlowProps {
         name: string;
         avatar: string;
         chosenScenario: string;
+        signupData: SignUpData;
     }) => void;
     onLoginSuccess: () => void;
 }
@@ -37,6 +37,7 @@ type Step = 'welcome' | 'signup' | 'login' | 'avatar' | 'yara' | 'scenario';
 export default function OnboardingFlow({ onComplete, onLoginSuccess }: OnboardingFlowProps) {
     const auth = useAuth();
     const [step, setStep] = useState<Step>('welcome');
+    const [signupData, setSignupData] = useState<SignUpData | null>(null);
     const [formName, setFormName] = useState<string>('');
     const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
     const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
@@ -44,7 +45,13 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
     
     const background = useMemo(() => PlaceHolderImages.find(p => p.id === 'forest-background'), []);
     const yaraCharImage = useMemo(() => PlaceHolderImages.find((p) => p.id === 'char-yara'), []);
-    const avatars = useMemo(() => PlaceHolderImages.filter(p => p.id.startsWith('avatar-')).sort((a,b) => a.id.localeCompare(b.id)), []);
+    const avatars = useMemo(() => {
+        return PlaceHolderImages.filter(p => p.id.startsWith('avatar-')).map(p => ({
+            id: p.id,
+            imageUrl: p.imageUrl,
+            description: p.description
+        })).sort((a,b) => a.id.localeCompare(b.id));
+    }, []);
 
     const scenarios = useMemo(() => [
         PlaceHolderImages.find(p => p.id === 'scenario-bosque-seco'),
@@ -62,9 +69,7 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         setIsLoading(true);
         try {
             await signUp(auth, data.email, data.clave);
-            // After successful sign-up, onAuthStateChanged in FirebaseProvider will trigger.
-            // GameClient will detect the new user, fetchPlayerState will see no doc, and keep isNewUser=true.
-            // We can then proceed with the rest of the onboarding.
+            setSignupData(data);
             setFormName(data.nombre);
             setStep('avatar');
         } catch (error: any) {
@@ -89,8 +94,6 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         setIsLoading(true);
         try {
             await login(auth, data.email, data.clave);
-            // onAuthStateChanged in the provider will handle setting the user.
-            // GameClient will see the user and call fetchPlayerState, which will find the existing doc.
             onLoginSuccess();
         } catch (error: any) {
             const message = (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential')
@@ -116,11 +119,12 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
     };
 
     const handleScenarioConfirm = () => {
-        if (formName && selectedAvatar && selectedScenario) {
+        if (formName && selectedAvatar && selectedScenario && signupData) {
             onComplete({
                 name: formName,
                 avatar: selectedAvatar,
                 chosenScenario: selectedScenario,
+                signupData: signupData,
             });
         } else {
             toast({
@@ -135,9 +139,9 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         switch (step) {
             case 'welcome':
                 return (
-                    <WelcomeScreen
-                        onLogin={() => setStep('login')}
-                        onSignUp={() => setStep('signup')}
+                    <AnimatedWelcome
+                        onLoginClick={() => setStep('login')}
+                        onCreateUserClick={() => setStep('signup')}
                     />
                 );
             case 'signup':
@@ -246,5 +250,3 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         </main>
     );
 }
-
-    

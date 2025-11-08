@@ -17,10 +17,11 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useStationProgress } from '@/hooks/use-station-progress';
 import { usePrizeCart } from '@/hooks/use-prize-cart';
 import { Settings } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { SignUpFormSchema } from './auth/SignUpForm';
+import { z } from 'zod';
 
 interface PlayerState {
   id: string;
@@ -175,7 +176,6 @@ export default function GameClient() {
 
     const newState: Partial<PlayerState> & Partial<z.infer<typeof SignUpFormSchema>> = {
       id: user.uid,
-      nombre: data.name,
       avatar: data.avatar,
       chosenScenario: data.chosenScenario,
       unlockedStations: [1],

@@ -4,7 +4,7 @@ import Image from "next/image";
 export default function Logo({ className, ...props }: { className?: string }) {
   return (
     <Image
-      src="/LogoAppKairu.png"
+      src="/backgrounds/LogoAppKairu.png"
       alt="Kairu Logo"
       width={512}
       height={512}
