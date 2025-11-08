@@ -37,27 +37,9 @@
       "imageHint": "renewable energy"
     },
     {
-      "id": "char-yara-talking",
-      "description": "Yara the frog speaking.",
-      "imageUrl": "/characters/Rana_hablando_2.png",
-      "imageHint": "talking frog"
-    },
-    {
-      "id": "char-yara-magnifying",
-      "description": "Yara the frog with a magnifying glass.",
-      "imageUrl": "/characters/Rana_lupa_1.png",
-      "imageHint": "frog magnifying glass"
-    },
-    {
-      "id": "char-yara-3",
-      "description": "Yara la rana, versión 3.",
-      "imageUrl": "/characters/YARA_3.png",
-      "imageHint": "frog character"
-    },
-    {
       "id": "char-yara",
       "description": "A friendly, smiling cartoon frog character named Yara, ready for adventure.",
-      "imageUrl": "/avatars/Avatar1.png",
+      "imageUrl": "/characters/YARA_3.png",
       "imageHint": "frog character"
     },
     {

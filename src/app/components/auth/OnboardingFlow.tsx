@@ -15,8 +15,6 @@ import { signUp, login } from '@/firebase/auth';
 import { useAuth } from '@/firebase/hooks';
 import type { z } from "zod";
 import { Button } from '@/components/ui/button';
-import WelcomeScreen from './WelcomeScreen';
-import TypewriterText from './TypewriterText';
 
 
 // We can infer the types from the SignUpForm's schema directly
@@ -35,17 +33,17 @@ interface OnboardingFlowProps {
     onLoginSuccess: () => void;
 }
 
-type Step = 'loading' | 'welcome' | 'signup' | 'login' | 'avatar' | 'yara' | 'scenario';
+type Step = 'welcome' | 'signup' | 'login' | 'avatar' | 'yara' | 'scenario';
 
 export default function OnboardingFlow({ onComplete, onLoginSuccess }: OnboardingFlowProps) {
     const auth = useAuth();
-    const [step, setStep] = useState<Step>('loading');
+    const [step, setStep] = useState<Step>('welcome');
     const [formName, setFormName] = useState<string>('');
     const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
     const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     
-    const background = useMemo(() => PlaceHolderImages.find(p => p.id === 'map-background'), []);
+    const background = useMemo(() => PlaceHolderImages.find(p => p.id === 'forest-background'), []);
     const yaraCharImage = useMemo(() => PlaceHolderImages.find((p) => p.id === 'char-yara'), []);
     const avatars = useMemo(() => PlaceHolderImages.filter(p => p.id.startsWith('avatar-')).sort((a,b) => a.id.localeCompare(b.id)), []);
 
@@ -58,8 +56,13 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
 
 
     useEffect(() => {
-        setStep('welcome');
-    }, []);
+        const timer = setTimeout(() => {
+            if (step === 'welcome') {
+                // Logic to automatically move or change something on welcome screen
+            }
+        }, 3000);
+        return () => clearTimeout(timer);
+    }, [step]);
 
     const handleSignUpSubmit = async (data: SignUpData) => {
         if (!auth) {
@@ -138,33 +141,27 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         }
     };
     
-    const yaraDialogText1 = "Soy Yara, una rana muy curiosa y estaré contigo en este emocionante recorrido por Kairu.";
-    const yaraDialogText2 = "A lo largo del camino conocerás 8 estaciones sorprendentes donde cada desafío superado abrirá nuevas etapas llenas de descubrimientos, aprendizajes y diversión. En el siguiente paso tendrás la oportunidad de escoger el lienzo que te permitirá crear tu propia estación.";
-    const yaraDialogText3 = "En cada avance ganarás recompensas especiales que tú mismo elegirás para completar la estación ideal que elijas.";
-    const yaraDialogText4 = "Cada paso te conectará más a la naturaleza y te mostrará cómo tus acciones pueden transformar el mundo que te rodea.";
-    
     const renderStep = () => {
         switch (step) {
-             case 'loading':
-                return (
-                    <motion.div
-                        key="loading"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="flex flex-col items-center justify-center text-center"
-                    >
-                        <Logo className="h-24 w-24 md:h-32 md:w-32 mx-auto text-primary animate-pulse" />
-                        <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mt-4 text-3d">KAIRU</h1>
-                    </motion.div>
-                );
             case 'welcome':
                 return (
-                     <motion.div key="welcome" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                        <WelcomeScreen
-                            onLoginClick={() => setStep('login')}
-                            onCreateUserClick={() => setStep('signup')}
-                        />
+                    <motion.div
+                        key="welcome"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1, transition: { duration: 1 } }}
+                        exit={{ opacity: 0 }}
+                        className="text-center"
+                    >
+                        <Logo className="h-24 w-24 md:h-32 md:w-32 mx-auto text-primary" />
+                        <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mt-4 text-3d">KAIRU</h1>
+                        <motion.div 
+                            initial={{ y: 20, opacity: 0 }} 
+                            animate={{ y: 0, opacity: 1, transition: { delay: 1, duration: 0.5 } }} 
+                            className="flex flex-col sm:flex-row gap-4 justify-center mt-12"
+                        >
+                            <Button onClick={() => setStep('signup')} size="lg">Crear Usuario</Button>
+                            <Button onClick={() => setStep('login')} size="lg" variant="outline" className="bg-white/80">Iniciar Sesión</Button>
+                        </motion.div>
                     </motion.div>
                 );
             case 'signup':
@@ -206,15 +203,8 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
                         {yaraCharImage && <Image src={yaraCharImage.imageUrl} alt="Yara" width={150} height={150} className="mx-auto mb-4" />}
                         <Card className="p-6 shadow-xl">
                             <h2 className="text-2xl font-bold font-headline text-primary">¡Hola, {formName}!</h2>
-                            
-                            <div className='text-muted-foreground text-left'>
-                                <TypewriterText text={yaraDialogText1} el="p" className="mt-4" />
-                                <TypewriterText text={yaraDialogText2} el="p" className="mt-2" delay={yaraDialogText1.length * 0.02} />
-                                <TypewriterText text={yaraDialogText3} el="p" className="mt-2" delay={(yaraDialogText1.length + yaraDialogText2.length) * 0.02} />
-                                <TypewriterText text={yaraDialogText4} el="p" className="mt-2" delay={(yaraDialogText1.length + yaraDialogText2.length + yaraDialogText3.length) * 0.02} />
-                            </div>
-
-                             <p className="mt-4 font-bold text-lg text-primary">¿Listo para comenzar este viaje conmigo?</p>
+                            <p className="mt-4 text-muted-foreground">Soy Yara, una rana muy curiosa y estaré contigo en este emocionante recorrido por Kairu. A lo largo del camino conocerás 8 estaciones sorprendentes donde cada desafío superado abrirá nuevas etapas llenas de descubrimientos, aprendizajes y diversión. En el siguiente paso tendrás la oportunidad de escoger el lienzo que te permitirá crear tu propia estación. En cada avance ganarás recompensas especiales que tú mismo elegirás para completar la estación ideal que elijas. Cada paso te conectará más a la naturaleza y te mostrará cómo tus acciones pueden transformar el mundo que te rodea.</p>
+                            <p className="mt-4 font-bold text-lg text-primary">¿Listo para comenzar este viaje conmigo?</p>
                             <Button onClick={() => setStep('scenario')} className="mt-6" size="lg">¡Sí!</Button>
                         </Card>
                      </motion.div>
