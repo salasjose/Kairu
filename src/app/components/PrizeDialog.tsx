@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { allPrizes, stations } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
-import { usePrizeCart } from "@/hooks/use-prize-cart.tsx";
+import { usePrizeCart } from "@/hooks/use-prize-cart";
 import type { Prize } from "@/lib/data";
 
 

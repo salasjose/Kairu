@@ -16,11 +16,19 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
   const [showDialog, setShowDialog] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const appearanceTimer = setTimeout(() => {
       setShowDialog(true);
-    }, 10000); // 10-second delay
+    }, 10000); // Aparece después de 10 segundos
 
-    return () => clearTimeout(timer); // Cleanup timer on component unmount
+    const disappearanceTimer = setTimeout(() => {
+        setShowDialog(false);
+    }, 10000 + 60000); // Desaparece 60 segundos después de aparecer
+    
+    // Limpia ambos temporizadores si el componente se desmonta
+    return () => {
+        clearTimeout(appearanceTimer);
+        clearTimeout(disappearanceTimer);
+    };
   }, []);
 
   return (

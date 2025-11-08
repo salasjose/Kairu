@@ -92,9 +92,9 @@
     },
     {
       "id": "forest-background",
-      "description": "A lush, green cartoon forest background, with tall trees and sunlight filtering through the leaves.",
-      "imageUrl": "/backgrounds/Inicio.png",
-      "imageHint": "forest background"
+      "description": "Fondo del mapa principal para la pantalla de bienvenida.",
+      "imageUrl": "/backgrounds/Mapa.png",
+      "imageHint": "game map background"
     },
     {
       "id": "biodiversidad-background",

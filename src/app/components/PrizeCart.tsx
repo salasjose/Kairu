@@ -1,6 +1,6 @@
 "use client";
 
-import { usePrizeCart } from "@/hooks/use-prize-cart.tsx";
+import { usePrizeCart } from "@/hooks/use-prize-cart";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from "@/components/ui/sheet";
 import { Gift, ShoppingCart } from "lucide-react";
