@@ -6,9 +6,9 @@ export default function Logo({ className, ...props }: { className?: string }) {
     <Image
       src="/backgrounds/LogoAppKairu.png"
       alt="Kairu Logo"
-      width={512}
-      height={512}
-      className={cn(className)}
+      width={312}
+      height={112}
+      className={cn("w-auto", className)}
       {...props}
     />
   );

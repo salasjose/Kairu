@@ -74,7 +74,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   if (authState.loading) {
     return (
        <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background">
-        <Logo className="h-24 w-24 animate-pulse" />
+        <Logo className="h-24 animate-pulse" />
         <p className="text-primary/70 mt-4">Estableciendo Conexión...</p>
       </main>
     )

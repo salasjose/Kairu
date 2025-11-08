@@ -199,7 +199,7 @@ export default function GameClient() {
   if (userLoading || isFetchingPlayer) {
     return (
       <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background/80 backdrop-blur-sm">
-        <Logo className="h-24 w-24 animate-pulse" />
+        <Logo className="h-24 animate-pulse" />
         <p className="text-primary/70 mt-4">Cargando datos del jugador...</p>
       </main>
     );
@@ -212,7 +212,7 @@ export default function GameClient() {
   if (!playerState) {
        return (
          <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background/80 backdrop-blur-sm">
-           <Logo className="h-24 w-24 animate-pulse" />
+           <Logo className="h-24 animate-pulse" />
            <p className="text-primary/70 mt-4">Cargando mapa...</p>
          </main>
        );
@@ -254,7 +254,7 @@ export default function GameClient() {
       <header className="absolute top-0 left-0 right-0 p-2 sm:p-4 z-20">
         <div className="container mx-auto flex items-start justify-between gap-2">
             <div className="bg-white/90 backdrop-blur-sm p-2 rounded-2xl flex items-center gap-3 shadow-md">
-                <Logo className="h-8 w-8" />
+                <Logo className="h-8" />
                 <div className="pr-2 hidden sm:block">
                     <h1 className="font-bold text-primary leading-tight font-kalam text-xl">Kairu</h1>
                     <p className="text-xs text-primary/80 leading-tight">
