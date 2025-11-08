@@ -79,7 +79,7 @@ const SettingsPanel = ({ playerState, setPlayerState }: { playerState: PlayerSta
                                 alt={avatar.description} 
                                 width={150} 
                                 height={150} 
-                                className="rounded-md w-full h-auto aspect-square object-cover" 
+                                className="rounded-md w-full h-auto aspect-square object-contain" 
                             />
                         </button>
                     ))}

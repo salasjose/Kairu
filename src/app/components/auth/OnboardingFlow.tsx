@@ -191,7 +191,7 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
                                             src={avatar.imageUrl}
                                             alt={avatar.description}
                                             fill
-                                            style={{objectFit: 'cover'}}
+                                            style={{objectFit: 'contain'}}
                                             className="rounded-md"
                                         />
                                     </div>
