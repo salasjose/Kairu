@@ -4,9 +4,9 @@ import { useState, useMemo, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 
-import Logo from '@/app/components/Logo';
 import SignUpForm from './SignUpForm';
 import LoginForm from './LoginForm';
+import WelcomeScreen from './WelcomeScreen'; // Import the new component
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -15,6 +15,10 @@ import { signUp, login } from '@/firebase/auth';
 import { useAuth } from '@/firebase/hooks';
 import type { z } from "zod";
 import { Button } from '@/components/ui/button';
+import avatar1 from '@/assets/avatars/Avatar1.png';
+import avatar2 from '@/assets/avatars/Avatar2.png';
+import avatar3 from '@/assets/avatars/Avatar3.png';
+import avatar4 from '@/assets/avatars/Avatar4.png';
 
 
 // We can infer the types from the SignUpForm's schema directly
@@ -54,15 +58,6 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         PlaceHolderImages.find(p => p.id === 'scenario-manglares'),
     ].filter(Boolean) as any[], []);
 
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (step === 'welcome') {
-                // Logic to automatically move or change something on welcome screen
-            }
-        }, 3000);
-        return () => clearTimeout(timer);
-    }, [step]);
 
     const handleSignUpSubmit = async (data: SignUpData) => {
         if (!auth) {
@@ -145,24 +140,10 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         switch (step) {
             case 'welcome':
                 return (
-                    <motion.div
-                        key="welcome"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1, transition: { duration: 1 } }}
-                        exit={{ opacity: 0 }}
-                        className="text-center"
-                    >
-                        <Logo className="h-24 w-24 md:h-32 md:w-32 mx-auto text-primary" />
-                        <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mt-4 text-3d">KAIRU</h1>
-                        <motion.div 
-                            initial={{ y: 20, opacity: 0 }} 
-                            animate={{ y: 0, opacity: 1, transition: { delay: 1, duration: 0.5 } }} 
-                            className="flex flex-col sm:flex-row gap-4 justify-center mt-12"
-                        >
-                            <Button onClick={() => setStep('signup')} size="lg">Crear Usuario</Button>
-                            <Button onClick={() => setStep('login')} size="lg" variant="outline" className="bg-white/80">Iniciar Sesión</Button>
-                        </motion.div>
-                    </motion.div>
+                    <WelcomeScreen
+                        onLogin={() => setStep('login')}
+                        onSignUp={() => setStep('signup')}
+                    />
                 );
             case 'signup':
                 return (
@@ -270,3 +251,5 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         </main>
     );
 }
+
+    

@@ -43,6 +43,18 @@
       "imageHint": "frog character"
     },
     {
+      "id": "char-yara-talking",
+      "description": "Yara the frog speaking.",
+      "imageUrl": "/characters/Rana_hablando_2.png",
+      "imageHint": "talking frog"
+    },
+    {
+      "id": "char-yara-magnifying-glass",
+      "description": "Yara the frog looking through a magnifying glass.",
+      "imageUrl": "/characters/Rana_con_lupa.png",
+      "imageHint": "frog magnifying glass"
+    },
+    {
       "id": "scenario-bosque-seco",
       "description": "Un escenario de bosque seco tropical para la estación final.",
       "imageUrl": "/backgrounds/Bosque_Seco_Tropical.png",
