@@ -245,15 +245,15 @@ export default function GameClient() {
       <header className="absolute top-0 left-0 right-0 p-2 sm:p-4 z-20">
         <div className="container mx-auto flex items-start justify-between gap-2">
             <div className="bg-white/90 backdrop-blur-sm p-2 rounded-2xl flex items-center gap-3 shadow-md">
-                <Logo className="h-8 w-8 text-green-800" />
-                <div className="pr-2">
-                    <h1 className="font-bold text-green-900 leading-tight">Kairu</h1>
-                    <p className="text-xs text-green-800/80 leading-tight">
+                <Logo className="h-8 w-8 text-primary" />
+                <div className="pr-2 hidden sm:block">
+                    <h1 className="font-bold text-primary leading-tight font-kalam text-xl">Kairu</h1>
+                    <p className="text-xs text-primary/80 leading-tight">
                         ¡Bienvenido, {playerState.name}!
                     </p>
                 </div>
                 <Avatar className="h-12 w-12 border-2 border-white">
-                    <AvatarImage src={playerState.avatar} alt="Player Avatar" />
+                    <AvatarImage src={playerState.avatar} alt="Player Avatar" className="object-contain" />
                     <AvatarFallback>{playerState?.name?.charAt(0)}</AvatarFallback>
                 </Avatar>
             </div>
@@ -267,7 +267,7 @@ export default function GameClient() {
                     <SettingsPanel playerState={playerState} setPlayerState={setPlayerState} />
                 </Sheet>
 
-                 <Button variant="destructive" size="sm" onClick={handleLogout} className="rounded-full bg-white/90 shadow-md h-10 w-auto px-4">
+                 <Button variant="outline" size="sm" onClick={handleLogout} className="rounded-full bg-white/90 shadow-md h-10 w-auto px-4">
                   Salir
                 </Button>
                 <PrizeCart />
