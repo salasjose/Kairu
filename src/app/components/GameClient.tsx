@@ -258,7 +258,7 @@ export default function GameClient() {
                 <div className="pr-2 hidden sm:block">
                     <h1 className="font-bold text-primary leading-tight font-kalam text-xl"></h1>
                     <p className="text-xs text-primary/80 leading-tight">
-                        ¡Bienvenido, {playerState.name}!
+                        ¡Bienvenido, Jugador!
                     </p>
                 </div>
                 <Avatar className="h-12 w-12 border-2 border-white">
