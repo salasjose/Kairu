@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -15,6 +16,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { useUser, useFirestore } from "@/firebase/hooks";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import TypewriterText from "../auth/TypewriterText";
 
 type Business = {
   name: string;
@@ -82,7 +85,7 @@ const AddBusinessDialog = ({
           </Button>
           {image && (
              <div className="relative w-full h-32 rounded-md overflow-hidden border">
-                <Image src={image} alt="Vista previa" layout="fill" objectFit="cover" />
+                <Image src={image} alt="Vista previa" fill style={{objectFit: "cover"}} />
              </div>
           )}
         </div>
@@ -108,9 +111,30 @@ export default function Station7() {
   const router = useRouter();
   const { user } = useUser();
   const db = useFirestore();
-  
+
+  const [showYaraDialog, setShowYaraDialog] = useState(false);
+  const yaraMessage = "¡Te doy la bienvenida a VerdeLab! Este es el laboratorio donde los sueños sostenibles se convierten en proyectos reales. ¡Emprende con propósito, crea con el corazón y demuestra que cuidar también puede ser una gran idea!";
+  const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const verdeLabBgImage = PlaceHolderImages.find(p => p.id === 'regira-background');
-  const greenBusinessImage = PlaceHolderImages.find((p) => p.id === "green-business");
+  const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara');
+
+  const scheduleYaraDialog = useCallback(() => {
+    if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
+    yaraTimerRef.current = setTimeout(() => {
+      setShowYaraDialog(true);
+      const hideTimer = setTimeout(() => setShowYaraDialog(false), 60000); // Hide after 1 minute
+      const reappearTimer = setTimeout(scheduleYaraDialog, 60000 + 120000); // Reappear after 2 more minutes
+    }, 10000); // Initial appearance after 10 seconds
+  }, []);
+
+  useEffect(() => {
+    scheduleYaraDialog();
+    return () => {
+      if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
+    };
+  }, [scheduleYaraDialog]);
+  
 
   const updateBusinessesInDb = useCallback(async (newBusinesses: (Business | null)[]) => {
      if (!user || !db) return;
@@ -224,9 +248,6 @@ export default function Station7() {
           <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
             <h1 className="text-3xl md:text-5xl">VerdeLAb</h1>
           </div>
-          <div className="max-w-xl mx-auto bg-black/50 text-white p-4 rounded-xl mb-8">
-            <p className="font-bold text-lg">YARA: "¡Te doy la bienvenida a VerdeLab! Este es el laboratorio donde los sueños sostenibles se convierten en proyectos reales. ¡Emprende con propósito, crea con el corazón y demuestra que cuidar también puede ser una gran idea!"</p>
-          </div>
           
           <Card className="w-full shadow-lg bg-card/80 backdrop-blur-sm">
             <CardHeader>
@@ -240,7 +261,7 @@ export default function Station7() {
                   <Card key={index} className="aspect-square flex flex-col items-center justify-center p-2 relative overflow-hidden">
                     {business ? (
                       <>
-                        <Image src={business.imageUrl} alt={business.name} layout="fill" objectFit="cover" />
+                        <Image src={business.imageUrl} alt={business.name} fill style={{objectFit: "cover"}} />
                         <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-end p-2 text-white">
                            <p className="font-bold text-sm text-center">{business.name}</p>
                         </div>
@@ -270,6 +291,43 @@ export default function Station7() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Yara Character and Dialog */}
+        <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4 pointer-events-none">
+            <AnimatePresence>
+                {showYaraDialog && (
+                  <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 20 }}
+                      transition={{ duration: 0.5 }}
+                      className="w-64 mb-4"
+                  >
+                      <Card className="p-3 shadow-lg bg-white/95 relative">
+                          <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium"/>
+                          <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
+                      </Card>
+                  </motion.div>
+                )}
+            </AnimatePresence>
+            
+            {yaraCharImage && (
+                <motion.div
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0, transition: { delay: 0.5, duration: 0.8 } }}
+                    className="w-24 h-auto md:w-32"
+                >
+                    <Image
+                        src={yaraCharImage.imageUrl}
+                        alt={yaraCharImage.description}
+                        width={150}
+                        height={187}
+                        className="h-auto w-full select-none"
+                        priority
+                    />
+                </motion.div>
+            )}
+        </div>
       </div>
       <PrizeDialog
         open={isPrizeModalOpen}
@@ -279,3 +337,6 @@ export default function Station7() {
     </>
   );
 }
+
+
+    
