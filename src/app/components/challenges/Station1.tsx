@@ -458,20 +458,23 @@ export default function Station1() {
   useEffect(() => {
     const timers: NodeJS.Timeout[] = [];
 
+    // Aparece a los 20 seg
     const showTimer = setTimeout(() => {
         setShowYaraDialog(true);
-    }, 20000); // Aparece a los 20 seg
+    }, 20000); 
     timers.push(showTimer);
 
+    // Desaparece 1 min después de aparecer
     const hideTimer = setTimeout(() => {
         setShowYaraDialog(false);
-    }, 20000 + 60000); // Desaparece 1 min después de aparecer
+    }, 20000 + 60000); 
     timers.push(hideTimer);
 
+    // Reaparece 2 min después de desaparecer
     const reappearTimer = setTimeout(() => {
-        setShowYaraDialog(true);
         setYaraMessageIndex(prev => (prev + 1) % yaraMessages.length);
-    }, 20000 + 60000 + 120000); // Reaparece 2 min después de desaparecer
+        setShowYaraDialog(true);
+    }, 20000 + 60000 + 120000); 
     timers.push(reappearTimer);
     
     return () => timers.forEach(clearTimeout);
