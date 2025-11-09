@@ -430,10 +430,6 @@ export default function Station2() {
                 <h1 className="text-4xl md:text-5xl">ImpacTrack</h1>
             </div>
             
-            <div className="max-w-xl mx-auto bg-black/50 text-white p-4 rounded-xl mb-8">
-                <p className="font-bold text-lg">YARA: "¡Llegamos a ImpacTrack! Aquí aprenderás que cada acción deja huella. Observa tu entorno, registra tus buenas prácticas y demuestra que tu impacto puede ser positivo. ¡Haz que tus pasos cuenten por el planeta!"</p>
-            </div>
-
           <div className="flex flex-col items-center gap-4 md:gap-6 bg-background/70 backdrop-blur-sm p-6 rounded-xl">
             <div className="flex flex-wrap justify-center gap-4 md:gap-6">
               {days.slice(0, 4).map((_, index) => renderDayButton(index))}
@@ -491,5 +487,3 @@ export default function Station2() {
     </>
   );
 }
-
-    
