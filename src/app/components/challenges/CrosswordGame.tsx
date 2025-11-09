@@ -102,43 +102,42 @@ export default function CrosswordGame({ topic, onBack, onComplete }: CrosswordGa
     };
     
    const findWordStart = (number: number, dir: Direction): [number, number] | null => {
-    if (!gridData) return null;
-    const clueList = dir === 'across' ? gridData.across : gridData.down;
-    const clue = clueList.find(c => c.number === number);
-    if (!clue) return null;
-
-    for (let r = 0; r < 10; r++) {
-      for (let c = 0; c < 10; c++) {
-        const clueNumberAtCell = getClueNumberForCell(r,c);
-        if (clueNumberAtCell === number) {
-            // Check if this is the start of the correct clue
-            if (dir === 'across' && (c === 0 || gridData.grid[r][c-1] === '#')) {
-                 return [r, c];
-            }
-            if (dir === 'down' && (r === 0 || gridData.grid[r-1][c] === '#')) {
-                 return [r, c];
+        if (!gridData) return null;
+        
+        for (let r = 0; r < gridData.grid.length; r++) {
+            for (let c = 0; c < gridData.grid[r].length; c++) {
+                const clueNumber = getClueNumberForCell(r, c);
+                if (clueNumber === number) {
+                    if (dir === 'across' && (c === 0 || gridData.grid[r][c-1] === '#')) {
+                        const clue = gridData.across.find(cl => cl.number === number);
+                        if (clue) return [r, c];
+                    }
+                    if (dir === 'down' && (r === 0 || gridData.grid[r-1][c] === '#')) {
+                        const clue = gridData.down.find(cl => cl.number === number);
+                        if (clue) return [r, c];
+                    }
+                }
             }
         }
-      }
-    }
-    return null;
-  };
+        return null;
+    };
   
   const getClueNumberForCell = (r: number, c: number) => {
       if (!gridData || gridData.grid[r][c] === '#') return null;
+
       const isAcrossStart = (c === 0 || gridData.grid[r][c - 1] === '#') && c < 9 && gridData.grid[r][c+1] !== '#';
       const isDownStart = (r === 0 || gridData.grid[r - 1][c] === '#') && r < 9 && gridData.grid[r+1][c] !== '#';
 
       if(isAcrossStart || isDownStart) {
           const acrossClue = gridData.across.find(clue => {
-              const word = Array.from({length: clue.answer.length}, (_, i) => gridData.grid[r][c+i]).join('');
-              return word === clue.answer && isAcrossStart;
+              const wordStart = findWordStart(clue.number, 'across');
+              return wordStart && wordStart[0] === r && wordStart[1] === c;
           });
           if(acrossClue) return acrossClue.number;
 
           const downClue = gridData.down.find(clue => {
-               const word = Array.from({length: clue.answer.length}, (_, i) => gridData.grid[r+i][c]).join('');
-               return word === clue.answer && isDownStart;
+               const wordStart = findWordStart(clue.number, 'down');
+               return wordStart && wordStart[0] === r && wordStart[1] === c;
           });
           if(downClue) return downClue.number;
       }
