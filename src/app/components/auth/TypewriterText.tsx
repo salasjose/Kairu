@@ -30,5 +30,3 @@ export default function TypewriterText({ text, className, delay = 0 }: Typewrite
     </p>
   );
 }
-
-    

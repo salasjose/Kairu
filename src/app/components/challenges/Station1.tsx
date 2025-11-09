@@ -16,11 +16,14 @@ import { useChallengeProgress } from "@/hooks/use-challenge-progress";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import PrizeDialog from "../PrizeDialog";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import TypewriterText from "../auth/TypewriterText";
 
 
 const faunaImage = PlaceHolderImages.find((p) => p.id === "fauna-capybara");
 const habitatImage = PlaceHolderImages.find((p) => p.id === "habitat-build-1");
 const biodiversidadBgImage = PlaceHolderImages.find((p) => p.id === "biodiversidad-background");
+const yaraCharacterImage = PlaceHolderImages.find((p) => p.id === 'char-yara');
 
 const challenges = {
   "Fauna y Flora": {
@@ -443,6 +446,36 @@ export default function Station1() {
   const { completedChallenges, completeChallenge } = useChallengeProgress();
   const { unlockStation } = useStationProgress();
   const router = useRouter();
+  
+  const [showYaraDialog, setShowYaraDialog] = useState(false);
+  const [yaraMessageIndex, setYaraMessageIndex] = useState(0);
+
+  const yaraMessages = [
+    "¡Bienvenido a Bionexus! Aquí comienza nuestra gran aventura. Prepárate para descubrir los secretos que conectan toda la vida del planeta. Cada especie, cada árbol, cada gota… todos formamos parte de la misma red. ¡Vamos a explorarla juntos!",
+    "Selecciona uno de los retos para completar la estación. ¡Debes completarlos todos para avanzar!",
+  ];
+
+  useEffect(() => {
+    const timers: NodeJS.Timeout[] = [];
+
+    const showTimer = setTimeout(() => {
+        setShowYaraDialog(true);
+    }, 20000); // Aparece a los 20 seg
+    timers.push(showTimer);
+
+    const hideTimer = setTimeout(() => {
+        setShowYaraDialog(false);
+    }, 20000 + 60000); // Desaparece 1 min después de aparecer
+    timers.push(hideTimer);
+
+    const reappearTimer = setTimeout(() => {
+        setShowYaraDialog(true);
+        setYaraMessageIndex(prev => (prev + 1) % yaraMessages.length);
+    }, 20000 + 60000 + 120000); // Reaparece 2 min después de desaparecer
+    timers.push(reappearTimer);
+    
+    return () => timers.forEach(clearTimeout);
+  }, []);
 
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const stationChallenges = Object.keys(challenges);
@@ -520,11 +553,7 @@ export default function Station1() {
           <h1 className="text-4xl md:text-5xl">Bionexus</h1>
         </div>
         
-        <div className="max-w-xl mx-auto bg-black/50 text-white p-4 rounded-xl mb-8">
-            <p className="font-bold text-lg">YARA: "¡Bienvenido a Bionexus! Aquí comienza nuestra gran aventura. Prepárate para descubrir los secretos que conectan toda la vida del planeta. Cada especie, cada árbol, cada gota… todos formamos parte de la misma red. ¡Vamos a explorarla juntos!"</p>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-8 md:gap-12 mb-8">
+        <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
           {(Object.keys(challenges) as (keyof typeof challenges)[]).map((reto, index) => {
             const challengeProgress = stationCompletedChallenges[reto];
             const isCompleted = !!challengeProgress;
@@ -540,7 +569,15 @@ export default function Station1() {
               )}
             >
               <div className="absolute inset-0 bg-white shadow-2xl rounded-2xl transform -rotate-1"></div>
-              <Card className="relative w-[88vw] max-w-[420px] h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-2xl shadow-2xl flex flex-col items-center justify-center p-6 border-4 border-gray-200 overflow-hidden">
+              <Card
+                className="relative
+                           w-[88vw] max-w-[420px] h-64
+                           md:w-80 md:h-80
+                           lg:w-96 lg:h-96
+                           rounded-2xl shadow-2xl
+                           flex flex-col items-center justify-center
+                           p-6 border-4 border-gray-200 overflow-hidden"
+              >
                  {isCompleted && imageUrl && (
                   <>
                     <Image
@@ -576,12 +613,48 @@ export default function Station1() {
         </div>
 
         <div className="mt-4 max-w-md mx-auto space-y-4">
-          <p className="bg-background/80 p-4 rounded-md text-center">
-            Selecciona uno de los retos para completar la estación. ¡Debes completarlos todos para avanzar!
-          </p>
            <Button onClick={handleSimulateComplete}>Simular Finalización</Button>
         </div>
       </div>
+      
+       {/* Yara Character and Dialog */}
+      <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4">
+        <AnimatePresence>
+            {showYaraDialog && (
+              <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ duration: 0.5 }}
+                  className="w-64 mb-4"
+              >
+                  <Card className="p-3 shadow-lg bg-white/95 relative">
+                      <TypewriterText text={yaraMessages[yaraMessageIndex]} className="text-sm text-primary font-medium"/>
+                       {/* Speech bubble arrow */}
+                      <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
+                  </Card>
+              </motion.div>
+            )}
+        </AnimatePresence>
+        
+        {yaraCharacterImage && (
+            <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0, transition: { delay: 0.5, duration: 0.8 } }}
+                className="w-24 h-auto md:w-32"
+            >
+                <Image
+                    src={yaraCharacterImage.imageUrl}
+                    alt={yaraCharacterImage.description}
+                    width={150}
+                    height={187}
+                    className="h-auto w-full select-none"
+                    priority
+                />
+            </motion.div>
+        )}
+      </div>
+
     </div>
     <PrizeDialog 
         open={isPrizeModalOpen} 
