@@ -124,7 +124,7 @@ export default function Station8() {
 
   return (
     <>
-      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden">
         {vitaliaBgImage && (
             <Image
                 src={vitaliaBgImage.imageUrl}
