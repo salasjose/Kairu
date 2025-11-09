@@ -155,9 +155,6 @@ export default function Station5() {
           <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
             <h1 className="text-3xl md:text-5xl">ZonaCreativa</h1>
           </div>
-          <div className="max-w-xl mx-auto bg-black/50 text-white p-4 rounded-xl mb-8">
-            <p className="font-bold text-lg">YARA: "¡Wow, llegamos a ZonaCreativa! Este es el espacio donde tu imaginación se vuelve sostenible transformando ideas que inspiren un cambio positivo. ¡Tu creatividad puede cambiar el mundo!"</p>
-          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-8">
             {(Object.keys(challenges) as ChallengeId[]).map((key) => {
