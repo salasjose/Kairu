@@ -525,7 +525,7 @@ export default function Station1() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-8 md:gap-12 mb-8">
-          {(stationChallenges as (keyof typeof challenges)[]).map((reto, index) => {
+          {(Object.keys(challenges) as (keyof typeof challenges)[]).map((reto, index) => {
             const challengeProgress = stationCompletedChallenges[reto];
             const isCompleted = !!challengeProgress;
             const imageUrl = challengeProgress?.imageUrl;
@@ -535,12 +535,12 @@ export default function Station1() {
               key={reto}
               onClick={() => handleChallengeSelection(reto)}
               className={cn(
-                "relative transition-transform duration-300 hover:scale-105",
+                "relative w-full transition-transform duration-300 hover:scale-105",
                 index === 0 ? "md:-rotate-6" : "md:rotate-6"
               )}
             >
-              <div className="absolute inset-0 bg-white shadow-2xl rounded-lg transform -rotate-1"></div>
-              <Card className="relative w-56 h-60 md:w-60 md:h-64 rounded-lg shadow-2xl flex flex-col items-center justify-center p-4 border-4 border-gray-200 overflow-hidden">
+              <div className="absolute inset-0 bg-white shadow-2xl rounded-2xl transform -rotate-1"></div>
+              <Card className="relative w-[88vw] max-w-[420px] h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-2xl shadow-2xl flex flex-col items-center justify-center p-6 border-4 border-gray-200 overflow-hidden">
                  {isCompleted && imageUrl && (
                   <>
                     <Image
@@ -555,19 +555,19 @@ export default function Station1() {
                 <div className="relative z-20 text-center">
                     <CardHeader>
                         <CardTitle className={cn(
-                            "font-kalam text-3xl",
+                            "font-kalam text-4xl md:text-5xl",
                             isCompleted && imageUrl ? "text-white" : "text-primary"
                         )}>
                             {challenges[reto].title}
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className={cn("text-sm", isCompleted && imageUrl && "text-gray-200")}>
+                    <CardContent className={cn("text-base md:text-lg", isCompleted && imageUrl && "text-gray-200")}>
                         <p>{challenges[reto].description}</p>
                     </CardContent>
                 </div>
                  {isCompleted && (
-                    <div className="absolute top-2 right-2 z-30 bg-green-500 rounded-full p-2 shadow-lg">
-                        <CheckCircle className="text-white h-5 w-5" />
+                    <div className="absolute top-3 right-3 z-30 bg-green-500 rounded-full p-2.5 shadow-lg">
+                        <CheckCircle className="text-white h-6 w-6" />
                     </div>
                 )}
               </Card>
