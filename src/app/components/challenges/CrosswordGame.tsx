@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, CheckCircle, RefreshCw } from "lucide-react";
+import { ArrowLeft, CheckCircle, RefreshCw, Trophy } from "lucide-react";
 
 const palabrasData = [
     { id: '1H', number: 1, clue: 'Uso responsable de los recursos naturales para satisfacer necesidades actuales sin comprometer las futuras.', answer: 'SOSTENIBILIDAD', direction: 'across', row: 0, col: 0 },
@@ -174,6 +174,21 @@ export default function CrosswordGame({ onBack, onComplete }: { onBack: () => vo
         setIsComplete(false);
         setShowErrors(false);
     };
+
+    const solveGame = () => {
+        const newGrid = grid.map(row => 
+            row.map(cell => {
+                if (!cell.isBlock) {
+                    return { ...cell, user: cell.solution };
+                }
+                return cell;
+            })
+        );
+        setGrid(newGrid);
+        setIsComplete(true);
+        setShowErrors(false);
+        toast({ title: "¡Crucigrama Resuelto!", description: "Aquí tienes la solución." });
+    };
     
     const renderGrid = () => {
       return grid.map((row, r) =>
@@ -232,8 +247,9 @@ export default function CrosswordGame({ onBack, onComplete }: { onBack: () => vo
                     </div>
                 </div>
                  <footer className="text-center mt-6 space-y-4">
-                    <div className="space-x-4">
-                        <Button onClick={checkAnswers} size="lg"><CheckCircle className="mr-2"/>Comprobar Solución</Button>
+                    <div className="flex flex-wrap justify-center gap-4">
+                        <Button onClick={checkAnswers} size="lg"><CheckCircle className="mr-2"/>Comprobar</Button>
+                        <Button onClick={solveGame} size="lg" variant="secondary"><Trophy className="mr-2"/>Resolver</Button>
                         <Button onClick={resetGame} size="lg" variant="outline"><RefreshCw className="mr-2"/>Reiniciar</Button>
                     </div>
                     {isComplete && (
