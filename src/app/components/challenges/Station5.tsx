@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, FileText, Gamepad2, Puzzle } from "lucide-react";
+import { ArrowLeft, FileText, Gamepad2, Puzzle, Link as LinkIcon } from "lucide-react";
 import PrizeDialog from "../PrizeDialog";
 import { useRouter } from "next/navigation";
 import { useStationProgress } from "@/hooks/use-station-progress";
@@ -15,11 +15,14 @@ import WordSearchGame from "./WordSearchGame";
 import CrosswordGame from "./CrosswordGame";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
+import { useUser, useFirestore } from "@/firebase/hooks";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { Input } from "@/components/ui/input";
 
 const challenges = {
   learn: {
     title: "Aprende",
-    description: "Videos y Documentos sobre ideas sostenibles.",
+    description: "Copia y pega la URL de tu video sobre ideas sostenibles.",
     icon: FileText,
   },
   crossword: {
@@ -37,7 +40,74 @@ const challenges = {
 type ChallengeId = keyof typeof challenges;
 
 const LearnChallenge = ({ onBack, onComplete }: { onBack: () => void; onComplete: () => void; }) => {
+    const { user } = useUser();
+    const db = useFirestore();
+    const [url, setUrl] = useState("");
+    const [videoUrl, setVideoUrl] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
     const sustainableDesignImage = PlaceHolderImages.find(p => p.id === 'sustainable-design-video');
+
+    const handleUrlChange = useCallback((newUrl: string) => {
+        setUrl(newUrl);
+        if (newUrl.trim() && (newUrl.startsWith("http://") || newUrl.startsWith("https://"))) {
+            if (newUrl.includes("youtube.com/watch?v=")) {
+                const videoId = newUrl.split("v=")[1].split("&")[0];
+                setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
+            } else if (newUrl.includes("youtu.be/")) {
+                const videoId = newUrl.split("youtu.be/")[1].split("?")[0];
+                setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
+            } else {
+                setVideoUrl(newUrl);
+            }
+        } else {
+            setVideoUrl(null);
+        }
+    }, []);
+
+    useEffect(() => {
+        const fetchUrl = async () => {
+            if (!user || !db) {
+                setIsLoading(false);
+                return;
+            }
+            try {
+                const docRef = doc(db, 'users', user.uid);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists() && docSnap.data().station5Url) {
+                    const savedUrl = docSnap.data().station5Url;
+                    handleUrlChange(savedUrl);
+                }
+            } catch (error) {
+                console.error("Error fetching URL from Firestore:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchUrl();
+    }, [user, db, handleUrlChange]);
+
+    const handleSaveAndComplete = async () => {
+        if (!url.trim()) {
+            toast({ title: "URL vacía", description: "Por favor, ingresa una URL válida.", variant: "destructive" });
+            return;
+        }
+        if (user && db) {
+            try {
+                const docRef = doc(db, 'users', user.uid);
+                await setDoc(docRef, { station5Url: url }, { merge: true });
+                toast({ title: "¡Guardado!", description: "La URL de tu video ha sido guardada." });
+                onComplete();
+            } catch (error) {
+                console.error("Error saving URL to Firestore:", error);
+                toast({ title: "Error al Guardar", description: "No se pudo guardar la URL.", variant: "destructive" });
+            }
+        } else {
+            toast({ title: "Usuario no encontrado", description: "Debes iniciar sesión para guardar tu progreso.", variant: "destructive" });
+        }
+    };
+
+
     return (
         <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center flex-grow">
             <div className="w-full">
@@ -46,24 +116,44 @@ const LearnChallenge = ({ onBack, onComplete }: { onBack: () => void; onComplete
                 </Button>
                 <Card className="w-full shadow-lg">
                     <CardHeader>
-                        <CardTitle>Videos Educativos</CardTitle>
-                        <CardDescription>Aprende de los expertos en diseño y arquitectura sostenible.</CardDescription>
+                        <CardTitle className="text-center">{challenges.learn.title}</CardTitle>
+                        <CardDescription className="text-center">{challenges.learn.description}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4 text-center">
-                        {sustainableDesignImage && (
-                            <div className="flex justify-center mb-6">
-                                <Image 
-                                    src={sustainableDesignImage.imageUrl} 
-                                    alt={sustainableDesignImage.description} 
-                                    width={400} 
-                                    height={300} 
-                                    className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto"
-                                    data-ai-hint={sustainableDesignImage.imageHint}
-                                />
-                            </div>
-                        )}
-                        <p className="text-muted-foreground">¡Próximamente un reproductor de video!</p>
-                        <Button onClick={onComplete} size="lg">Simular Finalización y Volver</Button>
+                       <div className="mx-auto mb-6 w-full max-w-sm h-auto aspect-video bg-black rounded-lg border-4 border-white shadow-md flex items-center justify-center">
+                          {isLoading ? (
+                            <p className="text-white">Cargando...</p>
+                          ) : videoUrl && videoUrl.includes("youtube.com/embed") ? (
+                             <iframe
+                                src={videoUrl}
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                className="rounded-lg w-full h-full"
+                              ></iframe>
+                          ) : (
+                            sustainableDesignImage && <Image 
+                                src={sustainableDesignImage.imageUrl} 
+                                alt={sustainableDesignImage.description} 
+                                width={400} 
+                                height={300} 
+                                className="rounded-lg object-cover w-full h-full opacity-50"
+                                data-ai-hint={sustainableDesignImage.imageHint}
+                            />
+                          )}
+                        </div>
+                        
+                        <div className="flex gap-2 max-w-md mx-auto">
+                            <LinkIcon className="h-10 text-muted-foreground" />
+                            <Input
+                                type="url"
+                                placeholder="https://youtube.com/tu-video"
+                                value={url}
+                                onChange={(e) => handleUrlChange(e.target.value)}
+                                disabled={isLoading}
+                            />
+                        </div>
+                        
+                        <Button onClick={handleSaveAndComplete} size="lg">Guardar y Completar</Button>
                     </CardContent>
                 </Card>
             </div>
