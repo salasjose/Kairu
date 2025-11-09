@@ -23,22 +23,10 @@ const grid = [
   ['S', 'O', 'L', 'A', 'M', 'B', 'I', 'E', 'N', 'T'],
 ];
 
-// Helper to find word positions for solution reveal (not used in gameplay logic)
-const wordPositions: { [key: string]: { start: [number, number]; end: [number, number] } } = {
-  RECICLAR: { start: [1, 1], end: [1, 8] },
-  FAUNA: { start: [2, 1], end: [2, 5] },
-  FLORA: { start: [2, 1], end: [2, 5] }, // Placeholder, needs correct position
-  AGUA: { start: [3, 9], end: [0, 9] },
-  SUELO: { start: [6, 2], end: [6, 6] },
-  BOSQUE: { start: [5, 0], end: [5, 5] },
-  SOL: { start: [9, 0], end: [9, 2] },
-  COMPOST: { start: [4, 8], end: [9, 8] },
-};
-
-
 const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack: () => void; gameId: string }) => {
   const [selectedCells, setSelectedCells] = useState<[number, number][]>([]);
   const [foundWords, setFoundWords] = useState<string[]>([]);
+  const [foundCells, setFoundCells] = useState<[number, number][]>([]);
   const [isSelecting, setIsSelecting] = useState(false);
   const [timeLeft, setTimeLeft] = useState(120);
   const [gameState, setGameState] = useState<'playing' | 'won' | 'lost'>('playing');
@@ -99,6 +87,7 @@ const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack
 
     if (foundWord && !foundWords.includes(foundWord)) {
       setFoundWords(prev => [...prev, foundWord]);
+      setFoundCells(prev => [...prev, ...selectedCells]);
       toast({ title: `¡Encontraste "${foundWord}"!`, className: 'bg-green-500/20' });
     }
     setSelectedCells([]);
@@ -107,6 +96,7 @@ const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack
   const handleRestart = () => {
     setSelectedCells([]);
     setFoundWords([]);
+    setFoundCells([]);
     setIsSelecting(false);
     setTimeLeft(120);
     setGameState('playing');
@@ -121,6 +111,11 @@ const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack
   const isCellSelected = (r: number, c: number) => {
     return selectedCells.some(([selR, selC]) => selR === r && selC === c);
   };
+  
+  const isCellFound = (r: number, c: number) => {
+    return foundCells.some(([foundR, foundC]) => foundR === r && foundC === c);
+  };
+
   
   if (gameState === 'won') {
     return (
@@ -183,7 +178,9 @@ const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack
                  onMouseEnter={() => handleMouseEnter(r, c)}
                  className={cn(
                    'flex items-center justify-center aspect-square text-lg font-bold uppercase cursor-pointer rounded-md transition-colors',
-                   isCellSelected(r,c) ? 'bg-primary/50 text-primary-foreground' : 'bg-background hover:bg-accent'
+                   isCellSelected(r,c) ? 'bg-primary/50 text-primary-foreground' 
+                   : isCellFound(r, c) ? 'bg-green-500/30'
+                   : 'bg-background hover:bg-accent'
                  )}
                >
                  {letter}
