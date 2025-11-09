@@ -448,44 +448,44 @@ export default function Station1() {
   const router = useRouter();
   
   const [showYaraDialog, setShowYaraDialog] = useState(false);
-  const [yaraMessageIndex, setYaraMessageIndex] = useState(0);
-  const yaraMessageTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [yaraMessage, setYaraMessage] = useState("¡Bienvenido a Bionexus! Aquí comienza nuestra gran aventura. Prepárate para descubrir los secretos que conectan toda la vida del planeta. Cada especie, cada árbol, cada gota todos formamos parte de la misma red. ¡Vamos a explorarla juntos! Para ellos debe seleccionar uno de los retos para completar la estación. ¡Debes completarlos todos para avanzar!");
+  const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const yaraMessages = [
-    "¡Bienvenido a Bionexus! Aquí comienza nuestra gran aventura. Prepárate para descubrir los secretos que conectan toda la vida del planeta. Cada especie, cada árbol, cada gota… todos formamos parte de la misma red. ¡Vamos a explorarla juntos!",
-    "Selecciona uno de los retos para completar la estación. ¡Debes completarlos todos para avanzar!",
-  ];
-  
-  const scheduleYaraMessage = useCallback(() => {
+  const scheduleYaraDialog = useCallback(() => {
     // Clear any existing timer
-    if (yaraMessageTimerRef.current) {
-      clearTimeout(yaraMessageTimerRef.current);
+    if (yaraTimerRef.current) {
+      clearTimeout(yaraTimerRef.current);
     }
     
     // Set a new timer
-    yaraMessageTimerRef.current = setTimeout(() => {
-      setYaraMessageIndex(prev => (prev + 1) % yaraMessages.length);
+    yaraTimerRef.current = setTimeout(() => {
       setShowYaraDialog(true);
       
       // Hide after 1 minute
-      setTimeout(() => {
+      const hideTimer = setTimeout(() => {
         setShowYaraDialog(false);
-        // Schedule the next appearance in 2 minutes
-        scheduleYaraMessage();
-      }, 60000);
+      }, 60000); 
 
-    }, yaraMessageIndex === 0 && !showYaraDialog ? 20000 : 120000); // 20s for first, 2min for subsequent
-  }, [yaraMessageIndex, showYaraDialog, yaraMessages.length]);
+      // Schedule the next appearance in 2 minutes after it hides
+      const reapperTimer = setTimeout(() => {
+        scheduleYaraDialog();
+      }, 60000 + 120000);
+
+    // Initial appearance after 20 seconds
+    }, 20000); 
+
+  }, []);
 
   useEffect(() => {
-    scheduleYaraMessage();
+    scheduleYaraDialog();
     // Cleanup timer on component unmount
     return () => {
-      if (yaraMessageTimerRef.current) {
-        clearTimeout(yaraMessageTimerRef.current);
+      if (yaraTimerRef.current) {
+        clearTimeout(yaraTimerRef.current);
       }
     };
-  }, [scheduleYaraMessage]);
+  }, [scheduleYaraDialog]);
+
 
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const stationChallenges = Object.keys(challenges);
@@ -639,7 +639,7 @@ export default function Station1() {
                   className="w-64 mb-4"
               >
                   <Card className="p-3 shadow-lg bg-white/95 relative">
-                      <TypewriterText text={yaraMessages[yaraMessageIndex]} className="text-sm text-primary font-medium"/>
+                      <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium"/>
                        {/* Speech bubble arrow */}
                       <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
                   </Card>
