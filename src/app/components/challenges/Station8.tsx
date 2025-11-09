@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import type { CrosswordData } from "@/lib/types";
@@ -13,6 +13,8 @@ import { ArrowLeft, Lightbulb, Zap } from "lucide-react";
 import PrizeDialog from "../PrizeDialog";
 import { useRouter } from "next/navigation";
 import { useStationProgress } from "@/hooks/use-station-progress";
+import { motion, AnimatePresence } from "framer-motion";
+import TypewriterText from "../auth/TypewriterText";
 
 
 const challenges = {
@@ -21,12 +23,6 @@ const challenges = {
     description: "Energías que mueven el mundo: Descubre cómo la naturaleza nos enseña a producir energía sin agotarla (videos).",
     icon: Lightbulb,
     imageId: "sustainable-design-video"
-  },
-  capture: {
-    title: "Captura Solar",
-    description: "Usa un medidor de radiación y capta cómo se aprovecha su energía.",
-    icon: Zap,
-    imageId: "solar-panel-field"
   },
 };
 
@@ -74,7 +70,30 @@ export default function Station8() {
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
   const router = useRouter();
+  
+  const [showYaraDialog, setShowYaraDialog] = useState(false);
+  const yaraMessage = "¡Has llegado a Vitalia! La energía del sol, del viento y del agua nos impulsa hacia un futuro más limpio. Recarga tu energía, comparte tu luz y sigue construyendo un planeta lleno de vida. ¡Tu fuerza también renueva el mundo!";
+  const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
   const vitaliaBgImage = PlaceHolderImages.find(p => p.id === 'vitalia-background');
+  const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara');
+
+  const scheduleYaraDialog = useCallback(() => {
+    if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
+    yaraTimerRef.current = setTimeout(() => {
+      setShowYaraDialog(true);
+      const hideTimer = setTimeout(() => setShowYaraDialog(false), 60000); // Hide after 1 minute
+      const reappearTimer = setTimeout(scheduleYaraDialog, 60000 + 120000); // Reappear after 2 more minutes
+    }, 10000); // Initial appearance after 10 seconds
+  }, []);
+
+  useEffect(() => {
+    scheduleYaraDialog();
+    return () => {
+      if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
+    };
+  }, [scheduleYaraDialog]);
+
 
   const handleComplete = (challengeId: ChallengeId) => {
     unlockStation(stationId + 1);
@@ -120,10 +139,7 @@ export default function Station8() {
           <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
             <h1 className="text-3xl md:text-5xl">Vitalia</h1>
           </div>
-            <div className="max-w-xl mx-auto bg-black/50 text-white p-4 rounded-xl mb-8">
-              <p className="font-bold text-lg">YARA: "¡Has llegado a Vitalia! La energía del sol, del viento y del agua nos impulsa hacia un futuro más limpio. Recarga tu energía, comparte tu luz y sigue construyendo un planeta lleno de vida. ¡Tu fuerza también renueva el mundo!"</p>
-            </div>
-
+           
           <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
             {(Object.keys(challenges) as ChallengeId[]).map((key) => {
               const challenge = challenges[key];
@@ -148,6 +164,43 @@ export default function Station8() {
           </div>
            <Button onClick={handleSimulateComplete}>Simular Finalización</Button>
         </div>
+        
+         {/* Yara Character and Dialog */}
+        <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4 pointer-events-none">
+            <AnimatePresence>
+                {showYaraDialog && (
+                  <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 20 }}
+                      transition={{ duration: 0.5 }}
+                      className="w-64 mb-4"
+                  >
+                      <Card className="p-3 shadow-lg bg-white/95 relative">
+                          <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium"/>
+                          <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
+                      </Card>
+                  </motion.div>
+                )}
+            </AnimatePresence>
+            
+            {yaraCharImage && (
+                <motion.div
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0, transition: { delay: 0.5, duration: 0.8 } }}
+                    className="w-24 h-auto md:w-32"
+                >
+                    <Image
+                        src={yaraCharImage.imageUrl}
+                        alt={yaraCharImage.description}
+                        width={150}
+                        height={187}
+                        className="h-auto w-full select-none"
+                        priority
+                    />
+                </motion.div>
+            )}
+        </div>
       </div>
       <PrizeDialog
         open={isPrizeModalOpen}
@@ -157,5 +210,7 @@ export default function Station8() {
     </>
   );
 }
+
+    
 
     
