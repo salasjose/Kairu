@@ -24,7 +24,7 @@ const palabrasData = [
 const gridSize = { rows: 12, cols: 15 };
 
 const createInitialGrid = () => {
-    const initialGrid = Array(gridSize.rows).fill(null).map(() => Array(gridSize.cols).fill({ user: '', solution: '', isBlock: true, clues: [] }));
+    const initialGrid = Array(gridSize.rows).fill(null).map(() => Array(gridSize.cols).fill({ user: '', solution: '', isBlock: true, clues: [] as string[], number: null as number | null }));
     palabrasData.forEach(palabra => {
         let { row, col, direction, answer, id, number } = palabra;
         for (let i = 0; i < answer.length; i++) {
