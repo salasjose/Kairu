@@ -449,36 +449,43 @@ export default function Station1() {
   
   const [showYaraDialog, setShowYaraDialog] = useState(false);
   const [yaraMessageIndex, setYaraMessageIndex] = useState(0);
+  const yaraMessageTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const yaraMessages = [
     "¡Bienvenido a Bionexus! Aquí comienza nuestra gran aventura. Prepárate para descubrir los secretos que conectan toda la vida del planeta. Cada especie, cada árbol, cada gota… todos formamos parte de la misma red. ¡Vamos a explorarla juntos!",
     "Selecciona uno de los retos para completar la estación. ¡Debes completarlos todos para avanzar!",
   ];
+  
+  const scheduleYaraMessage = useCallback(() => {
+    // Clear any existing timer
+    if (yaraMessageTimerRef.current) {
+      clearTimeout(yaraMessageTimerRef.current);
+    }
+    
+    // Set a new timer
+    yaraMessageTimerRef.current = setTimeout(() => {
+      setYaraMessageIndex(prev => (prev + 1) % yaraMessages.length);
+      setShowYaraDialog(true);
+      
+      // Hide after 1 minute
+      setTimeout(() => {
+        setShowYaraDialog(false);
+        // Schedule the next appearance in 2 minutes
+        scheduleYaraMessage();
+      }, 60000);
+
+    }, yaraMessageIndex === 0 && !showYaraDialog ? 20000 : 120000); // 20s for first, 2min for subsequent
+  }, [yaraMessageIndex, showYaraDialog, yaraMessages.length]);
 
   useEffect(() => {
-    const timers: NodeJS.Timeout[] = [];
-
-    // Aparece a los 20 seg
-    const showTimer = setTimeout(() => {
-        setShowYaraDialog(true);
-    }, 20000); 
-    timers.push(showTimer);
-
-    // Desaparece 1 min después de aparecer
-    const hideTimer = setTimeout(() => {
-        setShowYaraDialog(false);
-    }, 20000 + 60000); 
-    timers.push(hideTimer);
-
-    // Reaparece 2 min después de desaparecer
-    const reappearTimer = setTimeout(() => {
-        setYaraMessageIndex(prev => (prev + 1) % yaraMessages.length);
-        setShowYaraDialog(true);
-    }, 20000 + 60000 + 120000); 
-    timers.push(reappearTimer);
-    
-    return () => timers.forEach(clearTimeout);
-  }, []);
+    scheduleYaraMessage();
+    // Cleanup timer on component unmount
+    return () => {
+      if (yaraMessageTimerRef.current) {
+        clearTimeout(yaraMessageTimerRef.current);
+      }
+    };
+  }, [scheduleYaraMessage]);
 
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const stationChallenges = Object.keys(challenges);
