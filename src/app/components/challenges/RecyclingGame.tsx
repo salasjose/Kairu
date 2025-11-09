@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -5,13 +6,10 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import WasteClassificationGame from "./WasteClassificationGame";
-import WordSearchGame from "./WordSearchGame";
 
 const games = [
   { id: "classify", title: "Clasificación de Residuos", description: "Clasifica 10 residuos con imágenes antes de que se acabe el tiempo. ¡Cuidado, solo tienes 3 vidas!", component: WasteClassificationGame, enabled: true },
   { id: "drag-and-drop", title: "Arrastra y Recicla", description: "Arrastra cada residuo al contenedor correcto. ¡Demuestra tu conocimiento!", component: WasteClassificationGame, enabled: true },
-  { id: "word-search", title: "Sopa de Letras Ambiental", description: "Encuentra las palabras ocultas antes de que se acabe el tiempo.", component: WordSearchGame, enabled: true },
-  { id: "game4", title: "Juego 4 (Próximamente)", description: "Un nuevo reto de reciclaje.", component: null, enabled: false },
 ];
 
 interface RecyclingGamesMenuProps {
