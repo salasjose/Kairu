@@ -33,7 +33,11 @@ export default function CrosswordGame({ topic, onBack, onComplete }: CrosswordGa
     const generateGame = useCallback(async () => {
         setIsLoading(true);
         setError(null);
+        setGridData(null);
+        setGridState([]);
+
         const result = await handleGenerateCrossword(topic, 10);
+        
         if (result.success && result.data) {
             setGridData(result.data);
             const initialGrid = result.data.grid.map(row => row.map(cell => (cell === "#" ? "#" : "")));
@@ -90,61 +94,76 @@ export default function CrosswordGame({ topic, onBack, onComplete }: CrosswordGa
             setDirection(prev => prev === "across" ? "down" : "across");
         } else {
             setSelectedCell({ row, col });
-            // Prioritize across if available
-            const isInAcross = gridData?.across.some(a => {
-                const start = findWordStart(a.number);
-                if (!start) return false;
-                const [startRow, startCol] = start;
-                return row === startRow && col >= startCol && col < startCol + a.answer.length;
-            });
-
-            const isInDown = gridData?.down.some(d => {
-                const start = findWordStart(d.number);
-                if (!start) return false;
-                const [startRow, startCol] = start;
-                return col === startCol && row >= startRow && row < startRow + d.answer.length;
-            })
-
-            if (isInAcross) {
-                setDirection("across");
-            } else if (isInDown) {
-                setDirection("down");
+            const clue = findClueForCell(row, col);
+            if (clue) {
+              setDirection(clue.direction);
             }
         }
     };
     
-   const findWordStart = (number: number): [number, number] | null => {
-        if (!gridData) return null;
-        
-        const acrossClue = gridData.across.find(c => c.number === number);
-        if (acrossClue) {
-            for (let r = 0; r < 10; r++) {
-                for (let c = 0; c <= 10 - acrossClue.answer.length; c++) {
-                    const word = gridData.grid[r].slice(c, c + acrossClue.answer.length).join('');
-                    if (word === acrossClue.answer) {
-                        return [r, c];
-                    }
-                }
+   const findWordStart = (number: number, dir: Direction): [number, number] | null => {
+    if (!gridData) return null;
+    const clueList = dir === 'across' ? gridData.across : gridData.down;
+    const clue = clueList.find(c => c.number === number);
+    if (!clue) return null;
+
+    for (let r = 0; r < 10; r++) {
+      for (let c = 0; c < 10; c++) {
+        const clueNumberAtCell = getClueNumberForCell(r,c);
+        if (clueNumberAtCell === number) {
+            // Check if this is the start of the correct clue
+            if (dir === 'across' && (c === 0 || gridData.grid[r][c-1] === '#')) {
+                 return [r, c];
+            }
+            if (dir === 'down' && (r === 0 || gridData.grid[r-1][c] === '#')) {
+                 return [r, c];
             }
         }
-
-        const downClue = gridData.down.find(c => c.number === number);
-        if (downClue) {
-            for (let c = 0; c < 10; c++) {
-                for (let r = 0; r <= 10 - downClue.answer.length; r++) {
-                    let word = '';
-                    for(let i=0; i<downClue.answer.length; i++) {
-                        word += gridData.grid[r+i][c];
-                    }
-                    if (word === downClue.answer) {
-                        return [r, c];
-                    }
-                }
-            }
-        }
-
-        return null;
+      }
     }
+    return null;
+  };
+  
+  const getClueNumberForCell = (r: number, c: number) => {
+      if (!gridData || gridData.grid[r][c] === '#') return null;
+      const isAcrossStart = (c === 0 || gridData.grid[r][c - 1] === '#') && c < 9 && gridData.grid[r][c+1] !== '#';
+      const isDownStart = (r === 0 || gridData.grid[r - 1][c] === '#') && r < 9 && gridData.grid[r+1][c] !== '#';
+
+      if(isAcrossStart || isDownStart) {
+          const acrossClue = gridData.across.find(clue => {
+              const word = Array.from({length: clue.answer.length}, (_, i) => gridData.grid[r][c+i]).join('');
+              return word === clue.answer && isAcrossStart;
+          });
+          if(acrossClue) return acrossClue.number;
+
+          const downClue = gridData.down.find(clue => {
+               const word = Array.from({length: clue.answer.length}, (_, i) => gridData.grid[r+i][c]).join('');
+               return word === clue.answer && isDownStart;
+          });
+          if(downClue) return downClue.number;
+      }
+      return null;
+  }
+  
+  const findClueForCell = (row: number, col: number) => {
+      if(!gridData) return null;
+
+       // Check across
+      for (const clue of gridData.across) {
+          const start = findWordStart(clue.number, 'across');
+          if (start && row === start[0] && col >= start[1] && col < start[1] + clue.answer.length) {
+              return { ...clue, direction: 'across' as Direction };
+          }
+      }
+      // Check down
+      for (const clue of gridData.down) {
+          const start = findWordStart(clue.number, 'down');
+          if (start && col === start[1] && row >= start[0] && row < start[0] + clue.answer.length) {
+              return { ...clue, direction: 'down' as Direction };
+          }
+      }
+      return null;
+  }
 
 
     const checkSolution = () => {
@@ -175,36 +194,20 @@ export default function CrosswordGame({ topic, onBack, onComplete }: CrosswordGa
         if (!selectedCell || !gridData) return [];
         const { row, col } = selectedCell;
         
-        const clues = direction === 'across' ? gridData.across : gridData.down;
+        const clue = findClueForCell(row, col);
+        if(!clue) return [{r: row, c: col}];
 
-        for (const clue of clues) {
-            const start = findWordStart(clue.number);
-            if (!start) continue;
+        const start = findWordStart(clue.number, clue.direction);
+        if(!start) return [{r: row, c: col}];
 
-            let [startRow, startCol] = start;
-            let inThisWord = false;
-            
-            if (direction === 'across') {
-                if (row === startRow && col >= startCol && col < startCol + clue.answer.length) {
-                    inThisWord = true;
-                }
-            } else { // down
-                if (col === startCol && row >= startRow && row < startRow + clue.answer.length) {
-                    inThisWord = true;
-                }
-            }
-
-            if(inThisWord){
-                const cells: {r: number, c: number}[] = [];
-                for (let i = 0; i < clue.answer.length; i++) {
-                    const r = direction === 'down' ? startRow + i : startRow;
-                    const c = direction === 'across' ? startCol + i : startCol;
-                    cells.push({ r, c });
-                }
-                return cells;
-            }
+        const [startRow, startCol] = start;
+        const cells: {r: number, c: number}[] = [];
+        for (let i = 0; i < clue.answer.length; i++) {
+            const r = clue.direction === 'down' ? startRow + i : startRow;
+            const c = clue.direction === 'across' ? startCol + i : startCol;
+            cells.push({ r, c });
         }
-        return [{r: row, c: col}];
+        return cells;
     }
 
     const highlightedCells = getHighlightedCells();
@@ -213,6 +216,7 @@ export default function CrosswordGame({ topic, onBack, onComplete }: CrosswordGa
         return (
             <div className="w-full max-w-4xl mx-auto p-4 flex flex-col items-center justify-center text-center">
                 <h2 className="text-2xl font-bold font-headline mb-4">Generando Crucigrama...</h2>
+                <p className="text-muted-foreground mb-4">Esto puede tardar un momento...</p>
                 <Skeleton className="w-full aspect-square max-w-lg" />
             </div>
         );
@@ -222,7 +226,7 @@ export default function CrosswordGame({ topic, onBack, onComplete }: CrosswordGa
         return (
             <div className="w-full max-w-4xl mx-auto p-4 flex flex-col items-center justify-center text-center">
                  <AlertCircle className="w-16 h-16 text-destructive mb-4" />
-                <h2 className="text-2xl font-bold font-headline text-destructive mb-2">Error</h2>
+                <h2 className="text-2xl font-bold font-headline text-destructive mb-2">Error al Generar Crucigrama</h2>
                 <p className="text-muted-foreground mb-4">{error}</p>
                 <div className="flex gap-4">
                     <Button onClick={onBack} variant="outline">Volver</Button>
@@ -232,7 +236,12 @@ export default function CrosswordGame({ topic, onBack, onComplete }: CrosswordGa
         );
     }
     
-    if (!gridData) return null;
+    if (!gridData) return (
+      <div className="w-full max-w-4xl mx-auto p-4 flex flex-col items-center justify-center text-center">
+          <p>No se pudieron cargar los datos del crucigrama.</p>
+          <Button onClick={onBack} variant="outline" className="mt-4">Volver</Button>
+      </div>
+    );
 
     return (
         <div className="flex flex-col lg:flex-row gap-8 p-4 max-w-7xl mx-auto items-start">
@@ -250,8 +259,7 @@ export default function CrosswordGame({ topic, onBack, onComplete }: CrosswordGa
                             const isBlack = gridData.grid[r][c] === "#";
                             const isHighlighted = highlightedCells.some(hc => hc.r === r && hc.c === c);
                             const isSelected = selectedCell?.row === r && selectedCell?.col === c;
-                            const clueNumber = gridData.across.find(clue => findWordStart(clue.number)?.[0] === r && findWordStart(clue.number)?.[1] === c)?.number
-                                            || gridData.down.find(clue => findWordStart(clue.number)?.[0] === r && findWordStart(clue.number)?.[1] === c)?.number;
+                            const clueNumber = getClueNumberForCell(r,c);
 
 
                             return (
@@ -261,8 +269,8 @@ export default function CrosswordGame({ topic, onBack, onComplete }: CrosswordGa
                                         "aspect-square flex items-center justify-center relative",
                                         isBlack ? "bg-black" : "bg-white",
                                         !isBlack && "cursor-pointer",
-                                        isSelected && "bg-yellow-200",
-                                        isHighlighted && !isSelected && "bg-yellow-100/70"
+                                        isSelected && !isBlack && "bg-yellow-200",
+                                        isHighlighted && !isSelected && !isBlack && "bg-yellow-100/70"
                                     )}
                                     onClick={() => handleCellClick(r, c)}
                                 >
@@ -294,7 +302,7 @@ export default function CrosswordGame({ topic, onBack, onComplete }: CrosswordGa
                         <CardTitle>Horizontales</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm max-h-[400px] overflow-y-auto">
-                        {gridData.across.map(clue => (
+                        {gridData.across.sort((a,b) => a.number - b.number).map(clue => (
                             <p key={`across-${clue.number}`}><span className="font-bold">{clue.number}.</span> {clue.clue}</p>
                         ))}
                     </CardContent>
@@ -304,7 +312,7 @@ export default function CrosswordGame({ topic, onBack, onComplete }: CrosswordGa
                         <CardTitle>Verticales</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm max-h-[400px] overflow-y-auto">
-                        {gridData.down.map(clue => (
+                        {gridData.down.sort((a,b) => a.number - b.number).map(clue => (
                             <p key={`down-${clue.number}`}><span className="font-bold">{clue.number}.</span> {clue.clue}</p>
                         ))}
                     </CardContent>

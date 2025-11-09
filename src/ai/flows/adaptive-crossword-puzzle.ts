@@ -67,7 +67,7 @@ const prompt = ai.definePrompt({
   Ejemplo de salida JSON (para un crucigrama más pequeño de 3x3):
   '{"grid":[["A","B","C"],["D","#","E"],["F","G","H"]],"across":[{"number":1,"clue":"Primera letra","answer":"A"},{"number":2,"clue":"Segunda letra","answer":"B"}],"down":[{"number":1,"clue":"Otra letra","answer":"D"},{"number":2,"clue":"Una letra más","answer":"F"}]}'
 
-  Asegúrate de que el crucigrama generado se pueda resolver y que las pistas sean relevantes para el tema especificado. Las pistas y respuestas deben estar en español. No incluyas saltos de línea ni markdown en la salida.
+  Asegúrate de que el crucigrama generado se pueda resolver y que las pistas sean relevantes para el tema especificado. Las pistas y respuestas deben estar en español. No incluyas saltos de línea ni markdown en la salida. El JSON debe ser compacto y en una sola línea.
 `,
 });
 
@@ -82,3 +82,5 @@ const generateCrosswordPuzzleFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    
