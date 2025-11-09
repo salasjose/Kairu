@@ -540,7 +540,7 @@ export default function Station1() {
               )}
             >
               <div className="absolute inset-0 bg-white shadow-2xl rounded-lg transform -rotate-1"></div>
-              <Card className="relative w-60 h-64 md:w-64 md:h-72 rounded-lg shadow-2xl flex flex-col items-center justify-center p-4 border-4 border-gray-200 overflow-hidden">
+              <Card className="relative w-56 h-60 md:w-60 md:h-64 rounded-lg shadow-2xl flex flex-col items-center justify-center p-4 border-4 border-gray-200 overflow-hidden">
                  {isCompleted && imageUrl && (
                   <>
                     <Image
@@ -555,13 +555,13 @@ export default function Station1() {
                 <div className="relative z-20 text-center">
                     <CardHeader>
                         <CardTitle className={cn(
-                            "font-kalam text-3xl md:text-4xl",
+                            "font-kalam text-3xl",
                             isCompleted && imageUrl ? "text-white" : "text-primary"
                         )}>
                             {challenges[reto].title}
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className={cn(isCompleted && imageUrl && "text-gray-200")}>
+                    <CardContent className={cn("text-sm", isCompleted && imageUrl && "text-gray-200")}>
                         <p>{challenges[reto].description}</p>
                     </CardContent>
                 </div>
@@ -591,5 +591,3 @@ export default function Station1() {
     </>
   );
 }
-
-    
