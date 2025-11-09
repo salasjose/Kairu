@@ -302,7 +302,7 @@ export default function Station3() {
       setShowYaraDialog(true);
       const hideTimer = setTimeout(() => setShowYaraDialog(false), 60000); // Hide after 1 minute
       const reappearTimer = setTimeout(scheduleYaraDialog, 60000 + 120000); // Reappear after 2 more minutes
-    }, 20000); // Initial appearance after 20 seconds
+    }, 10000); // Initial appearance after 10 seconds
   }, []);
 
   useEffect(() => {
@@ -386,10 +386,6 @@ export default function Station3() {
             <h1 className="text-3xl md:text-5xl">ReNova</h1>
           </div>
           
-           <div className="max-w-xl mx-auto bg-black/50 text-white p-4 rounded-xl mb-8">
-                <p className="font-bold text-lg hidden">YARA: "¡Qué emoción! En ReNova descubriremos que nada se desperdicia cuando usamos la creatividad. Convierte lo viejo en nuevo, lo usado en útil y demuestra que transformar también es cuidar. ¡Manos a la obra!"</p>
-            </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 mb-8">
             {(Object.keys(challenges) as ChallengeId[]).map((key) => {
               const challenge = challenges[key];
@@ -469,5 +465,3 @@ export default function Station3() {
     </>
   );
 }
-
-    
