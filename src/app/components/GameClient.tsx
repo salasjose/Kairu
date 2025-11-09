@@ -256,7 +256,7 @@ export default function GameClient() {
             <div className="bg-white/90 backdrop-blur-sm p-2 rounded-2xl flex items-center gap-3 shadow-md">
                 <Logo className="h-8" />
                 <div className="pr-2 hidden sm:block">
-                    <h1 className="font-bold text-primary leading-tight font-kalam text-xl">Kairu</h1>
+                    <h1 className="font-bold text-primary leading-tight font-kalam text-xl"></h1>
                     <p className="text-xs text-primary/80 leading-tight">
                         ¡Bienvenido, {playerState.name}!
                     </p>
