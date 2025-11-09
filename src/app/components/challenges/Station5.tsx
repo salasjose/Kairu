@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -13,6 +13,8 @@ import { useStationProgress } from "@/hooks/use-station-progress";
 import { toast } from "@/hooks/use-toast";
 import WordSearchGame from "./WordSearchGame";
 import Station8 from "./Station8"; // Re-using crossword from station 8
+import { motion, AnimatePresence } from "framer-motion";
+import TypewriterText from "../auth/TypewriterText";
 
 const challenges = {
   learn: {
@@ -76,7 +78,29 @@ export default function Station5() {
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
   const router = useRouter();
+  
+  const [showYaraDialog, setShowYaraDialog] = useState(false);
+  const yaraMessage = "¡Wow, llegamos a ZonaCreativa! Este es el espacio donde tu imaginación se vuelve sostenible transformando ideas que inspiren un cambio positivo. ¡Tu creatividad puede cambiar el mundo!";
+  const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const sostenibilidadBgImage = PlaceHolderImages.find(p => p.id === 'sostenibilidad-background');
+  const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara');
+
+  const scheduleYaraDialog = useCallback(() => {
+    if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
+    yaraTimerRef.current = setTimeout(() => {
+      setShowYaraDialog(true);
+      const hideTimer = setTimeout(() => setShowYaraDialog(false), 60000);
+      const reappearTimer = setTimeout(scheduleYaraDialog, 60000 + 120000);
+    }, 10000); 
+  }, []);
+
+  useEffect(() => {
+    scheduleYaraDialog();
+    return () => {
+      if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
+    };
+  }, [scheduleYaraDialog]);
 
 
   const handleComplete = (challengeId: ChallengeId) => {
@@ -161,6 +185,43 @@ export default function Station5() {
             })}
           </div>
           <Button onClick={handleSimulateComplete}>Simular Finalización</Button>
+        </div>
+
+        {/* Yara Character and Dialog */}
+        <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4 pointer-events-none">
+          <AnimatePresence>
+              {showYaraDialog && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.5 }}
+                    className="w-64 mb-4"
+                >
+                    <Card className="p-3 shadow-lg bg-white/95 relative pointer-events-auto">
+                        <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium"/>
+                        <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
+                    </Card>
+                </motion.div>
+              )}
+          </AnimatePresence>
+          
+          {yaraCharImage && (
+              <motion.div
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0, transition: { delay: 0.5, duration: 0.8 } }}
+                  className="w-24 h-auto md:w-32"
+              >
+                  <Image
+                      src={yaraCharImage.imageUrl}
+                      alt={yaraCharImage.description}
+                      width={150}
+                      height={187}
+                      className="h-auto w-full select-none"
+                      priority
+                  />
+              </motion.div>
+          )}
         </div>
       </div>
        <PrizeDialog
