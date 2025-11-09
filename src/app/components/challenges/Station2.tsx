@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import AddPhotoDialog from "./AddPhotoDialog";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { motion, AnimatePresence } from "framer-motion";
+import TypewriterText from "../auth/TypewriterText";
 
 const STORAGE_KEY_STATION2 = "kairu-station2-progress";
 
@@ -248,10 +250,31 @@ export default function Station2() {
   const { unlockStation } = useStationProgress();
   const router = useRouter();
 
+  const [showYaraDialog, setShowYaraDialog] = useState(false);
+  const yaraMessage = "¡Llegamos a ImpacTrack! Aquí aprenderás que cada acción deja huella. Observa tu entorno, registra tus buenas prácticas y demuestra que tu impacto puede ser positivo. ¡Haz que tus pasos cuenten por el planeta!";
+  const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const sostenibilidadBgImage = PlaceHolderImages.find(
     (p) => p.id === "sostenibilidad-background"
   );
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
+
+  const scheduleYaraDialog = useCallback(() => {
+    if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
+    yaraTimerRef.current = setTimeout(() => {
+      setShowYaraDialog(true);
+      const hideTimer = setTimeout(() => setShowYaraDialog(false), 60000);
+      const reappearTimer = setTimeout(scheduleYaraDialog, 60000 + 120000);
+    }, 20000);
+  }, []);
+
+  useEffect(() => {
+    scheduleYaraDialog();
+    return () => {
+      if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
+    };
+  }, [scheduleYaraDialog]);
+
 
   const updateAndSaveChanges = useCallback((newDays: DayState[]) => {
     setDays(newDays);
@@ -423,6 +446,42 @@ export default function Station2() {
           </div>
           
         </div>
+          {/* Yara Character and Dialog */}
+          <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4">
+            <AnimatePresence>
+                {showYaraDialog && (
+                  <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 20 }}
+                      transition={{ duration: 0.5 }}
+                      className="w-64 mb-4"
+                  >
+                      <Card className="p-3 shadow-lg bg-white/95 relative">
+                          <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium"/>
+                          <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
+                      </Card>
+                  </motion.div>
+                )}
+            </AnimatePresence>
+            
+            {yaraCharImage && (
+                <motion.div
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0, transition: { delay: 0.5, duration: 0.8 } }}
+                    className="w-24 h-auto md:w-32"
+                >
+                    <Image
+                        src={yaraCharImage.imageUrl}
+                        alt={yaraCharImage.description}
+                        width={150}
+                        height={187}
+                        className="h-auto w-full select-none"
+                        priority
+                    />
+                </motion.div>
+            )}
+          </div>
       </div>
       <PrizeDialog
         open={isPrizeModalOpen}
