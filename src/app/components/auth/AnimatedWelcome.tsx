@@ -44,7 +44,7 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
             transition={{ duration: 0.5 }}
           >
             <Logo className="h-24 md:h-32 mx-auto" aria-hidden="true" />
-            <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mt-4 text-3d">KAIRU</h1>
+            <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mt-4 text-3d"></h1>
           </motion.div>
 
           <motion.div
