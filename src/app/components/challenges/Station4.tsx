@@ -1,18 +1,20 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { toast } from "@/hooks/use-toast";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BrainCircuit, Link as LinkIcon, Upload } from "lucide-react";
 import WaterQuiz from "@/app/components/challenges/WaterQuiz";
 import { Input } from "@/components/ui/input";
 import PrizeDialog from "../PrizeDialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { motion, AnimatePresence } from "framer-motion";
+import TypewriterText from "../auth/TypewriterText";
 
 const challenges = {
   quiz: {
@@ -145,8 +147,29 @@ export default function Station4() {
   const { unlockStation } = useStationProgress();
   const router = useRouter();
 
+  const [showYaraDialog, setShowYaraDialog] = useState(false);
+  const yaraMessage = "¡Bienvenido a TerrAzul! Aquí fluye la vida. El agua recorre montañas, ríos y mares, y depende de nosotros mantener su pureza. ¡Cuidemos cada gota y protejamos los territorios que le dan vida al planeta!";
+  const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const terrazulBgImage = PlaceHolderImages.find((p) => p.id === "terrazul-background");
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
+
+  const scheduleYaraDialog = useCallback(() => {
+    if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
+    yaraTimerRef.current = setTimeout(() => {
+      setShowYaraDialog(true);
+      const hideTimer = setTimeout(() => setShowYaraDialog(false), 60000); 
+      const reappearTimer = setTimeout(scheduleYaraDialog, 60000 + 120000); 
+    }, 10000); 
+  }, []);
+
+  useEffect(() => {
+    scheduleYaraDialog();
+    return () => {
+      if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
+    };
+  }, [scheduleYaraDialog]);
+
 
   const handleComplete = (challengeId: ChallengeId) => {
     unlockStation(stationId + 1);
@@ -205,9 +228,6 @@ export default function Station4() {
           <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
             <h1 className="text-3xl md:text-5xl">TerrAzul</h1>
           </div>
-            <div className="max-w-xl mx-auto bg-black/50 text-white p-4 rounded-xl mb-8">
-                <p className="font-bold text-lg">YARA: "¡Bienvenido a TerrAzul! Aquí fluye la vida. El agua recorre montañas, ríos y mares, y depende de nosotros mantener su pureza. ¡Cuidemos cada gota y protejamos los territorios que le dan vida al planeta!"</p>
-            </div>
 
           <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
             {(Object.keys(challenges) as ChallengeId[]).map((key) => {
@@ -242,7 +262,6 @@ export default function Station4() {
             </p>
             <Button onClick={handleSimulateComplete}>Simular Finalización</Button>
           </div>
-
         </div>
       </div>
     );
@@ -250,7 +269,42 @@ export default function Station4() {
 
   return (
     <>
-      {renderContent()}
+      <div className="relative flex-grow flex flex-col">{renderContent()}</div>
+        <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4 pointer-events-none">
+          <AnimatePresence>
+              {showYaraDialog && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.5 }}
+                    className="w-64 mb-4"
+                >
+                    <Card className="p-3 shadow-lg bg-white/95 relative">
+                        <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium"/>
+                        <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
+                    </Card>
+                </motion.div>
+              )}
+          </AnimatePresence>
+          
+          {yaraCharImage && (
+              <motion.div
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0, transition: { delay: 0.5, duration: 0.8 } }}
+                  className="w-24 h-auto md:w-32"
+              >
+                  <Image
+                      src={yaraCharImage.imageUrl}
+                      alt={yaraCharImage.description}
+                      width={150}
+                      height={187}
+                      className="h-auto w-full select-none"
+                      priority
+                  />
+              </motion.div>
+          )}
+        </div>
       <PrizeDialog
         open={isPrizeModalOpen}
         stationId={stationId}

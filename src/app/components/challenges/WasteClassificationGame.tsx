@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -370,7 +370,6 @@ export default function WasteClassificationGameContainer({ gameId, onComplete, o
     )
   }
 
-  const GameComponent = gameId === 'classify' ? GameWithImages : GameDragAndDrop;
   const gameTitle = gameId === 'classify' ? "Clasificación por Imagen" : "Arrastra y Recicla";
 
   return (
@@ -386,12 +385,21 @@ export default function WasteClassificationGameContainer({ gameId, onComplete, o
             Reiniciar
         </Button>
       </div>
-      <GameComponent 
-        key={key} 
-        onGameWin={handleGameWin} 
-        onRestartRequest={handleRestart}
-        {...(gameId === 'classify' && { gameState, updateGameState })}
-      />
+      {gameId === 'classify' ? (
+        <GameWithImages
+          key={key}
+          onGameWin={handleGameWin}
+          onRestartRequest={handleRestart}
+          gameState={gameState}
+          updateGameState={updateGameState}
+        />
+      ) : (
+        <GameDragAndDrop
+          key={key}
+          onGameWin={handleGameWin}
+          onRestartRequest={handleRestart}
+        />
+      )}
     </div>
   );
 }
