@@ -18,6 +18,7 @@ import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore } from "@/firebase/hooks";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
+import { SUSTAINABILITY_PUZZLE } from "@/lib/crossword-data";
 
 const challenges = {
   learn: {
@@ -220,7 +221,7 @@ export default function Station5() {
     return <LearnChallenge onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("learn")} />;
   }
   if (selectedChallenge === "crossword") {
-    return <CrosswordGame topic="sostenibilidad, transformación sostenible y buenas prácticas ambientales" onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("crossword")} />;
+    return <CrosswordGame topic="sostenibilidad, transformación sostenible y buenas prácticas ambientales" onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("crossword")} staticData={SUSTAINABILITY_PUZZLE} />;
   }
    if (selectedChallenge === "wordsearch") {
     return <WordSearchGame gameId="station5" onComplete={() => handleComplete("wordsearch")} onBack={() => setSelectedChallenge(null)} />;

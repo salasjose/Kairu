@@ -1,298 +1,490 @@
-
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import type { CrosswordData } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, CheckCircle, RefreshCw, Trophy } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, AlertCircle, RefreshCw, CheckCircle } from "lucide-react";
+import { handleGenerateCrossword } from "@/app/actions";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const palabrasData = [
-    { id: '1H', number: 1, clue: 'Uso responsable de los recursos naturales para satisfacer necesidades actuales sin comprometer las futuras.', answer: 'SOSTENIBILIDAD', direction: 'across', row: 0, col: 0 },
-    { id: '2V', number: 2, clue: 'Cambio positivo hacia un modelo que respeta el medio ambiente y promueve la equidad social.', answer: 'TRANSFORMACION', direction: 'down', row: 0, col: 2 },
-    { id: '3H', number: 3, clue: 'Proceso que busca equilibrar lo económico, lo social y lo ambiental.', answer: 'DESARROLLO', direction: 'across', row: 2, col: 0 },
-    { id: '4V', number: 4, clue: 'Capacidad de mantener el equilibrio ecológico y social a largo plazo.', answer: 'RESILIENCIA', direction: 'down', row: 2, col: 5 },
-    { id: '5H', number: 5, clue: 'Acción de volver a utilizar un producto o material para alargar su vida útil.', answer: 'REUTILIZAR', direction: 'across', row: 4, col: 2 },
-    { id: '6H', number: 6, clue: 'Práctica que reduce el consumo de materiales y energía.', answer: 'ECOEFICIENCIA', direction: 'across', row: 6, col: 0 },
-    { id: '7V', number: 7, clue: 'Energía obtenida de fuentes como el sol, el viento o el agua.', answer: 'RENOVABLE', direction: 'down', row: 6, col: 8 },
-    { id: '8V', number: 8, clue: 'Sistema que permite transformar residuos en nuevos productos.', answer: 'RECICLAJE', direction: 'down', row: 7, col: 1 },
-    { id: '9H', number: 9, clue: 'Modelo de producción y consumo que implica compartir, alquilar, reutilizar, reparar, renovar y reciclar materiales y productos existentes.', answer: 'ECONOMIA', direction: 'across', row: 8, col: 3 },
-    { id: '10H', number: 10, clue: 'Valor que impulsa a cuidar el planeta y actuar de forma responsable con el entorno.', answer: 'CONCIENCIA', direction: 'across', row: 10, col: 0 },
-];
+type Direction = "across" | "down";
+type CellStatus = "correct" | "incorrect" | "neutral";
 
-const gridSize = { rows: 12, cols: 15 };
-
-const createInitialGrid = () => {
-    const initialGrid = Array(gridSize.rows).fill(null).map(() => Array(gridSize.cols).fill({ user: '', solution: '', isBlock: true, clues: [] as string[], number: null as number | null }));
-    palabrasData.forEach(palabra => {
-        let { row, col, direction, answer, id, number } = palabra;
-        for (let i = 0; i < answer.length; i++) {
-            const r = direction === 'across' ? row : row + i;
-            const c = direction === 'across' ? col + i : col;
-            if (r < gridSize.rows && c < gridSize.cols) {
-                initialGrid[r][c] = {
-                    ...initialGrid[r][c],
-                    solution: answer[i],
-                    isBlock: false,
-                    clues: [...initialGrid[r][c].clues, id]
-                };
-                 if (i === 0) {
-                   initialGrid[r][c].number = number;
-                }
-            }
-        }
-    });
-    return initialGrid;
+type StartMap = {
+  number: number;
+  direction: Direction;
+  row: number;
+  col: number;
+  length: number;
+  answer: string;
+  clue: string;
 };
 
-export default function CrosswordGame({ onBack, onComplete }: { onBack: () => void; onComplete: () => void; }) {
-    const [grid, setGrid] = useState(createInitialGrid());
-    const [selectedCell, setSelectedCell] = useState({ row: 0, col: 0 });
-    const [direction, setDirection] = useState<'across' | 'down'>('across');
-    const [isComplete, setIsComplete] = useState(false);
-    const [showErrors, setShowErrors] = useState(false);
-    const inputRefs = useRef<(HTMLInputElement | null)[][]>(Array(gridSize.rows).fill(null).map(() => Array(gridSize.cols).fill(null)));
+function stripDiacritics(s: string) {
+  if (!s) return "";
+  return s.normalize("NFD").replace(/\p{Diacritic}/gu, "");
+}
 
-    const currentClueId = useMemo(() => {
-        const cell = grid[selectedCell.row][selectedCell.col];
-        if (!cell || cell.isBlock) return null;
-        const clue = cell.clues.find(c => (direction === 'across' && c.includes('H')) || (direction === 'down' && c.includes('V')));
-        return clue || cell.clues[0];
-    }, [selectedCell, direction, grid]);
+export default function CrosswordGame({
+  topic,
+  onBack,
+  onComplete,
+  staticData,
+}: {
+  topic: string;
+  onBack: () => void;
+  onComplete: () => void;
+  staticData?: CrosswordData;
+}) {
+  const [gridData, setGridData] = useState<CrosswordData | null>(staticData || null);
+  const [gridState, setGridState] = useState<string[][]>([]);
+  const [cellStatuses, setCellStatuses] = useState<CellStatus[][]>([]);
+  const [isLoading, setIsLoading] = useState(!staticData);
+  const [error, setError] = useState<string | null>(null);
+  const [isComplete, setIsComplete] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
 
-    const handleCellClick = (row: number, col: number) => {
-        if (grid[row][col].isBlock) return;
-        if (selectedCell.row === row && selectedCell.col === col) {
-            setDirection(prev => prev === 'across' ? 'down' : 'across');
-        } else {
-            setSelectedCell({ row, col });
-            const cell = grid[row][col];
-            if (cell.clues.some(c => c.includes('H'))) {
-              setDirection('across');
-            } else {
-              setDirection('down');
-            }
-        }
-    };
-    
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, row: number, col: number) => {
-        let value = e.target.value.toUpperCase();
-        if (value.length > 1) {
-            value = value.charAt(value.length - 1);
-        }
-        
-        const newGrid = grid.map(r => r.map(c => ({...c})));
-        newGrid[row][col].user = value;
-        setGrid(newGrid);
-        
-        setShowErrors(false);
+  const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
+  const [direction, setDirection] = useState<Direction>("across");
 
-        if (value) {
-           moveNext(row, col, 1);
-        }
-    };
+  const inputRefs = useRef<(HTMLInputElement | null)[][]>([]);
 
-    const moveNext = (row: number, col: number, step: number) => {
-        let nextRow = row;
-        let nextCol = col;
+  const rows = gridData?.grid.length ?? 0;
+  const cols = gridData?.grid[0]?.length ?? 0;
 
-        if (direction === 'across') {
-            nextCol += step;
-            if (nextCol >= gridSize.cols || nextCol < 0 || grid[nextRow][nextCol].isBlock) return;
-        } else {
-            nextRow += step;
-            if (nextRow >= gridSize.rows || nextRow < 0 || grid[nextRow][nextCol].isBlock) return;
-        }
-        
-        inputRefs.current[nextRow]?.[nextCol]?.focus();
-        setSelectedCell({ row: nextRow, col: nextCol });
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, row: number, col: number) => {
-        switch (e.key) {
-            case 'ArrowRight':
-                e.preventDefault();
-                setDirection('across');
-                moveNext(row, col, 1);
-                break;
-            case 'ArrowLeft':
-                e.preventDefault();
-                setDirection('across');
-                moveNext(row, col, -1);
-                break;
-            case 'ArrowDown':
-                e.preventDefault();
-                setDirection('down');
-                moveNext(row, col, 1);
-                break;
-            case 'ArrowUp':
-                e.preventDefault();
-                setDirection('down');
-                moveNext(row, col, -1);
-                break;
-            case 'Backspace':
-                if (!grid[row][col].user) {
-                    e.preventDefault();
-                    moveNext(row, col, -1);
-                }
-                break;
-             case 'Enter':
-                e.preventDefault();
-                handleCellClick(row, col); // Toggle direction
-                break;
-        }
-    };
-    
-    const checkAnswers = () => {
-        let allCorrect = true;
-        for (let r = 0; r < gridSize.rows; r++) {
-            for (let c = 0; c < gridSize.cols; c++) {
-                if (!grid[r][c].isBlock) {
-                    if (grid[r][c].user !== grid[r][c].solution) {
-                        allCorrect = false;
-                    }
-                }
-            }
-        }
-        
-        if (allCorrect) {
-            setIsComplete(true);
-            setShowErrors(false);
-            toast({ title: "¡Felicidades!", description: "Has completado el crucigrama correctamente." });
-            setTimeout(onComplete, 2000);
-        } else {
-            setShowErrors(true);
-            setIsComplete(false);
-            toast({ title: "Casi listo", description: "Algunas respuestas son incorrectas. ¡Sigue intentando!", variant: "destructive" });
-        }
-    };
-
-    const resetGame = () => {
-        setGrid(createInitialGrid());
-        setSelectedCell({row: 0, col: 0});
-        setIsComplete(false);
-        setShowErrors(false);
-    };
-
-    const solveGame = () => {
-        const newGrid = grid.map(row => 
-            row.map(cell => {
-                if (!cell.isBlock) {
-                    return { ...cell, user: cell.solution };
-                }
-                return cell;
-            })
-        );
-        setGrid(newGrid);
-        setIsComplete(true);
-        setShowErrors(false);
-        toast({ title: "¡Crucigrama Resuelto!", description: "Aquí tienes la solución." });
-    };
-    
-    const renderGrid = () => {
-      return grid.map((row, r) =>
-        row.map((cell, c) => {
-          const isSelected = selectedCell.row === r && selectedCell.col === c;
-          const isHighlighted = cell.clues.includes(currentClueId || '');
-          const isError = showErrors && !cell.isBlock && cell.user !== cell.solution;
-
-          return (
-            <div
-              key={`${r}-${c}`}
-              className={cn(
-                "w-full aspect-square border border-gray-300 flex items-center justify-center relative",
-                cell.isBlock ? "bg-black" : "bg-white",
-                !cell.isBlock && "cursor-pointer",
-                isHighlighted && !cell.isBlock && "bg-yellow-100",
-                isSelected && !cell.isBlock && "bg-yellow-300",
-              )}
-              onClick={() => handleCellClick(r, c)}
-            >
-              {cell.number && <span className="absolute top-0 left-0.5 text-[8px] font-bold select-none">{cell.number}</span>}
-              {!cell.isBlock && (
-                <input
-                  ref={el => inputRefs.current[r][c] = el}
-                  type="text"
-                  maxLength={1}
-                  value={cell.user}
-                  onChange={e => handleInputChange(e, r, c)}
-                  onKeyDown={e => handleKeyDown(e, r, c)}
-                  onFocus={() => setSelectedCell({row: r, col: c})}
-                  className={cn(
-                    "w-full h-full text-center bg-transparent border-none outline-none text-lg md:text-xl font-bold uppercase",
-                    isError && "text-red-500"
-                  )}
-                />
-              )}
-            </div>
-          );
-        })
-      );
-    };
-
-    return (
-        <div className="flex flex-col lg:flex-row gap-8 p-4 max-w-7xl mx-auto items-start">
-            <div className="w-full lg:w-auto">
-                <Button variant="ghost" onClick={onBack} className="mb-4">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Volver a los retos
-                </Button>
-                <div className="flex-shrink-0">
-                    <div
-                      className="inline-grid gap-0.5 p-2 bg-black border-2 border-black rounded-lg"
-                      style={{ gridTemplateColumns: `repeat(${gridSize.cols}, minmax(0, 1fr))` }}
-                    >
-                      {renderGrid()}
-                    </div>
-                </div>
-                 <footer className="text-center mt-6 space-y-4">
-                    <div className="flex flex-wrap justify-center gap-4">
-                        <Button onClick={checkAnswers} size="lg"><CheckCircle className="mr-2"/>Comprobar</Button>
-                        <Button onClick={solveGame} size="lg" variant="secondary"><Trophy className="mr-2"/>Resolver</Button>
-                        <Button onClick={resetGame} size="lg" variant="outline"><RefreshCw className="mr-2"/>Reiniciar</Button>
-                    </div>
-                    {isComplete && (
-                        <div className="p-3 bg-green-100 border border-green-300 rounded-lg text-green-800 font-semibold">
-                            🎉 ¡Felicidades! Has completado el crucigrama.
-                        </div>
-                    )}
-                     {showErrors && !isComplete && (
-                        <div className="p-3 bg-red-100 border border-red-300 rounded-lg text-red-800 font-semibold">
-                            Algunas respuestas son incorrectas. ¡Sigue intentando!
-                        </div>
-                    )}
-                </footer>
-            </div>
-
-            <aside className="flex-1 max-w-2xl w-full">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <Card>
-                        <CardHeader>
-                            <CardTitle>Horizontales</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2 text-sm max-h-[400px] overflow-y-auto">
-                            {palabrasData.filter(p => p.direction === 'across').map(p => (
-                                <p key={p.id} className={cn("cursor-pointer", currentClueId === p.id && "font-bold text-primary")}>
-                                  <strong>{p.number}.</strong> {p.clue}
-                                </p>
-                            ))}
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Verticales</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2 text-sm max-h-[400px] overflow-y-auto">
-                           {palabrasData.filter(p => p.direction === 'down').map(p => (
-                                <p key={p.id} className={cn("cursor-pointer", currentClueId === p.id && "font-bold text-primary")}>
-                                  <strong>{p.number}.</strong> {p.clue}
-                                </p>
-                           ))}
-                        </CardContent>
-                    </Card>
-                </div>
-            </aside>
-        </div>
+  const canonizedGrid = useMemo(() => {
+    if (!gridData) return [];
+    return gridData.grid.map((row) =>
+      row.map((cell) => (cell === "#" ? "#" : stripDiacritics(cell.toUpperCase())))
     );
+  }, [gridData]);
+
+  const initializeGrid = useCallback((data: CrosswordData) => {
+    const initialState = data.grid.map((row) => row.map((cell) => (cell === "#" ? "#" : "")));
+    const initialStatuses = data.grid.map((row) => row.map(() => "neutral" as CellStatus));
+
+    setGridState(initialState);
+    setCellStatuses(initialStatuses);
+
+    inputRefs.current = Array.from({ length: data.grid.length }, () =>
+      Array.from({ length: data.grid[0].length }, () => null)
+    );
+
+    setIsComplete(false);
+    setShowErrors(false);
+    setSelectedCell(null);
+    setDirection("across");
+  }, []);
+
+  const generateGame = useCallback(async () => {
+    if (staticData) {
+      setGridData(staticData);
+      initializeGrid(staticData);
+      setIsLoading(false);
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    setGridData(null);
+
+    try {
+      const result = await handleGenerateCrossword(topic, 15);
+
+      if (result.success && result.data) {
+        setGridData(result.data);
+        initializeGrid(result.data);
+      } else {
+        throw new Error(result.error || "No se pudo generar el crucigrama.");
+      }
+    } catch (err: any) {
+      const msg = err?.message ?? "No se pudo generar el crucigrama.";
+      setError(msg);
+      toast({
+        title: "Error de Generación",
+        description: msg,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [topic, staticData, initializeGrid]);
+
+  useEffect(() => {
+    generateGame();
+  }, [generateGame]);
+
+  const starts = useMemo<StartMap[]>(() => {
+    if (!gridData) return [];
+    const numberedStarts = new Map<string, number>();
+    let currentNumber = 1;
+
+    const allClues = [
+        ...gridData.across.map(c => ({...c, direction: 'across' as Direction})),
+        ...gridData.down.map(c => ({...c, direction: 'down' as Direction}))
+    ];
+
+    allClues.sort((a,b) => a.number - b.number);
+    
+    const out: StartMap[] = [];
+
+    for (const clue of allClues) {
+        let found = false;
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                if(canonizedGrid[r][c] === '#') continue;
+
+                const word = stripDiacritics(clue.answer.toUpperCase());
+                let matches = true;
+
+                if (clue.direction === 'across') {
+                    if (c + word.length > cols) continue;
+                    // Check if it's a valid start
+                    if (c > 0 && canonizedGrid[r][c-1] !== '#') continue;
+
+                    for(let i = 0; i < word.length; i++) {
+                        if (c + i >= cols || canonizedGrid[r][c+i] !== word[i]) {
+                           matches = false;
+                           break;
+                        }
+                    }
+                     if (matches && (c + word.length === cols || canonizedGrid[r][c+word.length] === '#')) {
+                         out.push({ ...clue, row: r, col: c, length: word.length });
+                         found = true;
+                         break;
+                     }
+                } else { // down
+                    if (r + word.length > rows) continue;
+                    // Check if it's a valid start
+                    if (r > 0 && canonizedGrid[r-1][c] !== '#') continue;
+
+                     for(let i = 0; i < word.length; i++) {
+                        if (r + i >= rows || canonizedGrid[r+i][c] !== word[i]) {
+                           matches = false;
+                           break;
+                        }
+                    }
+                     if (matches && (r + word.length === rows || canonizedGrid[r+word.length][c] === '#')) {
+                        out.push({ ...clue, row: r, col: c, length: word.length });
+                        found = true;
+                        break;
+                     }
+                }
+            }
+            if (found) break;
+        }
+    }
+    return out;
+  }, [gridData, rows, cols, canonizedGrid]);
+
+
+  const startsByCell = useMemo(() => {
+    const map = new Map<string, { across?: StartMap; down?: StartMap }>();
+    for (const st of starts) {
+      for (let i = 0; i < st.length; i++) {
+        const r = st.direction === "down" ? st.row + i : st.row;
+        const c = st.direction === "across" ? st.col + i : st.col;
+        const key = `${r},${c}`;
+        const entry = map.get(key) ?? {};
+        entry[st.direction] = st;
+        map.set(key, entry);
+      }
+    }
+    return map;
+  }, [starts]);
+
+  const getCurrentStart = useCallback((r: number, c: number, dir: Direction): StartMap | undefined => {
+    const entry = startsByCell.get(`${r},${c}`);
+    return entry?.[dir];
+  }, [startsByCell]);
+
+
+  const moveToNextCell = (r: number, c: number, dir: Direction, backwards = false) => {
+    if (!gridData) return;
+    let rr = r;
+    let cc = c;
+    while (true) {
+      if (dir === "across") cc += backwards ? -1 : 1;
+      else rr += backwards ? -1 : 1;
+
+      if (rr < 0 || cc < 0 || rr >= rows || cc >= cols) break;
+      if (gridData.grid[rr][cc] !== "#") {
+        inputRefs.current[rr][cc]?.focus();
+        setSelectedCell({ row: rr, col: cc });
+        return;
+      }
+    }
+  };
+
+  const handleInput = (e: React.ChangeEvent<HTMLInputElement>, row: number, col: number) => {
+    if (isComplete) return;
+
+    let value = stripDiacritics(e.target.value.toUpperCase());
+    if (value.length > 1) value = value.charAt(value.length - 1);
+
+    const next = gridState.map((r) => r.slice());
+    next[row][col] = value;
+    setGridState(next);
+
+    const st = getCurrentStart(row, col, direction);
+    if (st) {
+      const statuses = cellStatuses.map((r) => r.slice());
+      for (let i = 0; i < st.length; i++) {
+        const rr = st.direction === "down" ? st.row + i : st.row;
+        const cc = st.direction === "across" ? st.col + i : st.col;
+        if (gridData?.grid[rr][cc] !== "#") statuses[rr][cc] = "neutral";
+      }
+      setCellStatuses(statuses);
+    }
+    setShowErrors(false);
+
+    if (value) moveToNextCell(row, col, direction, false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, row: number, col: number) => {
+    if (e.key === "Backspace" && !gridState[row][col]) moveToNextCell(row, col, direction, true);
+    if (e.key === " " || e.key === "Spacebar") {
+      e.preventDefault();
+      setDirection((d) => (d === "across" ? "down" : "across"));
+    }
+    if (e.key === "ArrowRight") { e.preventDefault(); setDirection("across"); moveToNextCell(row, col, "across", false); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); setDirection("across"); moveToNextCell(row, col, "across", true); }
+    if (e.key === "ArrowDown") { e.preventDefault(); setDirection("down"); moveToNextCell(row, col, "down", false); }
+    if (e.key === "ArrowUp") { e.preventDefault(); setDirection("down"); moveToNextCell(row, col, "down", true); }
+  };
+
+  const handleCellClick = (row: number, col: number) => {
+    if (!gridData || gridData.grid[row][col] === "#") return;
+    if (selectedCell?.row === row && selectedCell?.col === col) {
+      const entry = startsByCell.get(`${row},${col}`);
+      if (entry?.across && entry?.down) {
+          setDirection((prev) => (prev === "across" ? "down" : "across"));
+      }
+    } else {
+      setSelectedCell({ row, col });
+      const entry = startsByCell.get(`${row},${col}`);
+      if (entry?.across && !entry?.down) setDirection("across");
+      else if (!entry?.across && entry?.down) setDirection("down");
+    }
+    inputRefs.current[row][col]?.focus();
+  };
+
+  const checkAnswers = () => {
+    if (!gridData) return;
+
+    let allCorrect = true;
+    const statuses = cellStatuses.map((r) => r.slice());
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (canonizedGrid[r][c] !== "#") {
+          if (gridState[r][c] === canonizedGrid[r][c]) statuses[r][c] = "correct";
+          else {
+            statuses[r][c] = "incorrect";
+            allCorrect = false;
+          }
+        }
+      }
+    }
+    setCellStatuses(statuses);
+
+    if (allCorrect) {
+      setIsComplete(true);
+      setShowErrors(false);
+      toast({ title: "¡Felicidades!", description: "Has completado el crucigrama correctamente." });
+      setTimeout(onComplete, 1200);
+    } else {
+      setShowErrors(true);
+      setIsComplete(false);
+      toast({
+        title: "Casi listo",
+        description: "Algunas respuestas son incorrectas. ¡Sigue intentando!",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const resetGame = () => {
+    if (gridData) initializeGrid(gridData);
+  };
+
+  const highlightedCells = useMemo(() => {
+    if (!selectedCell || !gridData) return [];
+    const st = getCurrentStart(selectedCell.row, selectedCell.col, direction);
+    if (!st) return [{ r: selectedCell.row, c: selectedCell.col }];
+    const cells: { r: number; c: number }[] = [];
+    for (let i = 0; i < st.length; i++) {
+      const r = st.direction === "down" ? st.row + i : st.row;
+      const c = st.direction === "across" ? st.col + i : st.col;
+      if (gridData.grid[r]?.[c] !== "#") cells.push({ r, c });
+    }
+    return cells;
+  }, [selectedCell, direction, gridData, getCurrentStart]);
+
+  if (isLoading) {
+    return (
+      <div className="w-full max-w-4xl mx-auto p-4 flex flex-col items-center justify-center text-center">
+        <h2 className="text-2xl font-bold font-headline mb-4">Generando Crucigrama...</h2>
+        <p className="text-muted-foreground mb-4">La IA está creando tu reto. Esto puede tardar un momento...</p>
+        <Skeleton className="w-full aspect-square max-w-lg" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full max-w-4xl mx-auto p-4 flex flex-col items-center justify-center text-center">
+        <AlertCircle className="w-16 h-16 text-destructive mb-4" />
+        <h2 className="text-2xl font-bold font-headline text-destructive mb-2">Error al Generar Crucigrama</h2>
+        <p className="text-muted-foreground mb-4">{error}</p>
+        <div className="flex gap-4">
+          <Button onClick={onBack} variant="outline">Volver</Button>
+          <Button onClick={generateGame}><RefreshCw className="mr-2" />Intentar de Nuevo</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!gridData) {
+    return (
+      <div className="w-full max-w-4xl mx-auto p-4 flex flex-col items-center justify-center text-center">
+        <p>No se pudieron cargar los datos del crucigrama.</p>
+        <Button onClick={onBack} variant="outline" className="mt-4">Volver</Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col lg:flex-row gap-8 p-4 max-w-7xl mx-auto items-start">
+      <div className="w-full lg:w-auto">
+        <Button variant="ghost" onClick={onBack} className="mb-4">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Volver a los retos
+        </Button>
+
+        <div
+          className="grid gap-0.5 bg-black border-2 border-black rounded-sm"
+          style={{
+            gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+            width: "clamp(320px, 90vw, 640px)",
+          }}
+        >
+          {gridState.map((row, r) =>
+            row.map((cell, c) => {
+              const isBlack = gridData.grid[r][c] === "#";
+              const isHighlighted = highlightedCells.some((hc) => hc.r === r && hc.c === c);
+              const isSelected = selectedCell?.row === r && selectedCell?.col === c;
+              const status = cellStatuses[r][c];
+              
+              const startInfo = starts.find(s => s.row === r && s.col === c);
+
+              return (
+                <div
+                  key={`${r}-${c}`}
+                  className={cn(
+                    "aspect-square flex items-center justify-center relative",
+                    isBlack ? "bg-black" : "bg-white",
+                    !isBlack && "cursor-pointer",
+                    isSelected && !isBlack && "bg-yellow-200",
+                    isHighlighted && !isSelected && !isBlack && "bg-yellow-100/70",
+                    status === "correct" && !isBlack && "bg-green-200",
+                    status === "incorrect" && !isBlack && "bg-red-200"
+                  )}
+                  onClick={() => handleCellClick(r, c)}
+                >
+                  {startInfo && (
+                    <span className="absolute top-0 left-0.5 text-[8px] font-bold select-none">
+                      {startInfo.number}
+                    </span>
+                  )}
+                  {!isBlack && (
+                    <input
+                      ref={(el) => { if(inputRefs.current[r]) inputRefs.current[r][c] = el; }}
+                      type="text"
+                      maxLength={1}
+                      value={cell === "#" ? "" : cell}
+                      onFocus={() => setSelectedCell({row: r, col: c})}
+                      onChange={(e) => handleInput(e, r, c)}
+                      onKeyDown={(e) => handleKeyDown(e, r, c)}
+                      className={cn(
+                        "w-full h-full text-center bg-transparent border-none outline-none text-lg md:text-xl font-bold uppercase",
+                        status === "incorrect" && "text-red-700"
+                      )}
+                      aria-label={`Fila ${r + 1}, Columna ${c + 1}`}
+                    />
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
+          <Button onClick={checkAnswers} size="lg">
+            <CheckCircle className="mr-2" />
+            Comprobar Solución
+          </Button>
+          <Button onClick={resetGame} size="lg" variant="outline">
+            <RefreshCw className="mr-2" />
+            Reiniciar
+          </Button>
+        </div>
+
+        <div className="mt-4 text-center">
+          {isComplete && (
+            <div className="p-3 bg-green-100 border border-green-300 rounded-lg text-green-800 font-semibold">
+              🎉 ¡Felicidades! Has completado el crucigrama.
+            </div>
+          )}
+          {showErrors && !isComplete && (
+            <div className="p-3 bg-red-100 border border-red-300 rounded-lg text-red-800 font-semibold">
+              Algunas respuestas son incorrectas. ¡Sigue intentando!
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex-grow w-full grid grid-cols-1 md:grid-cols-2 gap-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Horizontales</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm max-h-[400px] overflow-y-auto">
+            {gridData.across
+              .slice()
+              .sort((a, b) => a.number - b.number)
+              .map((clue) => (
+                <p key={`across-${clue.number}`} className="cursor-pointer" onClick={() => {
+                    const start = starts.find(s => s.number === clue.number && s.direction === 'across');
+                    if(start) handleCellClick(start.row, start.col);
+                }}>
+                  <span className="font-bold">{clue.number}.</span> {clue.clue}
+                </p>
+              ))}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Verticales</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm max-h-[400px] overflow-y-auto">
+            {gridData.down
+              .slice()
+              .sort((a, b) => a.number - b.number)
+              .map((clue) => (
+                 <p key={`down-${clue.number}`} className="cursor-pointer" onClick={() => {
+                    const start = starts.find(s => s.number === clue.number && s.direction === 'down');
+                    if(start) handleCellClick(start.row, start.col);
+                }}>
+                  <span className="font-bold">{clue.number}.</span> {clue.clue}
+                </p>
+              ))}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 }
