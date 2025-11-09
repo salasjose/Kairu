@@ -30,7 +30,7 @@ export const SUSTAINABILITY_PUZZLE: CrosswordData = {
   ],
   down: [
     { number: 8, clue: "Cambio positivo hacia un modelo que respeta el medio ambiente y promueve la equidad social.", answer: "TRANSFORMACION" },
-    { number: 9, clue: "Capacidad de mantener el equilibrio ecológico y social a largo plazo.", answer: "RESILIENCIA" },
-    { number: 10, clue: "Sistema que permite transformar residuos en nuevos productos.", answer: "RECICLAJE" },
+    { number: 9, clue: "Sistema que permite transformar residuos en nuevos productos.", answer: "RECICLAJE" },
+    { number: 10, clue: "Capacidad de mantener el equilibrio ecológico y social a largo plazo.", answer: "RESILIENCIA" },
   ],
 };
