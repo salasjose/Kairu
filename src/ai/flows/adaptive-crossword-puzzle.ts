@@ -40,30 +40,16 @@ const prompt = ai.definePrompt({
 
   Genera un crucigrama de {{size}}x{{size}} basado en el tema: {{topic}}.
 
-  La salida DEBE ser un JSON válido que represente los datos del crucigrama. El JSON debe contener los siguientes campos:
+  La salida DEBE ser un string JSON válido que represente los datos del crucigrama. El JSON debe contener los siguientes campos:
 
-  - 'grid': Una matriz 2D que representa la cuadrícula del crucigrama. Usa '#' para las casillas negras y letras para las casillas llenas.
+  - 'grid': Un array 2D que representa la cuadrícula del crucigrama. Usa '#' para las casillas negras y letras para las casillas llenas.
   - 'across': Un array de objetos, cada uno con 'number', 'clue', y 'answer' para las pistas horizontales.
   - 'down': Un array de objetos, cada uno con 'number', 'clue', y 'answer' para las pistas verticales.
 
   Ejemplo de salida JSON (para un crucigrama más pequeño de 3x3):
-  {
-    "grid": [
-      ["A", "B", "C"],
-      ["D", "#", "E"],
-      ["F", "G", "H"]
-    ],
-    "across": [
-      {"number": 1, "clue": "Primera letra", "answer": "A"},
-      {"number": 2, "clue": "Segunda letra", "answer": "B"}
-    ],
-    "down": [
-      {"number": 1, "clue": "Otra letra", "answer": "D"},
-      {"number": 2, "clue": "Una letra más", "answer": "F"}
-    ]
-  }
+  '{"grid":[["A","B","C"],["D","#","E"],["F","G","H"]],"across":[{"number":1,"clue":"Primera letra","answer":"A"},{"number":2,"clue":"Segunda letra","answer":"B"}],"down":[{"number":1,"clue":"Otra letra","answer":"D"},{"number":2,"clue":"Una letra más","answer":"F"}]}'
 
-  Asegúrate de que el crucigrama generado se pueda resolver y que las pistas sean relevantes para el tema especificado. Las pistas y respuestas deben estar en español.
+  Asegúrate de que el crucigrama generado se pueda resolver y que las pistas sean relevantes para el tema especificado. Las pistas y respuestas deben estar en español. No incluyas saltos de línea ni markdown en la salida.
 `,
 });
 

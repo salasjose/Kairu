@@ -8,14 +8,35 @@ export async function handleGenerateCrossword(topic: string, size: number): Prom
     const result = await generateCrosswordPuzzle({ topic, size });
     
     if (!result || !result.puzzle) {
-      return { success: false, error: "Failed to generate puzzle data." };
+      console.error("AI did not return puzzle data", result);
+      return { success: false, error: "La IA no pudo generar los datos del crucigrama." };
     }
 
-    const puzzleData: CrosswordData = JSON.parse(result.puzzle);
+    let puzzleData: CrosswordData;
+    try {
+      // The AI model sometimes returns a JSON string, sometimes a JSON object inside a string.
+      // This handles both cases.
+      const parsedResult = JSON.parse(result.puzzle);
+      if (typeof parsedResult === 'string') {
+        puzzleData = JSON.parse(parsedResult);
+      } else {
+        puzzleData = parsedResult;
+      }
+    } catch (e) {
+      console.error("Error parsing crossword JSON from AI:", e, "Raw data:", result.puzzle);
+      // Attempt to fix common markdown issues from the AI
+      const fixedJsonString = result.puzzle.replace(/```json/g, '').replace(/```/g, '').trim();
+       try {
+         puzzleData = JSON.parse(fixedJsonString);
+       } catch (finalError) {
+         return { success: false, error: "Se recibió un formato de crucigrama no válido de la IA." };
+       }
+    }
     
     // Basic validation of the parsed data
     if (!puzzleData.grid || !puzzleData.across || !puzzleData.down) {
-       return { success: false, error: "Received invalid puzzle format." };
+       console.error("Invalid puzzle structure:", puzzleData);
+       return { success: false, error: "El formato del crucigrama recibido es inválido." };
     }
 
     return { success: true, data: puzzleData };
@@ -23,8 +44,8 @@ export async function handleGenerateCrossword(topic: string, size: number): Prom
     console.error("Error generating crossword:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
     if (errorMessage.includes('JSON')) {
-       return { success: false, error: "The AI returned an invalid puzzle format. Please try again." };
+       return { success: false, error: "La IA devolvió un formato de crucigrama no válido. Por favor, intenta de nuevo." };
     }
-    return { success: false, error: "Could not connect to the puzzle generation service." };
+    return { success: false, error: "No se pudo conectar con el servicio de generación de crucigramas." };
   }
 }

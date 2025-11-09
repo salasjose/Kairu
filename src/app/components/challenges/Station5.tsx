@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { toast } from "@/hooks/use-toast";
 import WordSearchGame from "./WordSearchGame";
-import Station8 from "./Station8"; // Re-using crossword from station 8
+import CrosswordGame from "./CrosswordGame";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
 
@@ -130,8 +130,7 @@ export default function Station5() {
     return <LearnChallenge onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("learn")} />;
   }
   if (selectedChallenge === "crossword") {
-    // Re-using Station 8 component for the crossword
-    return <Station8 />;
+    return <CrosswordGame topic="sostenibilidad, transformación sostenible y buenas prácticas ambientales" onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("crossword")} />;
   }
    if (selectedChallenge === "wordsearch") {
     return <WordSearchGame gameId="station5" onComplete={() => handleComplete("wordsearch")} onBack={() => setSelectedChallenge(null)} />;
