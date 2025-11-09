@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
@@ -23,6 +23,8 @@ import RecyclingGame from "./RecyclingGame";
 import PrizeDialog from "../PrizeDialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Input } from "@/components/ui/input";
+import { motion, AnimatePresence } from "framer-motion";
+import TypewriterText from "../auth/TypewriterText";
 
 const STORAGE_KEY_PREFIX = "kairu-station3-challenge-";
 
@@ -285,10 +287,30 @@ export default function Station3() {
   const { unlockStation } = useStationProgress();
   const router = useRouter();
 
+  const [showYaraDialog, setShowYaraDialog] = useState(false);
+  const [yaraMessage, setYaraMessage] = useState("¡Qué emoción! En ReNova descubriremos que nada se desperdicia cuando usamos la creatividad. Convierte lo viejo en nuevo, lo usado en útil y demuestra que transformar también es cuidar. ¡Manos a la obra!");
+  const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const streetBgImage = PlaceHolderImages.find(
     (p) => p.id === "renova-background"
   );
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
+
+   const scheduleYaraDialog = useCallback(() => {
+    if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
+    yaraTimerRef.current = setTimeout(() => {
+      setShowYaraDialog(true);
+      const hideTimer = setTimeout(() => setShowYaraDialog(false), 60000); // Hide after 1 minute
+      const reappearTimer = setTimeout(scheduleYaraDialog, 60000 + 120000); // Reappear after 2 more minutes
+    }, 20000); // Initial appearance after 20 seconds
+  }, []);
+
+  useEffect(() => {
+    scheduleYaraDialog();
+    return () => {
+      if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
+    };
+  }, [scheduleYaraDialog]);
 
   const handleComplete = (challengeId: ChallengeId) => {
     unlockStation(stationId + 1);
@@ -365,7 +387,7 @@ export default function Station3() {
           </div>
           
            <div className="max-w-xl mx-auto bg-black/50 text-white p-4 rounded-xl mb-8">
-                <p className="font-bold text-lg">YARA: "¡Qué emoción! En ReNova descubriremos que nada se desperdicia cuando usamos la creatividad. Convierte lo viejo en nuevo, lo usado en útil y demuestra que transformar también es cuidar. ¡Manos a la obra!"</p>
+                <p className="font-bold text-lg hidden">YARA: "¡Qué emoción! En ReNova descubriremos que nada se desperdicia cuando usamos la creatividad. Convierte lo viejo en nuevo, lo usado en útil y demuestra que transformar también es cuidar. ¡Manos a la obra!"</p>
             </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 mb-8">
@@ -400,6 +422,44 @@ export default function Station3() {
           </div>
 
         </div>
+
+         {/* Yara Character and Dialog */}
+        <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4">
+          <AnimatePresence>
+              {showYaraDialog && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.5 }}
+                    className="w-64 mb-4"
+                >
+                    <Card className="p-3 shadow-lg bg-white/95 relative">
+                        <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium"/>
+                        <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
+                    </Card>
+                </motion.div>
+              )}
+          </AnimatePresence>
+          
+          {yaraCharImage && (
+              <motion.div
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0, transition: { delay: 0.5, duration: 0.8 } }}
+                  className="w-24 h-auto md:w-32"
+              >
+                  <Image
+                      src={yaraCharImage.imageUrl}
+                      alt={yaraCharImage.description}
+                      width={150}
+                      height={187}
+                      className="h-auto w-full select-none"
+                      priority
+                  />
+              </motion.div>
+          )}
+        </div>
+
       </div>
       <PrizeDialog
         open={isPrizeModalOpen}
