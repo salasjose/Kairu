@@ -45,14 +45,14 @@ export const allPrizes: Prize[][] = [
     { id: 's1-5', stationId: 1, name: 'Garza Volando', imageUrl: '/prizes/Garza_volando_.png' },
     { id: 's1-6', stationId: 1, name: 'Gato', imageUrl: '/prizes/Gato.png' },
     { id: 's1-7', stationId: 1, name: 'Iguana', imageUrl: '/prizes/Iguana.png' },
-    { id: 's1-8', stationId: 1, name: 'Pájaro Roca', imageUrl: '/prizes/Pájaro_roca.png' },
+    { id: 's1-8', stationId: 1, name: 'Pájaro', imageUrl: '/prizes/Pájaro_roca.png' },
     { id: 's1-9', stationId: 1, name: 'Perro', imageUrl: '/prizes/Perro.png' },
   ],
   // Station 2 Prizes
   [
-    { id: 's2-1', stationId: 2, name: 'Ilustración 1', imageUrl: '/prizes/Ilustración_sin_título_1.png' },
+    { id: 's2-1', stationId: 2, name: 'Edificio', imageUrl: '/prizes/Ilustración_sin_título_1.png' },
     { id: 's2-2', stationId: 2, name: 'Ilustración 2', imageUrl: '/prizes/Ilustración_sin_título_2.png' },
-    { id: 's2-3', stationId: 2, name: 'Ilustración 3', imageUrl: '/prizes/Ilustración_sin_título 3.png' },
+    { id: 's2-3', stationId: 2, name: 'Pescador', imageUrl: '/prizes/Ilustración_sin_título 3.png' },
     { id: 's2-4', stationId: 2, name: 'Ilustración 4', imageUrl: '/prizes/Ilustración_sin_título 4.png' },
     { id: 's2-5', stationId: 2, name: 'Ilustración 5', imageUrl: '/prizes/Ilustración_sin_título 5.png' },
     { id: 's2-6', stationId: 2, name: 'Ilustración 6', imageUrl: '/prizes/Ilustración_sin_título 6.png' },
