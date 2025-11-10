@@ -221,12 +221,12 @@ export default function Station5() {
   }
   if (selectedChallenge === "crossword") {
     return (
-        <main className="min-h-screen bg-gray-900 p-6 flex items-start justify-center">
-          <div className="mx-auto max-w-7xl">
-            <h1 className="text-2xl font-bold text-white mb-4">Crucigrama: Transformación Sostenible</h1>
-            <div className="rounded-xl bg-gray-800/60 p-4 ring-1 ring-gray-700">
-              <CrosswordGame data={CROSSWORD_DATA} onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("crossword")} />
-            </div>
+        <main className="min-h-screen bg-gradient-to-b from-green-200 via-sky-300 to-emerald-500 animate-gradient flex items-start justify-center p-6">
+          <div className="bg-gray-900/70 backdrop-blur-md rounded-xl p-6 shadow-xl max-w-7xl w-full">
+            <h1 className="text-3xl font-bold text-white mb-4 text-center">
+              🌱 Crucigrama: Transformación Sostenible
+            </h1>
+            <CrosswordGame data={CROSSWORD_DATA} onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("crossword")} />
           </div>
         </main>
       );
