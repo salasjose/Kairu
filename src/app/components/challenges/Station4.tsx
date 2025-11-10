@@ -44,14 +44,7 @@ const PostChallenge = ({
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const waterPostImage = PlaceHolderImages.find((p) => p.id === "water-post");
   
-  useEffect(() => {
-    const savedUrl = localStorage.getItem(STORAGE_KEY_POST);
-    if (savedUrl) {
-      handleUrlChange(savedUrl);
-    }
-  }, []);
-
-  const handleUrlChange = (newUrl: string) => {
+  const handleUrlChange = useCallback((newUrl: string) => {
     setUrl(newUrl);
     localStorage.setItem(STORAGE_KEY_POST, newUrl);
 
@@ -68,7 +61,14 @@ const PostChallenge = ({
     } else {
       setVideoUrl(null);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const savedUrl = localStorage.getItem(STORAGE_KEY_POST);
+    if (savedUrl) {
+      handleUrlChange(savedUrl);
+    }
+  }, [handleUrlChange]);
 
 
   const handleSubmit = () => {
@@ -152,23 +152,23 @@ export default function Station4() {
 
   const terrazulBgImage = PlaceHolderImages.find((p) => p.id === "terrazul-background");
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
-
-  const scheduleYaraDialog = useCallback(() => {
-    if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
-    yaraTimerRef.current = setTimeout(() => {
-      setShowYaraDialog(true);
-      const hideTimer = setTimeout(() => setShowYaraDialog(false), 60000); 
-      const reappearTimer = setTimeout(scheduleYaraDialog, 60000 + 120000); 
-    }, 10000); 
-  }, []);
-
+  
   useEffect(() => {
+    const scheduleYaraDialog = () => {
+        if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
+        yaraTimerRef.current = setTimeout(() => {
+            setShowYaraDialog(true);
+            const hideTimer = setTimeout(() => setShowYaraDialog(false), 60000);
+            const reappearTimer = setTimeout(scheduleYaraDialog, 60000 + 120000);
+        }, 10000);
+    };
+
     scheduleYaraDialog();
+
     return () => {
       if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
     };
-  }, [scheduleYaraDialog]);
-
+  }, []);
 
   const handleComplete = (challengeId: ChallengeId) => {
     unlockStation(stationId + 1);
