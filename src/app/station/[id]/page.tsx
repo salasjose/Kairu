@@ -33,7 +33,12 @@ const stationComponents: { [key: number]: React.ComponentType<any> } = {
 
 export default function StationPage({ params }: { params: { id: string } }) {
   const stationId = parseInt(params.id, 10);
-  const station = stations.find(s => s.id === stationId);
+  console.log("id statio",stationId);
+
+  const station = stations.find((s) =>{
+    console.log("statio",s);
+    return s.id === stationId;
+  } );
 
   if (!station) {
     notFound();
