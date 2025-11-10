@@ -212,24 +212,44 @@ export default function Station4() {
       );
     }
     return (
-      <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden min-h-0">
-        {terrazulBgImage && (
-            <Image
-                src={terrazulBgImage.imageUrl}
-                alt={terrazulBgImage.description}
-                fill
-                style={{objectFit: 'cover'}}
-                className="z-0 opacity-80"
-                data-ai-hint={terrazulBgImage.imageHint}
-                priority
-            />
-        )}
-        <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
-          <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
-            <h1 className="text-3xl md:text-5xl">TerrAzul</h1>
+      <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden min-h-[100dvh] bg-black">
+        {/* Fondo móvil (default <640px) */}
+        <Image
+          src="/backgrounds/Rio_425x768.png"
+          alt="Fondo TerrAzul móvil"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center block sm:hidden z-0 opacity-80"
+        />
+
+        {/* Fondo tablet (≥640px y <1024px) */}
+        <Image
+          src="/backgrounds/Rio_768x768.png"
+          alt="Fondo TerrAzul tablet"
+          fill
+          sizes="100vw"
+          className="object-cover object-center hidden sm:block lg:hidden z-0 opacity-80"
+        />
+
+        {/* Fondo desktop (≥1024px) */}
+        <Image
+          src="/backgrounds/Rio_1366x_768.png"
+          alt="Fondo TerrAzul desktop"
+          fill
+          sizes="100vw"
+          className="object-cover object-center hidden lg:block z-0 opacity-80"
+        />
+
+        {/* (Opcional) mejora de legibilidad en pantallas grandes */}
+        <div className="absolute inset-0 z-0 pointer-events-none lg:bg-gradient-to-b lg:from-black/30 lg:via-black/15 lg:to-transparent" />
+        
+        <div className="relative z-10 flex flex-col items-center justify-center text-center w-full text-white">
+          <div className="bg-primary/80 px-6 py-3 rounded-xl shadow-lg mb-6">
+            <h1 className="text-3xl md:text-5xl font-bold">TerrAzul</h1>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
+          <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8 mt-6">
             {(Object.keys(challenges) as ChallengeId[]).map((key) => {
               const challenge = challenges[key];
               const Icon = challenge.icon;
@@ -256,7 +276,7 @@ export default function Station4() {
           </div>
 
           <div className="mt-4 max-w-md mx-auto space-y-4">
-            <p className="bg-background/80 p-4 rounded-md text-center">
+            <p className="bg-background/80 p-4 rounded-md text-center text-foreground">
               Selecciona uno de los retos para demostrar tu compromiso con la
               conservación del agua.
             </p>
