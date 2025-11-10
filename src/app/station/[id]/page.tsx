@@ -1,27 +1,33 @@
 import { stations } from '@/lib/data';
 import { notFound } from 'next/navigation';
-import dynamic from 'next/dynamic';
-import Logo from '@/app/components/Logo';
+import Station1 from '@/app/components/challenges/Station1';
+import Station2 from '@/app/components/challenges/Station2';
+import Station3 from '@/app/components/challenges/Station3';
+import Station4 from '@/app/components/challenges/Station4';
+import Station5 from '@/app/components/challenges/Station5';
+import Station6 from '@/app/components/challenges/Station6';
+import Station7 from '@/app/components/challenges/Station7';
+import Station8 from '@/app/components/challenges/Station8';
+import Station9 from '@/app/components/challenges/Station9';
 
-export const dynamic = 'force-dynamic';
 
-const StationLoader = () => (
-    <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background">
-      <Logo className="h-24 animate-pulse" />
-      <p className="text-primary/70 mt-4">Cargando Estación...</p>
-    </main>
-);
+export async function generateStaticParams() {
+  return stations.map((station) => ({
+    id: station.id.toString(),
+  }))
+}
+
 
 const stationComponents: { [key: number]: React.ComponentType<any> } = {
-  1: dynamic(() => import('@/app/components/challenges/Station1'), { loading: () => <StationLoader />, ssr: false }),
-  2: dynamic(() => import('@/app/components/challenges/Station2'), { loading: () => <StationLoader />, ssr: false }),
-  3: dynamic(() => import('@/app/components/challenges/Station3'), { loading: () => <StationLoader />, ssr: false }),
-  4: dynamic(() => import('@/app/components/challenges/Station4'), { loading: () => <StationLoader />, ssr: false }),
-  5: dynamic(() => import('@/app/components/challenges/Station5'), { loading: () => <StationLoader />, ssr: false }),
-  6: dynamic(() => import('@/app/components/challenges/Station6'), { loading: () => <StationLoader />, ssr: false }),
-  7: dynamic(() => import('@/app/components/challenges/Station7'), { loading: () => <StationLoader />, ssr: false }),
-  8: dynamic(() => import('@/app/components/challenges/Station8'), { loading: () => <StationLoader />, ssr: false }),
-  9: dynamic(() => import('@/app/components/challenges/Station9'), { loading: () => <StationLoader />, ssr: false }),
+  1: Station1,
+  2: Station2,
+  3: Station3,
+  4: Station4,
+  5: Station5,
+  6: Station6,
+  7: Station7,
+  8: Station8,
+  9: Station9,
 };
 
 
