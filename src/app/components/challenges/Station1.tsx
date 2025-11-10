@@ -555,12 +555,11 @@ export default function Station1() {
               fill
               priority
               sizes="(min-width:1024px) 100vw, (min-width:768px) 100vw, 100vw"
-              // HÍBRIDO: en móvil llena pantalla (puede recortar), en md+ se ve completa
-              className="z-0 opacity-80 object-cover md:object-contain object-center"
+              className="z-0 opacity-80 object-cover object-center"
               data-ai-hint={biodiversidadBgImage.imageHint}
             />
             {/* Mejora legibilidad cuando está en contain */}
-            <div className="absolute inset-0 z-0 pointer-events-none md:bg-gradient-to-b md:from-black/40 md:via-black/20 md:to-transparent" />
+            <div className="absolute inset-0 z-0 pointer-events-none bg-black/30" />
           </>
         )}
 
