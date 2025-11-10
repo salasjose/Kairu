@@ -63,11 +63,6 @@ const GameWithImages = ({ onGameWin, onRestartRequest, gameState, updateGameStat
           if (prev <= 1) {
             clearInterval(id);
             setIsTimeUp(true);
-            toast({
-              title: "¡Se acabó el tiempo!",
-              description: "No lograste clasificar todos los residuos. ¡Inténtalo de nuevo!",
-              variant: "destructive",
-            });
             return 0;
           }
           return prev - 1;
@@ -76,6 +71,16 @@ const GameWithImages = ({ onGameWin, onRestartRequest, gameState, updateGameStat
     
       return () => clearInterval(id);
     }, [gameWon, isTimeUp, gameState.lives]);
+    
+    useEffect(() => {
+        if (isTimeUp) {
+            toast({
+              title: "¡Se acabó el tiempo!",
+              description: "No lograste clasificar todos los residuos. ¡Inténtalo de nuevo!",
+              variant: "destructive",
+            });
+        }
+    }, [isTimeUp]);
 
 
     const triggerAnimation = (category: WasteCategory, type: 'correct' | 'incorrect') => {
