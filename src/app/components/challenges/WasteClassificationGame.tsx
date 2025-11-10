@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { WasteItem, wasteItemsData } from '@/lib/data';
 import Image from 'next/image';
+import type { LucideIcon } from 'lucide-react';
 
 type WasteCategory = 'recycle' | 'organic' | 'trash';
 
@@ -19,14 +20,27 @@ interface GameState {
     lockoutUntil: number | null;
 }
 
-const bins: { category: WasteCategory; label: string; icon: React.ElementType; color: string }[] = [
+const bins = [
   { category: 'recycle', label: 'Reciclaje', icon: Recycle, color: 'text-blue-500' },
-  { category: 'organic', label: 'Orgánico', icon: Leaf, color: 'text-green-500' },
-  { category: 'trash', label: 'Basura', icon: Trash2, color: 'text-gray-600' },
-];
+  { category: 'organic', label: 'Orgánico', icon: Leaf,    color: 'text-green-500' },
+  { category: 'trash',   label: 'Basura',   icon: Trash2,  color: 'text-gray-600' },
+] as const satisfies ReadonlyArray<{
+  category: WasteCategory; label: string; icon: LucideIcon; color: string;
+}>;
+
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 
 const GameWithImages = ({ onGameWin, onRestartRequest, gameState, updateGameState }: { onGameWin: () => void; onRestartRequest: () => void; gameState: GameState, updateGameState: (newState: Partial<GameState>) => void }) => {
-    const [wasteItems, setWasteItems] = useState(() => [...wasteItemsData].sort(() => Math.random() - 0.5));
+    const [wasteItems, setWasteItems] = useState(() => shuffle([...wasteItemsData]));
     const [animations, setAnimations] = useState<Record<WasteCategory, string>>({ recycle: '', organic: '', trash: '' });
     const [timeLeft, setTimeLeft] = useState(180); // 3 minutes
     const [isTimeUp, setIsTimeUp] = useState(false);
@@ -43,18 +57,25 @@ const GameWithImages = ({ onGameWin, onRestartRequest, gameState, updateGameStat
     
     useEffect(() => {
       if (gameWon || isTimeUp || gameState.lives <= 0) return;
-      if (timeLeft > 0) {
-        const timerId = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-        return () => clearTimeout(timerId);
-      } else {
-        setIsTimeUp(true);
-        toast({
-          title: "¡Se acabó el tiempo!",
-          description: "No lograste clasificar todos los residuos. ¡Inténtalo de nuevo!",
-          variant: "destructive",
+    
+      const id = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            clearInterval(id);
+            setIsTimeUp(true);
+            toast({
+              title: "¡Se acabó el tiempo!",
+              description: "No lograste clasificar todos los residuos. ¡Inténtalo de nuevo!",
+              variant: "destructive",
+            });
+            return 0;
+          }
+          return prev - 1;
         });
-      }
-    }, [timeLeft, gameWon, isTimeUp, gameState.lives]);
+      }, 1000);
+    
+      return () => clearInterval(id);
+    }, [gameWon, isTimeUp, gameState.lives]);
 
 
     const triggerAnimation = (category: WasteCategory, type: 'correct' | 'incorrect') => {
@@ -65,7 +86,7 @@ const GameWithImages = ({ onGameWin, onRestartRequest, gameState, updateGameStat
     };
 
     const handleSelectBin = (category: WasteCategory) => {
-        if (!currentItem || gameState.lives <= 0) return;
+        if (!currentItem || isTimeUp || gameState.lives <= 0) return;
 
         if (currentItem.category === category) {
             setWasteItems(prevItems => prevItems.slice(0, prevItems.length - 1));
@@ -148,6 +169,7 @@ const GameWithImages = ({ onGameWin, onRestartRequest, gameState, updateGameStat
                 <button
                     key={category}
                     onClick={() => handleSelectBin(category)}
+                    aria-label={`Depositar en ${label}`}
                     className={cn(
                     "p-4 md:p-6 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all duration-300 hover:border-primary hover:bg-accent",
                     animations[category] === 'correct' && 'border-green-500 bg-green-500/20',
@@ -164,7 +186,7 @@ const GameWithImages = ({ onGameWin, onRestartRequest, gameState, updateGameStat
 };
 
 const GameDragAndDrop = ({ onGameWin, onRestartRequest }: { onGameWin: () => void; onRestartRequest: () => void; }) => {
-  const [wasteItems, setWasteItems] = useState(() => [...wasteItemsData].sort(() => Math.random() - 0.5).slice(0, 20));
+  const [wasteItems, setWasteItems] = useState(() => shuffle([...wasteItemsData].slice(0, 20)));
   const [animations, setAnimations] = useState<Record<WasteCategory, string>>({ recycle: '', organic: '', trash: '' });
   
   const currentItem = wasteItems[wasteItems.length - 1];
@@ -197,7 +219,12 @@ const GameDragAndDrop = ({ onGameWin, onRestartRequest }: { onGameWin: () => voi
       });
       triggerAnimation(category, 'incorrect');
       // Shuffle the item back in
-      setWasteItems(prev => [...prev.slice(0, prev.length - 1)].sort(() => Math.random() - 0.5).concat(currentItem));
+        setWasteItems(prev => {
+          const base = prev.slice(0, prev.length - 1); // quitar current
+          const idx = Math.floor(Math.random() * (base.length + 1));
+          base.splice(idx, 0, currentItem);
+          return base;
+        });
     }
   };
   
@@ -218,7 +245,6 @@ const GameDragAndDrop = ({ onGameWin, onRestartRequest }: { onGameWin: () => voi
               onDragEnd={(event, info) => {
                  const yOffset = info.offset.y;
                  const xOffset = info.offset.x;
-                 const binWidth = (window.innerWidth / 3);
 
                  if (yOffset > 100) { 
                     if (xOffset < -50) handleDrop('recycle');
@@ -291,21 +317,27 @@ export default function WasteClassificationGameContainer({ gameId, onComplete, o
     }
   }, [storageKey, key]);
 
+  const formatLockoutTime = (ms: number) => {
+    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+    const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+    const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+    const seconds = String(totalSeconds % 60).padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+  };
+
   useEffect(() => {
     if (pageState !== 'locked') return;
 
     const interval = setInterval(() => {
         if (gameState.lockoutUntil) {
-            const timeLeft = Math.max(0, gameState.lockoutUntil - Date.now());
-            if (timeLeft === 0) {
+            const timeLeft = gameState.lockoutUntil - Date.now();
+            if (timeLeft <= 0) {
                 setPageState('playing');
                 updateGameState({ lives: 3, lockoutUntil: null });
                 clearInterval(interval);
+            } else {
+                setLockoutTimeLeft(formatLockoutTime(timeLeft));
             }
-            const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24).toString().padStart(2, '0');
-            const minutes = Math.floor((timeLeft / 1000 / 60) % 60).toString().padStart(2, '0');
-            const seconds = Math.floor((timeLeft / 1000) % 60).toString().padStart(2, '0');
-            setLockoutTimeLeft(`${hours}:${minutes}:${seconds}`);
         }
     }, 1000);
 
@@ -315,16 +347,16 @@ export default function WasteClassificationGameContainer({ gameId, onComplete, o
   useEffect(() => {
     if (gameState.lockoutUntil && gameState.lockoutUntil > Date.now()) {
         setPageState('locked');
-    } else if (gameState.lives <= 0) {
+    } else if (gameState.lives <= 0 && pageState !== 'won') {
         // If lockout expired but lives are still 0, reset
         updateGameState({ lives: 3, lockoutUntil: null });
     }
-  }, [gameState, updateGameState]);
+  }, [gameState, updateGameState, pageState]);
 
 
   const handleGameWin = useCallback(() => {
     setPageState('won');
-    if (gameId === 'drag-and-drop') {
+    if (gameId === 'drag-and-drop' || gameId === 'classify') {
       toast({
           title: "¡Reto Superado!",
           description: "Has clasificado todos los residuos correctamente. ¡Eres un experto en reciclaje!",
