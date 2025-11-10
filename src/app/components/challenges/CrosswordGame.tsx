@@ -212,15 +212,15 @@ export default function CrosswordGame({
   };
 
   return (
-    <div className="mx-auto max-w-7xl p-4 flex flex-col lg:flex-row gap-8 items-start">
-      <div>
+    <div className="mx-auto w-full p-4 flex flex-col lg:flex-row gap-6 items-start">
+      <div className="w-full lg:w-auto">
         {onBack && (
           <Button variant="ghost" onClick={onBack} className="mb-4 text-white hover:bg-gray-700 hover:text-white">
             <ArrowLeft className="mr-2 h-4 w-4" /> Volver
           </Button>
         )}
         <div
-          className="grid gap-[2px] rounded-md p-2 bg-gray-900"
+          className="grid gap-px rounded-md p-1 bg-slate-700"
           style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}
         >
           {grid.map((row, r) =>
@@ -235,18 +235,18 @@ export default function CrosswordGame({
                   key={`${r}-${c}`}
                   onClick={() => { if (!isBlock) { setSelected({ r, c }); refs.current[r][c]?.focus(); } }}
                   className={cn(
-                    "relative aspect-square flex items-center justify-center border",
+                    "relative aspect-square flex items-center justify-center",
                     isBlock
-                      ? "bg-gray-800 border-gray-700"
-                      : "bg-white border-gray-300",
-                    isSel && !isBlock && "bg-yellow-200",
-                    hi && !isSel && !isBlock && "bg-yellow-100/50",
-                    status[r][c] === "correct" && "bg-green-200",
-                    status[r][c] === "incorrect" && "bg-red-200"
+                      ? "bg-slate-800"
+                      : "bg-slate-100",
+                    isSel && !isBlock && "bg-yellow-300",
+                    hi && !isSel && !isBlock && "bg-yellow-200/70",
+                    status[r][c] === "correct" && "bg-green-300",
+                    status[r][c] === "incorrect" && "bg-red-300"
                   )}
                 >
                   {n > 0 && !isBlock && (
-                    <span className="absolute left-0.5 top-0.5 text-[9px] font-semibold text-gray-600 select-none">
+                    <span className="absolute left-0.5 top-0.5 text-[8px] font-bold text-slate-500 select-none">
                       {n}
                     </span>
                   )}
@@ -259,7 +259,7 @@ export default function CrosswordGame({
                       onChange={(e) => handleInput(e, r, c)}
                       onKeyDown={(e) => handleKey(e, r, c)}
                       onFocus={() => setSelected({r,c})}
-                      className="h-full w-full text-center bg-transparent outline-none border-none text-base md:text-xl font-bold uppercase"
+                      className="h-full w-full text-center bg-transparent outline-none border-none text-base md:text-xl font-bold uppercase text-slate-900"
                       aria-label={`Fila ${r + 1}, Columna ${c + 1}`}
                     />
                   )}
@@ -271,7 +271,7 @@ export default function CrosswordGame({
 
         <div className="mt-4 flex flex-wrap gap-3">
           <Button onClick={check}><CheckCircle className="mr-2 h-4 w-4" />Comprobar</Button>
-          <Button variant="outline" onClick={() => setShowSolution(s => !s)}>
+          <Button variant="outline" className="bg-gray-800/60 text-white" onClick={() => setShowSolution(s => !s)}>
             <Eye className="mr-2 h-4 w-4" />
             {showSolution ? "Ocultar solución" : "Ver solución"}
           </Button>
@@ -281,20 +281,20 @@ export default function CrosswordGame({
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
         <Card className="bg-gray-800/60 border-gray-700 text-white">
           <CardHeader><CardTitle>Horizontales</CardTitle></CardHeader>
-          <CardContent className="space-y-2 text-sm max-h-[400px] overflow-y-auto">
+          <CardContent className="space-y-3 text-sm max-h-96 overflow-y-auto">
             {data.clues.across.map(cl => (
-              <p key={`a-${cl.number}`}><span className="font-bold">{cl.number}.</span> {cl.text}</p>
+              <p key={`a-${cl.number}`} className="pr-2"><b className="mr-1">{cl.number}.</b> {cl.text}</p>
             ))}
           </CardContent>
         </Card>
         <Card className="bg-gray-800/60 border-gray-700 text-white">
           <CardHeader><CardTitle>Verticales</CardTitle></CardHeader>
-          <CardContent className="space-y-2 text-sm max-h-[400px] overflow-y-auto">
+          <CardContent className="space-y-3 text-sm max-h-96 overflow-y-auto">
             {data.clues.down.map(cl => (
-              <p key={`d-${cl.number}`}><span className="font-bold">{cl.number}.</span> {cl.text}</p>
+              <p key={`d-${cl.number}`} className="pr-2"><b className="mr-1">{cl.number}.</b> {cl.text}</p>
             ))}
           </CardContent>
         </Card>
@@ -302,3 +302,5 @@ export default function CrosswordGame({
     </div>
   );
 }
+
+    
