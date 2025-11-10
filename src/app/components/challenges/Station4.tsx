@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BrainCircuit, Link as LinkIcon, Upload } from "lucide-react";
-import WaterQuiz from "@/app/components/challenges/WaterQuiz";
+import WaterQuiz from "@/components/challenges/WaterQuiz";
 import { Input } from "@/components/ui/input";
 import PrizeDialog from "../PrizeDialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
