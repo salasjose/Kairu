@@ -1,418 +1,265 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/hooks/use-toast";
-import type { CrosswordData } from "@/lib/types";
-import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, AlertCircle, RefreshCw, CheckCircle } from "lucide-react";
-import { handleGenerateCrossword } from "@/app/actions";
-import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { ArrowLeft, CheckCircle, RefreshCw, Eye } from "lucide-react";
 
+/** Tipos */
 type Direction = "across" | "down";
 type CellStatus = "correct" | "incorrect" | "neutral";
 
-type StartMap = {
-  number: number;
-  direction: Direction;
-  row: number;
-  col: number;
-  length: number;
-  answer: string;
-  clue: string;
-};
-
-function stripDiacritics(s: string) {
-  if (!s) return "";
-  return s.normalize("NFD").replace(/\p{Diacritic}/gu, "");
+export interface CrosswordData {
+  title: string;
+  grid: string[][]; // '#' = bloque, letra en mayúscula
+  clues: {
+    across: { number: number; text: string }[];
+    down: { number: number; text: string }[];
+  };
 }
 
+type Start = { number: number; r: number; c: number; len: number; dir: Direction };
+
+/** Utilidades */
+const strip = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toUpperCase();
+
+function deriveStarts(grid: string[][]): { starts: Start[]; numbers: number[][] } {
+  const rows = grid.length;
+  const cols = grid[0].length;
+  const numbers = Array.from({ length: rows }, () => Array(cols).fill(0));
+  const starts: Start[] = [];
+  let current = 0;
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (grid[r][c] === "#") continue;
+      const leftBlocked = c === 0 || grid[r][c - 1] === "#";
+      const upBlocked = r === 0 || grid[r - 1][c] === "#";
+      let started = false;
+
+      if (leftBlocked && c + 1 < cols && grid[r][c + 1] !== "#") {
+        let len = 1;
+        while (c + len < cols && grid[r][c + len] !== "#") len++;
+        if (!started) current++;
+        numbers[r][c] = current;
+        starts.push({ number: current, r, c, len, dir: "across" });
+        started = true;
+      }
+      if (upBlocked && r + 1 < rows && grid[r + 1][c] !== "#") {
+        let len = 1;
+        while (r + len < rows && grid[r + len][c] !== "#") len++;
+        if (!started) current++;
+        numbers[r][c] = started ? numbers[r][c] : current;
+        starts.push({ number: numbers[r][c] || current, r, c, len, dir: "down" });
+      }
+    }
+  }
+  return { starts, numbers };
+}
+
+function nextCell(grid: string[][], r: number, c: number, dir: Direction, backwards = false) {
+  const rows = grid.length, cols = grid[0].length;
+  let rr = r, cc = c;
+  while (true) {
+    if (dir === "across") cc += backwards ? -1 : 1;
+    else rr += backwards ? -1 : 1;
+    if (rr < 0 || cc < 0 || rr >= rows || cc >= cols) return null;
+    if (grid[rr][cc] !== "#") return { r: rr, c: cc };
+  }
+}
+
+/** Componente principal */
 export default function CrosswordGame({
-  topic,
+  data,
   onBack,
   onComplete,
-  staticData,
 }: {
-  topic: string;
-  onBack: () => void;
+  data: CrosswordData;
+  onBack?: () => void;
   onComplete: () => void;
-  staticData?: CrosswordData;
 }) {
-  const [gridData, setGridData] = useState<CrosswordData | null>(staticData || null);
-  const [gridState, setGridState] = useState<string[][]>([]);
-  const [cellStatuses, setCellStatuses] = useState<CellStatus[][]>([]);
-  const [isLoading, setIsLoading] = useState(!staticData);
-  const [error, setError] = useState<string | null>(null);
-  const [isComplete, setIsComplete] = useState(false);
-  const [showErrors, setShowErrors] = useState(false);
+  const grid = useMemo(() => data.grid.map(row => row.map(v => (v === "#" ? "#" : strip(v)))), [data.grid]);
+  const rows = grid.length, cols = grid[0].length;
 
-  const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
-  const [direction, setDirection] = useState<Direction>("across");
+  const { numbers } = useMemo(() => deriveStarts(grid), [grid]);
+  const [selected, setSelected] = useState<{ r: number; c: number } | null>({r: 0, c: 0});
+  const [dir, setDir] = useState<Direction>("across");
+  const [state, setState] = useState<string[][]>(() =>
+    grid.map(row => row.map(cell => (cell === "#" ? "#" : "")))
+  );
+  const [status, setStatus] = useState<CellStatus[][]>(() =>
+    grid.map(row => row.map(() => "neutral"))
+  );
+  const [showSolution, setShowSolution] = useState(false);
 
-  const inputRefs = useRef<(HTMLInputElement | null)[][]>([]);
-
-  const rows = gridData?.grid.length ?? 0;
-  const cols = gridData?.grid[0]?.length ?? 0;
-
-  const canonizedGrid = useMemo(() => {
-    if (!gridData) return [];
-    return gridData.grid.map((row) =>
-      row.map((cell) => (cell === "#" ? "#" : stripDiacritics(cell.toUpperCase())))
-    );
-  }, [gridData]);
-
-  const initializeGrid = useCallback((data: CrosswordData) => {
-    const initialState = data.grid.map((row) => row.map((cell) => (cell === "#" ? "#" : "")));
-    const initialStatuses = data.grid.map((row) => row.map(() => "neutral" as CellStatus));
-
-    setGridState(initialState);
-    setCellStatuses(initialStatuses);
-
-    inputRefs.current = Array.from({ length: data.grid.length }, () =>
-      Array.from({ length: data.grid[0].length }, () => null)
-    );
-
-    setIsComplete(false);
-    setShowErrors(false);
-    setSelectedCell(null);
-    setDirection("across");
-  }, []);
-
-  const generateGame = useCallback(async () => {
-    if (staticData) {
-      setGridData(staticData);
-      initializeGrid(staticData);
-      setIsLoading(false);
-      return;
-    }
-    
-    setIsLoading(true);
-    setError(null);
-    setGridData(null);
-
-    try {
-      const result = await handleGenerateCrossword(topic, 15);
-
-      if (result.success && result.data) {
-        setGridData(result.data);
-        initializeGrid(result.data);
-      } else {
-        throw new Error(result.error || "No se pudo generar el crucigrama.");
-      }
-    } catch (err: any) {
-      const msg = err?.message ?? "No se pudo generar el crucigrama.";
-      setError(msg);
-      toast({
-        title: "Error de Generación",
-        description: msg,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [topic, staticData, initializeGrid]);
+  const refs = useRef<(HTMLInputElement | null)[][]>(
+    Array.from({ length: rows }, () => Array(cols).fill(null))
+  );
 
   useEffect(() => {
-    generateGame();
-  }, [generateGame]);
-
-  const starts = useMemo<StartMap[]>(() => {
-    if (!gridData) return [];
-    const numberedStarts = new Map<string, number>();
-    let currentNumber = 1;
-
-    const allClues = [
-        ...gridData.across.map(c => ({...c, direction: 'across' as Direction})),
-        ...gridData.down.map(c => ({...c, direction: 'down' as Direction}))
-    ];
-
-    allClues.sort((a,b) => a.number - b.number);
-    
-    const out: StartMap[] = [];
-
-    for (const clue of allClues) {
-        let found = false;
-        for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++) {
-                if(canonizedGrid[r][c] === '#') continue;
-
-                const word = stripDiacritics(clue.answer.toUpperCase());
-                let matches = true;
-
-                if (clue.direction === 'across') {
-                    if (c + word.length > cols) continue;
-                    // Check if it's a valid start
-                    if (c > 0 && canonizedGrid[r][c-1] !== '#') continue;
-
-                    for(let i = 0; i < word.length; i++) {
-                        if (c + i >= cols || canonizedGrid[r][c+i] !== word[i]) {
-                           matches = false;
-                           break;
-                        }
-                    }
-                     if (matches && (c + word.length === cols || canonizedGrid[r][c+word.length] === '#')) {
-                         out.push({ ...clue, row: r, col: c, length: word.length });
-                         found = true;
-                         break;
-                     }
-                } else { // down
-                    if (r + word.length > rows) continue;
-                    // Check if it's a valid start
-                    if (r > 0 && canonizedGrid[r-1][c] !== '#') continue;
-
-                     for(let i = 0; i < word.length; i++) {
-                        if (r + i >= rows || canonizedGrid[r+i][c] !== word[i]) {
-                           matches = false;
-                           break;
-                        }
-                    }
-                     if (matches && (r + word.length === rows || canonizedGrid[r+word.length][c] === '#')) {
-                        out.push({ ...clue, row: r, col: c, length: word.length });
-                        found = true;
-                        break;
-                     }
-                }
-            }
-            if (found) break;
-        }
-    }
-    return out;
-  }, [gridData, rows, cols, canonizedGrid]);
-
-
-  const startsByCell = useMemo(() => {
-    const map = new Map<string, { across?: StartMap; down?: StartMap }>();
-    for (const st of starts) {
-      for (let i = 0; i < st.length; i++) {
-        const r = st.direction === "down" ? st.row + i : st.row;
-        const c = st.direction === "across" ? st.col + i : st.col;
-        const key = `${r},${c}`;
-        const entry = map.get(key) ?? {};
-        entry[st.direction] = st;
-        map.set(key, entry);
-      }
-    }
-    return map;
-  }, [starts]);
-
-  const getCurrentStart = useCallback((r: number, c: number, dir: Direction): StartMap | undefined => {
-    const entry = startsByCell.get(`${r},${c}`);
-    return entry?.[dir];
-  }, [startsByCell]);
-
-
-  const moveToNextCell = (r: number, c: number, dir: Direction, backwards = false) => {
-    if (!gridData) return;
-    let rr = r;
-    let cc = c;
-    while (true) {
-      if (dir === "across") cc += backwards ? -1 : 1;
-      else rr += backwards ? -1 : 1;
-
-      if (rr < 0 || cc < 0 || rr >= rows || cc >= cols) break;
-      if (gridData.grid[rr][cc] !== "#") {
-        inputRefs.current[rr][cc]?.focus();
-        setSelectedCell({ row: rr, col: cc });
-        return;
-      }
-    }
-  };
-
-  const handleInput = (e: React.ChangeEvent<HTMLInputElement>, row: number, col: number) => {
-    if (isComplete) return;
-
-    let value = stripDiacritics(e.target.value.toUpperCase());
-    if (value.length > 1) value = value.charAt(value.length - 1);
-
-    const next = gridState.map((r) => r.slice());
-    next[row][col] = value;
-    setGridState(next);
-
-    const st = getCurrentStart(row, col, direction);
-    if (st) {
-      const statuses = cellStatuses.map((r) => r.slice());
-      for (let i = 0; i < st.length; i++) {
-        const rr = st.direction === "down" ? st.row + i : st.row;
-        const cc = st.direction === "across" ? st.col + i : st.col;
-        if (gridData?.grid[rr][cc] !== "#") statuses[rr][cc] = "neutral";
-      }
-      setCellStatuses(statuses);
-    }
-    setShowErrors(false);
-
-    if (value) moveToNextCell(row, col, direction, false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, row: number, col: number) => {
-    if (e.key === "Backspace" && !gridState[row][col]) moveToNextCell(row, col, direction, true);
-    if (e.key === " " || e.key === "Spacebar") {
-      e.preventDefault();
-      setDirection((d) => (d === "across" ? "down" : "across"));
-    }
-    if (e.key === "ArrowRight") { e.preventDefault(); setDirection("across"); moveToNextCell(row, col, "across", false); }
-    if (e.key === "ArrowLeft") { e.preventDefault(); setDirection("across"); moveToNextCell(row, col, "across", true); }
-    if (e.key === "ArrowDown") { e.preventDefault(); setDirection("down"); moveToNextCell(row, col, "down", false); }
-    if (e.key === "ArrowUp") { e.preventDefault(); setDirection("down"); moveToNextCell(row, col, "down", true); }
-  };
-
-  const handleCellClick = (row: number, col: number) => {
-    if (!gridData || gridData.grid[row][col] === "#") return;
-    if (selectedCell?.row === row && selectedCell?.col === col) {
-      const entry = startsByCell.get(`${row},${col}`);
-      if (entry?.across && entry?.down) {
-          setDirection((prev) => (prev === "across" ? "down" : "across"));
-      }
+    if (showSolution) {
+      setState(grid.map(row => row.map(cell => (cell === "#" ? "#" : cell))));
+      setStatus(grid.map(row => row.map(cell => (cell === "#" ? "neutral" : "correct"))));
     } else {
-      setSelectedCell({ row, col });
-      const entry = startsByCell.get(`${row},${col}`);
-      if (entry?.across && !entry?.down) setDirection("across");
-      else if (!entry?.across && entry?.down) setDirection("down");
+       // Only reset if it was previously showing the solution
+       if (state.some((row, r) => row.some((cell, c) => cell === grid[r][c] && cell !== '#'))) {
+           setState(grid.map(row => row.map(cell => (cell === "#" ? "#" : ""))));
+           setStatus(grid.map(row => row.map(() => "neutral")));
+       }
     }
-    inputRefs.current[row][col]?.focus();
-  };
+  }, [showSolution, grid, state]);
 
-  const checkAnswers = () => {
-    if (!gridData) return;
-
-    let allCorrect = true;
-    const statuses = cellStatuses.map((r) => r.slice());
-
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        if (canonizedGrid[r][c] !== "#") {
-          if (gridState[r][c] === canonizedGrid[r][c]) statuses[r][c] = "correct";
-          else {
-            statuses[r][c] = "incorrect";
-            allCorrect = false;
-          }
-        }
-      }
-    }
-    setCellStatuses(statuses);
-
-    if (allCorrect) {
-      setIsComplete(true);
-      setShowErrors(false);
-      toast({ title: "¡Felicidades!", description: "Has completado el crucigrama correctamente." });
-      setTimeout(onComplete, 1200);
-    } else {
-      setShowErrors(true);
-      setIsComplete(false);
-      toast({
-        title: "Casi listo",
-        description: "Algunas respuestas son incorrectas. ¡Sigue intentando!",
-        variant: "destructive",
-      });
-    }
-  };
 
   const resetGame = () => {
-    if (gridData) initializeGrid(gridData);
-  };
+    setShowSolution(false);
+    setState(grid.map(r=>r.map(c=>c==="#"?"#":"")));
+    setStatus(grid.map(r=>r.map(()=> "neutral")));
+    setSelected({r:0, c:0});
+    refs.current[0][0]?.focus();
+  }
 
-  const highlightedCells = useMemo(() => {
-    if (!selectedCell || !gridData) return [];
-    const st = getCurrentStart(selectedCell.row, selectedCell.col, direction);
-    if (!st) return [{ r: selectedCell.row, c: selectedCell.col }];
-    const cells: { r: number; c: number }[] = [];
-    for (let i = 0; i < st.length; i++) {
-      const r = st.direction === "down" ? st.row + i : st.row;
-      const c = st.direction === "across" ? st.col + i : st.col;
-      if (gridData.grid[r]?.[c] !== "#") cells.push({ r, c });
+  const currentWordCells = useMemo(() => {
+    if (!selected) return [];
+    const { r, c } = selected;
+    if (grid[r][c] === "#") return [];
+    const cells: { r: number; c: number }[] = [{ r, c }];
+    let rr = r, cc = c;
+    while (true) {
+      const prev = nextCell(grid, rr, cc, dir, true);
+      if (!prev) break;
+      if ((dir === "across" && prev.r !== rr) || (dir === "down" && prev.c !== cc)) break;
+      rr = prev.r; cc = prev.c;
+      cells.unshift(prev);
+      if ((dir === "across" && (cc === 0 || grid[rr][cc - 1] === "#")) ||
+          (dir === "down" && (rr === 0 || grid[rr - 1][cc] === "#"))) break;
+    }
+    rr = r; cc = c;
+    while (true) {
+      const nxt = nextCell(grid, rr, cc, dir, false);
+      if (!nxt) break;
+      if ((dir === "across" && nxt.r !== rr) || (dir === "down" && nxt.c !== cc)) break;
+      rr = nxt.r; cc = nxt.c;
+      cells.push(nxt);
+      if ((dir === "across" && (cc === cols - 1 || grid[rr][cc + 1] === "#")) ||
+          (dir === "down" && (rr === rows - 1 || grid[rr + 1][cc] === "#"))) break;
     }
     return cells;
-  }, [selectedCell, direction, gridData, getCurrentStart]);
+  }, [selected, dir, grid, rows, cols]);
 
-  if (isLoading) {
-    return (
-      <div className="w-full max-w-4xl mx-auto p-4 flex flex-col items-center justify-center text-center">
-        <h2 className="text-2xl font-bold font-headline mb-4">Generando Crucigrama...</h2>
-        <p className="text-muted-foreground mb-4">La IA está creando tu reto. Esto puede tardar un momento...</p>
-        <Skeleton className="w-full aspect-square max-w-lg" />
-      </div>
-    );
-  }
+  const handleInput = (e: React.ChangeEvent<HTMLInputElement>, r: number, c: number) => {
+    let v = strip(e.target.value);
+    if (v.length > 1) v = v.at(-1)!;
 
-  if (error) {
-    return (
-      <div className="w-full max-w-4xl mx-auto p-4 flex flex-col items-center justify-center text-center">
-        <AlertCircle className="w-16 h-16 text-destructive mb-4" />
-        <h2 className="text-2xl font-bold font-headline text-destructive mb-2">Error al Generar Crucigrama</h2>
-        <p className="text-muted-foreground mb-4">{error}</p>
-        <div className="flex gap-4">
-          <Button onClick={onBack} variant="outline">Volver</Button>
-          <Button onClick={generateGame}><RefreshCw className="mr-2" />Intentar de Nuevo</Button>
-        </div>
-      </div>
-    );
-  }
+    const next = state.map(row => row.slice());
+    next[r][c] = v;
+    setState(next);
 
-  if (!gridData) {
-    return (
-      <div className="w-full max-w-4xl mx-auto p-4 flex flex-col items-center justify-center text-center">
-        <p>No se pudieron cargar los datos del crucigrama.</p>
-        <Button onClick={onBack} variant="outline" className="mt-4">Volver</Button>
-      </div>
-    );
-  }
+    if (currentWordCells.length) {
+      const st = status.map(row => row.slice());
+      for (const { r: rr, c: cc } of currentWordCells) st[rr][cc] = "neutral";
+      setStatus(st);
+    }
+
+    if (v) {
+      const n = nextCell(grid, r, c, dir);
+      if (n) {
+        setSelected(n);
+        refs.current[n.r][n.c]?.focus();
+      }
+    }
+  };
+
+  const handleKey = (e: React.KeyboardEvent<HTMLInputElement>, r: number, c: number) => {
+    if (e.key === "Backspace" && !state[r][c]) {
+      const prev = nextCell(grid, r, c, dir, true);
+      if (prev) {
+        setSelected(prev);
+        refs.current[prev.r][prev.c]?.focus();
+      }
+    }
+    if (e.key === " " || e.key === "Tab") {
+      e.preventDefault();
+      setDir(d => (d === "across" ? "down" : "across"));
+    }
+    if (e.key === "ArrowRight") { e.preventDefault(); setDir("across"); move("across", false); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); setDir("across"); move("across", true); }
+    if (e.key === "ArrowDown") { e.preventDefault(); setDir("down"); move("down", false); }
+    if (e.key === "ArrowUp") { e.preventDefault(); setDir("down"); move("down", true); }
+
+    function move(d: Direction, back: boolean) {
+      const nxt = nextCell(grid, r, c, d, back);
+      if (nxt) { setSelected(nxt); refs.current[nxt.r][nxt.c]?.focus(); }
+    }
+  };
+
+  const check = () => {
+    const st = status.map(row => row.slice());
+    let all = true;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (grid[r][c] === "#") continue;
+        const ok = state[r][c] && strip(state[r][c]) === grid[r][c];
+        st[r][c] = ok ? "correct" : "incorrect";
+        if (!ok) all = false;
+      }
+    }
+    setStatus(st);
+    if (all) {
+        alert("🎉 ¡Completado!");
+        onComplete();
+    }
+  };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 p-4 max-w-7xl mx-auto items-start">
-      <div className="w-full lg:w-auto">
-        <Button variant="ghost" onClick={onBack} className="mb-4">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Volver a los retos
-        </Button>
-
+    <div className="mx-auto max-w-7xl p-4 flex flex-col lg:flex-row gap-8 items-start">
+      <div>
+        {onBack && (
+          <Button variant="ghost" onClick={onBack} className="mb-4 text-white hover:bg-gray-700 hover:text-white">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Volver
+          </Button>
+        )}
         <div
-          className="grid gap-0.5 bg-black border-2 border-black rounded-sm"
-          style={{
-            gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-            width: "clamp(320px, 90vw, 640px)",
-          }}
+          className="grid gap-[2px] rounded-md p-2 bg-gray-900"
+          style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}
         >
-          {gridState.map((row, r) =>
+          {grid.map((row, r) =>
             row.map((cell, c) => {
-              const isBlack = gridData.grid[r][c] === "#";
-              const isHighlighted = highlightedCells.some((hc) => hc.r === r && hc.c === c);
-              const isSelected = selectedCell?.row === r && selectedCell?.col === c;
-              const status = cellStatuses[r][c];
-              
-              const startInfo = starts.find(s => s.row === r && s.col === c);
+              const isBlock = cell === "#";
+              const isSel = selected?.r === r && selected?.c === c;
+              const hi = currentWordCells.some(k => k.r === r && k.c === c);
+              const n = numbers[r][c];
 
               return (
                 <div
                   key={`${r}-${c}`}
+                  onClick={() => { if (!isBlock) { setSelected({ r, c }); refs.current[r][c]?.focus(); } }}
                   className={cn(
-                    "aspect-square flex items-center justify-center relative",
-                    isBlack ? "bg-black" : "bg-white",
-                    !isBlack && "cursor-pointer",
-                    isSelected && !isBlack && "bg-yellow-200",
-                    isHighlighted && !isSelected && !isBlack && "bg-yellow-100/70",
-                    status === "correct" && !isBlack && "bg-green-200",
-                    status === "incorrect" && !isBlack && "bg-red-200"
+                    "relative aspect-square flex items-center justify-center border",
+                    isBlock
+                      ? "bg-gray-800 border-gray-700"
+                      : "bg-white border-gray-300",
+                    isSel && !isBlock && "bg-yellow-200",
+                    hi && !isSel && !isBlock && "bg-yellow-100/50",
+                    status[r][c] === "correct" && "bg-green-200",
+                    status[r][c] === "incorrect" && "bg-red-200"
                   )}
-                  onClick={() => handleCellClick(r, c)}
                 >
-                  {startInfo && (
-                    <span className="absolute top-0 left-0.5 text-[8px] font-bold select-none">
-                      {startInfo.number}
+                  {n > 0 && !isBlock && (
+                    <span className="absolute left-0.5 top-0.5 text-[9px] font-semibold text-gray-600 select-none">
+                      {n}
                     </span>
                   )}
-                  {!isBlack && (
+                  {!isBlock && (
                     <input
-                      ref={(el) => { if(inputRefs.current[r]) inputRefs.current[r][c] = el; }}
+                      ref={el => { if (refs.current[r]) refs.current[r][c] = el; }}
                       type="text"
                       maxLength={1}
-                      value={cell === "#" ? "" : cell}
-                      onFocus={() => setSelectedCell({row: r, col: c})}
+                      value={state[r][c] === "#" ? "" : state[r][c]}
                       onChange={(e) => handleInput(e, r, c)}
-                      onKeyDown={(e) => handleKeyDown(e, r, c)}
-                      className={cn(
-                        "w-full h-full text-center bg-transparent border-none outline-none text-lg md:text-xl font-bold uppercase",
-                        status === "incorrect" && "text-red-700"
-                      )}
+                      onKeyDown={(e) => handleKey(e, r, c)}
+                      onFocus={() => setSelected({r,c})}
+                      className="h-full w-full text-center bg-transparent outline-none border-none text-base md:text-xl font-bold uppercase"
                       aria-label={`Fila ${r + 1}, Columna ${c + 1}`}
                     />
                   )}
@@ -422,66 +269,33 @@ export default function CrosswordGame({
           )}
         </div>
 
-        <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
-          <Button onClick={checkAnswers} size="lg">
-            <CheckCircle className="mr-2" />
-            Comprobar Solución
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Button onClick={check}><CheckCircle className="mr-2 h-4 w-4" />Comprobar</Button>
+          <Button variant="outline" onClick={() => setShowSolution(s => !s)}>
+            <Eye className="mr-2 h-4 w-4" />
+            {showSolution ? "Ocultar solución" : "Ver solución"}
           </Button>
-          <Button onClick={resetGame} size="lg" variant="outline">
-            <RefreshCw className="mr-2" />
-            Reiniciar
+          <Button variant="secondary" onClick={resetGame}>
+            <RefreshCw className="mr-2 h-4 w-4" />Reiniciar
           </Button>
-        </div>
-
-        <div className="mt-4 text-center">
-          {isComplete && (
-            <div className="p-3 bg-green-100 border border-green-300 rounded-lg text-green-800 font-semibold">
-              🎉 ¡Felicidades! Has completado el crucigrama.
-            </div>
-          )}
-          {showErrors && !isComplete && (
-            <div className="p-3 bg-red-100 border border-red-300 rounded-lg text-red-800 font-semibold">
-              Algunas respuestas son incorrectas. ¡Sigue intentando!
-            </div>
-          )}
         </div>
       </div>
 
-      <div className="flex-grow w-full grid grid-cols-1 md:grid-cols-2 gap-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Horizontales</CardTitle>
-          </CardHeader>
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="bg-gray-800/60 border-gray-700 text-white">
+          <CardHeader><CardTitle>Horizontales</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm max-h-[400px] overflow-y-auto">
-            {gridData.across
-              .slice()
-              .sort((a, b) => a.number - b.number)
-              .map((clue) => (
-                <p key={`across-${clue.number}`} className="cursor-pointer" onClick={() => {
-                    const start = starts.find(s => s.number === clue.number && s.direction === 'across');
-                    if(start) handleCellClick(start.row, start.col);
-                }}>
-                  <span className="font-bold">{clue.number}.</span> {clue.clue}
-                </p>
-              ))}
+            {data.clues.across.map(cl => (
+              <p key={`a-${cl.number}`}><span className="font-bold">{cl.number}.</span> {cl.text}</p>
+            ))}
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Verticales</CardTitle>
-          </CardHeader>
+        <Card className="bg-gray-800/60 border-gray-700 text-white">
+          <CardHeader><CardTitle>Verticales</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm max-h-[400px] overflow-y-auto">
-            {gridData.down
-              .slice()
-              .sort((a, b) => a.number - b.number)
-              .map((clue) => (
-                 <p key={`down-${clue.number}`} className="cursor-pointer" onClick={() => {
-                    const start = starts.find(s => s.number === clue.number && s.direction === 'down');
-                    if(start) handleCellClick(start.row, start.col);
-                }}>
-                  <span className="font-bold">{clue.number}.</span> {clue.clue}
-                </p>
-              ))}
+            {data.clues.down.map(cl => (
+              <p key={`d-${cl.number}`}><span className="font-bold">{cl.number}.</span> {cl.text}</p>
+            ))}
           </CardContent>
         </Card>
       </div>

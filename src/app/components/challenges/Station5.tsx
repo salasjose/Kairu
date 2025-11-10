@@ -17,7 +17,7 @@ import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore } from "@/firebase/hooks";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
-import { SUSTAINABILITY_PUZZLE } from "@/lib/crossword-data";
+import { CROSSWORD_DATA } from "@/lib/crossword-data";
 
 const challenges = {
   learn: {
@@ -220,7 +220,16 @@ export default function Station5() {
     return <LearnChallenge onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("learn")} />;
   }
   if (selectedChallenge === "crossword") {
-    return <CrosswordGame topic="sostenibilidad" onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("crossword")} staticData={SUSTAINABILITY_PUZZLE} />;
+    return (
+        <main className="min-h-screen bg-gray-900 p-6">
+          <div className="mx-auto max-w-7xl">
+            <h1 className="text-2xl font-bold text-white mb-4">Crucigrama: Transformación Sostenible</h1>
+            <div className="rounded-xl bg-gray-800/60 p-4 ring-1 ring-gray-700">
+              <CrosswordGame data={CROSSWORD_DATA} onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("crossword")} />
+            </div>
+          </div>
+        </main>
+      );
   }
    if (selectedChallenge === "wordsearch") {
     return <WordSearchGame gameId="station5" onComplete={() => handleComplete("wordsearch")} onBack={() => setSelectedChallenge(null)} />;
