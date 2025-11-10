@@ -269,7 +269,7 @@ const challenges = {
   "photos-crafts": {
     title: "Reto 3: Creaciones",
     description:
-      "Crea nuevos productos a partir de residuos reciclados. Monta un post en Instagram, etiquétanos @fundaciontekara @corpoguajira y comparte el enlace.",
+      "Crea nuevos productos a partir de residuos reciclados. Monta un post en Instagram, etiquétanos @fundaciontekara y @corpoguajira y comparte el enlace.",
     imageId: "recycled-art",
     icon: Sparkles,
   },
@@ -419,7 +419,7 @@ export default function Station3() {
         </div>
 
          {/* Yara Character and Dialog */}
-        <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4">
+        <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4 pointer-events-none">
           <AnimatePresence>
               {showYaraDialog && (
                 <motion.div
