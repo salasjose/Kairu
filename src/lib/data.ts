@@ -50,15 +50,9 @@ export const allPrizes: Prize[][] = [
   ],
   // Station 2 Prizes
   [
-<<<<<<< HEAD
     { id: 's2-1', stationId: 2, name: 'Edificio', imageUrl: '/prizes/Ilustración_sin_título_1.png' },
     { id: 's2-2', stationId: 2, name: 'Ilustración 2', imageUrl: '/prizes/Ilustración_sin_título_2.png' },
     { id: 's2-3', stationId: 2, name: 'Pescador', imageUrl: '/prizes/Ilustración_sin_título 3.png' },
-=======
-    { id: 's2-1', stationId: 2, name: 'Ilustración 1', imageUrl: '/prizes/Ilustración_sin_título_1.png' },
-    { id: 's2-2', stationId: 2, name: 'Ilustración 2', imageUrl: '/prizes/Ilustración_sin_título_2.png' },
-    { id: 's2-3', stationId: 2, name: 'Ilustración 3', imageUrl: '/prizes/Ilustración_sin_título 3.png' },
->>>>>>> 7d28fac (ajuste la estación 9  para que las insignias se puedan mover las insigni)
     { id: 's2-4', stationId: 2, name: 'Ilustración 4', imageUrl: '/prizes/Ilustración_sin_título 4.png' },
     { id: 's2-5', stationId: 2, name: 'Ilustración 5', imageUrl: '/prizes/Ilustración_sin_título 5.png' },
     { id: 's2-6', stationId: 2, name: 'Ilustración 6', imageUrl: '/prizes/Ilustración_sin_título 6.png' },
@@ -80,7 +74,7 @@ export const allPrizes: Prize[][] = [
   ],
   // Station 4 Prizes
    [
-    { id: 's4-1', stationId: 4, name: 'Ilustración 1', imageUrl: '/prizes/Ilustración_sin_título_1.png' },
+    { id: 's4-1', stationId: 4, name: 'Edificio', imageUrl: '/prizes/Ilustración_sin_título_1.png' },
     { id: 's4-2', stationId: 4, name: 'Ilustración 2', imageUrl: '/prizes/Ilustración_sin_título_2.png' },
     { id: 's4-3', stationId: 4, name: 'Ilustración 3', imageUrl: '/prizes/Ilustración_sin_título 3.png' },
     { id: 's4-4', stationId: 4, name: 'Ilustración 4', imageUrl: '/prizes/Ilustración_sin_título 4.png' },
@@ -104,9 +98,9 @@ export const allPrizes: Prize[][] = [
   ],
   // Station 6 Prizes
   [
-    { id: 's6-1', stationId: 6, name: 'Ilustración 1', imageUrl: '/prizes/Ilustración_sin_título_1.png' },
+    { id: 's6-1', stationId: 6, name: 'Edificio', imageUrl: '/prizes/Ilustración_sin_título_1.png' },
     { id: 's6-2', stationId: 6, name: 'Ilustración 2', imageUrl: '/prizes/Ilustración_sin_título_2.png' },
-    { id: 's6-3', stationId: 6, name: 'Ilustración 3', imageUrl: '/prizes/Ilustración_sin_título 3.png' },
+    { id: 's6-3', stationId: 6, name: 'Pescador', imageUrl: '/prizes/Ilustración_sin_título 3.png' },
     { id: 's6-4', stationId: 6, name: 'Ilustración 4', imageUrl: '/prizes/Ilustración_sin_título 4.png' },
     { id: 's6-5', stationId: 6, name: 'Ilustración 5', imageUrl: '/prizes/Ilustración_sin_título 5.png' },
     { id: 's6-6', stationId: 6, name: 'Ilustración 6', imageUrl: '/prizes/Ilustración_sin_título 6.png' },
@@ -128,9 +122,9 @@ export const allPrizes: Prize[][] = [
   ],
   // Station 8 Prizes
   [
-    { id: 's8-1', stationId: 8, name: 'Ilustración 1', imageUrl: '/prizes/Ilustración_sin_título_1.png' },
+    { id: 's8-1', stationId: 8, name: 'Edificio', imageUrl: '/prizes/Ilustración_sin_título_1.png' },
     { id: 's8-2', stationId: 8, name: 'Ilustración 2', imageUrl: '/prizes/Ilustración_sin_título_2.png' },
-    { id: 's8-3', stationId: 8, name: 'Ilustración 3', imageUrl: '/prizes/Ilustración_sin_título 3.png' },
+    { id: 's8-3', stationId: 8, name: 'Pescador', imageUrl: '/prizes/Ilustración_sin_título 3.png' },
     { id: 's8-4', stationId: 8, name: 'Ilustración 4', imageUrl: '/prizes/Ilustración_sin_título 4.png' },
     { id: 's8-5', stationId: 8, name: 'Ilustración 5', imageUrl: '/prizes/Ilustración_sin_título 5.png' },
     { id: 's8-6', stationId: 8, name: 'Ilustración 6', imageUrl: '/prizes/Ilustración_sin_título 6.png' },

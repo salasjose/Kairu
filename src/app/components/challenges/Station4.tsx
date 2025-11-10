@@ -220,9 +220,15 @@ export default function Station4() {
       className="
         w-screen h-[100dvh] relative overflow-hidden
         bg-cover bg-center bg-no-repeat
+<<<<<<< HEAD
         bg-[url('/backgrounds/Rio_1366x_768.png')]
         md:bg-[url('/backgrounds/Rio_768x768.png')]
         sm:bg-[url('/backgrounds/Rio_425x768.png')]
+=======
+        bg-[url('/backgrounds/Rio_425x768.png')]
+        sm:bg-[url('/backgrounds/Rio_768x768.png')]
+        lg:bg-[url('/backgrounds/Rio_1366x_768.png')]
+>>>>>>> bf86e7d (ajustame el codigo de fondo del aplicativo de la estacion TerrAzul  con)
       "
     >
       {/* opcional: velo de legibilidad */}
