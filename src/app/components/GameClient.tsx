@@ -16,12 +16,22 @@ import { signOut } from 'firebase/auth';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useStationProgress } from '@/hooks/use-station-progress';
 import { usePrizeCart } from '@/hooks/use-prize-cart';
-import { Settings } from 'lucide-react';
+import { Settings, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { SignUpFormSchema } from './auth/SignUpForm';
 import { z } from 'zod';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface PlayerState {
   id: string;
@@ -33,6 +43,10 @@ interface PlayerState {
 
 const SettingsPanel = ({ playerState, setPlayerState }: { playerState: PlayerState; setPlayerState: (state: PlayerState) => void; }) => {
     const db = useFirestore();
+    const { resetProgress } = useStationProgress();
+    const { clearCart } = usePrizeCart();
+    const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+
     const avatars = useMemo(() => {
         return PlaceHolderImages.filter(p => p.id.startsWith('avatar-')).map(p => ({
             id: p.id,
@@ -61,40 +75,81 @@ const SettingsPanel = ({ playerState, setPlayerState }: { playerState: PlayerSta
             // setPlayerState(playerState); 
         }
     };
+
+    const handleResetProgress = async () => {
+        await resetProgress();
+        clearCart();
+        toast({
+            title: "Progreso Reiniciado",
+            description: "Tu aventura ha sido reiniciada. ¡Buena suerte!",
+        });
+        setIsResetConfirmOpen(false);
+        // The page will reload due to the listener in GameClient detecting the change.
+    }
     
     return (
-        <SheetContent>
-            <SheetHeader>
-                <SheetTitle>Configuración</SheetTitle>
-                <SheetDescription>Personaliza tu experiencia en Kairu.</SheetDescription>
-            </SheetHeader>
-            <div className="py-4">
-                <h3 className="font-semibold mb-4">Cambiar Avatar</h3>
-                <div className="grid grid-cols-2 gap-4">
-                    {avatars.map(avatar => (
-                         <button 
-                           key={avatar.id} 
-                           onClick={() => handleAvatarChange(avatar.imageUrl)}
-                           className={cn(
-                            "p-2 rounded-lg border-2 transition-all",
-                            playerState.avatar === avatar.imageUrl 
-                                ? "border-primary bg-primary/10 shadow-lg scale-105"
-                                : "border-border hover:bg-accent"
-                           )}
-                         >
-                            <div className="relative w-full aspect-square">
-                                <Image 
-                                    src={avatar.imageUrl} 
-                                    alt={avatar.description} 
-                                    fill
-                                    className="rounded-md object-contain" 
-                                />
-                            </div>
-                        </button>
-                    ))}
+        <>
+            <AlertDialog open={isResetConfirmOpen} onOpenChange={setIsResetConfirmOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <AlertTriangle className="text-destructive"/>
+                    ¿Estás seguro de que quieres reiniciar?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción es irreversible. Se borrará todo tu progreso, incluyendo las estaciones desbloqueadas y las insignias recolectadas. Tu cuenta no será eliminada.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleResetProgress} className="bg-destructive hover:bg-destructive/90">
+                    Sí, reiniciar progreso
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            <SheetContent>
+                <SheetHeader>
+                    <SheetTitle>Configuración</SheetTitle>
+                    <SheetDescription>Personaliza tu experiencia en Kairu.</SheetDescription>
+                </SheetHeader>
+                <div className="py-4">
+                    <h3 className="font-semibold mb-4">Cambiar Avatar</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        {avatars.map(avatar => (
+                             <button 
+                               key={avatar.id} 
+                               onClick={() => handleAvatarChange(avatar.imageUrl)}
+                               className={cn(
+                                "p-2 rounded-lg border-2 transition-all",
+                                playerState.avatar === avatar.imageUrl 
+                                    ? "border-primary bg-primary/10 shadow-lg scale-105"
+                                    : "border-border hover:bg-accent"
+                               )}
+                             >
+                                <div className="relative w-full aspect-square">
+                                    <Image 
+                                        src={avatar.imageUrl} 
+                                        alt={avatar.description} 
+                                        fill
+                                        className="rounded-md object-contain" 
+                                    />
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                    <div className="mt-8">
+                        <h3 className="font-semibold mb-2">Zona de Peligro</h3>
+                        <Button variant="destructive" className="w-full" onClick={() => setIsResetConfirmOpen(true)}>
+                            <RefreshCw className="mr-2" /> Reiniciar Progreso
+                        </Button>
+                        <p className="text-xs text-muted-foreground mt-2">
+                           Esto borrará todas tus estaciones desbloqueadas, insignias y progreso en los retos. Úsalo si encuentras un error que no te permite continuar.
+                        </p>
+                    </div>
                 </div>
-            </div>
-        </SheetContent>
+            </SheetContent>
+        </>
     );
 };
 
