@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -21,14 +20,8 @@ export default function RecyclingGamesMenu({ onComplete, onBack }: RecyclingGame
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
 
   const handleGameComplete = (gameId: string) => {
-    const currentIndex = games.findIndex(g => g.id === gameId);
-    const nextGame = games[currentIndex + 1];
-
-    if (nextGame && nextGame.enabled) {
-        setSelectedGameId(nextGame.id);
-    } else {
-        onComplete();
-    }
+    // Both games now trigger the station completion flow
+    onComplete();
   };
 
   if (selectedGameId) {
