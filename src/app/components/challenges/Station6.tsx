@@ -259,5 +259,3 @@ export default function Station6() {
     </>
   );
 }
-
-    
