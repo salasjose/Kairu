@@ -10,6 +10,14 @@ import Station7 from '@/app/components/challenges/Station7';
 import Station8 from '@/app/components/challenges/Station8';
 import Station9 from '@/app/components/challenges/Station9';
 
+export const dynamic = 'force-dynamic';
+
+export async function generateStaticParams() {
+  return stations.map((station) => ({
+    id: station.id.toString(),
+  }));
+}
+
 export default function StationPage({ params }: { params: { id: string } }) {
   const stationId = parseInt(params.id, 10);
   const station = stations.find(s => s.id === stationId);
