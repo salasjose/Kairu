@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Logo from '@/app/components/Logo';
 
-export const dynamicParams = true; // Allow new station IDs to be rendered on demand
+export const dynamic = 'force-dynamic';
 
 const stationComponents: { [key: number]: React.ComponentType<any> } = {
   1: dynamic(() => import('@/app/components/challenges/Station1'), { loading: () => <StationLoader /> }),

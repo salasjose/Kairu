@@ -221,9 +221,8 @@ export default function Station4() {
         w-screen h-[100dvh] relative overflow-hidden
         bg-cover bg-center bg-no-repeat
         bg-[url('/backgrounds/Rio_1366x_768.png')]
-        sm:bg-[url('/backgrounds/Rio_425x768.png')]
         md:bg-[url('/backgrounds/Rio_768x768.png')]
-        lg:bg-[url('/backgrounds/Rio_1366x_768.png')]
+        sm:bg-[url('/backgrounds/Rio_425x768.png')]
       "
     >
       {/* opcional: velo de legibilidad */}

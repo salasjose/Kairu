@@ -19,9 +19,9 @@ const config = {
     },
     extend: {
       fontFamily: {
-        body: ['"PT Sans"', 'sans-serif'],
-        headline: ['Alegreya', 'serif'],
-        kalam: ['Kalam', 'cursive'],
+        body: ['var(--font-pt-sans)', 'sans-serif'],
+        headline: ['var(--font-alegreya)', 'serif'],
+        kalam: ['var(--font-kalam)', 'cursive'],
       },
       colors: {
         border: "hsl(var(--border))",
