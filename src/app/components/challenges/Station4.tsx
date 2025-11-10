@@ -148,17 +148,16 @@ export default function Station4() {
 
   const [showYaraDialog, setShowYaraDialog] = useState(false);
   const yaraMessage = "¡Bienvenido a TerrAzul! Aquí fluye la vida. El agua recorre montañas, ríos y mares, y depende de nosotros mantener su pureza. ¡Cuidemos cada gota y protejamos los territorios que le dan vida al planeta!";
-  const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
-
+  
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
   
   useEffect(() => {
+    let mainTimer: NodeJS.Timeout;
     let hideTimer: NodeJS.Timeout;
     let reappearTimer: NodeJS.Timeout;
 
     const scheduleYaraDialog = () => {
-        if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
-        yaraTimerRef.current = setTimeout(() => {
+        mainTimer = setTimeout(() => {
             setShowYaraDialog(true);
             hideTimer = setTimeout(() => setShowYaraDialog(false), 60000);
             reappearTimer = setTimeout(scheduleYaraDialog, 60000 + 120000);
@@ -168,9 +167,9 @@ export default function Station4() {
     scheduleYaraDialog();
 
     return () => {
-      if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
-      if (hideTimer) clearTimeout(hideTimer);
-      if (reappearTimer) clearTimeout(reappearTimer);
+      clearTimeout(mainTimer);
+      clearTimeout(hideTimer);
+      clearTimeout(reappearTimer);
     };
   }, []);
 
