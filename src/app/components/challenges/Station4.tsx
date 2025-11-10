@@ -150,16 +150,18 @@ export default function Station4() {
   const yaraMessage = "¡Bienvenido a TerrAzul! Aquí fluye la vida. El agua recorre montañas, ríos y mares, y depende de nosotros mantener su pureza. ¡Cuidemos cada gota y protejamos los territorios que le dan vida al planeta!";
   const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const terrazulBgImage = PlaceHolderImages.find((p) => p.id === "terrazul-background");
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
   
   useEffect(() => {
+    let hideTimer: NodeJS.Timeout;
+    let reappearTimer: NodeJS.Timeout;
+
     const scheduleYaraDialog = () => {
         if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
         yaraTimerRef.current = setTimeout(() => {
             setShowYaraDialog(true);
-            const hideTimer = setTimeout(() => setShowYaraDialog(false), 60000);
-            const reappearTimer = setTimeout(scheduleYaraDialog, 60000 + 120000);
+            hideTimer = setTimeout(() => setShowYaraDialog(false), 60000);
+            reappearTimer = setTimeout(scheduleYaraDialog, 60000 + 120000);
         }, 10000);
     };
 
@@ -167,6 +169,8 @@ export default function Station4() {
 
     return () => {
       if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
+      if (hideTimer) clearTimeout(hideTimer);
+      if (reappearTimer) clearTimeout(reappearTimer);
     };
   }, []);
 
@@ -211,80 +215,51 @@ export default function Station4() {
         />
       );
     }
+    
     return (
-      <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden min-h-[100dvh] bg-black">
-        {/* Fondo móvil (default <640px) */}
-        <Image
-          src="/backgrounds/Rio_425x768.png"
-          alt="Fondo TerrAzul móvil"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center block sm:hidden z-0 opacity-80"
-        />
+    <div className="game-bg"> {/* <- FONDO RESPONSIVE */}
+      {/* Capa de contenido */}
+      <div className="relative z-10 w-full h-full flex flex-col items-center justify-center p-4 text-white text-center">
+        <div className="bg-primary/80 px-6 py-3 rounded-xl shadow-lg mb-6">
+          <h1 className="text-3xl md:text-5xl font-bold">TerrAzul</h1>
+        </div>
 
-        {/* Fondo tablet (≥640px y <1024px) */}
-        <Image
-          src="/backgrounds/Rio_768x768.png"
-          alt="Fondo TerrAzul tablet"
-          fill
-          sizes="100vw"
-          className="object-cover object-center hidden sm:block lg:hidden z-0 opacity-80"
-        />
+        <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8 mt-6">
+          {(Object.keys(challenges) as ChallengeId[]).map((key) => {
+            const challenge = challenges[key];
+            const Icon = challenge.icon;
+            return (
+              <button
+                key={key}
+                onClick={() => setSelectedChallenge(key)}
+                className="transition-transform duration-300 hover:scale-105 group"
+              >
+                <Card className="w-60 md:w-64 h-auto md:h-56 bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors">
+                  <CardContent className="flex flex-col items-center justify-center text-center p-4 h-full">
+                    <Icon className="w-12 h-12 md:w-16 md:h-16 text-primary mb-3" />
+                    <h2 className="font-bold font-headline text-xl md:text-2xl text-primary">
+                      {challenge.title}
+                    </h2>
+                    <p className="text-muted-foreground text-sm mt-1">
+                      {challenge.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              </button>
+            );
+          })}
+        </div>
 
-        {/* Fondo desktop (≥1024px) */}
-        <Image
-          src="/backgrounds/Rio_1366x_768.png"
-          alt="Fondo TerrAzul desktop"
-          fill
-          sizes="100vw"
-          className="object-cover object-center hidden lg:block z-0 opacity-80"
-        />
-
-        {/* (Opcional) mejora de legibilidad en pantallas grandes */}
-        <div className="absolute inset-0 z-0 pointer-events-none lg:bg-gradient-to-b lg:from-black/30 lg:via-black/15 lg:to-transparent" />
-        
-        <div className="relative z-10 flex flex-col items-center justify-center text-center w-full text-white">
-          <div className="bg-primary/80 px-6 py-3 rounded-xl shadow-lg mb-6">
-            <h1 className="text-3xl md:text-5xl font-bold">TerrAzul</h1>
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8 mt-6">
-            {(Object.keys(challenges) as ChallengeId[]).map((key) => {
-              const challenge = challenges[key];
-              const Icon = challenge.icon;
-              return (
-                <button
-                  key={key}
-                  onClick={() => setSelectedChallenge(key)}
-                  className="transition-transform duration-300 hover:scale-105 group"
-                >
-                  <Card className="w-60 md:w-64 h-auto md:h-56 bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors">
-                    <CardContent className="flex flex-col items-center justify-center text-center p-4 h-full">
-                      <Icon className="w-12 h-12 md:w-16 md:h-16 text-primary mb-3" />
-                      <h2 className="font-bold font-headline text-xl md:text-2xl text-primary">
-                        {challenge.title}
-                      </h2>
-                      <p className="text-muted-foreground text-sm mt-1">
-                        {challenge.description}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-4 max-w-md mx-auto space-y-4">
-            <p className="bg-background/80 p-4 rounded-md text-center text-foreground">
-              Selecciona uno de los retos para demostrar tu compromiso con la
-              conservación del agua.
-            </p>
-            <Button onClick={handleSimulateComplete}>Simular Finalización</Button>
-          </div>
+        <div className="mt-4 max-w-md mx-auto space-y-4">
+          <p className="bg-background/80 p-4 rounded-md text-center text-foreground">
+            Selecciona uno de los retos para demostrar tu compromiso con la
+            conservación del agua.
+          </p>
+          <Button onClick={handleSimulateComplete}>Simular Finalización</Button>
         </div>
       </div>
-    );
+    </div>
+  );
   };
 
   return (
