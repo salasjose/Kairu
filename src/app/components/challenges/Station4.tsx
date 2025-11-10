@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { toast } from "@/hooks/use-toast";
 import { useStationProgress } from "@/hooks/use-station-progress";
@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BrainCircuit, Link as LinkIcon, Upload } from "lucide-react";
-import WaterQuiz from "@/components/challenges/WaterQuiz";
+import WaterQuiz from "@/app/components/challenges/WaterQuiz";
 import { Input } from "@/components/ui/input";
 import PrizeDialog from "../PrizeDialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -44,7 +44,14 @@ const PostChallenge = ({
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const waterPostImage = PlaceHolderImages.find((p) => p.id === "water-post");
   
-  const handleUrlChange = useCallback((newUrl: string) => {
+  useEffect(() => {
+    const savedUrl = localStorage.getItem(STORAGE_KEY_POST);
+    if (savedUrl) {
+      handleUrlChange(savedUrl);
+    }
+  }, []);
+
+  const handleUrlChange = (newUrl: string) => {
     setUrl(newUrl);
     localStorage.setItem(STORAGE_KEY_POST, newUrl);
 
@@ -61,14 +68,7 @@ const PostChallenge = ({
     } else {
       setVideoUrl(null);
     }
-  }, []);
-
-  useEffect(() => {
-    const savedUrl = localStorage.getItem(STORAGE_KEY_POST);
-    if (savedUrl) {
-      handleUrlChange(savedUrl);
-    }
-  }, [handleUrlChange]);
+  };
 
 
   const handleSubmit = () => {
@@ -148,9 +148,11 @@ export default function Station4() {
 
   const [showYaraDialog, setShowYaraDialog] = useState(false);
   const yaraMessage = "¡Bienvenido a TerrAzul! Aquí fluye la vida. El agua recorre montañas, ríos y mares, y depende de nosotros mantener su pureza. ¡Cuidemos cada gota y protejamos los territorios que le dan vida al planeta!";
-  
+  const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const terrazulBgImage = PlaceHolderImages.find((p) => p.id === "terrazul-background");
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
-  
+
   useEffect(() => {
     let mainTimer: NodeJS.Timeout;
     let hideTimer: NodeJS.Timeout;
