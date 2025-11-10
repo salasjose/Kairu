@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -164,7 +164,7 @@ const GameWithImages = ({ onGameWin, onRestartRequest, gameState, updateGameStat
 };
 
 const GameDragAndDrop = ({ onGameWin, onRestartRequest }: { onGameWin: () => void; onRestartRequest: () => void; }) => {
-  const [wasteItems, setWasteItems] = useState(() => [...wasteItemsData].sort(() => Math.random() - 0.5));
+  const [wasteItems, setWasteItems] = useState(() => [...wasteItemsData].sort(() => Math.random() - 0.5).slice(0, 20));
   const [animations, setAnimations] = useState<Record<WasteCategory, string>>({ recycle: '', organic: '', trash: '' });
   
   const currentItem = wasteItems[wasteItems.length - 1];
