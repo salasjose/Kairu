@@ -212,7 +212,7 @@ export default function Station4() {
       );
     }
     return (
-      <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden min-h-0">
         {terrazulBgImage && (
             <Image
                 src={terrazulBgImage.imageUrl}
@@ -221,6 +221,7 @@ export default function Station4() {
                 style={{objectFit: 'cover'}}
                 className="z-0 opacity-80"
                 data-ai-hint={terrazulBgImage.imageHint}
+                priority
             />
         )}
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
@@ -312,5 +313,3 @@ export default function Station4() {
     </>
   );
 }
-
-    
