@@ -217,8 +217,19 @@ export default function Station4() {
     }
     
     return (
-    <div className="game-bg"> {/* <- FONDO RESPONSIVE */}
-      {/* Capa de contenido */}
+    <div
+      className="
+        w-screen h-[100dvh] relative overflow-hidden
+        bg-cover bg-center bg-no-repeat
+        bg-[url('/backgrounds/Rio_425x768.png')]
+        sm:bg-[url('/backgrounds/Rio_768x768.png')]
+        lg:bg-[url('/backgrounds/Rio_1366x_768.png')]
+      "
+    >
+      {/* opcional: velo de legibilidad */}
+      <div className="absolute inset-0 pointer-events-none lg:bg-gradient-to-b lg:from-black/30 lg:via-black/15 lg:to-transparent" />
+
+      {/* contenido */}
       <div className="relative z-10 w-full h-full flex flex-col items-center justify-center p-4 text-white text-center">
         <div className="bg-primary/80 px-6 py-3 rounded-xl shadow-lg mb-6">
           <h1 className="text-3xl md:text-5xl font-bold">TerrAzul</h1>
