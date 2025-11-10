@@ -220,7 +220,7 @@ export default function Station5() {
     return <LearnChallenge onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("learn")} />;
   }
   if (selectedChallenge === "crossword") {
-    return <CrosswordGame topic="sostenibilidad, transformación sostenible y buenas prácticas ambientales" onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("crossword")} staticData={SUSTAINABILITY_PUZZLE} />;
+    return <CrosswordGame topic="sostenibilidad" onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("crossword")} staticData={SUSTAINABILITY_PUZZLE} />;
   }
    if (selectedChallenge === "wordsearch") {
     return <WordSearchGame gameId="station5" onComplete={() => handleComplete("wordsearch")} onBack={() => setSelectedChallenge(null)} />;
