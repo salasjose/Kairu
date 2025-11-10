@@ -546,130 +546,138 @@ export default function Station1() {
 
   return (
     <>
-    <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
-      {biodiversidadBgImage && (
-          <Image
-            src={biodiversidadBgImage.imageUrl}
-            alt={biodiversidadBgImage.description}
-            fill
-            style={{objectFit: 'cover'}}
-            className="z-0 opacity-80"
-            data-ai-hint={biodiversidadBgImage.imageHint}
-          />
-      )}
-      <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
-        <div className="bg-white/90 backdrop-blur-sm text-primary font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
-          <h1 className="text-4xl md:text-5xl">Bionexus</h1>
-        </div>
-        
-        <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
-          {(Object.keys(challenges) as (keyof typeof challenges)[]).map((reto, index) => {
-            const challengeProgress = stationCompletedChallenges[reto];
-            const isCompleted = !!challengeProgress;
-            const imageUrl = challengeProgress?.imageUrl;
-
-            return (
-            <button
-              key={reto}
-              onClick={() => handleChallengeSelection(reto)}
-              className={cn(
-                "relative w-full transition-transform duration-300 hover:scale-105",
-                index === 0 ? "md:-rotate-6" : "md:rotate-6"
-              )}
-            >
-              <div className="absolute inset-0 bg-white shadow-2xl rounded-2xl transform -rotate-1"></div>
-              <Card
-                className="relative
-                           w-[88vw] max-w-[420px] h-64
-                           md:w-80 md:h-80
-                           lg:w-96 lg:h-96
-                           rounded-2xl shadow-2xl
-                           flex flex-col items-center justify-center
-                           p-6 border-4 border-gray-200 overflow-hidden"
-              >
-                 {isCompleted && imageUrl && (
-                  <>
-                    <Image
-                      src={imageUrl}
-                      alt={`Completado: ${challenges[reto].title}`}
-                      fill
-                      className="object-cover z-0"
-                    />
-                    <div className="absolute inset-0 bg-black/40 z-10"></div>
-                  </>
-                )}
-                <div className="relative z-20 text-center">
-                    <CardHeader>
-                        <CardTitle className={cn(
-                            "font-kalam text-4xl md:text-5xl",
-                            isCompleted && imageUrl ? "text-white" : "text-primary"
-                        )}>
-                            {challenges[reto].title}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className={cn("text-base md:text-lg", isCompleted && imageUrl && "text-gray-200")}>
-                        <p>{challenges[reto].description}</p>
-                    </CardContent>
-                </div>
-                 {isCompleted && (
-                    <div className="absolute top-3 right-3 z-30 bg-green-500 rounded-full p-2.5 shadow-lg">
-                        <CheckCircle className="text-white h-6 w-6" />
-                    </div>
-                )}
-              </Card>
-            </button>
-          )})}
-        </div>
-
-        <div className="mt-4 max-w-md mx-auto space-y-4">
-           <Button onClick={handleSimulateComplete}>Simular Finalización</Button>
-        </div>
-      </div>
-      
-       {/* Yara Character and Dialog */}
-      <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4">
-        <AnimatePresence>
-            {showYaraDialog && (
-              <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ duration: 0.5 }}
-                  className="w-64 mb-4"
-              >
-                  <Card className="p-3 shadow-lg bg-white/95 relative">
-                      <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium"/>
-                       {/* Speech bubble arrow */}
-                      <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
-                  </Card>
-              </motion.div>
-            )}
-        </AnimatePresence>
-        
-        {yaraCharacterImage && (
-            <motion.div
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0, transition: { delay: 0.5, duration: 0.8 } }}
-                className="w-24 h-auto md:w-32"
-            >
-                <Image
-                    src={yaraCharacterImage.imageUrl}
-                    alt={yaraCharacterImage.description}
-                    width={150}
-                    height={187}
-                    className="h-auto w-full select-none"
-                    priority
-                />
-            </motion.div>
+      <div className="relative w-full flex flex-col items-center justify-center p-4 overflow-hidden min-h-[100dvh] bg-black">
+        {biodiversidadBgImage && (
+          <>
+            <Image
+              src={biodiversidadBgImage.imageUrl}
+              alt={biodiversidadBgImage.description}
+              fill
+              priority
+              sizes="(min-width:1024px) 100vw, (min-width:768px) 100vw, 100vw"
+              // HÍBRIDO: en móvil llena pantalla (puede recortar), en md+ se ve completa
+              className="z-0 opacity-80 object-cover md:object-contain object-center"
+              data-ai-hint={biodiversidadBgImage.imageHint}
+            />
+            {/* Mejora legibilidad cuando está en contain */}
+            <div className="absolute inset-0 z-0 pointer-events-none md:bg-gradient-to-b md:from-black/40 md:via-black/20 md:to-transparent" />
+          </>
         )}
-      </div>
 
-    </div>
-    <PrizeDialog 
-        open={isPrizeModalOpen} 
-        stationId={stationId} 
-        onClaim={handleClaimPrize} 
-      />
+        {/* Contenido encima del fondo */}
+        <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
+          <div className="bg-white/90 backdrop-blur-sm text-primary font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
+            <h1 className="text-4xl md:text-5xl">Bionexus</h1>
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
+            {(Object.keys(challenges) as (keyof typeof challenges)[]).map((reto, index) => {
+              const challengeProgress = stationCompletedChallenges[reto];
+              const isCompleted = !!challengeProgress;
+              const imageUrl = challengeProgress?.imageUrl;
+
+              return (
+                <button
+                  key={reto}
+                  onClick={() => handleChallengeSelection(reto)}
+                  className={cn(
+                    "relative w-full transition-transform duration-300 hover:scale-105",
+                    index === 0 ? "md:-rotate-6" : "md:rotate-6"
+                  )}
+                >
+                  <div className="absolute inset-0 bg-white shadow-2xl rounded-2xl transform -rotate-1"></div>
+                  <Card
+                    className="relative
+                               w-[88vw] max-w-[420px] h-64
+                               md:w-80 md:h-80
+                               lg:w-96 lg:h-96
+                               rounded-2xl shadow-2xl
+                               flex flex-col items-center justify-center
+                               p-6 border-4 border-gray-200 overflow-hidden"
+                  >
+                    {isCompleted && imageUrl && (
+                      <>
+                        <Image
+                          src={imageUrl}
+                          alt={`Completado: ${challenges[reto].title}`}
+                          fill
+                          className="object-cover z-0"
+                        />
+                        <div className="absolute inset-0 bg-black/40 z-10"></div>
+                      </>
+                    )}
+                    <div className="relative z-20 text-center">
+                      <CardHeader>
+                        <CardTitle className={cn(
+                          "font-kalam text-4xl md:text-5xl",
+                          isCompleted && imageUrl ? "text-white" : "text-primary"
+                        )}>
+                          {challenges[reto].title}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className={cn("text-base md:text-lg", isCompleted && imageUrl && "text-gray-200")}>
+                        <p>{challenges[reto].description}</p>
+                      </CardContent>
+                    </div>
+                    {isCompleted && (
+                      <div className="absolute top-3 right-3 z-30 bg-green-500 rounded-full p-2.5 shadow-lg">
+                        <CheckCircle className="text-white h-6 w-6" />
+                      </div>
+                    )}
+                  </Card>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-4 max-w-md mx-auto space-y-4">
+            <Button onClick={handleSimulateComplete}>Simular Finalización</Button>
+          </div>
+        </div>
+
+        {/* Yara Character and Dialog */}
+        <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4">
+            <AnimatePresence>
+                {showYaraDialog && (
+                  <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 20 }}
+                      transition={{ duration: 0.5 }}
+                      className="w-64 mb-4"
+                  >
+                      <Card className="p-3 shadow-lg bg-white/95 relative">
+                          <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium"/>
+                           {/* Speech bubble arrow */}
+                          <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
+                      </Card>
+                  </motion.div>
+                )}
+            </AnimatePresence>
+            
+            {yaraCharacterImage && (
+                <motion.div
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0, transition: { delay: 0.5, duration: 0.8 } }}
+                    className="w-24 h-auto md:w-32"
+                >
+                    <Image
+                        src={yaraCharacterImage.imageUrl}
+                        alt={yaraCharacterImage.description}
+                        width={150}
+                        height={187}
+                        className="h-auto w-full select-none"
+                        priority
+                    />
+                </motion.div>
+            )}
+        </div>
+      </div>
+      <PrizeDialog 
+          open={isPrizeModalOpen} 
+          stationId={stationId} 
+          onClaim={handleClaimPrize} 
+        />
     </>
   );
 }
