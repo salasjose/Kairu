@@ -221,7 +221,7 @@ export default function Station5() {
   }
   if (selectedChallenge === "crossword") {
     return (
-        <main className="min-h-screen bg-emerald-950 p-6 flex items-start justify-center">
+        <main className="min-h-screen bg-gray-900 p-6 flex items-start justify-center">
           <div className="mx-auto max-w-7xl">
             <h1 className="text-2xl font-bold text-white mb-4">Crucigrama: Transformación Sostenible</h1>
             <div className="rounded-xl bg-gray-800/60 p-4 ring-1 ring-gray-700">
