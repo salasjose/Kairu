@@ -3,23 +3,23 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import type { CrosswordData } from "@/lib/types";
-import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, Lightbulb, Zap } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, Lightbulb, Link as LinkIcon, Zap } from "lucide-react";
 import PrizeDialog from "../PrizeDialog";
 import { useRouter } from "next/navigation";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-
+import { useUser, useFirestore } from "@/firebase/hooks";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { Input } from "@/components/ui/input";
 
 const challenges = {
   learn: {
     title: "Aprende",
-    description: "Energías que mueven el mundo: Descubre cómo la naturaleza nos enseña a producir energía sin agotarla (videos).",
+    description: "Energías que mueven el mundo: Descubre cómo la naturaleza nos enseña a producir energía sin agotarla. Pega el enlace de un video y guárdalo.",
     icon: Lightbulb,
     imageId: "sustainable-design-video"
   },
@@ -30,6 +30,71 @@ type ChallengeId = keyof typeof challenges;
 const ChallengeScreen = ({ challengeId, onBack, onComplete }: { challengeId: ChallengeId, onBack: () => void, onComplete: () => void }) => {
     const challenge = challenges[challengeId];
     const imageInfo = PlaceHolderImages.find(p => p.id === challenge.imageId);
+    const { user } = useUser();
+    const db = useFirestore();
+
+    const [url, setUrl] = useState("");
+    const [videoUrl, setVideoUrl] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const handleUrlChange = useCallback((newUrl: string) => {
+        setUrl(newUrl);
+        if (newUrl.trim() && (newUrl.startsWith("http://") || newUrl.startsWith("https://"))) {
+            if (newUrl.includes("youtube.com/watch?v=")) {
+                const videoId = newUrl.split("v=")[1].split("&")[0];
+                setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
+            } else if (newUrl.includes("youtu.be/")) {
+                const videoId = newUrl.split("youtu.be/")[1].split("?")[0];
+                setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
+            } else {
+                setVideoUrl(null); // No es un video de youtube, no se puede embeber.
+            }
+        } else {
+            setVideoUrl(null);
+        }
+    }, []);
+
+    useEffect(() => {
+        const fetchUrl = async () => {
+            if (!user || !db) {
+                setIsLoading(false);
+                return;
+            }
+            try {
+                const docRef = doc(db, 'users', user.uid);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists() && docSnap.data().station8Url) {
+                    const savedUrl = docSnap.data().station8Url;
+                    handleUrlChange(savedUrl);
+                }
+            } catch (error) {
+                console.error("Error fetching URL from Firestore:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchUrl();
+    }, [user, db, handleUrlChange]);
+
+    const handleSaveAndComplete = async () => {
+        if (!url.trim()) {
+            toast({ title: "URL vacía", description: "Por favor, ingresa una URL válida.", variant: "destructive" });
+            return;
+        }
+        if (user && db) {
+            try {
+                const docRef = doc(db, 'users', user.uid);
+                await setDoc(docRef, { station8Url: url }, { merge: true });
+                toast({ title: "¡Guardado!", description: "La URL de tu video ha sido guardada." });
+                onComplete();
+            } catch (error) {
+                console.error("Error saving URL to Firestore:", error);
+                toast({ title: "Error al Guardar", description: "No se pudo guardar la URL.", variant: "destructive" });
+            }
+        } else {
+            toast({ title: "Usuario no encontrado", description: "Debes iniciar sesión para guardar tu progreso.", variant: "destructive" });
+        }
+    };
 
     return (
         <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center flex-grow">
@@ -42,19 +107,39 @@ const ChallengeScreen = ({ challengeId, onBack, onComplete }: { challengeId: Cha
                         <CardTitle className="text-center">{challenge.title}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4 text-center">
-                        {imageInfo && (
-                            <Image 
+                        <div className="mx-auto mb-6 w-full max-w-sm h-auto aspect-video bg-black rounded-lg border-4 border-white shadow-md flex items-center justify-center">
+                          {isLoading ? (
+                            <p className="text-white">Cargando...</p>
+                          ) : videoUrl ? (
+                             <iframe
+                                src={videoUrl}
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                className="rounded-lg w-full h-full"
+                              ></iframe>
+                          ) : (
+                            imageInfo && <Image 
                                 src={imageInfo.imageUrl} 
                                 alt={imageInfo.description} 
                                 width={400} 
                                 height={300} 
-                                className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto mx-auto"
+                                className="rounded-lg object-cover w-full h-full opacity-50"
                                 data-ai-hint={imageInfo.imageHint}
                             />
-                        )}
+                          )}
+                        </div>
                         <p className="text-muted-foreground">{challenge.description}</p>
-                        <p className="text-sm text-primary font-bold">¡Contenido próximamente!</p>
-                        <Button onClick={onComplete} size="lg">Simular y Completar</Button>
+                        <div className="flex gap-2 max-w-md mx-auto">
+                            <LinkIcon className="h-10 text-muted-foreground" />
+                            <Input
+                                type="url"
+                                placeholder="https://youtube.com/tu-video"
+                                value={url}
+                                onChange={(e) => handleUrlChange(e.target.value)}
+                                disabled={isLoading}
+                            />
+                        </div>
+                        <Button onClick={handleSaveAndComplete} size="lg">Guardar y Completar</Button>
                     </CardContent>
                 </Card>
             </div>
@@ -209,7 +294,3 @@ export default function Station8() {
     </>
   );
 }
-
-    
-
-    
