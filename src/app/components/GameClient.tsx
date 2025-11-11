@@ -222,7 +222,7 @@ export default function GameClient() {
     { top: "65%", left: "12%" },
     { top: "60%", left: "32%" },
     { top: "50%", left: "45%" },
-    { top: "42%", left: "55%" },
+    { top: "38%", left: "55%" },
     { top: "60%", left: "65%" },
     { top: "70%", left: "80%" },
     { top: "55%", left: "88%" },
@@ -275,7 +275,7 @@ export default function GameClient() {
       </header>
 
       <div className="relative flex-1 w-full h-screen overflow-hidden z-10">
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 grid place-items-center">
             <svg
                 width="100%"
                 height="100%"
