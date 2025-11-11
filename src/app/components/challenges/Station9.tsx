@@ -91,7 +91,8 @@ export default function Station9() {
           const data = docSnap.data();
           setChosenScenario(data.chosenScenario || null);
           setPlacedPrizes(data.placedPrizes || []);
-          setPlayerName(data.nombre || "Guardián");
+          const fullName = `${data.nombre || ''} ${data.apellido || ''}`.trim();
+          setPlayerName(fullName || "Guardián");
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -226,7 +227,7 @@ export default function Station9() {
                     />
                 ))}
                  {unplacedPrizes.length === 0 && (
-                    <p className="text-white/70 text-xs text-center pt-4">No tienes más insignias por colocar.</p>
+                    <p className="text-white/70 text-xs text-center pt-4">¡Todas las insignias colocadas!</p>
                 )}
             </div>
              {allPrizesPlaced && (
