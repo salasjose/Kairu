@@ -14,6 +14,7 @@ import PrizeDialog from "../PrizeDialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
+import ResponsiveBackground from "../ResponsiveBackground";
 
 const challenges = {
   quiz: {
@@ -212,57 +213,45 @@ export default function Station4() {
       );
     }
     return (
-      <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden">
-        {terrazulBgImage && (
-            <Image
-                src={terrazulBgImage.imageUrl}
-                alt={terrazulBgImage.description}
-                fill
-                style={{objectFit: 'cover'}}
-                className="z-0 opacity-80"
-                data-ai-hint={terrazulBgImage.imageHint}
-            />
-        )}
-        <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
-          <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
-            <h1 className="text-3xl md:text-5xl">TerrAzul</h1>
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
-            {(Object.keys(challenges) as ChallengeId[]).map((key) => {
-              const challenge = challenges[key];
-              const Icon = challenge.icon;
-              return (
-                <button
-                  key={key}
-                  onClick={() => setSelectedChallenge(key)}
-                  className="transition-transform duration-300 hover:scale-105 group"
-                >
-                  <Card className="w-60 md:w-64 h-auto md:h-56 bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors">
-                    <CardContent className="flex flex-col items-center justify-center text-center p-4 h-full">
-                      <Icon className="w-12 h-12 md:w-16 md:h-16 text-primary mb-3" />
-                      <h2 className="font-bold font-headline text-xl md:text-2xl text-primary">
-                        {challenge.title}
-                      </h2>
-                      <p className="text-muted-foreground text-sm mt-1">
-                        {challenge.description}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-4 max-w-md mx-auto space-y-4">
-            <p className="bg-background/80 p-4 rounded-md text-center">
-              Selecciona uno de los retos para demostrar tu compromiso con la
-              conservación del agua.
-            </p>
-            <Button onClick={handleSimulateComplete}>Simular Finalización</Button>
-          </div>
+      <ResponsiveBackground>
+        <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
+          <h1 className="text-3xl md:text-5xl">TerrAzul</h1>
         </div>
-      </div>
+
+        <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
+          {(Object.keys(challenges) as ChallengeId[]).map((key) => {
+            const challenge = challenges[key];
+            const Icon = challenge.icon;
+            return (
+              <button
+                key={key}
+                onClick={() => setSelectedChallenge(key)}
+                className="transition-transform duration-300 hover:scale-105 group"
+              >
+                <Card className="w-60 md:w-64 h-auto md:h-56 bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors">
+                  <CardContent className="flex flex-col items-center justify-center text-center p-4 h-full">
+                    <Icon className="w-12 h-12 md:w-16 md:h-16 text-primary mb-3" />
+                    <h2 className="font-bold font-headline text-xl md:text-2xl text-primary">
+                      {challenge.title}
+                    </h2>
+                    <p className="text-muted-foreground text-sm mt-1">
+                      {challenge.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 max-w-md mx-auto space-y-4">
+          <p className="bg-background/80 p-4 rounded-md text-center">
+            Selecciona uno de los retos para demostrar tu compromiso con la
+            conservación del agua.
+          </p>
+          <Button onClick={handleSimulateComplete}>Simular Finalización</Button>
+        </div>
+      </ResponsiveBackground>
     );
   };
 
