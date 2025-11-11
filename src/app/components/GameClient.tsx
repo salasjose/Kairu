@@ -241,16 +241,6 @@ export default function GameClient() {
 
   return (
     <main className="relative w-full min-h-screen flex flex-col overflow-hidden">
-      {mapBackground && (
-        <Image
-          src={mapBackground.imageUrl}
-          alt={mapBackground.description}
-          fill
-          style={{objectFit: 'cover'}}
-          className="z-0"
-          priority
-        />
-      )}
       <header className="absolute top-0 left-0 right-0 p-2 sm:p-4 z-20">
         <div className="container mx-auto flex items-start justify-between gap-2">
             <div className="bg-white/90 backdrop-blur-sm p-2 rounded-2xl flex items-center gap-3 shadow-md">
