@@ -78,6 +78,9 @@ export default function PrizeDialog({ open, stationId, onClaim }: PrizeDialogPro
                   alt={prize.name} 
                   fill
                   style={{objectFit:"contain"}}
+                  className={cn(
+                    (prize.imageUrl.includes('Molinos.png') || prize.imageUrl.includes('Panal.png')) && "scale-125"
+                  )}
                 />
               </div>
               <span className="text-xs text-center font-medium h-8 flex items-center">{prize.name}</span>

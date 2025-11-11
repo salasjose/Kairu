@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescri
 import { Gift, ShoppingCart } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 export default function PrizeCart() {
     const { prizes, clearCart } = usePrizeCart();
@@ -49,6 +50,9 @@ export default function PrizeCart() {
                                               alt={prize.name}
                                               fill
                                               style={{objectFit: 'contain'}}
+                                              className={cn(
+                                                (prize.imageUrl.includes('Molinos.png') || prize.imageUrl.includes('Panal.png')) && "scale-125"
+                                              )}
                                             />
                                         </div>
                                         <span className="text-xs text-center font-medium">{prize.name}</span>
