@@ -6,10 +6,13 @@ import { Button } from "@/components/ui/button";
 import { useUser, useFirestore } from "@/firebase/hooks";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { usePrizeCart } from "@/hooks/use-prize-cart";
-import { motion, useDragControls, PanInfo } from "framer-motion";
+import { motion, useDragControls, PanInfo, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import CompletionDialog from "../CompletionDialog";
 import type { Prize } from "@/lib/data";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { Card } from "@/components/ui/card";
+import TypewriterText from "../auth/TypewriterText";
 
 const DRAGGABLE_AREA_ID = "station-9-canvas";
 
@@ -43,7 +46,7 @@ const DraggablePrize = ({
         dragConstraints={constraints}
         className="w-full aspect-square bg-white/20 rounded-md p-1 cursor-grab active:cursor-grabbing"
     >
-        <div className="relative w-full h-full" onPointerDown={(e) => controls.start(e)}>
+        <div className="relative w-full h-full" onPointerDown={(e) => controls.start(e, { snapToCursor: true })}>
             <Image src={prize.imageUrl} alt={prize.name} fill style={{objectFit: 'contain'}}/>
         </div>
     </motion.div>
@@ -56,6 +59,7 @@ export default function Station9() {
   const [isLoading, setIsLoading] = useState(true);
   const [placedPrizes, setPlacedPrizes] = useState<PlacedPrize[]>([]);
   const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
+  const [isYaraMessageVisible, setIsYaraMessageVisible] = useState(false);
   
   const { user } = useUser();
   const db = useFirestore();
@@ -63,6 +67,7 @@ export default function Station9() {
   const collectedPrizesFromStations1to8 = collectedPrizes.filter(p => p.stationId <= 8);
 
   const canvasRef = useRef<HTMLDivElement>(null);
+  const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara');
 
   // Fetch initial data (scenario and placed prizes)
   useEffect(() => {
@@ -87,6 +92,23 @@ export default function Station9() {
     };
     fetchPlayerData();
   }, [user, db]);
+
+  // Yara message timer
+  useEffect(() => {
+    const showTimer = setTimeout(() => {
+      setIsYaraMessageVisible(true);
+    }, 5000); // Show after 5 seconds
+
+    const hideTimer = setTimeout(() => {
+      setIsYaraMessageVisible(false);
+    }, 5000 + 120000); // Hide 2 minutes after it appears
+
+    return () => {
+      clearTimeout(showTimer);
+      clearTimeout(hideTimer);
+    };
+  }, []);
+
 
   const handlePrizeDrop = async (prizeId: string, info: any) => {
     if (!canvasRef.current || !user || !db) return;
@@ -199,6 +221,45 @@ export default function Station9() {
                 </Button>
             )}
         </div>
+        
+        {/* Yara Character and Dialog */}
+        <div className="absolute bottom-4 right-40 z-20 flex items-end gap-4 pointer-events-none">
+            <AnimatePresence>
+                {isYaraMessageVisible && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
+                        transition={{ duration: 0.5 }}
+                        className="w-64 mb-4"
+                    >
+                        <Card className="p-3 shadow-lg bg-white/95 relative pointer-events-auto">
+                            <p className="text-sm text-primary font-medium">
+                                Para mover o arrastrar las Insignias, haz doble clic y sostén la imagen.
+                            </p>
+                            <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
+                        </Card>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+            
+            {yaraCharImage && (
+                <motion.div
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0, transition: { delay: 0.2 } }}
+                    className="w-24 h-auto md:w-32"
+                >
+                    <Image
+                        src={yaraCharImage.imageUrl}
+                        alt={yaraCharImage.description}
+                        width={150}
+                        height={187}
+                        className="h-auto w-full select-none"
+                    />
+                </motion.div>
+            )}
+        </div>
+
       </div>
       <CompletionDialog 
         open={isCompletionDialogOpen}
