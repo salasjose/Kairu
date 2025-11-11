@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -36,6 +37,12 @@ const DraggablePrize = ({
   constraints: React.RefObject<HTMLElement> 
 }) => {
   const controls = useDragControls();
+  
+  const handleDragStart = (event: React.PointerEvent) => {
+    // This allows the drag to be initiated with a long press or double-click hold
+    controls.start(event, { snapToCursor: true });
+  };
+  
   return (
     <motion.div
         key={prize.id}
@@ -46,7 +53,7 @@ const DraggablePrize = ({
         dragConstraints={constraints}
         className="w-full aspect-square bg-white/20 rounded-md p-1 cursor-grab active:cursor-grabbing"
     >
-        <div className="relative w-full h-full" onPointerDown={(e) => controls.start(e, { snapToCursor: true })}>
+        <div className="relative w-full h-full" onPointerDown={handleDragStart}>
             <Image src={prize.imageUrl} alt={prize.name} fill style={{objectFit: 'contain'}}/>
         </div>
     </motion.div>
@@ -56,6 +63,7 @@ const DraggablePrize = ({
 
 export default function Station9() {
   const [chosenScenario, setChosenScenario] = useState<string | null>(null);
+  const [playerName, setPlayerName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [placedPrizes, setPlacedPrizes] = useState<PlacedPrize[]>([]);
   const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
@@ -69,7 +77,7 @@ export default function Station9() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara');
 
-  // Fetch initial data (scenario and placed prizes)
+  // Fetch initial data (scenario, name, and placed prizes)
   useEffect(() => {
     const fetchPlayerData = async () => {
       if (!user || !db) {
@@ -83,6 +91,7 @@ export default function Station9() {
           const data = docSnap.data();
           setChosenScenario(data.chosenScenario || null);
           setPlacedPrizes(data.placedPrizes || []);
+          setPlayerName(data.nombre || "Guardián");
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -95,6 +104,8 @@ export default function Station9() {
 
   // Yara message timer
   useEffect(() => {
+    if (isLoading) return; // Don't start timer until player data is loaded
+    
     const showTimer = setTimeout(() => {
       setIsYaraMessageVisible(true);
     }, 5000); // Show after 5 seconds
@@ -107,7 +118,7 @@ export default function Station9() {
       clearTimeout(showTimer);
       clearTimeout(hideTimer);
     };
-  }, []);
+  }, [isLoading]);
 
 
   const handlePrizeDrop = async (prizeId: string, info: any) => {
@@ -161,6 +172,9 @@ export default function Station9() {
       </div>
     );
   }
+
+  const yaraMessage = `${playerName}, ¡Ya eres un Guardián de la Naturaleza! Ahora es tiempo de armar tu Estación. Moverás tus Insignias por todo tu lienzo; para ello, debes hacer doble clic y sostener tu insignia sin soltarla hasta el lugar donde la quieras tener.`;
+
 
   return (
     <>
@@ -231,12 +245,10 @@ export default function Station9() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
                         transition={{ duration: 0.5 }}
-                        className="w-64 mb-4"
+                        className="w-80 mb-4"
                     >
                         <Card className="p-3 shadow-lg bg-white/95 relative pointer-events-auto">
-                            <p className="text-sm text-primary font-medium">
-                                Para mover o arrastrar las Insignias, haz doble clic y sostén la imagen.
-                            </p>
+                            <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium" />
                             <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
                         </Card>
                     </motion.div>
