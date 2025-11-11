@@ -15,13 +15,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className="h-full" suppressHydrationWarning={true}>
+    <html lang="es" className="h-full">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400;700&family=PT+Sans:wght@400;700&family=Kalam:wght@700&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased bg-background min-h-screen flex flex-col">
+      <body className="font-body antialiased bg-background min-h-screen flex flex-col" suppressHydrationWarning={true}>
         <Providers>
             {children}
         </Providers>

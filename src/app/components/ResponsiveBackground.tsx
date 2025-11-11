@@ -22,7 +22,7 @@ export default function ResponsiveBackground({ children }: { children: React.Rea
         <source media="(min-width: 768px)" srcSet="/backgrounds/Rio_1024x768.png" />
         {/* Móvil (fallback) */}
         <img
-          src="/backgrounds/Rio_360x649.png"
+          src="/backgrounds/Rio360x649.png"
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
           sizes="(min-width:1280px) 100vw, (min-width:768px) 100vw, 100vw"
