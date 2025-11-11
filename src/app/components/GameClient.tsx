@@ -221,7 +221,7 @@ export default function GameClient() {
   const stationPositions = [
     { top: "65%", left: "12%" },
     { top: "60%", left: "32%" },
-    { top: "48%", left: "38%" },
+    { top: "50%", left: "45%" },
     { top: "42%", left: "55%" },
     { top: "60%", left: "65%" },
     { top: "70%", left: "80%" },
@@ -248,7 +248,7 @@ export default function GameClient() {
                 <div className="pr-2 hidden sm:block">
                     <h1 className="font-bold text-primary leading-tight font-kalam text-xl"></h1>
                     <p className="text-xs text-primary/80 leading-tight">
-                        ¡Bienvenido, Jugador!
+                        ¡Bienvenido, {playerState.name}!
                     </p>
                 </div>
                 <Avatar className="h-12 w-12 border-2 border-white">
