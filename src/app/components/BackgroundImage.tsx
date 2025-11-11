@@ -11,7 +11,7 @@ export default function BackgroundImage({ children }: { children?: React.ReactNo
         alt="Fondo del aplicativo"
         fill
         priority
-        className="object-contain object-center"
+        className="object-cover object-center"
         sizes="(max-width: 640px) 100vw, 
                (max-width: 1024px) 100vw, 
                100vw"
