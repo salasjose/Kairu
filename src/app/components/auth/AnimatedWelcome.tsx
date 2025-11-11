@@ -18,11 +18,11 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
   useEffect(() => {
     const appearanceTimer = setTimeout(() => {
       setShowDialog(true);
-    }, 10000); // Aparece después de 10 segundos
+    }, 1000); // Aparece después de 1 segundo
 
     const disappearanceTimer = setTimeout(() => {
         setShowDialog(false);
-    }, 10000 + 60000); // Desaparece 60 segundos después de aparecer
+    }, 1000 + 15000); // Desaparece 15 segundos después de aparecer
     
     // Limpia ambos temporizadores si el componente se desmonta
     return () => {
@@ -59,21 +59,26 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
 
         {/* Right Side: Yara Image and Dialog */}
         <div className="relative mt-8 lg:mt-0">
-            <motion.div
-                initial={{ opacity: 0, x: 50, y: 50 }}
-                animate={{ opacity: 1, x: 0, y: 0, transition: { delay: 1.5, duration: 0.8, type: 'spring' } }}
-                className="max-w-[150px] md:max-w-[200px] lg:max-w-[250px]"
-            >
-                <Image
-                    src="/characters/YARA_3.png"
-                    alt="Yara la rana, asistente del juego Kairu"
-                    width={250}
-                    height={312}
-                    className="h-auto w-full select-none"
-                    priority
-                    aria-hidden="true"
-                />
-            </motion.div>
+            <AnimatePresence>
+            {showDialog && (
+              <motion.div
+                  initial={{ opacity: 0, x: 50, y: 50 }}
+                  animate={{ opacity: 1, x: 0, y: 0, transition: { delay: 0, duration: 0.8, type: 'spring' } }}
+                  exit={{ opacity: 0, x: 50, y: 50, transition: {duration: 0.5 } }}
+                  className="max-w-[150px] md:max-w-[200px] lg:max-w-[250px]"
+              >
+                  <Image
+                      src="/characters/YARA_3.png"
+                      alt="Yara la rana, asistente del juego Kairu"
+                      width={250}
+                      height={312}
+                      className="h-auto w-full select-none"
+                      priority
+                      aria-hidden="true"
+                  />
+              </motion.div>
+            )}
+            </AnimatePresence>
 
             <AnimatePresence>
                 {showDialog && (

@@ -2,11 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
-import { toast } from "@/hooks/use-toast";
-import { useStationProgress } from "@/hooks/use-station-progress";
-import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Camera, Store, Trash2 } from "lucide-react";
 import PrizeDialog from "../PrizeDialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -17,6 +15,8 @@ import { doc, setDoc, getDoc } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
+import { useStationProgress } from "@/hooks/use-station-progress";
+import { useRouter } from "next/navigation";
 
 type Business = {
   name: string;
@@ -122,9 +122,8 @@ export default function Station7() {
     if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
     yaraTimerRef.current = setTimeout(() => {
       setShowYaraDialog(true);
-      const hideTimer = setTimeout(() => setShowYaraDialog(false), 60000); // Hide after 1 minute
-      const reappearTimer = setTimeout(scheduleYaraDialog, 60000 + 120000); // Reappear after 2 more minutes
-    }, 10000); // Initial appearance after 10 seconds
+      const hideTimer = setTimeout(() => setShowYaraDialog(false), 15000); 
+    }, 1000); 
   }, []);
 
   useEffect(() => {

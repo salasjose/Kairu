@@ -158,9 +158,8 @@ export default function Station4() {
     if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
     yaraTimerRef.current = setTimeout(() => {
       setShowYaraDialog(true);
-      const hideTimer = setTimeout(() => setShowYaraDialog(false), 60000); 
-      const reappearTimer = setTimeout(scheduleYaraDialog, 60000 + 120000); 
-    }, 10000); 
+      const hideTimer = setTimeout(() => setShowYaraDialog(false), 15000); 
+    }, 1000); 
   }, []);
 
   useEffect(() => {

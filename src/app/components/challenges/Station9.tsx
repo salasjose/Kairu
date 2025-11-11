@@ -1,7 +1,6 @@
+'use client';
 
-"use client";
-
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore } from "@/firebase/hooks";
@@ -104,22 +103,26 @@ export default function Station9() {
   }, [user, db]);
 
   // Yara message timer
-  useEffect(() => {
-    if (isLoading) return; // Don't start timer until player data is loaded
-    
+  const scheduleYaraDialog = useCallback(() => {
     const showTimer = setTimeout(() => {
       setIsYaraMessageVisible(true);
-    }, 5000); // Show after 5 seconds
+    }, 1000); // Show after 1 second
 
     const hideTimer = setTimeout(() => {
       setIsYaraMessageVisible(false);
-    }, 5000 + 120000); // Hide 2 minutes after it appears
+    }, 1000 + 15000); // Hide 15 seconds after it appears
 
     return () => {
       clearTimeout(showTimer);
       clearTimeout(hideTimer);
     };
-  }, [isLoading]);
+  }, []);
+  
+  useEffect(() => {
+    if (isLoading) return; // Don't start timer until player data is loaded
+    const clearTimers = scheduleYaraDialog();
+    return clearTimers;
+  }, [isLoading, scheduleYaraDialog]);
 
 
   const handlePrizeDrop = async (prizeId: string, info: any) => {
@@ -256,10 +259,11 @@ export default function Station9() {
                 )}
             </AnimatePresence>
             
-            {yaraCharImage && (
+            {yaraCharImage && isYaraMessageVisible && (
                 <motion.div
                     initial={{ opacity: 0, x: 50 }}
                     animate={{ opacity: 1, x: 0, transition: { delay: 0.2 } }}
+                     exit={{ opacity: 0, x: 50, transition: {duration: 0.5 } }}
                     className="w-24 h-auto md:w-32"
                 >
                     <Image

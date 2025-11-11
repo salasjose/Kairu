@@ -451,37 +451,18 @@ export default function Station1() {
   const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const scheduleYaraDialog = useCallback(() => {
-    // Clear any existing timer
-    if (yaraTimerRef.current) {
-      clearTimeout(yaraTimerRef.current);
-    }
-    
-    // Set a new timer
+    if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
     yaraTimerRef.current = setTimeout(() => {
       setShowYaraDialog(true);
-      
-      // Hide after 1 minute
-      const hideTimer = setTimeout(() => {
-        setShowYaraDialog(false);
-      }, 60000); 
-
-      // Schedule the next appearance in 2 minutes after it hides
-      const reapperTimer = setTimeout(() => {
-        scheduleYaraDialog();
-      }, 60000 + 120000);
-
-    // Initial appearance after 20 seconds
-    }, 20000); 
+      const hideTimer = setTimeout(() => setShowYaraDialog(false), 15000); 
+    }, 1000); 
 
   }, []);
 
   useEffect(() => {
     scheduleYaraDialog();
-    // Cleanup timer on component unmount
     return () => {
-      if (yaraTimerRef.current) {
-        clearTimeout(yaraTimerRef.current);
-      }
+      if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
     };
   }, [scheduleYaraDialog]);
 

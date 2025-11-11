@@ -180,9 +180,8 @@ export default function Station5() {
     if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
     yaraTimerRef.current = setTimeout(() => {
       setShowYaraDialog(true);
-      const hideTimer = setTimeout(() => setShowYaraDialog(false), 60000); // Hide after 1 minute
-      const reappearTimer = setTimeout(scheduleYaraDialog, 60000 + 120000); // Reappear after 2 more minutes
-    }, 10000); // Initial appearance after 10 seconds
+      const hideTimer = setTimeout(() => setShowYaraDialog(false), 15000); 
+    }, 1000); 
   }, []);
 
   useEffect(() => {

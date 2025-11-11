@@ -37,7 +37,6 @@ const initialDays: DayState[] = Array(7)
 const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void; onCancel: () => void; }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
-  const sustainablePracticeImage = PlaceHolderImages.find(p => p.id === "sustainable-practice");
 
   useEffect(() => {
     const getCameraPermission = async () => {
@@ -80,7 +79,16 @@ const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void;
   }, []);
 
   const handleCapture = () => {
-    onCapture(sustainablePracticeImage?.imageUrl ?? `https://picsum.photos/seed/capture${Date.now()}/400/300`);
+    if (videoRef.current) {
+        const canvas = document.createElement('canvas');
+        canvas.width = videoRef.current.videoWidth;
+        canvas.height = videoRef.current.videoHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+            onCapture(canvas.toDataURL('image/jpeg'));
+        }
+    }
   };
 
   return (
@@ -262,9 +270,8 @@ export default function Station2() {
     if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
     yaraTimerRef.current = setTimeout(() => {
       setShowYaraDialog(true);
-      const hideTimer = setTimeout(() => setShowYaraDialog(false), 60000);
-      const reappearTimer = setTimeout(scheduleYaraDialog, 60000 + 120000);
-    }, 20000);
+      const hideTimer = setTimeout(() => setShowYaraDialog(false), 15000);
+    }, 1000);
   }, []);
 
   useEffect(() => {
@@ -442,7 +449,7 @@ export default function Station2() {
           
         </div>
           {/* Yara Character and Dialog */}
-          <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4">
+          <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4 pointer-events-none">
             <AnimatePresence>
                 {showYaraDialog && (
                   <motion.div
