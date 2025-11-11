@@ -4,14 +4,14 @@ import Image from "next/image";
 
 export default function BackgroundImage({ children }: { children?: React.ReactNode }) {
   return (
-    <section className="relative min-h-screen w-full overflow-hidden">
+    <section className="relative min-h-screen w-full overflow-hidden bg-black">
       {/* Imagen de fondo responsiva */}
       <Image
         src="/backgrounds/Mapa.png"
         alt="Fondo del aplicativo"
         fill
         priority
-        className="object-cover object-center"
+        className="object-contain object-center"
         sizes="(max-width: 640px) 100vw, 
                (max-width: 1024px) 100vw, 
                100vw"
