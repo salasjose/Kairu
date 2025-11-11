@@ -36,6 +36,7 @@ const prompt = ai.definePrompt({
   name: 'crosswordPuzzlePrompt',
   input: {schema: CrosswordPuzzleInputSchema},
   output: {schema: CrosswordPuzzleOutputSchema},
+  model: 'googleai/gemini-pro',
   prompt: `Eres un experto generador de crucigramas en español.
 
   Genera un crucigrama de {{size}}x{{size}} basado en el tema: "{{topic}}".
