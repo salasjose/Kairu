@@ -49,13 +49,13 @@ const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack
     }
   }, [foundWords]);
 
-  const handleMouseDown = (r: number, c: number) => {
+  const startSelection = (r: number, c: number) => {
     if (gameState !== 'playing') return;
     setIsSelecting(true);
     setSelectedCells([[r, c]]);
   };
 
-  const handleMouseEnter = (r: number, c: number) => {
+  const moveSelection = (r: number, c: number) => {
     if (!isSelecting || gameState !== 'playing') return;
     
     const startCell = selectedCells[0];
@@ -63,6 +63,7 @@ const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack
     const dr = Math.sign(r - startCell[0]);
     const dc = Math.sign(c - startCell[1]);
 
+    // Only allow straight or diagonal lines
     if (Math.abs(r - startCell[0]) === Math.abs(c - startCell[1]) || r === startCell[0] || c === startCell[1]) {
       let currR = startCell[0] + dr;
       let currC = startCell[1] + dc;
@@ -76,8 +77,8 @@ const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack
     }
   };
 
-  const handleMouseUp = () => {
-    if (gameState !== 'playing') return;
+  const endSelection = () => {
+    if (gameState !== 'playing' || !isSelecting) return;
     setIsSelecting(false);
     
     const selectedWord = selectedCells.map(([r, c]) => grid[r][c]).join('');
@@ -92,6 +93,20 @@ const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack
     }
     setSelectedCells([]);
   };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (element) {
+      const r = parseInt(element.getAttribute('data-r') || '-1', 10);
+      const c = parseInt(element.getAttribute('data-c') || '-1', 10);
+      if (r !== -1 && c !== -1) {
+        moveSelection(r, c);
+      }
+    }
+  };
+
 
   const handleRestart = () => {
     setSelectedCells([]);
@@ -167,15 +182,21 @@ const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack
        <div className="grid md:grid-cols-3 gap-8 items-start">
          <div 
            className="md:col-span-2 grid grid-cols-10 gap-1 bg-card border p-2 rounded-lg aspect-square select-none"
-           onMouseUp={handleMouseUp}
-           onMouseLeave={handleMouseUp}
+           onMouseUp={endSelection}
+           onMouseLeave={endSelection}
+           onTouchEnd={endSelection}
+           onTouchCancel={endSelection}
+           onTouchMove={handleTouchMove}
          >
            {grid.map((row, r) =>
              row.map((letter, c) => (
                <motion.div
                  key={`${r}-${c}`}
-                 onMouseDown={() => handleMouseDown(r, c)}
-                 onMouseEnter={() => handleMouseEnter(r, c)}
+                 data-r={r}
+                 data-c={c}
+                 onMouseDown={() => startSelection(r, c)}
+                 onMouseEnter={() => moveSelection(r, c)}
+                 onTouchStart={(e) => { e.preventDefault(); startSelection(r, c); }}
                  className={cn(
                    'flex items-center justify-center aspect-square text-lg font-bold uppercase cursor-pointer rounded-md transition-colors',
                    isCellSelected(r,c) ? 'bg-primary/50 text-primary-foreground' 
