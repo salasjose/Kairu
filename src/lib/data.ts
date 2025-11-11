@@ -50,10 +50,10 @@ export const allPrizes: Prize[][] = [
   // Station 2 Prizes
   [
     { id: 's2-1', stationId: 2, name: 'Caimán Aguja', imageUrl: '/prizes/Caiman_Aguja.png' },
-    { id: 's2-2', stationId: 2, name: 'Cardenal (de lado)', imageUrl: '/prizes/Cardenal_de_lado.png' },
+    { id: 's2-2', stationId: 2, name: 'Cardenal Guajiro 2', imageUrl: '/prizes/Cardenal_de_lado.png' },
     { id: 's2-3', stationId: 2, name: 'Niño en Bicicleta', imageUrl: '/prizes/Nino_en_Bicicleta.png' },
     { id: 's2-4', stationId: 2, name: 'Gato', imageUrl: '/prizes/Gato.png' },
-    { id: 's2-5', stationId: 2, name: 'Cardenal (de frente)', imageUrl: '/prizes/De_frente.png' },
+    { id: 's2-5', stationId: 2, name: 'Cardenal Guajiro 1', imageUrl: '/prizes/De_frente.png' },
     { id: 's2-6', stationId: 2, name: 'Iguana', imageUrl: '/prizes/Iguana.png' },
     { id: 's2-7', stationId: 2, name: 'Niña en Bicicleta', imageUrl: '/prizes/Nina_en_Bicicleta.png' },
     { id: 's2-8', stationId: 2, name: 'Garza', imageUrl: '/prizes/Garza_volando.png' },
@@ -93,7 +93,7 @@ export const allPrizes: Prize[][] = [
   ],
   // Station 6 Prizes
   [
-    { id: 's6-1', stationId: 6, name: 'Cardenal (de lado)', imageUrl: '/prizes/Cardenal_de_lado.png' },
+    { id: 's6-1', stationId: 6, name: 'Cardenal Guajiro 2', imageUrl: '/prizes/Cardenal_de_lado.png' },
     { id: 's6-2', stationId: 6, name: 'Hombre en Canoa', imageUrl: '/prizes/Hombre_en_Canoa.png' },
     { id: 's6-3', stationId: 6, name: 'Ciudad', imageUrl: '/prizes/Ciudad.png' },
     { id: 's6-4', stationId: 6, name: 'Hombre en Bicicleta', imageUrl: '/prizes/Hombre_en_Bicicleta.png' },
@@ -108,7 +108,7 @@ export const allPrizes: Prize[][] = [
     { id: 's7-2', stationId: 7, name: 'Babosa', imageUrl: '/prizes/Babosa.png' },
     { id: 's7-3', stationId: 7, name: 'Panel', imageUrl: '/prizes/Panel.png' },
     { id: 's7-4', stationId: 7, name: 'Perro', imageUrl: '/prizes/Perro.png' },
-    { id: 's7-5', stationId: 7, name: 'Cardenal (de frente)', imageUrl: '/prizes/De_frente.png' },
+    { id: 's7-5', stationId: 7, name: 'Cardenal Guajiro 1', imageUrl: '/prizes/De_frente.png' },
     { id: 's7-6', stationId: 7, name: 'Hombre Caminando', imageUrl: '/prizes/Hombrecaminando.png' },
     { id: 's7-7', stationId: 7, name: 'Molino', imageUrl: '/prizes/Molinos.png' },
     { id: 's7-8', stationId: 7, name: 'Ciudad', imageUrl: '/prizes/Ciudad.png' },
@@ -116,7 +116,7 @@ export const allPrizes: Prize[][] = [
   // Station 8 Prizes
   [
     { id: 's8-1', stationId: 8, name: 'Hombre en Canoa', imageUrl: '/prizes/Hombre_en_Canoa.png' },
-    { id: 's8-2', stationId: 8, name: 'Cardenal (de lado)', imageUrl: '/prizes/Cardenal_de_lado.png' },
+    { id: 's8-2', stationId: 8, name: 'Cardenal Guajiro 2', imageUrl: '/prizes/Cardenal_de_lado.png' },
     { id: 's8-3', stationId: 8, name: 'Niño en Bicicleta', imageUrl: '/prizes/Nino_en_Bicicleta.png' },
     { id: 's8-4', stationId: 8, name: 'Niña en Bicicleta', imageUrl: '/prizes/Nina_en_Bicicleta.png' },
     { id: 's8-5', stationId: 8, name: 'Jaguar', imageUrl: '/prizes/Jaguar.png' },
