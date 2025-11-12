@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 const challenges = {
   learn: {
     title: "Aprende",
-    description: "Copia y pega la URL de tu video sobre ideas sostenibles.",
+    description: "Descubriendo como el diseño puede transformar el mundo",
     icon: FileText,
   },
   wordsearch: {
