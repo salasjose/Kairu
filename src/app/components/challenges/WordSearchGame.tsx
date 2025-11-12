@@ -28,7 +28,7 @@ const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack
   const [foundWords, setFoundWords] = useState<string[]>([]);
   const [foundCells, setFoundCells] = useState<[number, number][]>([]);
   const [isSelecting, setIsSelecting] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(120);
+  const [timeLeft, setTimeLeft] = useState(240);
   const [gameState, setGameState] = useState<'playing' | 'won' | 'lost'>('playing');
 
   useEffect(() => {
@@ -113,7 +113,7 @@ const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack
     setFoundWords([]);
     setFoundCells([]);
     setIsSelecting(false);
-    setTimeLeft(120);
+    setTimeLeft(240);
     setGameState('playing');
   };
 
