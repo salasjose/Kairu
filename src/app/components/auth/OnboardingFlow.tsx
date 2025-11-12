@@ -36,7 +36,7 @@ type Step = 'welcome' | 'signup' | 'login' | 'avatar' | 'yara' | 'scenario';
 
 export default function OnboardingFlow({ onComplete, onLoginSuccess }: OnboardingFlowProps) {
     const auth = useAuth();
-    const [step, setStep] = useState<Step>('signup');
+    const [step, setStep] = useState<Step>('welcome');
     const [signupData, setSignupData] = useState<SignUpData | null>(null);
     const [formName, setFormName] = useState<string>('');
     const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
