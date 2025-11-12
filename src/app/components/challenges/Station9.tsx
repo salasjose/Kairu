@@ -50,9 +50,8 @@ const DraggablePrize = ({
         onDragEnd={onDragEnd}
         dragConstraints={constraints}
         className="w-full aspect-square bg-white/20 rounded-md p-1 cursor-grab active:cursor-grabbing"
-        onPointerDown={(e) => controls.start(e, { snapToCursor: true })}
     >
-        <div className="relative w-full h-full">
+        <div className="relative w-full h-full" onPointerDown={(e) => controls.start(e, { snapToCursor: true })}>
             <Image src={prize.imageUrl} alt={prize.name} fill style={{objectFit: 'contain'}}/>
         </div>
     </motion.div>
@@ -77,6 +76,7 @@ export default function Station9() {
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara');
+  const dragControls = useDragControls();
 
   useEffect(() => {
     const fetchPlayerData = async () => {
@@ -240,6 +240,7 @@ export default function Station9() {
                  <motion.div
                     key={prize.id}
                     drag
+                    dragControls={dragControls}
                     dragMomentum={false}
                     onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
                     dragConstraints={canvasRef}
@@ -251,14 +252,19 @@ export default function Station9() {
                         height: `${80 * prize.scale}px`
                     }}
                     initial={{ x: prize.x, y: prize.y, scale: 1 }}
-                    onClick={() => setSelectedPrizeId(prize.id)}
+                    onClick={(e) => {e.stopPropagation(); setSelectedPrizeId(prize.id)}}
                     animate={{ 
                         scale: isSelected ? 1.1 : 1,
                         boxShadow: isSelected ? "0px 0px 15px rgba(255,255,100,0.8)" : "0px 0px 0px rgba(0,0,0,0)",
                     }}
                     transition={{ duration: 0.2 }}
                     >
-                    <Image src={prize.imageUrl} alt={prize.name} fill style={{objectFit:'contain'}} />
+                    <div className="w-full h-full relative" onPointerDown={(e) => {
+                        e.stopPropagation(); // Prevent canvas click from deselecting
+                        dragControls.start(e, { snapToCursor: false });
+                    }}>
+                        <Image src={prize.imageUrl} alt={prize.name} fill style={{objectFit:'contain'}} />
+                    </div>
 
                      {isSelected && (
                         <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-40 bg-background/80 p-2 rounded-lg shadow-lg flex items-center gap-2" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
