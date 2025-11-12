@@ -32,14 +32,16 @@ const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack
   const [gameState, setGameState] = useState<'playing' | 'won' | 'lost'>('playing');
 
   useEffect(() => {
-    if (gameState !== 'playing') return;
-    if (timeLeft > 0) {
-      const timerId = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timerId);
-    } else {
-      setGameState('lost');
-      toast({ title: "¡Se acabó el tiempo!", variant: "destructive" });
+    if (gameState !== 'playing' || timeLeft <= 0) {
+      if (timeLeft <= 0) {
+        setGameState('lost');
+        toast({ title: "¡Se acabó el tiempo!", variant: "destructive" });
+      }
+      return;
     }
+  
+    const timerId = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+    return () => clearTimeout(timerId);
   }, [timeLeft, gameState]);
 
   useEffect(() => {

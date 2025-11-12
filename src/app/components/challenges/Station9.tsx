@@ -208,7 +208,7 @@ export default function Station9() {
               dragMomentum={false}
               onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
               dragConstraints={canvasRef}
-              className="absolute w-16 h-16 md:w-20 md:h-20 cursor-grab active:cursor-grabbing z-20"
+              className="absolute w-25 h-5 md:w-20 md:h-20 cursor-grab active:cursor-grabbing z-20"
               style={{ x: prize.x, y: prize.y }}
               initial={{ x: prize.x, y: prize.y }}
             >
