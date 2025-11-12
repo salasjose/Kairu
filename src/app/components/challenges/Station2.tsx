@@ -222,7 +222,7 @@ const PhotoUploadChallenge = ({
                 ) : (
                     <Image
                         src={sustainablePracticeImage?.imageUrl ?? "https://picsum.photos/seed/sustainability-day/400/300"}
-                        alt={sustainablePracticeImage?.description ?? "Sustainable practice"}
+                        alt="Práctica sostenible"
                         fill
                         className="object-cover rounded-md opacity-20"
                         data-ai-hint={sustainablePracticeImage?.imageHint ?? "sustainable practice"}
@@ -272,8 +272,8 @@ export default function Station2() {
     if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
     yaraTimerRef.current = setTimeout(() => {
       setShowYaraDialog(true);
-      const hideTimer = setTimeout(() => setShowYaraDialog(false), 15000);
-    }, 1000);
+      const hideTimer = setTimeout(() => setShowYaraDialog(false), 15000); 
+    }, 1000); 
   }, []);
 
   useEffect(() => {
@@ -488,5 +488,3 @@ export default function Station2() {
     </>
   );
 }
-
-    
