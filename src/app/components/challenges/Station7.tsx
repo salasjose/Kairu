@@ -193,14 +193,6 @@ export default function Station7() {
   }
 
   const handleComplete = () => {
-    if(!businesses.some(b => b !== null)) {
-        toast({
-            title: "Reto incompleto",
-            description: "Por favor, añade al menos un negocio sostenible.",
-            variant: "destructive",
-        })
-        return;
-    }
     unlockStation(stationId + 1);
     toast({
       title: `¡Estación ${stationId} Completada!`,
@@ -213,6 +205,9 @@ export default function Station7() {
     setIsPrizeModalOpen(false);
     router.push("/");
   };
+  
+  const businessesCount = businesses.filter(b => b !== null).length;
+  const isCompleteButtonDisabled = businessesCount < 4;
 
   return (
     <>
@@ -273,8 +268,15 @@ export default function Station7() {
                 ))}
               </div>
 
-              <div className="flex justify-center gap-4 pt-4">
-                <Button onClick={handleComplete} size="lg">Completar Reto</Button>
+              <div className="flex flex-col items-center justify-center gap-2 pt-4">
+                <Button onClick={handleComplete} size="lg" disabled={isCompleteButtonDisabled}>
+                  Completar Reto
+                </Button>
+                {isCompleteButtonDisabled && (
+                    <p className="text-sm text-muted-foreground">
+                        Faltan {4 - businessesCount} negocio(s) por añadir.
+                    </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -325,6 +327,3 @@ export default function Station7() {
     </>
   );
 }
-
-
-    
