@@ -13,6 +13,10 @@ import type { Prize } from "@/lib/data";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card } from "@/components/ui/card";
 import TypewriterText from "../auth/TypewriterText";
+import { Slider } from "@/components/ui/slider";
+import { Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
 
 const DRAGGABLE_AREA_ID = "station-9-canvas";
 
@@ -22,6 +26,7 @@ type PlacedPrize = {
   name: string;
   x: number;
   y: number;
+  scale: number;
   stationId: number;
 };
 
@@ -65,6 +70,7 @@ export default function Station9() {
   const [playerName, setPlayerName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [placedPrizes, setPlacedPrizes] = useState<PlacedPrize[]>([]);
+  const [selectedPrizeId, setSelectedPrizeId] = useState<string | null>(null);
   const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
   const [isYaraMessageVisible, setIsYaraMessageVisible] = useState(false);
   
@@ -89,7 +95,7 @@ export default function Station9() {
         if (docSnap.exists()) {
           const data = docSnap.data();
           setChosenScenario(data.chosenScenario || null);
-          setPlacedPrizes(data.placedPrizes || []);
+          setPlacedPrizes(data.placedPrizes?.map((p: any) => ({ ...p, scale: p.scale || 1 })) || []);
           const fullName = `${data.nombre || ''} ${data.apellido || ''}`.trim();
           setPlayerName(fullName || "Guardián");
         }
@@ -124,9 +130,24 @@ export default function Station9() {
     return clearTimers;
   }, [isLoading, scheduleYaraDialog]);
 
+  const savePrizesToDb = useCallback(async (prizesToSave: PlacedPrize[]) => {
+      if (!user || !db) return;
+      try {
+        const userDocRef = doc(db, "users", user.uid);
+        await setDoc(userDocRef, { placedPrizes: prizesToSave }, { merge: true });
+      } catch (error) {
+        console.error("Failed to save prize position", error);
+        toast({
+            title: "Error al guardar",
+            description: "No se pudo guardar la posición de la insignia.",
+            variant: "destructive",
+        });
+      }
+  }, [user, db]);
+
 
   const handlePrizeDrop = async (prizeId: string, info: any) => {
-    if (!canvasRef.current || !user || !db) return;
+    if (!canvasRef.current) return;
 
     const canvasRect = canvasRef.current.getBoundingClientRect();
     const x = info.point.x - canvasRect.left;
@@ -135,7 +156,9 @@ export default function Station9() {
     const prizeData = collectedPrizes.find(p => p.id === prizeId);
     if (!prizeData) return;
 
-    const newPlacedPrize: PlacedPrize = { ...prizeData, x, y };
+    const existingPrize = placedPrizes.find(p => p.id === prizeId);
+
+    const newPlacedPrize: PlacedPrize = { ...prizeData, x, y, scale: existingPrize?.scale || 1 };
 
     const newPlacedPrizes = [
       ...placedPrizes.filter(p => p.id !== prizeId),
@@ -143,21 +166,24 @@ export default function Station9() {
     ];
     
     setPlacedPrizes(newPlacedPrizes);
-
-    // Save to Firestore
-    try {
-      const userDocRef = doc(db, "users", user.uid);
-      await setDoc(userDocRef, { placedPrizes: newPlacedPrizes }, { merge: true });
-    } catch (error) {
-      console.error("Failed to save prize position", error);
-      toast({
-        title: "Error al guardar",
-        description: "No se pudo guardar la posición de la insignia.",
-        variant: "destructive",
-      });
-    }
+    savePrizesToDb(newPlacedPrizes);
   };
   
+  const handleScaleChange = (prizeId: string, newScale: number[]) => {
+    const newPlacedPrizes = placedPrizes.map(p => 
+        p.id === prizeId ? { ...p, scale: newScale[0] } : p
+    );
+    setPlacedPrizes(newPlacedPrizes);
+    savePrizesToDb(newPlacedPrizes);
+  };
+
+  const handleDeletePrize = (prizeId: string) => {
+    const newPlacedPrizes = placedPrizes.filter(p => p.id !== prizeId);
+    setPlacedPrizes(newPlacedPrizes);
+    savePrizesToDb(newPlacedPrizes);
+    setSelectedPrizeId(null);
+  };
+
   const handleCompleteChallenge = () => {
     setIsCompletionDialogOpen(true);
   }
@@ -182,7 +208,10 @@ export default function Station9() {
 
   return (
     <>
-      <div className="relative w-screen h-screen overflow-hidden bg-background">
+      <div className="relative w-screen h-screen overflow-hidden bg-background" onClick={(e) => {
+           if ((e.target as HTMLElement).closest('.placed-prize-wrapper')) return;
+           setSelectedPrizeId(null);
+      }}>
         {/* Canvas Area */}
         <div id={DRAGGABLE_AREA_ID} ref={canvasRef} className="absolute inset-0">
           {chosenScenario ? (
@@ -201,20 +230,49 @@ export default function Station9() {
           )}
 
           {/* Placed Prizes */}
-          {placedPrizes.map((prize) => (
-            <motion.div
-              key={prize.id}
-              drag
-              dragMomentum={false}
-              onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
-              dragConstraints={canvasRef}
-              className="absolute w-24 h-24 md:w-20 md:h-20 cursor-grab active:cursor-grabbing z-20"
-              style={{ x: prize.x, y: prize.y }}
-              initial={{ x: prize.x, y: prize.y }}
-            >
-              <Image src={prize.imageUrl} alt={prize.name} fill style={{objectFit:'contain'}} />
-            </motion.div>
-          ))}
+          {placedPrizes.map((prize) => {
+            const isSelected = selectedPrizeId === prize.id;
+            return (
+                 <motion.div
+                    key={prize.id}
+                    drag
+                    dragMomentum={false}
+                    onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
+                    dragConstraints={canvasRef}
+                    className="placed-prize-wrapper absolute cursor-grab active:cursor-grabbing z-20"
+                    style={{ 
+                        x: prize.x, 
+                        y: prize.y, 
+                        width: `${80 * prize.scale}px`, 
+                        height: `${80 * prize.scale}px`
+                    }}
+                    initial={{ x: prize.x, y: prize.y, scale: 1 }}
+                    onClick={() => setSelectedPrizeId(prize.id)}
+                    animate={{ 
+                        scale: isSelected ? 1.1 : 1,
+                        boxShadow: isSelected ? "0px 0px 15px rgba(255,255,100,0.8)" : "0px 0px 0px rgba(0,0,0,0)",
+                    }}
+                    transition={{ duration: 0.2 }}
+                    >
+                    <Image src={prize.imageUrl} alt={prize.name} fill style={{objectFit:'contain'}} />
+
+                     {isSelected && (
+                        <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-40 bg-background/80 p-2 rounded-lg shadow-lg flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                            <Slider
+                                defaultValue={[prize.scale]}
+                                min={0.5}
+                                max={2.5}
+                                step={0.1}
+                                onValueChange={(value) => handleScaleChange(prize.id, value)}
+                            />
+                             <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDeletePrize(prize.id)}>
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    )}
+                </motion.div>
+            )
+          })}
         </div>
 
         {/* Sidebar with unplaced prizes */}
