@@ -11,24 +11,17 @@ import { useRouter } from "next/navigation";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { toast } from "@/hooks/use-toast";
 import WordSearchGame from "./WordSearchGame";
-import CrosswordGame from "./CrosswordGame";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore } from "@/firebase/hooks";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
-import { CROSSWORD_DATA } from "@/lib/crossword-data";
 
 const challenges = {
   learn: {
     title: "Aprende",
     description: "Copia y pega la URL de tu video sobre ideas sostenibles.",
     icon: FileText,
-  },
-  crossword: {
-    title: "Crucigrama",
-    description: "Completa, conecta y pon a prueba tu ingenio.",
-    icon: Puzzle,
   },
   wordsearch: {
     title: "Sopa de letras",
@@ -209,18 +202,6 @@ export default function Station5() {
   if (selectedChallenge === "learn") {
     return <LearnChallenge onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("learn")} />;
   }
-  if (selectedChallenge === "crossword") {
-    return (
-        <main className="min-h-screen bg-gradient-to-b from-green-200 via-sky-300 to-emerald-500 animate-gradient flex items-start justify-center p-6">
-          <div className="bg-gray-900/70 backdrop-blur-md rounded-xl p-6 shadow-xl max-w-7xl w-full">
-            <h1 className="text-3xl font-bold text-white mb-4 text-center">
-              🌱 Crucigrama: Transformación Sostenible
-            </h1>
-            <CrosswordGame data={CROSSWORD_DATA} onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("crossword")} />
-          </div>
-        </main>
-      );
-  }
    if (selectedChallenge === "wordsearch") {
     return <WordSearchGame gameId="station5" onComplete={() => handleComplete("wordsearch")} onBack={() => setSelectedChallenge(null)} />;
   }
@@ -244,7 +225,7 @@ export default function Station5() {
             <h1 className="text-3xl md:text-5xl">ZonaCreativa</h1>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8">
             {(Object.keys(challenges) as ChallengeId[]).map((key) => {
               const challenge = challenges[key];
               const Icon = challenge.icon;
