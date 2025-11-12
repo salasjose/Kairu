@@ -14,7 +14,7 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card } from "@/components/ui/card";
 import TypewriterText from "../auth/TypewriterText";
 import { Slider } from "@/components/ui/slider";
-import { Trash2 } from "lucide-react";
+import { Trash2, Gift, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 
@@ -30,7 +30,6 @@ type PlacedPrize = {
   stationId: number;
 };
 
-// New component for the draggable prize item
 const DraggablePrize = ({ 
   prize, 
   onDragEnd, 
@@ -42,11 +41,6 @@ const DraggablePrize = ({
 }) => {
   const controls = useDragControls();
   
-  const handleDragStart = (event: React.PointerEvent) => {
-    // This allows the drag to be initiated with a long press or double-click hold
-    controls.start(event, { snapToCursor: true });
-  };
-  
   return (
     <motion.div
         key={prize.id}
@@ -56,8 +50,9 @@ const DraggablePrize = ({
         onDragEnd={onDragEnd}
         dragConstraints={constraints}
         className="w-full aspect-square bg-white/20 rounded-md p-1 cursor-grab active:cursor-grabbing"
+        onPointerDown={(e) => controls.start(e, { snapToCursor: true })}
     >
-        <div className="relative w-full h-full" onPointerDown={handleDragStart}>
+        <div className="relative w-full h-full">
             <Image src={prize.imageUrl} alt={prize.name} fill style={{objectFit: 'contain'}}/>
         </div>
     </motion.div>
@@ -73,16 +68,16 @@ export default function Station9() {
   const [selectedPrizeId, setSelectedPrizeId] = useState<string | null>(null);
   const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
   const [isYaraMessageVisible, setIsYaraMessageVisible] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
   const { user } = useUser();
   const db = useFirestore();
-  const { prizes: collectedPrizes } = usePrizeCart();
+  const { prizes: collectedPrizes, addPrize, clearCart: clearPrizeCart } = usePrizeCart();
   const collectedPrizesFromStations1to8 = collectedPrizes.filter(p => p.stationId <= 8);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara');
 
-  // Fetch initial data (scenario, name, and placed prizes)
   useEffect(() => {
     const fetchPlayerData = async () => {
       if (!user || !db) {
@@ -108,15 +103,14 @@ export default function Station9() {
     fetchPlayerData();
   }, [user, db]);
 
-  // Yara message timer
   const scheduleYaraDialog = useCallback(() => {
     const showTimer = setTimeout(() => {
       setIsYaraMessageVisible(true);
-    }, 1000); // Show after 1 second
+    }, 1000); 
 
     const hideTimer = setTimeout(() => {
       setIsYaraMessageVisible(false);
-    }, 1000 + 15000); // Hide 15 seconds after it appears
+    }, 1000 + 15000); 
 
     return () => {
       clearTimeout(showTimer);
@@ -125,7 +119,7 @@ export default function Station9() {
   }, []);
   
   useEffect(() => {
-    if (isLoading) return; // Don't start timer until player data is loaded
+    if (isLoading) return; 
     const clearTimers = scheduleYaraDialog();
     return clearTimers;
   }, [isLoading, scheduleYaraDialog]);
@@ -174,10 +168,20 @@ export default function Station9() {
         p.id === prizeId ? { ...p, scale: newScale[0] } : p
     );
     setPlacedPrizes(newPlacedPrizes);
+  };
+
+  const handleScaleChangeCommit = (prizeId: string, newScale: number[]) => {
+     const newPlacedPrizes = placedPrizes.map(p => 
+        p.id === prizeId ? { ...p, scale: newScale[0] } : p
+    );
     savePrizesToDb(newPlacedPrizes);
   };
 
+
   const handleDeletePrize = (prizeId: string) => {
+    const prizeToRemove = placedPrizes.find(p => p.id === prizeId);
+    if (!prizeToRemove) return;
+    
     const newPlacedPrizes = placedPrizes.filter(p => p.id !== prizeId);
     setPlacedPrizes(newPlacedPrizes);
     savePrizesToDb(newPlacedPrizes);
@@ -193,7 +197,7 @@ export default function Station9() {
   );
   
   const allPrizesPlaced = collectedPrizesFromStations1to8.length > 0 && 
-                          collectedPrizesFromStations1to8.length === placedPrizes.length;
+                          unplacedPrizes.length === 0;
 
   if (isLoading) {
     return (
@@ -257,13 +261,14 @@ export default function Station9() {
                     <Image src={prize.imageUrl} alt={prize.name} fill style={{objectFit:'contain'}} />
 
                      {isSelected && (
-                        <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-40 bg-background/80 p-2 rounded-lg shadow-lg flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                        <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-40 bg-background/80 p-2 rounded-lg shadow-lg flex items-center gap-2" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
                             <Slider
                                 defaultValue={[prize.scale]}
                                 min={0.5}
                                 max={2.5}
                                 step={0.1}
                                 onValueChange={(value) => handleScaleChange(prize.id, value)}
+                                onValueCommit={(value) => handleScaleChangeCommit(prize.id, value)}
                             />
                              <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDeletePrize(prize.id)}>
                                 <Trash2 className="h-4 w-4" />
@@ -275,28 +280,59 @@ export default function Station9() {
           })}
         </div>
 
-        {/* Sidebar with unplaced prizes */}
-        <div className="absolute top-0 right-0 h-full w-24 md:w-32 bg-black/50 backdrop-blur-sm p-2 z-30 flex flex-col items-center">
-            <h3 className="text-white font-bold text-sm mb-2 text-center">Insignias</h3>
-            <div className="flex-grow overflow-y-auto space-y-2 w-full">
-                {unplacedPrizes.map(prize => (
-                    <DraggablePrize 
-                      key={prize.id}
-                      prize={prize} 
-                      onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
-                      constraints={canvasRef}
-                    />
-                ))}
-                 {unplacedPrizes.length === 0 && (
-                    <p className="text-white/70 text-xs text-center pt-4">¡Todas las insignias colocadas!</p>
+        {/* Sidebar Toggle Button */}
+        <Button 
+            variant="outline"
+            size="icon"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="absolute top-4 right-4 z-40 bg-white/80"
+        >
+            <AnimatePresence initial={false}>
+                {isSidebarOpen ? (
+                    <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
+                        <X />
+                    </motion.div>
+                ) : (
+                    <motion.div key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
+                        <Gift />
+                    </motion.div>
                 )}
-            </div>
-             {allPrizesPlaced && (
-                <Button onClick={handleCompleteChallenge} className="mt-4 w-full">
-                    Completar Aventura
-                </Button>
+            </AnimatePresence>
+        </Button>
+
+
+        {/* Sidebar with unplaced prizes */}
+        <AnimatePresence>
+            {isSidebarOpen && (
+                 <motion.div 
+                    className="absolute top-0 right-0 h-full w-24 md:w-32 bg-black/50 backdrop-blur-sm p-2 z-30 flex flex-col items-center"
+                    initial={{ x: "100%" }}
+                    animate={{ x: 0 }}
+                    exit={{ x: "100%" }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                >
+                    <h3 className="text-white font-bold text-sm mt-12 mb-2 text-center">Insignias</h3>
+                    <div className="flex-grow overflow-y-auto space-y-2 w-full">
+                        {unplacedPrizes.map(prize => (
+                            <DraggablePrize 
+                            key={prize.id}
+                            prize={prize} 
+                            onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
+                            constraints={canvasRef}
+                            />
+                        ))}
+                        {unplacedPrizes.length === 0 && (
+                            <p className="text-white/70 text-xs text-center pt-4">¡Todas las insignias colocadas!</p>
+                        )}
+                    </div>
+                    {allPrizesPlaced && (
+                        <Button onClick={handleCompleteChallenge} className="mt-4 w-full">
+                            Completar Aventura
+                        </Button>
+                    )}
+                </motion.div>
             )}
-        </div>
+        </AnimatePresence>
         
         {/* Yara Character and Dialog */}
         <div className="absolute bottom-4 right-40 z-20 flex items-end gap-4 pointer-events-none">
