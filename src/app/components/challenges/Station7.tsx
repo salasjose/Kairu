@@ -209,15 +209,6 @@ export default function Station7() {
     setIsPrizeModalOpen(true);
   };
   
-  const handleSimulateComplete = () => {
-    unlockStation(stationId + 1);
-    toast({
-      title: `¡Estación ${stationId} Completada!`,
-      description: "Has simulado la finalización. ¡Escoge tu premio!",
-    });
-    setIsPrizeModalOpen(true);
-  };
-
   const handleClaimPrize = () => {
     setIsPrizeModalOpen(false);
     router.push("/");
@@ -284,7 +275,6 @@ export default function Station7() {
 
               <div className="flex justify-center gap-4 pt-4">
                 <Button onClick={handleComplete} size="lg">Completar Reto</Button>
-                <Button onClick={handleSimulateComplete} size="lg" variant="secondary">Simular Finalización</Button>
               </div>
             </CardContent>
           </Card>

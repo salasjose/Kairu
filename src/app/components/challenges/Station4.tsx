@@ -190,15 +190,6 @@ export default function Station4() {
     router.push("/");
   };
   
-  const handleSimulateComplete = () => {
-    unlockStation(stationId + 1);
-    toast({
-      title: `¡Estación ${stationId} Completada!`,
-      description: "Has simulado la finalización. ¡Escoge tu premio!",
-    });
-    setIsPrizeModalOpen(true);
-  };
-
   const renderContent = () => {
     if (selectedChallenge === "quiz") {
       return (
@@ -254,7 +245,6 @@ export default function Station4() {
             Selecciona uno de los retos para demostrar tu compromiso con la
             conservación del agua.
           </p>
-          <Button onClick={handleSimulateComplete}>Simular Finalización</Button>
         </div>
       </ResponsiveBackground>
     );

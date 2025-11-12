@@ -192,15 +192,6 @@ export default function Station8() {
     router.push("/");
   };
   
-  const handleSimulateComplete = () => {
-    unlockStation(stationId + 1);
-    toast({
-      title: `¡Estación ${stationId} Completada!`,
-      description: "Has simulado la finalización. ¡Escoge tu premio!",
-    });
-    setIsPrizeModalOpen(true);
-  };
-  
   if (selectedChallenge) {
     return <ChallengeScreen challengeId={selectedChallenge} onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete(selectedChallenge)} />
   }
@@ -245,7 +236,6 @@ export default function Station8() {
               );
             })}
           </div>
-           <Button onClick={handleSimulateComplete}>Simular Finalización</Button>
         </div>
         
          {/* Yara Character and Dialog */}

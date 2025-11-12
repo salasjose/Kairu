@@ -522,19 +522,6 @@ export default function Station1() {
   }
 
   const stationCompletedChallenges = completedChallenges[stationId] || {};
-  
-    const handleSimulateComplete = () => {
-    stationChallenges.forEach(challenge => {
-      completeChallenge(stationId, challenge, null);
-    });
-    unlockStation(stationId + 1);
-    toast({
-      title: `¡Estación ${stationId} Completada!`,
-      description: "¡Has completado todos los retos! Escoge tu premio.",
-    });
-    setIsPrizeModalOpen(true);
-  };
-
 
   return (
     <>
@@ -611,10 +598,6 @@ export default function Station1() {
               </Card>
             </button>
           )})}
-        </div>
-
-        <div className="mt-4 max-w-md mx-auto space-y-4">
-           <Button onClick={handleSimulateComplete}>Simular Finalización</Button>
         </div>
       </div>
       

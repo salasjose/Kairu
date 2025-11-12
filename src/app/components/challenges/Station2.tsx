@@ -369,15 +369,6 @@ export default function Station2() {
     setIsPrizeModalOpen(false);
     router.push("/");
   };
-  
-  const handleSimulateComplete = () => {
-    unlockStation(stationId + 1);
-    toast({
-      title: `¡Estación ${stationId} Completada!`,
-      description: "Has simulado la finalización. ¡Escoge tu premio!",
-    });
-    setIsPrizeModalOpen(true);
-  };
 
   if (selectedDay !== null) {
     const dayIndex = selectedDay - 1;
@@ -449,7 +440,6 @@ export default function Station2() {
               {days.slice(4, 7).map((_, index) => renderDayButton(index + 4))}
             </div>
              <p className="text-sm text-muted-foreground mt-4">MECÁNICA: Cada vez que subas tu foto, pasadas 24 horas se activará el siguiente candado para continuar.</p>
-             <Button onClick={handleSimulateComplete} className="mt-4">Simular Finalización</Button>
           </div>
           
         </div>

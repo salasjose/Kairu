@@ -344,15 +344,6 @@ export default function Station3() {
     router.push("/");
   };
   
-  const handleSimulateComplete = () => {
-    unlockStation(stationId + 1);
-    toast({
-      title: `¡Estación ${stationId} Completada!`,
-      description: "Has simulado la finalización. ¡Escoge tu premio!",
-    });
-    setIsPrizeModalOpen(true);
-  };
-
   if (selectedChallenge === "game") {
     return (
       <RecyclingGame
@@ -432,7 +423,6 @@ export default function Station3() {
               Selecciona uno de los retos para demostrar cómo gestionas los
               residuos. ¡Al terminar, volverás al mapa!
             </p>
-            <Button onClick={handleSimulateComplete}>Simular Finalización</Button>
           </div>
 
         </div>
