@@ -133,6 +133,24 @@ const ChallengeDetail = ({
       setVideoUrl(null);
     }
   };
+  
+  const handleSaveAndReturn = () => {
+    const isUrlChallenge = challengeId === 'video-separate' || challengeId === 'photos-crafts';
+    
+    if (isUrlChallenge) {
+        if (!url.trim()) {
+            toast({
+                title: "Reto Incompleto",
+                description: "Debes ingresar la URL de tu video/publicación.",
+                variant: "destructive",
+            });
+            return;
+        }
+        toast({ title: "Progreso Guardado", description: "La URL ha sido guardada."});
+    }
+
+    onBack();
+  };
 
   const handleCompleteClick = () => {
     if (challengeId === "video-cleanup" && !videoUrl) {
@@ -213,29 +231,22 @@ const ChallengeDetail = ({
               {title}
             </h3>
             <div className="mx-auto mb-6 w-full max-w-sm h-auto aspect-video bg-black rounded-lg border-4 border-white shadow-md flex items-center justify-center">
-              {videoUrl && (challengeId === 'video-separate' || challengeId === 'photos-crafts') ? (
-                <iframe
-                  src={videoUrl}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="rounded-lg w-full h-full"
-                ></iframe>
-              ) : videoUrl && challengeId === 'video-cleanup' ? (
-                <video
-                  src={videoUrl}
-                  controls
-                  className="w-full h-full rounded-md bg-black"
-                />
-              ) : challengeId !== 'photos-crafts' ? (
-                 <Image
-                  src={image}
-                  alt={description}
-                  width={400}
-                  height={300}
-                  className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto"
-                  data-ai-hint={imageHint}
-                />
-              ) : null }
+              {videoUrl ? (
+                 (challengeId === 'video-separate' || challengeId === 'photos-crafts') && videoUrl.includes("youtube.com/embed") ? (
+                    <iframe
+                        src={videoUrl}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="rounded-lg w-full h-full"
+                    ></iframe>
+                 ) : (
+                    <video
+                        src={videoUrl}
+                        controls
+                        className="w-full h-full rounded-md bg-black"
+                    />
+                 )
+              ) : null}
             </div>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               {description}
@@ -243,10 +254,16 @@ const ChallengeDetail = ({
 
             <div className="mb-6">{renderChallengeInput()}</div>
 
-            <Button onClick={handleCompleteClick} size="lg">
-              <CheckCircle className="mr-2" />
-              Completar Reto
-            </Button>
+            {challengeId === 'photos-crafts' ? (
+                <Button onClick={handleSaveAndReturn} size="lg">
+                    Guardar
+                </Button>
+            ) : (
+                <Button onClick={handleCompleteClick} size="lg">
+                  <CheckCircle className="mr-2" />
+                  Completar Reto
+                </Button>
+            )}
           </CardContent>
         </Card>
       </div>
