@@ -258,6 +258,7 @@ export default function Station2() {
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
   const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
 
   const [showYaraDialog, setShowYaraDialog] = useState(false);
   const yaraMessage = "¡Llegamos a ImpacTrack! Aquí aprenderás que cada acción deja huella. Observa tu entorno, registra tus buenas prácticas y demuestra que tu impacto puede ser positivo. ¡Haz que tus pasos cuenten por el planeta!";
@@ -267,6 +268,10 @@ export default function Station2() {
     (p) => p.id === "sostenibilidad-background"
   );
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const scheduleYaraDialog = useCallback(() => {
     if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
@@ -292,13 +297,14 @@ export default function Station2() {
   }, [storageKey]);
 
   useEffect(() => {
-    if (storageKey) {
+    if (isClient && storageKey) {
       const savedProgress = localStorage.getItem(storageKey);
+      let loadedDays: DayState[] = initialDays;
       if (savedProgress) {
         try {
           const parsedProgress = JSON.parse(savedProgress) as DayState[];
           if (Array.isArray(parsedProgress) && parsedProgress.length === 7) {
-            setDays(parsedProgress);
+            loadedDays = parsedProgress;
           }
         } catch {
           // ignore parsing errors, use initial state
@@ -306,42 +312,49 @@ export default function Station2() {
       } else {
         localStorage.setItem(storageKey, JSON.stringify(initialDays));
       }
-    } else {
+      
+      const now = Date.now();
+      const updatedDays = loadedDays.map(day => {
+          if (day.status === "locked" && day.unlockTime && now >= day.unlockTime) {
+            return { ...day, status: "unlocked" };
+          }
+          return day;
+      });
+
+      setDays(updatedDays);
+      if (JSON.stringify(updatedDays) !== JSON.stringify(loadedDays)) {
+         localStorage.setItem(storageKey, JSON.stringify(updatedDays));
+      }
+
+    } else if (!storageKey) {
         // No user, reset to initial state
         setDays(initialDays);
     }
-  }, [storageKey]);
+  }, [storageKey, isClient]);
 
-  const checkUnlocks = useCallback(() => {
-    let changed = false;
-    const now = Date.now();
-
-    setDays((currentDays) => {
-      const newDays = [...currentDays];
-      let hasChanged = false;
-      newDays.forEach((day, index) => {
-        if (day.status === "locked" && day.unlockTime && now >= day.unlockTime) {
-          newDays[index] = { ...newDays[index], status: "unlocked" };
-          hasChanged = true;
-        }
-      });
-
-      if (hasChanged && storageKey) {
-        localStorage.setItem(storageKey, JSON.stringify(newDays));
-      }
-      return hasChanged ? newDays : currentDays;
-    });
-  }, [storageKey]);
 
   useEffect(() => {
-    const interval = setInterval(checkUnlocks, 1000 * 60); // Check for unlocks every minute
-    // Run on mount inside a useEffect to avoid hydration errors
-    const initialCheckTimer = setTimeout(checkUnlocks, 1);
-    return () => {
-      clearInterval(interval)
-      clearTimeout(initialCheckTimer);
-    };
-  }, [checkUnlocks]);
+    if (!isClient) return;
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setDays(currentDays => {
+          const newDays = currentDays.map(day => {
+              if (day.status === "locked" && day.unlockTime && now >= day.unlockTime) {
+                  return { ...day, status: "unlocked" };
+              }
+              return day;
+          });
+          
+          if(JSON.stringify(newDays) !== JSON.stringify(currentDays) && storageKey) {
+              localStorage.setItem(storageKey, JSON.stringify(newDays));
+          }
+          return newDays;
+      });
+    }, 1000 * 30); // Check for unlocks every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [isClient, storageKey]);
 
   const handleDayComplete = (dayIndex: number, photoUrl: string) => {
     const newDays = [...days];
@@ -373,6 +386,14 @@ export default function Station2() {
     setIsPrizeModalOpen(false);
     router.push("/");
   };
+
+  if (!isClient) {
+     return (
+       <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden">
+          Cargando estación...
+       </div>
+     );
+  }
 
   if (selectedDay !== null) {
     const dayIndex = selectedDay - 1;
