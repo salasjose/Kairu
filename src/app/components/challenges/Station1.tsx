@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Camera, CheckCircle, Upload, Video, X } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle, Upload, Video } from "lucide-react";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import ChallengeContainer from "../ChallengeContainer";
@@ -461,7 +461,7 @@ export default function Station1() {
     if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
     yaraTimerRef.current = setTimeout(() => {
       setShowYaraDialog(true);
-      const hideTimer = setTimeout(() => setShowYaraDialog(false), 15000); 
+      const hideTimer = setTimeout(() => setShowYaraDialog(false), 20000); 
     }, 1000); 
 
   }, []);
@@ -593,7 +593,7 @@ export default function Station1() {
       </ResponsiveBackground>
       
        {/* Yara Character and Dialog */}
-      <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4">
+      <div className="absolute bottom-4 right-4 md:right-8 lg:right-12 z-20 flex items-end gap-0 md:gap-2 pointer-events-none">
         <AnimatePresence>
             {showYaraDialog && (
               <motion.div
@@ -601,12 +601,12 @@ export default function Station1() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}
                   transition={{ duration: 0.5 }}
-                  className="w-64 mb-4"
+                  className="w-64 md:w-80 mb-4"
               >
                   <Card className="p-3 shadow-lg bg-white/95 relative">
                       <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium"/>
                        {/* Speech bubble arrow */}
-                      <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
+                      <div className="absolute bottom-[-10px] right-4 md:right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
                   </Card>
               </motion.div>
             )}
@@ -616,7 +616,7 @@ export default function Station1() {
             <motion.div
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0, transition: { delay: 0.5, duration: 0.8 } }}
-                className="w-24 h-auto md:w-32"
+                className="w-24 h-auto md:w-32 self-end"
             >
                 <Image
                     src={yaraCharacterImage.imageUrl}
