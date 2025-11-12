@@ -524,7 +524,7 @@ export default function Station1() {
 
   return (
     <>
-    <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
+    <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {biodiversidadBgImage && (
           <Image
             src={biodiversidadBgImage.imageUrl}
