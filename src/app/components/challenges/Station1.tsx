@@ -17,6 +17,7 @@ import PrizeDialog from "../PrizeDialog";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
+import { useUser } from "@/firebase/hooks";
 
 
 const faunaImage = PlaceHolderImages.find((p) => p.id === "fauna-capybara");
@@ -161,9 +162,12 @@ const PhotoSlot = ({
 
 
 const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: () => void }) => {
-  const STORAGE_KEY_FLORA = "kairu-station1-flora";
-  const STORAGE_KEY_FAUNA = "kairu-station1-fauna";
-
+  const { user } = useUser();
+  const getStorageKey = useCallback((type: 'flora' | 'fauna') => 
+    user ? `kairu-station1-${type}-${user.uid}` : null,
+    [user]
+  );
+  
   const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>([]);
   const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>([]);
 
@@ -173,9 +177,12 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    const floraKey = getStorageKey('flora');
+    const faunaKey = getStorageKey('fauna');
+    if (!floraKey || !faunaKey) return;
     try {
-      const savedFlora = localStorage.getItem(STORAGE_KEY_FLORA);
-      const savedFauna = localStorage.getItem(STORAGE_KEY_FAUNA);
+      const savedFlora = localStorage.getItem(floraKey);
+      const savedFauna = localStorage.getItem(faunaKey);
       setFloraPhotos(savedFlora ? JSON.parse(savedFlora) : Array(4).fill(null));
       setFaunaPhotos(savedFauna ? JSON.parse(savedFauna) : Array(4).fill(null));
     } catch (e) {
@@ -183,16 +190,17 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
       setFloraPhotos(Array(4).fill(null));
       setFaunaPhotos(Array(4).fill(null));
     }
-  }, []);
+  }, [getStorageKey]);
 
   const updatePhotos = (type: "flora" | "fauna", newPhotos: (string | null)[]) => {
+    const key = getStorageKey(type);
+    if (!key) return;
     if (type === "flora") {
       setFloraPhotos(newPhotos);
-      localStorage.setItem(STORAGE_KEY_FLORA, JSON.stringify(newPhotos));
     } else {
       setFaunaPhotos(newPhotos);
-      localStorage.setItem(STORAGE_KEY_FAUNA, JSON.stringify(newPhotos));
     }
+    localStorage.setItem(key, JSON.stringify(newPhotos));
   };
 
   const handleAddPhotoClick = (type: "flora" | "fauna", index: number) => {
@@ -313,7 +321,8 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
 };
 
 const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: () => void }) => {
-  const STORAGE_KEY_HABITAT = "kairu-station1-habitat";
+  const { user } = useUser();
+  const storageKey = user ? `kairu-station1-habitat-${user.uid}` : null;
   
   const [habitatPhotos, setHabitatPhotos] = useState<(string | null)[]>([]);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -322,18 +331,20 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (!storageKey) return;
     try {
-      const savedPhotos = localStorage.getItem(STORAGE_KEY_HABITAT);
+      const savedPhotos = localStorage.getItem(storageKey);
       setHabitatPhotos(savedPhotos ? JSON.parse(savedPhotos) : Array(4).fill(null));
     } catch (e) {
       console.error("Failed to load photos from localStorage", e);
       setHabitatPhotos(Array(4).fill(null));
     }
-  }, []);
+  }, [storageKey]);
 
   const updatePhotos = (newPhotos: (string | null)[]) => {
+    if (!storageKey) return;
     setHabitatPhotos(newPhotos);
-    localStorage.setItem(STORAGE_KEY_HABITAT, JSON.stringify(newPhotos));
+    localStorage.setItem(storageKey, JSON.stringify(newPhotos));
   };
 
 

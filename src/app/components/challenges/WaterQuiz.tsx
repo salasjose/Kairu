@@ -7,8 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { AlertCircle, ArrowLeft, Lightbulb, Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
-
-const QUIZ_STORAGE_KEY = 'kairu-water-quiz-progress';
+import { useUser } from "@/firebase/hooks";
 
 type Question = {
   question: string;
@@ -42,6 +41,8 @@ interface QuizState {
 }
 
 export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge }: WaterQuizProps) {
+  const { user } = useUser();
+  const storageKey = user ? `kairu-water-quiz-progress-${user.uid}` : null;
   const [quizState, setQuizState] = useState<QuizState>({ lives: 3, lastLostTime: null });
   const [isBlocked, setIsBlocked] = useState(false);
   
@@ -54,30 +55,14 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge }: Wat
   const [lifelines, setLifelines] = useState({ fiftyFifty: 1, hint: 1 });
   const [visibleOptions, setVisibleOptions] = useState<string[]>([]);
 
-  useEffect(() => {
-    const savedState = localStorage.getItem(QUIZ_STORAGE_KEY);
-    if (savedState) {
-      const parsed = JSON.parse(savedState) as QuizState;
-      setQuizState(parsed);
-      if(parsed.lives <= 0 && parsed.lastLostTime) {
-        const timePassed = Date.now() - parsed.lastLostTime;
-        if (timePassed < 24 * 60 * 60 * 1000) {
-            setIsBlocked(true);
-        } else {
-            // Reset lives if 24 hours have passed
-            updateQuizState({ lives: 3, lastLostTime: null });
-        }
-      }
-    }
-    startNewGame();
-  }, []);
-
-  const updateQuizState = (newState: Partial<QuizState>) => {
+  const updateQuizState = useCallback((newState: Partial<QuizState>) => {
     const updatedState = { ...quizState, ...newState };
     setQuizState(updatedState);
-    localStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify(updatedState));
-  }
-
+    if (storageKey) {
+      localStorage.setItem(storageKey, JSON.stringify(updatedState));
+    }
+  }, [quizState, storageKey]);
+  
   const startNewGame = useCallback(() => {
     setShuffledQuestions([...questions].sort(() => Math.random() - 0.5).slice(0, 10));
     setCurrentQuestionIndex(0);
@@ -87,6 +72,28 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge }: Wat
     setIsAnswered(false);
     setLifelines({ fiftyFifty: 1, hint: 1 });
   }, []);
+
+  useEffect(() => {
+    if (storageKey) {
+      const savedState = localStorage.getItem(storageKey);
+      if (savedState) {
+        const parsed = JSON.parse(savedState) as QuizState;
+        setQuizState(parsed);
+        if(parsed.lives <= 0 && parsed.lastLostTime) {
+          const timePassed = Date.now() - parsed.lastLostTime;
+          if (timePassed < 24 * 60 * 60 * 1000) {
+              setIsBlocked(true);
+          } else {
+              // Reset lives if 24 hours have passed
+              updateQuizState({ lives: 3, lastLostTime: null });
+          }
+        }
+      }
+    } else {
+      setQuizState({ lives: 3, lastLostTime: null });
+    }
+    startNewGame();
+  }, [storageKey]);
 
   const currentQuestion = useMemo(() => shuffledQuestions[currentQuestionIndex], [shuffledQuestions, currentQuestionIndex]);
 

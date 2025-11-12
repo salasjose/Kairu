@@ -1,9 +1,9 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import { useUser } from '@/firebase/hooks';
 
-const CHALLENGE_PROGRESS_KEY = 'kairu-challenge-progress';
+const CHALLENGE_PROGRESS_KEY_PREFIX = 'kairu-challenge-progress-';
 
 type ChallengeInfo = {
   completed: boolean;
@@ -18,20 +18,31 @@ type ChallengeProgress = {
 
 export function useChallengeProgress() {
   const [completedChallenges, setCompletedChallenges] = useState<ChallengeProgress>({});
+  const { user } = useUser();
+  const storageKey = user ? `${CHALLENGE_PROGRESS_KEY_PREFIX}${user.uid}` : null;
 
   useEffect(() => {
-    try {
-      const savedProgress = localStorage.getItem(CHALLENGE_PROGRESS_KEY);
-      if (savedProgress) {
-        const parsedProgress = JSON.parse(savedProgress);
-        setCompletedChallenges(parsedProgress);
+    if (storageKey) {
+      try {
+        const savedProgress = localStorage.getItem(storageKey);
+        if (savedProgress) {
+          const parsedProgress = JSON.parse(savedProgress);
+          setCompletedChallenges(parsedProgress);
+        } else {
+          setCompletedChallenges({}); // Reset if no data for this user
+        }
+      } catch (error) {
+        console.error("Failed to load challenge progress from localStorage", error);
+        setCompletedChallenges({});
       }
-    } catch (error) {
-      console.error("Failed to load challenge progress from localStorage", error);
+    } else {
+      // If no user, progress should be empty
+      setCompletedChallenges({});
     }
-  }, []);
+  }, [storageKey]);
 
   const completeChallenge = useCallback((stationId: number, challengeName: string, imageUrl: string | null = null) => {
+    if (!storageKey) return;
     setCompletedChallenges(prev => {
       const stationProgress = prev[stationId] ? { ...prev[stationId] } : {};
       
@@ -43,24 +54,26 @@ export function useChallengeProgress() {
       const newProgress = { ...prev, [stationId]: stationProgress };
 
       try {
-        localStorage.setItem(CHALLENGE_PROGRESS_KEY, JSON.stringify(newProgress));
+        localStorage.setItem(storageKey, JSON.stringify(newProgress));
       } catch (error) {
         console.error("Failed to save challenge progress to localStorage", error);
       }
       
       return newProgress;
     });
-  }, []);
+  }, [storageKey]);
   
   const resetChallengeProgress = useCallback(() => {
-    const initialProgress = {};
-    setCompletedChallenges(initialProgress);
-    try {
-      localStorage.setItem(CHALLENGE_PROGRESS_KEY, JSON.stringify(initialProgress));
-    } catch (error) {
-      console.error("Failed to reset challenge progress in localStorage", error);
+    if (storageKey) {
+      const initialProgress = {};
+      setCompletedChallenges(initialProgress);
+      try {
+        localStorage.removeItem(storageKey);
+      } catch (error) {
+        console.error("Failed to reset challenge progress in localStorage", error);
+      }
     }
-  }, []);
+  }, [storageKey]);
 
   return { completedChallenges, completeChallenge, resetChallengeProgress };
 }

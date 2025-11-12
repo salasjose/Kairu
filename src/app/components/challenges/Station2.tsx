@@ -15,8 +15,7 @@ import AddPhotoDialog from "./AddPhotoDialog";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-
-const STORAGE_KEY_STATION2 = "kairu-station2-progress";
+import { useUser } from "@/firebase/hooks";
 
 type DayStatus = "locked" | "unlocked" | "completed";
 
@@ -251,6 +250,9 @@ const PhotoUploadChallenge = ({
 
 export default function Station2() {
   const stationId = 2;
+  const { user } = useUser();
+  const storageKey = user ? `kairu-station2-progress-${user.uid}` : null;
+
   const [days, setDays] = useState<DayState[]>(initialDays);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
@@ -284,26 +286,31 @@ export default function Station2() {
 
   const updateAndSaveChanges = useCallback((newDays: DayState[]) => {
     setDays(newDays);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY_STATION2, JSON.stringify(newDays));
+    if (storageKey) {
+      localStorage.setItem(storageKey, JSON.stringify(newDays));
     }
-  }, []);
+  }, [storageKey]);
 
   useEffect(() => {
-    const savedProgress = localStorage.getItem(STORAGE_KEY_STATION2);
-    if (savedProgress) {
-      try {
-        const parsedProgress = JSON.parse(savedProgress) as DayState[];
-        if (Array.isArray(parsedProgress) && parsedProgress.length === 7) {
-          setDays(parsedProgress);
+    if (storageKey) {
+      const savedProgress = localStorage.getItem(storageKey);
+      if (savedProgress) {
+        try {
+          const parsedProgress = JSON.parse(savedProgress) as DayState[];
+          if (Array.isArray(parsedProgress) && parsedProgress.length === 7) {
+            setDays(parsedProgress);
+          }
+        } catch {
+          // ignore parsing errors, use initial state
         }
-      } catch {
-        // ignore parsing errors, use initial state
+      } else {
+        localStorage.setItem(storageKey, JSON.stringify(initialDays));
       }
     } else {
-      localStorage.setItem(STORAGE_KEY_STATION2, JSON.stringify(initialDays));
+        // No user, reset to initial state
+        setDays(initialDays);
     }
-  }, []);
+  }, [storageKey]);
 
   const checkUnlocks = useCallback(() => {
     let changed = false;
@@ -319,14 +326,12 @@ export default function Station2() {
         }
       });
 
-      if (hasChanged) {
-        if (typeof window !== "undefined") {
-          localStorage.setItem(STORAGE_KEY_STATION2, JSON.stringify(newDays));
-        }
+      if (hasChanged && storageKey) {
+        localStorage.setItem(storageKey, JSON.stringify(newDays));
       }
       return hasChanged ? newDays : currentDays;
     });
-  }, []);
+  }, [storageKey]);
 
   useEffect(() => {
     const interval = setInterval(checkUnlocks, 1000 * 60); // Check for unlocks every minute

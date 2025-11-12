@@ -10,6 +10,7 @@ import { toast } from '@/hooks/use-toast';
 import { WasteItem, wasteItemsData } from '@/lib/data';
 import Image from 'next/image';
 import type { LucideIcon } from 'lucide-react';
+import { useUser } from '@/firebase/hooks';
 
 type WasteCategory = 'recycle' | 'organic' | 'trash';
 
@@ -289,31 +290,36 @@ const GameDragAndDrop = ({ onGameWin, onRestartRequest }: { onGameWin: () => voi
 
 
 export default function WasteClassificationGameContainer({ gameId, onComplete, onBack }: { gameId: string; onComplete: () => void; onBack: () => void; }) {
+  const { user } = useUser();
+  const storageKey = user ? `${GAME_STORAGE_KEY_PREFIX}${gameId}-${user.uid}` : null;
+  
   const [pageState, setPageState] = useState<'playing' | 'won' | 'locked'>('playing');
   const [key, setKey] = useState(0); 
   const [gameState, setGameState] = useState<GameState>({ lives: 3, lockoutUntil: null });
   const [lockoutTimeLeft, setLockoutTimeLeft] = useState<string>("");
 
-  const storageKey = `${GAME_STORAGE_KEY_PREFIX}${gameId}`;
-
   const updateGameState = useCallback((newState: Partial<GameState>) => {
     setGameState(prev => {
         const updatedState = { ...prev, ...newState };
-        localStorage.setItem(storageKey, JSON.stringify(updatedState));
+        if (storageKey) {
+            localStorage.setItem(storageKey, JSON.stringify(updatedState));
+        }
         return updatedState;
     });
   }, [storageKey]);
 
   useEffect(() => {
-    const savedState = localStorage.getItem(storageKey);
-    if (savedState) {
-        const parsedState: GameState = JSON.parse(savedState);
-        setGameState(parsedState);
-        if (parsedState.lockoutUntil && parsedState.lockoutUntil > Date.now()) {
-            setPageState('locked');
+    if (storageKey) {
+        const savedState = localStorage.getItem(storageKey);
+        if (savedState) {
+            const parsedState: GameState = JSON.parse(savedState);
+            setGameState(parsedState);
+            if (parsedState.lockoutUntil && parsedState.lockoutUntil > Date.now()) {
+                setPageState('locked');
+            }
+        } else {
+            localStorage.setItem(storageKey, JSON.stringify({ lives: 3, lockoutUntil: null }));
         }
-    } else {
-        localStorage.setItem(storageKey, JSON.stringify({ lives: 3, lockoutUntil: null }));
     }
   }, [storageKey, key]);
 

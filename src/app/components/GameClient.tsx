@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { SignUpFormSchema } from './auth/SignUpForm';
 import { z } from 'zod';
+import { useChallengeProgress } from '@/hooks/use-challenge-progress';
 
 interface PlayerState {
   id: string;
@@ -105,6 +106,7 @@ export default function GameClient() {
   const auth = useAuth();
   const { resetProgress } = useStationProgress();
   const { clearCart } = usePrizeCart();
+  const { resetChallengeProgress } = useChallengeProgress();
   const mapBackground = PlaceHolderImages.find(p => p.id === 'map-background');
 
 
@@ -194,6 +196,8 @@ export default function GameClient() {
     await signOut(auth);
     setPlayerState(null);
     setIsNewUser(true);
+    clearCart();
+    resetChallengeProgress();
   }
 
   if (userLoading || isFetchingPlayer) {

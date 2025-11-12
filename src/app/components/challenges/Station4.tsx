@@ -15,6 +15,7 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
 import ResponsiveBackground from "../ResponsiveBackground";
+import { useUser } from "@/firebase/hooks";
 
 const challenges = {
   quiz: {
@@ -32,8 +33,6 @@ const challenges = {
 
 type ChallengeId = keyof typeof challenges;
 
-const STORAGE_KEY_POST = "kairu-station4-post-url";
-
 const PostChallenge = ({
   onComplete,
   onBack,
@@ -41,20 +40,18 @@ const PostChallenge = ({
   onComplete: () => void;
   onBack: () => void;
 }) => {
+  const { user } = useUser();
+  const storageKey = user ? `kairu-station4-post-url-${user.uid}` : null;
+
   const [url, setUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const waterPostImage = PlaceHolderImages.find((p) => p.id === "water-post");
   
-  useEffect(() => {
-    const savedUrl = localStorage.getItem(STORAGE_KEY_POST);
-    if (savedUrl) {
-      handleUrlChange(savedUrl);
-    }
-  }, []);
-
-  const handleUrlChange = (newUrl: string) => {
+  const handleUrlChange = useCallback((newUrl: string) => {
     setUrl(newUrl);
-    localStorage.setItem(STORAGE_KEY_POST, newUrl);
+    if (storageKey) {
+      localStorage.setItem(storageKey, newUrl);
+    }
 
     if (newUrl.trim() && (newUrl.startsWith("http://") || newUrl.startsWith("https://"))) {
       if (newUrl.includes("youtube.com/watch?v=")) {
@@ -69,7 +66,16 @@ const PostChallenge = ({
     } else {
       setVideoUrl(null);
     }
-  };
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (storageKey) {
+      const savedUrl = localStorage.getItem(storageKey);
+      if (savedUrl) {
+        handleUrlChange(savedUrl);
+      }
+    }
+  }, [storageKey, handleUrlChange]);
 
 
   const handleSubmit = () => {
@@ -300,5 +306,3 @@ export default function Station4() {
     </>
   );
 }
-
-    

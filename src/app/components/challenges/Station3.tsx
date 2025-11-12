@@ -24,6 +24,7 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
+import { useUser } from "@/firebase/hooks";
 
 const STORAGE_KEY_PREFIX = "kairu-station3-challenge-";
 
@@ -44,12 +45,14 @@ const ChallengeDetail = ({
   imageHint: string;
   challengeId: ChallengeId;
 }) => {
-  const storageKey = `${STORAGE_KEY_PREFIX}${challengeId}`;
+  const { user } = useUser();
+  const storageKey = user ? `${STORAGE_KEY_PREFIX}${challengeId}-${user.uid}` : null;
   const [url, setUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (!storageKey) return;
     const savedData = localStorage.getItem(storageKey);
     if (savedData) {
         if (challengeId === 'video-cleanup' && savedData.startsWith('data:video')) {
@@ -76,21 +79,23 @@ const ChallengeDetail = ({
       reader.onload = (e) => {
         const dataUrl = e.target?.result as string;
         setVideoUrl(dataUrl);
-        try {
-            localStorage.setItem(storageKey, dataUrl);
-             toast({
-                title: "Video Cargado",
-                description: "Tu video ha sido guardado para esta sesión.",
-            });
-        } catch (error) {
-            console.error("Error saving video to localStorage", error);
-            localStorage.removeItem(storageKey); // Clear item if saving failed
-            setVideoUrl(URL.createObjectURL(file)); 
-            toast({
-                title: "Video Cargado (Temporalmente)",
-                description: "El video es muy grande para guardarlo, se perderá si sales de la página.",
-                variant: "destructive"
-            });
+        if (storageKey) {
+            try {
+                localStorage.setItem(storageKey, dataUrl);
+                 toast({
+                    title: "Video Cargado",
+                    description: "Tu video ha sido guardado para esta sesión.",
+                });
+            } catch (error) {
+                console.error("Error saving video to localStorage", error);
+                localStorage.removeItem(storageKey); // Clear item if saving failed
+                setVideoUrl(URL.createObjectURL(file)); 
+                toast({
+                    title: "Video Cargado (Temporalmente)",
+                    description: "El video es muy grande para guardarlo, se perderá si sales de la página.",
+                    variant: "destructive"
+                });
+            }
         }
       };
       reader.readAsDataURL(file);
@@ -107,7 +112,7 @@ const ChallengeDetail = ({
     const newUrl = e.target.value;
     setUrl(newUrl);
 
-    if (challengeId === 'video-separate' || challengeId === 'photos-crafts') {
+    if ((challengeId === 'video-separate' || challengeId === 'photos-crafts') && storageKey) {
       localStorage.setItem(storageKey, newUrl);
     }
     
