@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
 import { useUser } from "@/firebase/hooks";
+import ResponsiveBackground from "../ResponsiveBackground";
 
 
 const faunaImage = PlaceHolderImages.find((p) => p.id === "fauna-capybara");
@@ -524,80 +525,72 @@ export default function Station1() {
 
   return (
     <>
-    <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
-      <picture className="absolute inset-0 z-0">
-        <source media="(min-width: 768px)" srcSet="/backgrounds/Biodiversidad.png" />
-        <img
-          src="/backgrounds/Biodiversidad360x649.png"
-          alt="Fondo de la estación Bionexus"
-          className="w-full h-full object-cover"
-        />
-      </picture>
+      <ResponsiveBackground>
+        <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
+          <div className="bg-white/90 backdrop-blur-sm text-primary font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
+            <h1 className="text-4xl md:text-5xl">Bionexus</h1>
+          </div>
+          
+          <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
+            {(Object.keys(challenges) as (keyof typeof challenges)[]).map((reto, index) => {
+              const challengeProgress = stationCompletedChallenges[reto];
+              const isCompleted = !!challengeProgress;
+              const imageUrl = challengeProgress?.imageUrl;
 
-      <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
-        <div className="bg-white/90 backdrop-blur-sm text-primary font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
-          <h1 className="text-4xl md:text-5xl">Bionexus</h1>
-        </div>
-        
-        <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
-          {(Object.keys(challenges) as (keyof typeof challenges)[]).map((reto, index) => {
-            const challengeProgress = stationCompletedChallenges[reto];
-            const isCompleted = !!challengeProgress;
-            const imageUrl = challengeProgress?.imageUrl;
-
-            return (
-            <button
-              key={reto}
-              onClick={() => handleChallengeSelection(reto)}
-              className={cn(
-                "relative w-full transition-transform duration-300 hover:scale-105",
-                index === 0 ? "md:-rotate-6" : "md:rotate-6"
-              )}
-            >
-              <div className="absolute inset-0 bg-white shadow-2xl rounded-2xl transform -rotate-1"></div>
-              <Card
-                className="relative
-                           w-[88vw] max-w-[420px] h-64
-                           md:w-80 md:h-80
-                           lg:w-96 lg:h-96
-                           rounded-2xl shadow-2xl
-                           flex flex-col items-center justify-center
-                           p-6 border-4 border-gray-200 overflow-hidden"
+              return (
+              <button
+                key={reto}
+                onClick={() => handleChallengeSelection(reto)}
+                className={cn(
+                  "relative w-full transition-transform duration-300 hover:scale-105",
+                  index === 0 ? "md:-rotate-6" : "md:rotate-6"
+                )}
               >
-                 {isCompleted && imageUrl && (
-                  <>
-                    <Image
-                      src={imageUrl}
-                      alt={`Completado: ${challenges[reto].title}`}
-                      fill
-                      className="object-cover z-0"
-                    />
-                    <div className="absolute inset-0 bg-black/40 z-10"></div>
-                  </>
-                )}
-                <div className="relative z-20 text-center">
-                    <CardHeader>
-                        <CardTitle className={cn(
-                            "font-kalam text-4xl md:text-5xl",
-                            isCompleted && imageUrl ? "text-white" : "text-primary"
-                        )}>
-                            {challenges[reto].title}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className={cn("text-base md:text-lg", isCompleted && imageUrl && "text-gray-200")}>
-                        <p>{challenges[reto].description}</p>
-                    </CardContent>
-                </div>
-                 {isCompleted && (
-                    <div className="absolute top-3 right-3 z-30 bg-green-500 rounded-full p-2.5 shadow-lg">
-                        <CheckCircle className="text-white h-6 w-6" />
-                    </div>
-                )}
-              </Card>
-            </button>
-          )})}
+                <div className="absolute inset-0 bg-white shadow-2xl rounded-2xl transform -rotate-1"></div>
+                <Card
+                  className="relative
+                            w-[88vw] max-w-[420px] h-64
+                            md:w-80 md:h-80
+                            lg:w-96 lg:h-96
+                            rounded-2xl shadow-2xl
+                            flex flex-col items-center justify-center
+                            p-6 border-4 border-gray-200 overflow-hidden"
+                >
+                  {isCompleted && imageUrl && (
+                    <>
+                      <Image
+                        src={imageUrl}
+                        alt={`Completado: ${challenges[reto].title}`}
+                        fill
+                        className="object-cover z-0"
+                      />
+                      <div className="absolute inset-0 bg-black/40 z-10"></div>
+                    </>
+                  )}
+                  <div className="relative z-20 text-center">
+                      <CardHeader>
+                          <CardTitle className={cn(
+                              "font-kalam text-4xl md:text-5xl",
+                              isCompleted && imageUrl ? "text-white" : "text-primary"
+                          )}>
+                              {challenges[reto].title}
+                          </CardTitle>
+                      </CardHeader>
+                      <CardContent className={cn("text-base md:text-lg", isCompleted && imageUrl && "text-gray-200")}>
+                          <p>{challenges[reto].description}</p>
+                      </CardContent>
+                  </div>
+                  {isCompleted && (
+                      <div className="absolute top-3 right-3 z-30 bg-green-500 rounded-full p-2.5 shadow-lg">
+                          <CheckCircle className="text-white h-6 w-6" />
+                      </div>
+                  )}
+                </Card>
+              </button>
+            )})}
+          </div>
         </div>
-      </div>
+      </ResponsiveBackground>
       
        {/* Yara Character and Dialog */}
       <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4">
@@ -637,7 +630,6 @@ export default function Station1() {
         )}
       </div>
 
-    </div>
     <PrizeDialog 
         open={isPrizeModalOpen} 
         stationId={stationId} 
