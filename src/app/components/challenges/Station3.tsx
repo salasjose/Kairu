@@ -212,22 +212,22 @@ const ChallengeDetail = ({
             <h3 className="font-bold text-2xl text-primary font-headline mb-4">
               {title}
             </h3>
-            <div className="flex justify-center mb-6">
-              {videoUrl && challengeId === "video-separate" ? (
-                  <iframe
-                    src={videoUrl}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto aspect-video bg-black"
-                  ></iframe>
-              ) : videoUrl && challengeId === "video-cleanup" ? (
-                  <video
-                    src={videoUrl}
-                    controls
-                    className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto bg-black"
-                  />
-              ) : (
-                <Image
+            <div className="mx-auto mb-6 w-full max-w-sm h-auto aspect-video bg-black rounded-lg border-4 border-white shadow-md flex items-center justify-center">
+              {videoUrl && (challengeId === 'video-separate' || challengeId === 'photos-crafts') ? (
+                <iframe
+                  src={videoUrl}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="rounded-lg w-full h-full"
+                ></iframe>
+              ) : videoUrl && challengeId === 'video-cleanup' ? (
+                <video
+                  src={videoUrl}
+                  controls
+                  className="w-full h-full rounded-md bg-black"
+                />
+              ) : challengeId !== 'photos-crafts' ? (
+                 <Image
                   src={image}
                   alt={description}
                   width={400}
@@ -235,7 +235,7 @@ const ChallengeDetail = ({
                   className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto"
                   data-ai-hint={imageHint}
                 />
-              )}
+              ) : null }
             </div>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               {description}
