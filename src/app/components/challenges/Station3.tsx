@@ -189,7 +189,7 @@ const ChallengeDetail = ({
             <LinkIcon className="h-10 text-muted-foreground" />
             <Input
               type="url"
-              placeholder="https://ejemplo.com/tu-video"
+              placeholder="Pega el enlace de tu post aquí..."
               value={url}
               onChange={handleUrlChange}
             />
@@ -213,21 +213,19 @@ const ChallengeDetail = ({
               {title}
             </h3>
             <div className="flex justify-center mb-6">
-              {videoUrl && challengeId !== "photos-crafts" ? (
-                challengeId === "video-cleanup" ? (
-                  <video
-                    src={videoUrl}
-                    controls
-                    className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto bg-black"
-                  />
-                ) : (
+              {videoUrl && challengeId === "video-separate" ? (
                   <iframe
                     src={videoUrl}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                     className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto aspect-video bg-black"
                   ></iframe>
-                )
+              ) : videoUrl && challengeId === "video-cleanup" ? (
+                  <video
+                    src={videoUrl}
+                    controls
+                    className="rounded-lg border-4 border-white shadow-md w-full max-w-sm h-auto bg-black"
+                  />
               ) : (
                 <Image
                   src={image}
