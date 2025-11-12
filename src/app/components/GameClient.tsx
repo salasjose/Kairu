@@ -16,13 +16,24 @@ import { signOut } from 'firebase/auth';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useStationProgress } from '@/hooks/use-station-progress';
 import { usePrizeCart } from '@/hooks/use-prize-cart';
-import { Settings } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
+import { Settings, Trash2 } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger, SheetFooter } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { SignUpFormSchema } from './auth/SignUpForm';
 import { z } from 'zod';
 import { useChallengeProgress } from '@/hooks/use-challenge-progress';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface PlayerState {
   id: string;
@@ -34,6 +45,11 @@ interface PlayerState {
 
 const SettingsPanel = ({ playerState, setPlayerState }: { playerState: PlayerState; setPlayerState: (state: PlayerState) => void; }) => {
     const db = useFirestore();
+    const { resetProgress } = useStationProgress();
+    const { clearCart } = usePrizeCart();
+    const { resetChallengeProgress } = useChallengeProgress();
+    const [isAlertOpen, setIsAlertOpen] = useState(false);
+
     const avatars = useMemo(() => {
         return PlaceHolderImages.filter(p => p.id.startsWith('avatar-')).map(p => ({
             id: p.id,
@@ -63,7 +79,37 @@ const SettingsPanel = ({ playerState, setPlayerState }: { playerState: PlayerSta
         }
     };
     
+    const handleClearCacheAndReset = () => {
+        resetChallengeProgress();
+        clearCart();
+        resetProgress();
+        toast({
+            title: "Caché Limpiado",
+            description: "Todo el progreso local ha sido eliminado. La aplicación se recargará."
+        });
+        setTimeout(() => {
+            window.location.reload();
+        }, 1500);
+        setIsAlertOpen(false);
+    };
+
     return (
+      <>
+        <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Esta acción eliminará todo tu progreso guardado en este navegador (retos completados, fotos subidas, premios). Tu cuenta y progreso en la nube no se verán afectados. La aplicación se recargará.
+                </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleClearCacheAndReset}>Sí, limpiar caché</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
         <SheetContent>
             <SheetHeader>
                 <SheetTitle>Configuración</SheetTitle>
@@ -95,7 +141,14 @@ const SettingsPanel = ({ playerState, setPlayerState }: { playerState: PlayerSta
                     ))}
                 </div>
             </div>
+            <SheetFooter className="mt-auto">
+                <Button variant="destructive" className="w-full" onClick={() => setIsAlertOpen(true)}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Limpiar Caché y Reiniciar
+                </Button>
+            </SheetFooter>
         </SheetContent>
+      </>
     );
 };
 
