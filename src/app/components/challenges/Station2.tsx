@@ -347,7 +347,7 @@ export default function Station2() {
     const nextDayIndex = dayIndex + 1;
     if (nextDayIndex < days.length) {
       if (newDays[nextDayIndex].status === "locked") {
-        newDays[nextDayIndex].unlockTime = Date.now() + 15 * 60 * 1000; // 15 minutes from now
+        newDays[nextDayIndex].unlockTime = Date.now() + 2 * 60 * 1000; // 2 minutes from now
       }
     }
 
