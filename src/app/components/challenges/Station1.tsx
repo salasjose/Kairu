@@ -168,8 +168,8 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
     [user]
   );
   
-  const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>([]);
-  const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>([]);
+  const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>(Array(4).fill(null));
+  const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>(Array(4).fill(null));
 
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAddPhotoDialogOpen, setIsAddPhotoDialogOpen] = useState(false);
@@ -240,22 +240,19 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
     setIsCameraOpen(true);
   };
 
+  const areAllPhotosUploaded = floraPhotos.every(p => p !== null) && faunaPhotos.every(p => p !== null);
 
   const onChallengeComplete = () => {
-    const hasFlora = floraPhotos.some(p => p !== null);
-    const hasFauna = faunaPhotos.some(p => p !== null);
-    if(hasFlora && hasFauna) {
+    if (areAllPhotosUploaded) {
       const firstFlora = floraPhotos.find(p => p !== null);
-      // Pass a representative image URL to the station completion logic
       onStationComplete();
-      return true;
+    } else {
+      toast({
+        title: "Reto Incompleto",
+        description: "Debes subir las 8 fotos (4 de flora y 4 de fauna) para completar el reto.",
+        variant: "destructive"
+      })
     }
-    toast({
-      title: "Casi listo",
-      description: "Debes subir al menos una foto de flora y una de fauna para completar el reto.",
-      variant: "destructive"
-    })
-    return false;
   }
 
   return (
@@ -310,7 +307,7 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
                 </section>
             </div>
              <div className="mt-8 text-center">
-                <Button size="lg" onClick={onChallengeComplete}>
+                <Button size="lg" onClick={onChallengeComplete} disabled={!areAllPhotosUploaded}>
                     Completar Reto
                 </Button>
             </div>
@@ -324,7 +321,7 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
   const { user } = useUser();
   const storageKey = user ? `kairu-station1-habitat-${user.uid}` : null;
   
-  const [habitatPhotos, setHabitatPhotos] = useState<(string | null)[]>([]);
+  const [habitatPhotos, setHabitatPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAddPhotoDialogOpen, setIsAddPhotoDialogOpen] = useState(false);
   const [photoToAddIndex, setPhotoToAddIndex] = useState<number | null>(null);
@@ -384,18 +381,18 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
     setIsCameraOpen(true);
   };
 
+  const areAllPhotosUploaded = habitatPhotos.every(p => p !== null);
+
   const onChallengeComplete = () => {
-    const firstPhoto = habitatPhotos.find(p => p !== null);
-    if (firstPhoto) {
+    if (areAllPhotosUploaded) {
       onStationComplete();
-      return true;
+    } else {
+      toast({
+        title: "Reto Incompleto",
+        description: "Debes subir las 4 fotos para completar el reto.",
+        variant: "destructive"
+      });
     }
-    toast({
-      title: "Casi listo",
-      description: "Debes subir al menos una foto de tu comedero/bebedero para completar el reto.",
-      variant: "destructive"
-    });
-    return false;
   };
 
   return (
@@ -440,7 +437,7 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
           </section>
         </div>
          <div className="mt-8 text-center">
-            <Button size="lg" onClick={onChallengeComplete}>
+            <Button size="lg" onClick={onChallengeComplete} disabled={!areAllPhotosUploaded}>
                 Completar Reto
             </Button>
         </div>
@@ -479,46 +476,48 @@ export default function Station1() {
 
 
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
-  const stationChallenges = Object.keys(challenges);
+  const [lastCompletedChallenge, setLastCompletedChallenge] = useState<string | null>(null);
   
   const handleChallengeSelection = (challenge: string) => {
     setSelectedChallenge(challenge);
   }
 
-  const handleStationComplete = (challengeName: string, imageUrl?: string | null) => {
+  const handleChallengeComplete = (challengeName: string, imageUrl?: string | null) => {
     completeChallenge(stationId, challengeName, imageUrl);
-    setSelectedChallenge(null); // Go back to challenge selection
+    setLastCompletedChallenge(challengeName); // Keep track of which challenge triggered the prize modal
+    setIsPrizeModalOpen(true);
+  };
+  
+  const handleClaimPrize = () => {
+    setIsPrizeModalOpen(false);
+    setSelectedChallenge(null); // Go back to challenge selection screen
 
-    // Use a callback with setCompletedChallenges to get the most up-to-date state
-    const currentCompleted = [...Object.keys(completedChallenges[stationId] || {}), challengeName];
+    // Check if ALL challenges for this station are now complete
+    const stationChallenges = Object.keys(challenges);
+    const currentCompleted = [...Object.keys(completedChallenges[stationId] || {}), lastCompletedChallenge];
     const allChallengesDone = stationChallenges.every(ch => currentCompleted.includes(ch));
     
     if (allChallengesDone) {
         unlockStation(stationId + 1);
         toast({
             title: `¡Estación ${stationId} Completada!`,
-            description: "¡Has completado todos los retos! Escoge tu premio.",
+            description: "¡Has completado todos los retos! Regresando al mapa...",
         });
-        setIsPrizeModalOpen(true);
+        router.push("/"); // Navigate to map only when all challenges are done
     } else {
         toast({
-            title: `¡Reto '${challengeName}' Completado!`,
-            description: "¡Bien hecho! Vuelve cuando quieras para completar los demás.",
+            title: `¡Reto '${lastCompletedChallenge}' Completado!`,
+            description: "¡Bien hecho! Vuelve para completar el otro reto.",
         });
     }
   };
   
-  const handleClaimPrize = () => {
-    setIsPrizeModalOpen(false);
-    router.push("/");
-  };
-  
   if (selectedChallenge === "Fauna y Flora") {
-    return <PhotoChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={() => handleStationComplete("Fauna y Flora")} />;
+    return <PhotoChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={() => handleChallengeComplete("Fauna y Flora")} />;
   }
 
   if (selectedChallenge === "Cuidado Animal") {
-    return <HabitatChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={() => handleStationComplete("Cuidado Animal")} />;
+    return <HabitatChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={() => handleChallengeComplete("Cuidado Animal")} />;
   }
 
   const stationCompletedChallenges = completedChallenges[stationId] || {};
@@ -648,3 +647,5 @@ export default function Station1() {
     </>
   );
 }
+
+    
