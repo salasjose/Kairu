@@ -243,7 +243,7 @@ export default function Station7() {
               <CardTitle className="text-center text-2xl font-bold">Reto: Negocios Verdes en Acción</CardTitle>
             </CardHeader>
             <CardContent className="text-center space-y-4">
-              <p className="text-muted-foreground">Añade hasta 4 negocios sostenibles que conozcas en tu entorno.</p>
+              <p className="text-muted-foreground">Te invitamos a colocar 4 Negocios que reconozcas como sostenibles.</p>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {businesses.map((business, index) => (

@@ -168,7 +168,6 @@ export default function Station6() {
                     <CardTitle className="text-center text-2xl font-bold">Reto: Negocios Exitosos</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center">
-                    <p className="text-muted-foreground mb-4">Descubre cómo emprendimientos aplican la Economía Circular para transformar residuos en oportunidades. Graba y carga un video explicando tu hallazgo.</p>
                      
                     <div className="bg-black rounded-lg border-4 border-white shadow-md mx-auto mb-6 w-full max-w-sm h-auto aspect-video flex items-center justify-center">
                       {isLoading ? (
