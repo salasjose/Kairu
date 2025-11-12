@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { useStationProgress } from "@/hooks/use-station-progress";
@@ -222,7 +222,7 @@ const PhotoUploadChallenge = ({
                 ) : (
                     <Image
                         src={sustainablePracticeImage?.imageUrl ?? "https://picsum.photos/seed/sustainability-day/400/300"}
-                        alt="Práctica sostenible"
+                        alt={sustainablePracticeImage?.imageHint ?? "sustainable practice"}
                         fill
                         className="object-cover rounded-md opacity-20"
                         data-ai-hint={sustainablePracticeImage?.imageHint ?? "sustainable practice"}
@@ -335,8 +335,12 @@ export default function Station2() {
 
   useEffect(() => {
     const interval = setInterval(checkUnlocks, 1000 * 60); // Check for unlocks every minute
-    checkUnlocks();
-    return () => clearInterval(interval);
+    // Run on mount inside a useEffect to avoid hydration errors
+    const initialCheckTimer = setTimeout(checkUnlocks, 1);
+    return () => {
+      clearInterval(interval)
+      clearTimeout(initialCheckTimer);
+    };
   }, [checkUnlocks]);
 
   const handleDayComplete = (dayIndex: number, photoUrl: string) => {
@@ -439,7 +443,7 @@ export default function Station2() {
             <div className="flex flex-wrap justify-center gap-4 md:gap-6">
               {days.slice(4, 7).map((_, index) => renderDayButton(index + 4))}
             </div>
-             <p className="text-sm text-muted-foreground mt-4">MECÁNICA: Cada vez que subas tu foto, pasadas 24 horas se activará el siguiente candado para continuar.</p>
+             <p className="text-sm text-muted-foreground mt-4">MECÁNICA: Cada vez que subas tu foto, pasadas 2 minutos se activará el siguiente candado para continuar.</p>
           </div>
           
         </div>
