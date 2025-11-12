@@ -22,7 +22,6 @@ import { useUser } from "@/firebase/hooks";
 
 const faunaImage = PlaceHolderImages.find((p) => p.id === "fauna-capybara");
 const habitatImage = PlaceHolderImages.find((p) => p.id === "habitat-build-1");
-const biodiversidadBgImage = PlaceHolderImages.find((p) => p.id === "biodiversidad-background");
 const yaraCharacterImage = PlaceHolderImages.find((p) => p.id === 'char-yara');
 
 const challenges = {
@@ -244,7 +243,6 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
 
   const onChallengeComplete = () => {
     if (areAllPhotosUploaded) {
-      const firstFlora = floraPhotos.find(p => p !== null);
       onStationComplete();
     } else {
       toast({
@@ -482,8 +480,10 @@ export default function Station1() {
     setSelectedChallenge(challenge);
   }
 
-  const handleChallengeComplete = (challengeName: string, imageUrl?: string | null) => {
-    completeChallenge(stationId, challengeName, imageUrl);
+  const handleChallengeComplete = (challengeName: string) => {
+    const challengeInfo = challenges[challengeName as keyof typeof challenges];
+    const imageInfo = PlaceHolderImages.find((p) => p.id === (challengeName === "Fauna y Flora" ? "fauna-capybara" : "habitat-build-1"));
+    completeChallenge(stationId, challengeName, imageInfo?.imageUrl);
     setLastCompletedChallenge(challengeName); // Keep track of which challenge triggered the prize modal
     setIsPrizeModalOpen(true);
   };
@@ -494,8 +494,8 @@ export default function Station1() {
 
     // Check if ALL challenges for this station are now complete
     const stationChallenges = Object.keys(challenges);
-    const currentCompleted = [...Object.keys(completedChallenges[stationId] || {}), lastCompletedChallenge];
-    const allChallengesDone = stationChallenges.every(ch => currentCompleted.includes(ch));
+    const currentCompletedForStation = Object.keys(completedChallenges[stationId] || {});
+    const allChallengesDone = stationChallenges.every(ch => currentCompletedForStation.includes(ch));
     
     if (allChallengesDone) {
         unlockStation(stationId + 1);
@@ -525,16 +525,15 @@ export default function Station1() {
   return (
     <>
     <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
-      {biodiversidadBgImage && (
-          <Image
-            src={biodiversidadBgImage.imageUrl}
-            alt={biodiversidadBgImage.description}
-            fill
-            style={{objectFit: 'cover'}}
-            className="z-0 opacity-80"
-            data-ai-hint={biodiversidadBgImage.imageHint}
-          />
-      )}
+      <picture className="absolute inset-0 z-0">
+        <source media="(min-width: 768px)" srcSet="/backgrounds/Biodiversidad.png" />
+        <img
+          src="/backgrounds/Biodiversidad360x649.png"
+          alt="Fondo de la estación Bionexus"
+          className="w-full h-full object-cover"
+        />
+      </picture>
+
       <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
         <div className="bg-white/90 backdrop-blur-sm text-primary font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
           <h1 className="text-4xl md:text-5xl">Bionexus</h1>
@@ -647,5 +646,3 @@ export default function Station1() {
     </>
   );
 }
-
-    
