@@ -181,7 +181,7 @@ const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack
       </div>
        <div className="grid md:grid-cols-3 gap-8 items-start">
          <div 
-           className="md:col-span-2 grid grid-cols-10 gap-1 bg-card border p-2 rounded-lg aspect-square select-none"
+           className="md:col-span-2 grid grid-cols-10 gap-1 bg-card border p-2 rounded-lg aspect-square select-none touch-none"
            onMouseUp={endSelection}
            onMouseLeave={endSelection}
            onTouchEnd={endSelection}
