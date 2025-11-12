@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Camera, CheckCircle, Upload, Video } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle, Upload, Video, X } from "lucide-react";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import ChallengeContainer from "../ChallengeContainer";
@@ -192,16 +192,26 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
     }
   }, [getStorageKey]);
 
-  const updatePhotos = (type: "flora" | "fauna", newPhotos: (string | null)[]) => {
+  const updatePhotos = useCallback((type: "flora" | "fauna", index: number, imageUrl: string) => {
     const key = getStorageKey(type);
     if (!key) return;
+
+    const updater = (setter: React.Dispatch<React.SetStateAction<(string | null)[]>>) => {
+        setter(prevPhotos => {
+            const newPhotos = [...prevPhotos];
+            newPhotos[index] = imageUrl;
+            localStorage.setItem(key, JSON.stringify(newPhotos));
+            return newPhotos;
+        });
+    };
+
     if (type === "flora") {
-      setFloraPhotos(newPhotos);
+        updater(setFloraPhotos);
     } else {
-      setFaunaPhotos(newPhotos);
+        updater(setFaunaPhotos);
     }
-    localStorage.setItem(key, JSON.stringify(newPhotos));
-  };
+}, [getStorageKey]);
+
 
   const handleAddPhotoClick = (type: "flora" | "fauna", index: number) => {
     setPhotoToAdd({ type, index });
@@ -211,9 +221,7 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
   const handleCapture = (imageUrl: string) => {
     if (photoToAdd) {
         const { type, index } = photoToAdd;
-        const currentPhotos = type === "flora" ? [...floraPhotos] : [...faunaPhotos];
-        currentPhotos[index] = imageUrl;
-        updatePhotos(type, currentPhotos);
+        updatePhotos(type, index, imageUrl);
     }
     setIsCameraOpen(false);
     setPhotoToAdd(null);
@@ -638,3 +646,5 @@ export default function Station1() {
     </>
   );
 }
+
+    
