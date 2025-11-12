@@ -135,6 +135,8 @@ const LearnChallenge = ({ onBack, onComplete }: { onBack: () => void; onComplete
                           )}
                         </div>
                         
+                        <p className="text-muted-foreground">Te invito a compartir los videos de Diseño Sostenible que te apasionen. Copia y pega tu URL.</p>
+
                         <div className="flex gap-2 max-w-md mx-auto">
                             <LinkIcon className="h-10 text-muted-foreground" />
                             <Input
