@@ -17,8 +17,8 @@ import PrizeDialog from "../PrizeDialog";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore, useStorage } from "@/firebase/hooks";
-import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
-import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject, FirebaseStorage } from "firebase/storage";
 import ResponsiveBackground from "../ResponsiveBackground";
 import { useChallengeProgress } from "@/hooks/use-challenge-progress";
 
@@ -45,20 +45,15 @@ const resizeImage = (dataUrl: string, maxWidth: number): Promise<string> => {
   });
 };
 
-const uploadDataUrlAsBlob = async (dataUrl: string, userId: string, path: string): Promise<string> => {
-  const storage = useStorage()();
-  if (!storage) throw new Error("Storage not available");
-  
+const uploadDataUrlAsBlob = async (storage: FirebaseStorage, dataUrl: string, userId: string, path: string): Promise<string> => {
   const storagePathRef = storageRef(storage, `${userId}/${path}_${Date.now()}.jpeg`);
-
   const response = await fetch(dataUrl);
   const blob = await response.blob();
-
   const snapshot = await uploadBytes(storagePathRef, blob, { contentType: 'image/jpeg' });
-  
   const downloadUrl = await getDownloadURL(snapshot.ref);
   return downloadUrl;
 };
+
 
 type PhotoData = {
   url: string;
@@ -216,6 +211,7 @@ const PhotoSlot = ({
 const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: () => void }) => {
   const { user } = useUser();
   const db = useFirestore();
+  const storage = useStorage()();
 
   const [photos, setPhotos] = useState<{flora: (PhotoData | null)[], fauna: (PhotoData | null)[]}>({ flora: Array(4).fill(null), fauna: Array(4).fill(null) });
 
@@ -232,12 +228,9 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
             const docSnap = await getDoc(userDocRef);
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                if (data.station1FloraPhotos) {
-                    setPhotos(prev => ({...prev, flora: data.station1FloraPhotos}));
-                }
-                if (data.station1FaunaPhotos) {
-                    setPhotos(prev => ({...prev, fauna: data.station1FaunaPhotos}));
-                }
+                const floraPhotos = data.station1FloraPhotos ? data.station1FloraPhotos.map((p: any) => p || null) : Array(4).fill(null);
+                const faunaPhotos = data.station1FaunaPhotos ? data.station1FaunaPhotos.map((p: any) => p || null) : Array(4).fill(null);
+                setPhotos({ flora: floraPhotos, fauna: faunaPhotos });
             }
         } catch (error) {
             console.error("Error fetching photos from Firestore:", error);
@@ -259,7 +252,7 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
   }, [user, db]);
 
   const handleProcessPhoto = async (dataUrl: string) => {
-    if (!photoToAdd || !user) return;
+    if (!photoToAdd || !user || !storage) return;
     const { type, index } = photoToAdd;
 
     try {
@@ -267,7 +260,7 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
         toast({ title: "Subiendo imagen..." });
         
         const storagePath = `station1/photos/${type}/${type}_${index}`;
-        const downloadUrl = await uploadDataUrlAsBlob(resizedUrl, user.uid, storagePath);
+        const downloadUrl = await uploadDataUrlAsBlob(storage, resizedUrl, user.uid, storagePath);
 
         const newPhotoData: PhotoData = {
           url: downloadUrl,
@@ -279,10 +272,9 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
             const newPhotosForType = [...prev[type]];
             newPhotosForType[index] = newPhotoData;
             updatePhotosInFirestore(type, newPhotosForType); 
+            toast({ title: "¡Foto guardada!", description: "Tu imagen se ha subido correctamente." });
             return { ...prev, [type]: newPhotosForType };
         });
-
-        toast({ title: "¡Foto guardada!", description: "Tu imagen se ha subido correctamente." });
         
     } catch (e) {
       console.error("Error al procesar la foto:", e);
@@ -312,6 +304,7 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
       };
       reader.readAsDataURL(file);
     }
+    event.target.value = '';
   };
 
   const handleUploadClick = () => {
@@ -325,7 +318,7 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
   };
   
   const deletePhoto = useCallback(async (type: "flora" | "fauna", index: number) => {
-    if (!user) return;
+    if (!user || !storage) return;
 
     const photoToDelete = photos[type][index];
     if (!photoToDelete) return;
@@ -335,8 +328,7 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
     setPhotos(prev => ({ ...prev, [type]: newPhotosForType }));
 
     try {
-        const storage = useStorage()();
-        if(storage && photoToDelete.storagePath) {
+        if(photoToDelete.storagePath) {
             const imageRef = storageRef(storage, photoToDelete.storagePath);
             await deleteObject(imageRef);
         }
@@ -345,7 +337,7 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
     }
     
     updatePhotosInFirestore(type, newPhotosForType);
-  }, [user, photos, updatePhotosInFirestore, useStorage]);
+  }, [user, photos, storage, updatePhotosInFirestore]);
 
 
   const areAllPhotosUploaded = photos.flora.every(p => p !== null) && photos.fauna.every(p => p !== null);
@@ -427,6 +419,7 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
 const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: () => void }) => {
   const { user } = useUser();
   const db = useFirestore();
+  const storage = useStorage()();
   
   const [habitatPhotos, setHabitatPhotos] = useState<(PhotoData | null)[]>(Array(4).fill(null));
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -452,7 +445,8 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
         try {
             const docSnap = await getDoc(userDocRef);
             if (docSnap.exists() && docSnap.data().station1HabitatPhotos) {
-                setHabitatPhotos(docSnap.data().station1HabitatPhotos);
+                const loadedPhotos = docSnap.data().station1HabitatPhotos.map((p: any) => p || null);
+                setHabitatPhotos(loadedPhotos);
             }
         } catch (error) {
             console.error("Error fetching habitat photos from Firestore:", error);
@@ -462,14 +456,14 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
   }, [user, db]);
 
   const handleProcessPhoto = async (dataUrl: string) => {
-    if (photoToAddIndex === null || !user) return;
+    if (photoToAddIndex === null || !user || !storage) return;
     
     try {
         const resizedUrl = await resizeImage(dataUrl, 1024);
         toast({ title: "Subiendo imagen..." });
         
         const storagePath = `station1/habitat/photos/habitat_${photoToAddIndex}`;
-        const downloadUrl = await uploadDataUrlAsBlob(resizedUrl, user.uid, storagePath);
+        const downloadUrl = await uploadDataUrlAsBlob(storage, resizedUrl, user.uid, storagePath);
 
         const newPhotoData: PhotoData = {
           url: downloadUrl,
@@ -479,10 +473,10 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
 
         const newPhotos = [...habitatPhotos];
         newPhotos[photoToAddIndex] = newPhotoData;
+        
         setHabitatPhotos(newPhotos);
-        await updatePhotosInDb(newPhotos);
-
         toast({ title: "¡Foto guardada!", description: "Tu imagen se ha subido correctamente." });
+        await updatePhotosInDb(newPhotos);
 
     } catch(e) {
         console.error("Error al procesar la foto:", e);
@@ -512,6 +506,7 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
       };
       reader.readAsDataURL(file);
     }
+    event.target.value = '';
   };
 
   const handleUploadClick = () => {
@@ -525,7 +520,7 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
   };
   
   const deletePhoto = useCallback(async (index: number) => {
-    if (!user) return;
+    if (!user || !storage) return;
     const photoToDelete = habitatPhotos[index];
     if (!photoToDelete) return;
     
@@ -534,8 +529,7 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
     setHabitatPhotos(newPhotos);
     
     try {
-        const storage = useStorage()();
-        if (storage && photoToDelete.storagePath) {
+        if (photoToDelete.storagePath) {
             const imageRef = storageRef(storage, photoToDelete.storagePath);
             await deleteObject(imageRef);
         }
@@ -544,7 +538,7 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
     }
     
     updatePhotosInDb(newPhotos);
-  }, [user, habitatPhotos, updatePhotosInDb, useStorage]);
+  }, [user, habitatPhotos, storage, updatePhotosInDb]);
 
 
   const areAllPhotosUploaded = habitatPhotos.every(p => p !== null);
