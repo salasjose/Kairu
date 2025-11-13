@@ -196,32 +196,33 @@ const PhotoChallenge = ({ user, db, onBack, onStationComplete }: ChallengeProps)
     fetchPhotos();
   }, [user, db]);
 
-  const updatePhotos = useCallback(async (type: "flora" | "fauna", index: number, imageUrl: string) => {
+  const updatePhotos = async (type: "flora" | "fauna", index: number, imageUrl: string) => {
     if (!user || !db) {
         toast({ title: "Error", description: "No se puede guardar. Usuario no autenticado.", variant: "destructive"});
         return;
     };
 
-    const updater = async (setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, dbField: string, currentPhotos: (string|null)[]) => {
-        const newPhotos = [...currentPhotos];
-        newPhotos[index] = imageUrl;
-        setter(newPhotos);
+    const currentPhotos = type === 'flora' ? floraPhotos : faunaPhotos;
+    const newPhotos = [...currentPhotos];
+    newPhotos[index] = imageUrl;
 
-        try {
-            const userDocRef = doc(db, 'users', user.uid);
-            await setDoc(userDocRef, { [dbField]: newPhotos }, { merge: true });
-        } catch (error) {
-            console.error(`Failed to save ${type} photos to Firestore:`, error);
-            toast({ title: "Error al guardar", description: "No se pudo guardar la imagen en la nube.", variant: "destructive" });
+    const dbField = type === 'flora' ? 'station1FloraPhotos' : 'station1FaunaPhotos';
+
+    try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { [dbField]: newPhotos }, { merge: true });
+        
+        if (type === 'flora') {
+            setFloraPhotos(newPhotos);
+        } else {
+            setFaunaPhotos(newPhotos);
         }
-    };
-
-    if (type === "flora") {
-        await updater(setFloraPhotos, 'station1FloraPhotos', floraPhotos);
-    } else {
-        await updater(setFaunaPhotos, 'station1FaunaPhotos', faunaPhotos);
+        
+    } catch (error) {
+        console.error(`Failed to save ${type} photos to Firestore:`, error);
+        toast({ title: "Error al guardar", description: "No se pudo guardar la imagen en la nube.", variant: "destructive" });
     }
-  }, [user, db, floraPhotos, faunaPhotos]);
+  };
 
 
   const handleAddPhotoClick = (type: "flora" | "fauna", index: number) => {
@@ -366,18 +367,18 @@ const HabitatChallenge = ({ user, db, onBack, onStationComplete }: ChallengeProp
     try {
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { station1HabitatPhotos: newPhotos }, { merge: true });
+        setHabitatPhotos(newPhotos);
     } catch (error) {
         console.error("Failed to save habitat photos to Firestore:", error);
         toast({ title: "Error al guardar", description: "No se pudo guardar la imagen en la nube.", variant: "destructive" });
     }
   };
 
-  const handleCapture = (imageUrl: string) => {
+  const handleCapture = async (imageUrl: string) => {
     if (photoToAddIndex !== null) {
       const newPhotos = [...habitatPhotos];
       newPhotos[photoToAddIndex] = imageUrl;
-      setHabitatPhotos(newPhotos);
-      updatePhotosInDb(newPhotos);
+      await updatePhotosInDb(newPhotos);
     }
     setIsCameraOpen(false);
     setPhotoToAddIndex(null);
