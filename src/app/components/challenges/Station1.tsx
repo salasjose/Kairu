@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -211,7 +210,7 @@ const PhotoSlot = ({
 const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: () => void }) => {
   const { user } = useUser();
   const db = useFirestore();
-  const storage = useStorage()();
+  const storage = useStorage();
 
   const [photos, setPhotos] = useState<{flora: (PhotoData | null)[], fauna: (PhotoData | null)[]}>({ flora: Array(4).fill(null), fauna: Array(4).fill(null) });
 
@@ -268,13 +267,17 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
           uploadedAt: new Date().toISOString(),
         };
 
+        const newPhotosForType = [...photos[type]];
+        newPhotosForType[index] = newPhotoData;
+
         setPhotos(prev => {
-            const newPhotosForType = [...prev[type]];
-            newPhotosForType[index] = newPhotoData;
-            updatePhotosInFirestore(type, newPhotosForType); 
-            toast({ title: "¡Foto guardada!", description: "Tu imagen se ha subido correctamente." });
-            return { ...prev, [type]: newPhotosForType };
+            const newState = { ...prev, [type]: newPhotosForType };
+            return newState;
         });
+
+        await updatePhotosInFirestore(type, newPhotosForType); 
+        
+        toast({ title: "¡Foto guardada!", description: "Tu imagen se ha subido correctamente." });
         
     } catch (e) {
       console.error("Error al procesar la foto:", e);
@@ -419,7 +422,7 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
 const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: () => void }) => {
   const { user } = useUser();
   const db = useFirestore();
-  const storage = useStorage()();
+  const storage = useStorage();
   
   const [habitatPhotos, setHabitatPhotos] = useState<(PhotoData | null)[]>(Array(4).fill(null));
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -475,8 +478,9 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
         newPhotos[photoToAddIndex] = newPhotoData;
         
         setHabitatPhotos(newPhotos);
-        toast({ title: "¡Foto guardada!", description: "Tu imagen se ha subido correctamente." });
         await updatePhotosInDb(newPhotos);
+
+        toast({ title: "¡Foto guardada!", description: "Tu imagen se ha subido correctamente." });
 
     } catch(e) {
         console.error("Error al procesar la foto:", e);
