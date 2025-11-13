@@ -15,7 +15,8 @@ import Station9 from '@/app/components/challenges/Station9';
 import { useUser, useFirestore } from '@/firebase/hooks';
 import Logo from '@/app/components/Logo';
 
-export default function StationPage({ params: { id } }: { params: { id: string } }) {
+export default function StationPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const stationId = parseInt(id, 10);
   const station = stations.find(s => s.id === stationId);
   const { user, loading } = useUser();
