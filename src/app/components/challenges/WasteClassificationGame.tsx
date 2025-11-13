@@ -40,7 +40,7 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 
-const GameWithImages = ({ onGameWin, onRestartRequest, gameState, updateGameState }: { onGameWin: () => void; onRestartRequest: () => void; gameState: GameState, updateGameState: (newState: Partial<GameState>) => void }) => {
+const GameWithImages = ({ onGameWin, onBack, gameState, updateGameState }: { onGameWin: () => void; onBack: () => void; gameState: GameState, updateGameState: (newState: Partial<GameState>) => void }) => {
     const [wasteItems, setWasteItems] = useState(() => shuffle([...wasteItemsData]));
     const [animations, setAnimations] = useState<Record<WasteCategory, string>>({ recycle: '', organic: '', trash: '' });
     const [timeLeft, setTimeLeft] = useState(180); // 3 minutes
@@ -51,7 +51,6 @@ const GameWithImages = ({ onGameWin, onRestartRequest, gameState, updateGameStat
 
     useEffect(() => {
         if (gameWon) {
-            toast({ title: "¡Reto Superado!", description: "Has clasificado todos los residuos. ¡Prepárate para el siguiente reto!" });
             onGameWin();
         }
     }, [gameWon, onGameWin]);
@@ -120,15 +119,15 @@ const GameWithImages = ({ onGameWin, onRestartRequest, gameState, updateGameStat
       return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
     };
 
-    if (isTimeUp) {
+    if (isTimeUp || gameState.lives <= 0) {
         return (
             <div className="w-full flex flex-col items-center justify-center text-center min-h-[300px]">
                 <AlertCircle className="w-24 h-24 text-destructive mb-4" />
-                <h2 className="text-3xl font-bold font-headline text-destructive mb-2">¡Se acabó el tiempo!</h2>
+                <h2 className="text-3xl font-bold font-headline text-destructive mb-2">{isTimeUp ? "¡Se acabó el tiempo!" : "¡Sin vidas!"}</h2>
                 <p className="text-muted-foreground text-lg mb-6">No te preocupes, la práctica hace al maestro.</p>
-                <Button onClick={onRestartRequest} size="lg">
-                    <RefreshCw className="mr-2" />
-                    Volver a Intentar
+                <Button onClick={onBack} size="lg">
+                    <ArrowLeft className="mr-2" />
+                    Volver al Menú del Reto
                 </Button>
             </div>
         )
@@ -186,7 +185,7 @@ const GameWithImages = ({ onGameWin, onRestartRequest, gameState, updateGameStat
     );
 };
 
-const GameDragAndDrop = ({ onGameWin, onRestartRequest }: { onGameWin: () => void; onRestartRequest: () => void; }) => {
+const GameDragAndDrop = ({ onGameWin, onBack }: { onGameWin: () => void; onBack: () => void; }) => {
   const [wasteItems, setWasteItems] = useState(() => shuffle([...wasteItemsData].slice(0, 20)));
   const [animations, setAnimations] = useState<Record<WasteCategory, string>>({ recycle: '', organic: '', trash: '' });
   
@@ -361,14 +360,8 @@ export default function WasteClassificationGameContainer({ gameId, onComplete, o
 
 
   const handleGameWin = useCallback(() => {
-    setPageState('won');
-    if (gameId === 'drag-and-drop' || gameId === 'classify') {
-      toast({
-          title: "¡Reto Superado!",
-          description: "Has clasificado todos los residuos correctamente. ¡Eres un experto en reciclaje!",
-      });
-    }
-  }, [gameId]);
+    onComplete();
+  }, [onComplete]);
 
   const handleRestart = useCallback(() => {
     setPageState('playing');
@@ -384,26 +377,6 @@ export default function WasteClassificationGameContainer({ gameId, onComplete, o
             <p className="text-muted-foreground text-lg mb-2">Has perdido todas tus vidas.</p>
             <p className="text-muted-foreground text-lg mb-6">Vuelve a intentarlo en: <span className="font-bold text-xl tabular-nums">{lockoutTimeLeft}</span></p>
             <Button onClick={onBack}>Volver al menú</Button>
-        </div>
-    )
-  }
-
-  if (pageState === 'won') {
-    return (
-        <div className="w-full max-w-4xl mx-auto p-4 flex flex-col items-center justify-center text-center min-h-[400px]">
-            <PartyPopper className="w-24 h-24 text-yellow-500 animate-bounce mb-4" />
-            <h2 className="text-4xl font-bold font-headline text-primary mb-2">¡Ganaste!</h2>
-            <p className="text-muted-foreground text-lg mb-6">Demostraste ser un verdadero Guardián del Planeta.</p>
-            <div className='flex gap-4'>
-                <Button onClick={handleRestart} variant="outline" size="lg">
-                    <RefreshCw className="mr-2" />
-                    Jugar de Nuevo
-                </Button>
-                <Button onClick={onComplete} size="lg">
-                    <CheckCircle className="mr-2" />
-                    Continuar Aventura
-                </Button>
-            </div>
         </div>
     )
   }
@@ -427,7 +400,7 @@ export default function WasteClassificationGameContainer({ gameId, onComplete, o
         <GameWithImages
           key={key}
           onGameWin={handleGameWin}
-          onRestartRequest={handleRestart}
+          onBack={onBack}
           gameState={gameState}
           updateGameState={updateGameState}
         />
@@ -435,7 +408,7 @@ export default function WasteClassificationGameContainer({ gameId, onComplete, o
         <GameDragAndDrop
           key={key}
           onGameWin={handleGameWin}
-          onRestartRequest={handleRestart}
+          onBack={onBack}
         />
       )}
     </div>
