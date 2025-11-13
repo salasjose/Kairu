@@ -251,6 +251,7 @@ const PhotoChallenge = ({ user, db, onBack, onStationComplete }: ChallengeProps)
         }
     };
     fetchPhotos();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, db]);
 
 
@@ -419,6 +420,7 @@ const HabitatChallenge = ({ user, db, onBack, onStationComplete }: ChallengeProp
         }
     };
     fetchPhotos();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, db]);
 
   const handleCapture = async (dataUrl: string) => {
