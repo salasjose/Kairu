@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -497,42 +498,45 @@ export default function Station1() {
 
 
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
-  const [lastCompletedChallenge, setLastCompletedChallenge] = useState<string | null>(null);
   
   const handleChallengeSelection = (challenge: string) => {
     setSelectedChallenge(challenge);
   }
 
   const handleChallengeComplete = (challengeName: string) => {
-    const challengeInfo = challenges[challengeName as keyof typeof challenges];
     const imageInfo = PlaceHolderImages.find((p) => p.id === (challengeName === "Fauna y Flora" ? "fauna-capybara" : "habitat-build-1"));
     completeChallenge(stationId, challengeName, imageInfo?.imageUrl);
-    setLastCompletedChallenge(challengeName); // Keep track of which challenge triggered the prize modal
-    setIsPrizeModalOpen(true);
+  
+    // Check if ALL challenges for this station will be complete *after* this one
+    const stationChallenges = Object.keys(challenges);
+    const currentCompletedForStation = Object.keys(completedChallenges[stationId] || {});
+    // Add the newly completed challenge to the list for the check
+    const allChallengesDone = stationChallenges.every(ch => 
+      currentCompletedForStation.includes(ch) || ch === challengeName
+    );
+
+    setSelectedChallenge(null); // Go back to challenge selection screen
+
+    if (allChallengesDone) {
+      // If all are done, show the prize modal
+      setIsPrizeModalOpen(true);
+    } else {
+      // If not all are done, just show a toast notification
+      toast({
+        title: `¡Reto '${challengeName}' Completado!`,
+        description: "¡Bien hecho! Completa el otro reto para ganar tu insignia.",
+      });
+    }
   };
   
   const handleClaimPrize = () => {
     setIsPrizeModalOpen(false);
-    setSelectedChallenge(null); // Go back to challenge selection screen
-
-    // Check if ALL challenges for this station are now complete
-    const stationChallenges = Object.keys(challenges);
-    const currentCompletedForStation = Object.keys(completedChallenges[stationId] || {});
-    const allChallengesDone = stationChallenges.every(ch => currentCompletedForStation.includes(ch));
-    
-    if (allChallengesDone) {
-        unlockStation(stationId + 1);
-        toast({
-            title: `¡Estación ${stationId} Completada!`,
-            description: "¡Has completado todos los retos! Regresando al mapa...",
-        });
-        router.push("/"); // Navigate to map only when all challenges are done
-    } else {
-        toast({
-            title: `¡Reto '${lastCompletedChallenge}' Completado!`,
-            description: "¡Bien hecho! Vuelve para completar el otro reto.",
-        });
-    }
+    unlockStation(stationId + 1);
+    toast({
+        title: `¡Estación ${stationId} Completada!`,
+        description: "¡Has completado todos los retos! Regresando al mapa...",
+    });
+    router.push("/");
   };
   
   if (selectedChallenge === "Fauna y Flora") {
@@ -660,3 +664,5 @@ export default function Station1() {
     </>
   );
 }
+
+    
