@@ -1,6 +1,7 @@
 
 'use client'
 
+import React from 'react';
 import { stations } from '@/lib/data';
 import { notFound } from 'next/navigation';
 import Station1 from '@/app/components/challenges/Station1';
@@ -15,8 +16,9 @@ import Station9 from '@/app/components/challenges/Station9';
 import { useUser, useFirestore } from '@/firebase/hooks';
 import Logo from '@/app/components/Logo';
 
-export default function StationPage({ params }: { params: { id: string } }) {
-  const stationId = parseInt(params.id, 10);
+export default function StationPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = React.use(params);
+  const stationId = parseInt(id, 10);
   const station = stations.find(s => s.id === stationId);
   const { user, loading } = useUser();
   const db = useFirestore();
