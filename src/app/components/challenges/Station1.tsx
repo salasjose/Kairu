@@ -16,14 +16,14 @@ import PrizeDialog from "../PrizeDialog";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore, useStorage } from "@/firebase/hooks";
-import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { getStorage, ref as storageRef, uploadString, getDownloadURL, deleteObject } from "firebase/storage";
 import ResponsiveBackground from "../ResponsiveBackground";
 import { useChallengeProgress } from "@/hooks/use-challenge-progress";
 
 const resizeImage = (dataUrl: string, maxWidth: number): Promise<string> => {
     return new Promise((resolve, reject) => {
-        const img = document.createElement('img');
+        const img = new (window.Image)();
         img.onload = () => {
             let { width, height } = img;
             if (width > maxWidth) {
@@ -45,7 +45,7 @@ const resizeImage = (dataUrl: string, maxWidth: number): Promise<string> => {
     });
 };
 
-const uploadImageAndGetUrl = async (
+const uploadDataUrlToStorage = async (
   userId: string,
   imageDataUrl: string,
   folder: string,
@@ -297,7 +297,7 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
   
       try {
         const folder = type === "flora" ? "flora" : "fauna";
-        const downloadUrl = await uploadImageAndGetUrl(
+        const downloadUrl = await uploadDataUrlToStorage(
           user.uid,
           imageDataUrl,
           folder,
@@ -323,6 +323,7 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
         } else {
           setFaunaPhotos(newPhotos);
         }
+         toast({ title: "¡Imagen Guardada!", description: "Tu foto se ha guardado exitosamente." });
       } catch (error) {
         console.error(`Failed to save ${type} photos to Firestore:`, error);
         toast({
@@ -334,7 +335,6 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
     },
     [user, db, floraPhotos, faunaPhotos]
   );
-
 
   const handleCapture = async (imageDataUrl: string) => {
     if (photoToAdd) {
@@ -533,7 +533,7 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
   
     if (photoToAddIndex !== null) {
       try {
-        const downloadUrl = await uploadImageAndGetUrl(
+        const downloadUrl = await uploadDataUrlToStorage(
           user.uid,
           imageDataUrl,
           "habitat",
@@ -544,6 +544,8 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
         newPhotos[photoToAddIndex] = downloadUrl;
         setHabitatPhotos(newPhotos);
         await updatePhotosInDb(newPhotos);
+        toast({ title: "¡Imagen Guardada!", description: "Tu foto se ha guardado exitosamente." });
+
       } catch (error) {
         console.error("Failed to save habitat photos:", error);
         toast({
@@ -866,4 +868,6 @@ export default function Station1() {
     </>
   );
 }
+    
+
     
