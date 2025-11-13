@@ -24,7 +24,8 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-import { useUser } from "@/firebase/hooks";
+import { useUser, useFirestore } from "@/firebase/hooks";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 const STORAGE_KEY_PREFIX = "kairu-station3-challenge-";
 
@@ -46,23 +47,71 @@ const ChallengeDetail = ({
   challengeId: ChallengeId;
 }) => {
   const { user } = useUser();
-  const storageKey = user ? `${STORAGE_KEY_PREFIX}${challengeId}-${user.uid}` : null;
+  const db = useFirestore();
   const [url, setUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const getDbFieldForChallenge = (id: ChallengeId) => {
+    switch (id) {
+        case 'video-separate': return 'station3UrlSeparate';
+        case 'photos-crafts': return 'station3UrlCrafts';
+        case 'video-cleanup': return 'station3UrlCleanup';
+        default: return null;
+    }
+  }
+
+  const handleUrlChange = useCallback((newUrl: string) => {
+    setUrl(newUrl);
+    if (newUrl.trim() && (newUrl.startsWith("http://") || newUrl.startsWith("https://"))) {
+        if (newUrl.includes("youtube.com/watch?v=")) {
+            const videoId = newUrl.split("v=")[1].split("&")[0];
+            setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
+        } else if (newUrl.includes("youtu.be/")) {
+            const videoId = newUrl.split("youtu.be/")[1].split("?")[0];
+            setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
+        } else {
+            setVideoUrl(newUrl);
+        }
+    } else {
+        setVideoUrl(null);
+    }
+  }, []);
 
   useEffect(() => {
-    if (!storageKey) return;
-    const savedData = localStorage.getItem(storageKey);
-    if (savedData) {
-        if (challengeId === 'video-cleanup' && savedData.startsWith('data:video')) {
-            setVideoUrl(savedData);
-        } else if (challengeId === 'video-separate' || challengeId === 'photos-crafts') {
-            handleUrlChange({ target: { value: savedData } } as React.ChangeEvent<HTMLInputElement>);
+    const fetchUrl = async () => {
+        const dbField = getDbFieldForChallenge(challengeId);
+        if (!user || !db || !dbField) return;
+        
+        try {
+            const userDocRef = doc(db, 'users', user.uid);
+            const docSnap = await getDoc(userDocRef);
+            if (docSnap.exists() && docSnap.data()[dbField]) {
+                const savedUrl = docSnap.data()[dbField];
+                handleUrlChange(savedUrl);
+            }
+        } catch (error) {
+            console.error(`Error fetching ${dbField} from Firestore:`, error);
         }
-    }
-  }, [challengeId, storageKey]);
+    };
+    fetchUrl();
+  }, [challengeId, user, db, handleUrlChange]);
 
+  const saveUrlToDb = async (newUrl: string) => {
+    const dbField = getDbFieldForChallenge(challengeId);
+    if (!user || !db || !dbField) {
+        toast({ title: "Error", description: "No se puede guardar. Usuario no autenticado.", variant: "destructive" });
+        return;
+    }
+    try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { [dbField]: newUrl }, { merge: true });
+        toast({ title: "Guardado", description: "La URL ha sido guardada en tu perfil." });
+    } catch (error) {
+        console.error(`Error saving ${dbField} to Firestore:`, error);
+        toast({ title: "Error al guardar", description: "No se pudo guardar la URL en la nube.", variant: "destructive" });
+    }
+  }
 
   useEffect(() => {
     return () => {
@@ -79,24 +128,7 @@ const ChallengeDetail = ({
       reader.onload = (e) => {
         const dataUrl = e.target?.result as string;
         setVideoUrl(dataUrl);
-        if (storageKey) {
-            try {
-                localStorage.setItem(storageKey, dataUrl);
-                 toast({
-                    title: "Video Cargado",
-                    description: "Tu video ha sido guardado para esta sesión.",
-                });
-            } catch (error) {
-                console.error("Error saving video to localStorage", error);
-                localStorage.removeItem(storageKey); // Clear item if saving failed
-                setVideoUrl(URL.createObjectURL(file)); 
-                toast({
-                    title: "Video Cargado (Temporalmente)",
-                    description: "El video es muy grande para guardarlo, se perderá si sales de la página.",
-                    variant: "destructive"
-                });
-            }
-        }
+        saveUrlToDb(dataUrl);
       };
       reader.readAsDataURL(file);
     } else {
@@ -107,70 +139,31 @@ const ChallengeDetail = ({
       });
     }
   };
-
-  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  
+  const handleUrlInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newUrl = e.target.value;
-    setUrl(newUrl);
-
-    if ((challengeId === 'video-separate' || challengeId === 'photos-crafts') && storageKey) {
-      localStorage.setItem(storageKey, newUrl);
-    }
-    
-    if (
-      newUrl.trim() &&
-      (newUrl.startsWith("http://") || newUrl.startsWith("https://"))
-    ) {
-      if (newUrl.includes("youtube.com/watch?v=")) {
-        const videoId = newUrl.split("v=")[1].split("&")[0];
-        setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
-      } else if (newUrl.includes("youtu.be/")) {
-        const videoId = newUrl.split("youtu.be/")[1].split("?")[0];
-        setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
-      } else {
-        setVideoUrl(newUrl);
-      }
-    } else {
-      setVideoUrl(null);
-    }
+    handleUrlChange(newUrl);
+    saveUrlToDb(newUrl);
   };
   
   const handleSaveAndReturn = () => {
-    const isUrlChallenge = challengeId === 'video-separate' || challengeId === 'photos-crafts';
-    
-    if (isUrlChallenge) {
-        if (!url.trim()) {
-            toast({
-                title: "Reto Incompleto",
-                description: "Debes ingresar la URL de tu video/publicación.",
-                variant: "destructive",
-            });
-            return;
-        }
-        toast({ title: "Progreso Guardado", description: "La URL ha sido guardada."});
-    }
-
     onBack();
   };
 
   const handleCompleteClick = () => {
-    if (challengeId === "video-cleanup" && !videoUrl) {
-      toast({
-        title: "Reto Incompleto",
-        description: "Debes cargar un video para continuar.",
-        variant: "destructive",
-      });
-      return;
+    const dbField = getDbFieldForChallenge(challengeId);
+    if (!dbField) { // For 'game' challenge
+        onComplete();
+        return;
     }
-    if (
-      (challengeId === "video-separate" || challengeId === "photos-crafts") &&
-      !url.trim()
-    ) {
-      toast({
-        title: "Reto Incompleto",
-        description: "Debes ingresar la URL de tu video/publicación.",
-        variant: "destructive",
-      });
-      return;
+
+    if (!url.trim()) {
+        toast({
+            title: "Reto Incompleto",
+            description: "Debes ingresar la URL de tu video/publicación.",
+            variant: "destructive",
+        });
+        return;
     }
     onComplete();
   };
@@ -209,7 +202,7 @@ const ChallengeDetail = ({
               type="url"
               placeholder="Pega el enlace de tu post aquí..."
               value={url}
-              onChange={handleUrlChange}
+              onChange={handleUrlInputChange}
             />
           </div>
         );

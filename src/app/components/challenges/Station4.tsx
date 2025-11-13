@@ -15,7 +15,8 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
 import ResponsiveBackground from "../ResponsiveBackground";
-import { useUser } from "@/firebase/hooks";
+import { useUser, useFirestore } from "@/firebase/hooks";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 const challenges = {
   quiz: {
@@ -41,7 +42,7 @@ const PostChallenge = ({
   onBack: () => void;
 }) => {
   const { user } = useUser();
-  const storageKey = user ? `kairu-station4-post-url-${user.uid}` : null;
+  const db = useFirestore();
 
   const [url, setUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -49,10 +50,6 @@ const PostChallenge = ({
   
   const handleUrlChange = useCallback((newUrl: string) => {
     setUrl(newUrl);
-    if (storageKey) {
-      localStorage.setItem(storageKey, newUrl);
-    }
-
     if (newUrl.trim() && (newUrl.startsWith("http://") || newUrl.startsWith("https://"))) {
       if (newUrl.includes("youtube.com/watch?v=")) {
         const videoId = newUrl.split("v=")[1].split("&")[0];
@@ -66,21 +63,38 @@ const PostChallenge = ({
     } else {
       setVideoUrl(null);
     }
-  }, [storageKey]);
+  }, []);
 
   useEffect(() => {
-    if (storageKey) {
-      const savedUrl = localStorage.getItem(storageKey);
-      if (savedUrl) {
-        handleUrlChange(savedUrl);
-      }
-    }
-  }, [storageKey, handleUrlChange]);
+    const fetchUrl = async () => {
+        if (!user || !db) return;
+        try {
+            const userDocRef = doc(db, 'users', user.uid);
+            const docSnap = await getDoc(userDocRef);
+            if (docSnap.exists() && docSnap.data().station4Url) {
+                handleUrlChange(docSnap.data().station4Url);
+            }
+        } catch (error) {
+            console.error("Error fetching station 4 URL:", error);
+        }
+    };
+    fetchUrl();
+  }, [user, db, handleUrlChange]);
 
-
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (url.trim() && (url.startsWith("http://") || url.startsWith("https://"))) {
-      onComplete();
+        if (user && db) {
+            try {
+                const userDocRef = doc(db, 'users', user.uid);
+                await setDoc(userDocRef, { station4Url: url }, { merge: true });
+                toast({ title: "URL Guardada", description: "Tu enlace ha sido guardado." });
+                onComplete();
+            } catch (error) {
+                toast({ title: "Error", description: "No se pudo guardar la URL.", variant: "destructive" });
+            }
+        } else {
+            toast({ title: "Error", description: "Debes iniciar sesión para guardar.", variant: "destructive" });
+        }
     } else {
       toast({
         title: "URL Inválida",

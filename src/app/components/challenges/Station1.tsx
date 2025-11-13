@@ -17,8 +17,9 @@ import PrizeDialog from "../PrizeDialog";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-import { useUser } from "@/firebase/hooks";
+import { useUser, useFirestore } from "@/firebase/hooks";
 import ResponsiveBackground from "../ResponsiveBackground";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 
 const faunaImage = PlaceHolderImages.find((p) => p.id === "fauna-capybara");
@@ -163,11 +164,8 @@ const PhotoSlot = ({
 
 const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: () => void }) => {
   const { user } = useUser();
-  const getStorageKey = useCallback((type: 'flora' | 'fauna') => 
-    user ? `kairu-station1-${type}-${user.uid}` : null,
-    [user]
-  );
-  
+  const db = useFirestore();
+
   const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>(Array(4).fill(null));
 
@@ -177,40 +175,46 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const floraKey = getStorageKey('flora');
-    const faunaKey = getStorageKey('fauna');
-    if (!floraKey || !faunaKey) return;
-    try {
-      const savedFlora = localStorage.getItem(floraKey);
-      const savedFauna = localStorage.getItem(faunaKey);
-      setFloraPhotos(savedFlora ? JSON.parse(savedFlora) : Array(4).fill(null));
-      setFaunaPhotos(savedFauna ? JSON.parse(savedFauna) : Array(4).fill(null));
-    } catch (e) {
-      console.error("Failed to load photos from localStorage", e);
-      setFloraPhotos(Array(4).fill(null));
-      setFaunaPhotos(Array(4).fill(null));
-    }
-  }, [getStorageKey]);
+    const fetchPhotos = async () => {
+        if (!user || !db) return;
+        const userDocRef = doc(db, 'users', user.uid);
+        try {
+            const docSnap = await getDoc(userDocRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                setFloraPhotos(data.station1FloraPhotos || Array(4).fill(null));
+                setFaunaPhotos(data.station1FaunaPhotos || Array(4).fill(null));
+            }
+        } catch (error) {
+            console.error("Error fetching photos from Firestore:", error);
+        }
+    };
+    fetchPhotos();
+  }, [user, db]);
 
-  const updatePhotos = useCallback((type: "flora" | "fauna", index: number, imageUrl: string) => {
-    const key = getStorageKey(type);
-    if (!key) return;
+  const updatePhotos = useCallback(async (type: "flora" | "fauna", index: number, imageUrl: string) => {
+    if (!user || !db) return;
 
-    const updater = (setter: React.Dispatch<React.SetStateAction<(string | null)[]>>) => {
-        setter(prevPhotos => {
-            const newPhotos = [...prevPhotos];
-            newPhotos[index] = imageUrl;
-            localStorage.setItem(key, JSON.stringify(newPhotos));
-            return newPhotos;
-        });
+    const updater = async (setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, dbField: string) => {
+        const newPhotos = [...(type === "flora" ? floraPhotos : faunaPhotos)];
+        newPhotos[index] = imageUrl;
+        setter(newPhotos);
+
+        try {
+            const userDocRef = doc(db, 'users', user.uid);
+            await setDoc(userDocRef, { [dbField]: newPhotos }, { merge: true });
+        } catch (error) {
+            console.error(`Failed to save ${type} photos to Firestore:`, error);
+            toast({ title: "Error al guardar", description: "No se pudo guardar la imagen en la nube.", variant: "destructive" });
+        }
     };
 
     if (type === "flora") {
-        updater(setFloraPhotos);
+        await updater(setFloraPhotos, 'station1FloraPhotos');
     } else {
-        updater(setFaunaPhotos);
+        await updater(setFaunaPhotos, 'station1FaunaPhotos');
     }
-}, [getStorageKey]);
+}, [user, db, floraPhotos, faunaPhotos]);
 
 
   const handleAddPhotoClick = (type: "flora" | "fauna", index: number) => {
@@ -326,7 +330,7 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
 
 const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: () => void }) => {
   const { user } = useUser();
-  const storageKey = user ? `kairu-station1-habitat-${user.uid}` : null;
+  const db = useFirestore();
   
   const [habitatPhotos, setHabitatPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -335,36 +339,46 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!storageKey) return;
+    const fetchPhotos = async () => {
+        if (!user || !db) return;
+        const userDocRef = doc(db, 'users', user.uid);
+        try {
+            const docSnap = await getDoc(userDocRef);
+            if (docSnap.exists() && docSnap.data().station1HabitatPhotos) {
+                setHabitatPhotos(docSnap.data().station1HabitatPhotos);
+            }
+        } catch (error) {
+            console.error("Error fetching habitat photos from Firestore:", error);
+        }
+    };
+    fetchPhotos();
+  }, [user, db]);
+
+  const updatePhotosInDb = async (newPhotos: (string | null)[]) => {
+    if (!user || !db) return;
     try {
-      const savedPhotos = localStorage.getItem(storageKey);
-      setHabitatPhotos(savedPhotos ? JSON.parse(savedPhotos) : Array(4).fill(null));
-    } catch (e) {
-      console.error("Failed to load photos from localStorage", e);
-      setHabitatPhotos(Array(4).fill(null));
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { station1HabitatPhotos: newPhotos }, { merge: true });
+    } catch (error) {
+        console.error("Failed to save habitat photos to Firestore:", error);
+        toast({ title: "Error al guardar", description: "No se pudo guardar la imagen en la nube.", variant: "destructive" });
     }
-  }, [storageKey]);
-
-  const updatePhotos = (newPhotos: (string | null)[]) => {
-    if (!storageKey) return;
-    setHabitatPhotos(newPhotos);
-    localStorage.setItem(storageKey, JSON.stringify(newPhotos));
-  };
-
-
-  const handleAddPhotoClick = (index: number) => {
-    setPhotoToAddIndex(index);
-    setIsAddPhotoDialogOpen(true);
   };
 
   const handleCapture = (imageUrl: string) => {
     if (photoToAddIndex !== null) {
       const newPhotos = [...habitatPhotos];
       newPhotos[photoToAddIndex] = imageUrl;
-      updatePhotos(newPhotos);
+      setHabitatPhotos(newPhotos);
+      updatePhotosInDb(newPhotos);
     }
     setIsCameraOpen(false);
     setPhotoToAddIndex(null);
+  };
+
+  const handleAddPhotoClick = (index: number) => {
+    setPhotoToAddIndex(index);
+    setIsAddPhotoDialogOpen(true);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -646,5 +660,3 @@ export default function Station1() {
     </>
   );
 }
-
-    

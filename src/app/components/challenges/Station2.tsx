@@ -15,7 +15,8 @@ import AddPhotoDialog from "./AddPhotoDialog";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-import { useUser } from "@/firebase/hooks";
+import { useUser, useFirestore } from "@/firebase/hooks";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 type DayStatus = "locked" | "unlocked" | "completed";
 
@@ -251,7 +252,7 @@ const PhotoUploadChallenge = ({
 export default function Station2() {
   const stationId = 2;
   const { user } = useUser();
-  const storageKey = user ? `kairu-station2-progress-${user.uid}` : null;
+  const db = useFirestore();
 
   const [days, setDays] = useState<DayState[]>(initialDays);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
@@ -289,48 +290,54 @@ export default function Station2() {
   }, [scheduleYaraDialog]);
 
 
-  const updateAndSaveChanges = useCallback((newDays: DayState[]) => {
+  const updateAndSaveChanges = useCallback(async (newDays: DayState[]) => {
     setDays(newDays);
-    if (storageKey) {
-      localStorage.setItem(storageKey, JSON.stringify(newDays));
+    if (user && db) {
+        try {
+            const userDocRef = doc(db, 'users', user.uid);
+            await setDoc(userDocRef, { station2Days: newDays }, { merge: true });
+        } catch (error) {
+            console.error("Failed to save station 2 progress to Firestore", error);
+            toast({ title: "Error", description: "No se pudo guardar tu progreso en la nube.", variant: "destructive" });
+        }
     }
-  }, [storageKey]);
+  }, [user, db]);
 
   useEffect(() => {
-    if (isClient && storageKey) {
-      const savedProgress = localStorage.getItem(storageKey);
-      let loadedDays: DayState[] = initialDays;
-      if (savedProgress) {
+    const fetchProgress = async () => {
+        if (!isClient || !user || !db) return;
+        
+        let loadedDays: DayState[];
         try {
-          const parsedProgress = JSON.parse(savedProgress) as DayState[];
-          if (Array.isArray(parsedProgress) && parsedProgress.length === 7) {
-            loadedDays = parsedProgress;
-          }
-        } catch {
-          // ignore parsing errors, use initial state
+            const userDocRef = doc(db, 'users', user.uid);
+            const docSnap = await getDoc(userDocRef);
+            if (docSnap.exists() && docSnap.data().station2Days) {
+                loadedDays = docSnap.data().station2Days;
+            } else {
+                loadedDays = initialDays;
+                await setDoc(userDocRef, { station2Days: initialDays }, { merge: true });
+            }
+
+            const now = Date.now();
+            const updatedDays = loadedDays.map(day => {
+                if (day.status === "locked" && day.unlockTime && now >= day.unlockTime) {
+                    return { ...day, status: "unlocked" };
+                }
+                return day;
+            });
+
+            setDays(updatedDays);
+            if (JSON.stringify(updatedDays) !== JSON.stringify(loadedDays)) {
+                await setDoc(userDocRef, { station2Days: updatedDays }, { merge: true });
+            }
+
+        } catch (error) {
+            console.error("Error fetching/updating station 2 progress", error);
+            setDays(initialDays);
         }
-      } else {
-        localStorage.setItem(storageKey, JSON.stringify(initialDays));
-      }
-      
-      const now = Date.now();
-      const updatedDays = loadedDays.map(day => {
-          if (day.status === "locked" && day.unlockTime && now >= day.unlockTime) {
-            return { ...day, status: "unlocked" };
-          }
-          return day;
-      });
-
-      setDays(updatedDays);
-      if (JSON.stringify(updatedDays) !== JSON.stringify(loadedDays)) {
-         localStorage.setItem(storageKey, JSON.stringify(updatedDays));
-      }
-
-    } else if (!storageKey) {
-        // No user, reset to initial state
-        setDays(initialDays);
     }
-  }, [storageKey, isClient]);
+    fetchProgress();
+  }, [user, db, isClient]);
 
 
   useEffect(() => {
@@ -338,23 +345,22 @@ export default function Station2() {
 
     const interval = setInterval(() => {
       const now = Date.now();
-      setDays(currentDays => {
-          const newDays = currentDays.map(day => {
-              if (day.status === "locked" && day.unlockTime && now >= day.unlockTime) {
-                  return { ...day, status: "unlocked" };
-              }
-              return day;
-          });
-          
-          if(JSON.stringify(newDays) !== JSON.stringify(currentDays) && storageKey) {
-              localStorage.setItem(storageKey, JSON.stringify(newDays));
+      let changed = false;
+      const newDays = days.map(day => {
+          if (day.status === "locked" && day.unlockTime && now >= day.unlockTime) {
+              changed = true;
+              return { ...day, status: "unlocked" };
           }
-          return newDays;
+          return day;
       });
+      
+      if(changed) {
+          updateAndSaveChanges(newDays);
+      }
     }, 1000 * 30); // Check for unlocks every 30 seconds
 
     return () => clearInterval(interval);
-  }, [isClient, storageKey]);
+  }, [isClient, days, updateAndSaveChanges]);
 
   const handleDayComplete = (dayIndex: number, photoUrl: string) => {
     const newDays = [...days];
