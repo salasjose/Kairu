@@ -171,12 +171,39 @@ interface ChallengeProps {
 
 const PhotoChallenge = ({ user, db, onBack, onStationComplete }: ChallengeProps) => {
   const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>(Array(4).fill(null));
-  const [faunaPhotos, setFaunaPhotos = useState<(string | null)[]>(Array(4).fill(null));
+  const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>(Array(4).fill(null));
 
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAddPhotoDialogOpen, setIsAddPhotoDialogOpen] = useState(false);
   const [photoToAdd, setPhotoToAdd] = useState<{type: "flora" | "fauna", index: number} | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const updatePhotos = useCallback(async (type: "flora" | "fauna", index: number, imageUrl: string) => {
+    if (!user || !db) {
+        toast({ title: "Error", description: "No se puede guardar. Usuario no autenticado.", variant: "destructive"});
+        return;
+    };
+
+    const newPhotos = type === 'flora' ? [...floraPhotos] : [...faunaPhotos];
+    newPhotos[index] = imageUrl;
+
+    if (type === 'flora') {
+        setFloraPhotos(newPhotos);
+    } else {
+        setFaunaPhotos(newPhotos);
+    }
+    
+    const dbField = type === 'flora' ? 'station1FloraPhotos' : 'station1FaunaPhotos';
+
+    try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { [dbField]: newPhotos }, { merge: true });
+        
+    } catch (error) {
+        console.error(`Failed to save ${type} photos to Firestore:`, error);
+        toast({ title: "Error al guardar", description: "No se pudo guardar la imagen en la nube.", variant: "destructive" });
+    }
+  }, [user, db, floraPhotos, faunaPhotos]);
 
   useEffect(() => {
     const fetchPhotos = async () => {
@@ -195,33 +222,6 @@ const PhotoChallenge = ({ user, db, onBack, onStationComplete }: ChallengeProps)
     };
     fetchPhotos();
   }, [user, db]);
-
-  const updatePhotos = async (type: "flora" | "fauna", index: number, imageUrl: string) => {
-    if (!user || !db) {
-        toast({ title: "Error", description: "No se puede guardar. Usuario no autenticado.", variant: "destructive"});
-        return;
-    };
-
-    const currentPhotos = type === 'flora' ? [...floraPhotos] : [...faunaPhotos];
-    currentPhotos[index] = imageUrl;
-
-    if (type === 'flora') {
-        setFloraPhotos(currentPhotos);
-    } else {
-        setFaunaPhotos(currentPhotos);
-    }
-    
-    const dbField = type === 'flora' ? 'station1FloraPhotos' : 'station1FaunaPhotos';
-
-    try {
-        const userDocRef = doc(db, 'users', user.uid);
-        await setDoc(userDocRef, { [dbField]: currentPhotos }, { merge: true });
-        
-    } catch (error) {
-        console.error(`Failed to save ${type} photos to Firestore:`, error);
-        toast({ title: "Error al guardar", description: "No se pudo guardar la imagen en la nube.", variant: "destructive" });
-    }
-  };
 
 
   const handleAddPhotoClick = (type: "flora" | "fauna", index: number) => {
@@ -342,6 +342,21 @@ const HabitatChallenge = ({ user, db, onBack, onStationComplete }: ChallengeProp
   const [photoToAddIndex, setPhotoToAddIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const updatePhotosInDb = useCallback(async (newPhotos: (string | null)[]) => {
+    if (!user || !db) {
+        toast({ title: "Error", description: "No se puede guardar. Usuario no autenticado.", variant: "destructive"});
+        return;
+    }
+    try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { station1HabitatPhotos: newPhotos }, { merge: true });
+        setHabitatPhotos(newPhotos);
+    } catch (error) {
+        console.error("Failed to save habitat photos to Firestore:", error);
+        toast({ title: "Error al guardar", description: "No se pudo guardar la imagen en la nube.", variant: "destructive" });
+    }
+  }, [user, db]);
+
   useEffect(() => {
     const fetchPhotos = async () => {
         if (!user || !db) return;
@@ -357,21 +372,6 @@ const HabitatChallenge = ({ user, db, onBack, onStationComplete }: ChallengeProp
     };
     fetchPhotos();
   }, [user, db]);
-
-  const updatePhotosInDb = async (newPhotos: (string | null)[]) => {
-    if (!user || !db) {
-        toast({ title: "Error", description: "No se puede guardar. Usuario no autenticado.", variant: "destructive"});
-        return;
-    }
-    try {
-        const userDocRef = doc(db, 'users', user.uid);
-        await setDoc(userDocRef, { station1HabitatPhotos: newPhotos }, { merge: true });
-        setHabitatPhotos(newPhotos);
-    } catch (error) {
-        console.error("Failed to save habitat photos to Firestore:", error);
-        toast({ title: "Error al guardar", description: "No se pudo guardar la imagen en la nube.", variant: "destructive" });
-    }
-  };
 
   const handleCapture = async (imageUrl: string) => {
     if (photoToAddIndex !== null) {
@@ -513,21 +513,17 @@ export default function Station1({ user, db }: { user: User | null; db: Firestor
     const imageInfo = PlaceHolderImages.find((p) => p.id === (challengeName === "Fauna y Flora" ? "fauna-capybara" : "habitat-build-1"));
     completeChallenge(stationId, challengeName, imageInfo?.imageUrl);
   
-    // Check if ALL challenges for this station will be complete *after* this one
     const stationChallenges = Object.keys(challenges);
     const currentCompletedForStation = Object.keys(completedChallenges[stationId] || {});
-    // Add the newly completed challenge to the list for the check
     const allChallengesDone = stationChallenges.every(ch => 
       currentCompletedForStation.includes(ch) || ch === challengeName
     );
 
-    setSelectedChallenge(null); // Go back to challenge selection screen
+    setSelectedChallenge(null);
 
     if (allChallengesDone) {
-      // If all are done, show the prize modal
       setIsPrizeModalOpen(true);
     } else {
-      // If not all are done, just show a toast notification
       toast({
         title: `¡Reto '${challengeName}' Completado!`,
         description: "¡Bien hecho! Completa el otro reto para ganar tu insignia.",
