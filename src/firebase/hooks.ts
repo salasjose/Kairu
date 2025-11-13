@@ -20,6 +20,12 @@ export const useFirestore = () => {
     return context.db;
 };
 
+export const useStorage = () => {
+    const context = useContext(FirebaseContext);
+    if (!context) throw new Error('useStorage must be used within a FirebaseProvider');
+    return context.storage;
+};
+
 export const useUser = () => {
     const context = useContext(FirebaseContext);
     if (!context) throw new Error('useUser must be used within a FirebaseProvider');

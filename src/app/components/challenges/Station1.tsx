@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -18,10 +17,10 @@ import PrizeDialog from "../PrizeDialog";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-import { useUser, useFirestore } from "@/firebase/hooks";
+import { useUser, useFirestore, useStorage } from "@/firebase/hooks";
 import ResponsiveBackground from "../ResponsiveBackground";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-
+import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
 
 const faunaImage = PlaceHolderImages.find((p) => p.id === "fauna-capybara");
 const habitatImage = PlaceHolderImages.find((p) => p.id === "habitat-build-1");
@@ -40,36 +39,52 @@ const challenges = {
   },
 };
 
+/**
+ * Sube una imagen Data URL a Firebase Storage y devuelve la URL de descarga.
+ * @param {string} dataUrl - La imagen codificada como Data URL (Base64).
+ * @param {string} userId - ID del usuario.
+ * @param {string} path - Ruta de almacenamiento en Firebase Storage.
+ * @returns {Promise<string>} URL de descarga de la imagen.
+ */
+const uploadDataUrlToStorage = async (dataUrl: string, userId: string, path: string): Promise<string> => {
+  const storage = getStorage();
+  const fileRef = storageRef(storage, `${userId}/${path}_${Date.now()}.jpeg`);
+
+  // Sube el Data URL
+  const snapshot = await uploadString(fileRef, dataUrl, 'data_url');
+  
+  // Obtiene la URL pública
+  const downloadUrl = await getDownloadURL(snapshot.ref);
+  return downloadUrl;
+};
+
+
 const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void; onCancel: () => void; }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
 
   useEffect(() => {
+    let stream: MediaStream | null = null;
     const getCameraPermission = async () => {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.error("Camera API is not supported by this browser.");
-        setHasCameraPermission(false);
-        toast({
-            variant: "destructive",
-            title: "Cámara no Soportada",
-            description: "Tu navegador no es compatible con la API de la cámara.",
-        });
-        return;
-      }
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const constraints = { 
+          video: { 
+            facingMode: 'environment',
+          } 
+        };
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
         setHasCameraPermission(true);
-
+        
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
       } catch (error) {
-        console.error("Error accessing camera:", error);
+        console.error("Error al acceder a la cámara:", error);
         setHasCameraPermission(false);
         toast({
           variant: "destructive",
-          title: "Acceso a la Cámara Denegado",
-          description: "Por favor, habilita los permisos de la cámara en tu navegador.",
+          title: "Acceso denegado",
+          description: "Por favor, habilite los permisos de la cámara."
         });
       }
     };
@@ -77,23 +92,30 @@ const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void;
     getCameraPermission();
 
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
+      if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
     };
   }, []);
 
   const handleCapture = () => {
-    if (videoRef.current) {
-        const canvas = document.createElement('canvas');
-        canvas.width = videoRef.current.videoWidth;
-        canvas.height = videoRef.current.videoHeight;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-            ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-            onCapture(canvas.toDataURL('image/jpeg'));
-        }
+    const video = videoRef.current;
+    if (!video || !video.videoWidth) {
+      toast({
+        title: "Cámara no lista",
+        description: "Espera un momento a que el video se active.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        onCapture(canvas.toDataURL('image/jpeg'));
     }
   };
 
@@ -197,16 +219,17 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
     if (!user || !db) return;
 
     const updater = async (setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, dbField: string) => {
-        const newPhotos = [...(type === "flora" ? floraPhotos : faunaPhotos)];
+        const currentPhotos = (type === "flora" ? floraPhotos : faunaPhotos);
+        const newPhotos = [...currentPhotos];
         newPhotos[index] = imageUrl;
-        setter(newPhotos);
+        setter(newPhotos); 
 
         try {
             const userDocRef = doc(db, 'users', user.uid);
             await setDoc(userDocRef, { [dbField]: newPhotos }, { merge: true });
         } catch (error) {
             console.error(`Failed to save ${type} photos to Firestore:`, error);
-            toast({ title: "Error al guardar", description: "No se pudo guardar la imagen en la nube.", variant: "destructive" });
+            toast({ title: "Error al guardar URL", description: "No se pudo guardar la URL de la imagen en la nube.", variant: "destructive" });
         }
     };
 
@@ -223,10 +246,34 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
     setIsAddPhotoDialogOpen(true);
   };
 
-  const handleCapture = (imageUrl: string) => {
-    if (photoToAdd) {
+  const handleCapture = async (imageUrl: string) => {
+    if (photoToAdd && user && db) {
         const { type, index } = photoToAdd;
-        updatePhotos(type, index, imageUrl);
+        
+        toast({ 
+            title: "Subiendo Imagen...", 
+            description: "Espera un momento, estamos guardando tu foto.", 
+            variant: "default" 
+        });
+
+        try {
+            const dbField = type === "flora" ? 'station1FloraPhotos' : 'station1FaunaPhotos';
+            const storagePath = `station1/photos/${dbField}`;
+            
+            const downloadUrl = await uploadDataUrlToStorage(imageUrl, user.uid, storagePath);
+
+            await updatePhotos(type, index, downloadUrl);
+
+            toast({ title: "¡Imagen Guardada!", description: "Tu foto se ha guardado exitosamente." });
+            
+        } catch (error) {
+            console.error("Error al subir o guardar la imagen:", error);
+            toast({ 
+                title: "Error al guardar la imagen", 
+                description: "No se pudo subir la foto. Intenta de nuevo.", 
+                variant: "destructive" 
+            });
+        }
     }
     setIsCameraOpen(false);
     setPhotoToAdd(null);
@@ -361,17 +408,39 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { station1HabitatPhotos: newPhotos }, { merge: true });
     } catch (error) {
-        console.error("Failed to save habitat photos to Firestore:", error);
-        toast({ title: "Error al guardar", description: "No se pudo guardar la imagen en la nube.", variant: "destructive" });
+        console.error("Failed to save habitat photos URLs to Firestore:", error);
+        toast({ title: "Error al guardar URL", description: "No se pudo guardar la URL de la imagen en la nube.", variant: "destructive" });
     }
   };
 
-  const handleCapture = (imageUrl: string) => {
-    if (photoToAddIndex !== null) {
-      const newPhotos = [...habitatPhotos];
-      newPhotos[photoToAddIndex] = imageUrl;
-      setHabitatPhotos(newPhotos);
-      updatePhotosInDb(newPhotos);
+  const handleCapture = async (imageUrl: string) => {
+    if (photoToAddIndex !== null && user && db) {
+        
+        toast({ 
+            title: "Subiendo Imagen...", 
+            description: "Estamos guardando tu foto del bebedero/comedero.", 
+            variant: "default" 
+        });
+
+        try {
+            const storagePath = `station1/habitat/photos`;
+            const downloadUrl = await uploadDataUrlToStorage(imageUrl, user.uid, storagePath);
+
+            const newPhotos = [...habitatPhotos];
+            newPhotos[photoToAddIndex] = downloadUrl;
+            setHabitatPhotos(newPhotos);
+            await updatePhotosInDb(newPhotos);
+
+            toast({ title: "¡Imagen Guardada!", description: "Tu foto se ha guardado exitosamente." });
+            
+        } catch (error) {
+            console.error("Error al subir o guardar la imagen:", error);
+            toast({ 
+                title: "Error al guardar la imagen", 
+                description: "No se pudo subir la foto del hábitat. Intenta de nuevo.", 
+                variant: "destructive" 
+            });
+        }
     }
     setIsCameraOpen(false);
     setPhotoToAddIndex(null);
@@ -664,5 +733,3 @@ export default function Station1() {
     </>
   );
 }
-
-    
