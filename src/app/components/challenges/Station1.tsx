@@ -171,7 +171,7 @@ interface ChallengeProps {
 
 const PhotoChallenge = ({ user, db, onBack, onStationComplete }: ChallengeProps) => {
   const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>(Array(4).fill(null));
-  const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>(Array(4).fill(null));
+  const [faunaPhotos, setFaunaPhotos = useState<(string | null)[]>(Array(4).fill(null));
 
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAddPhotoDialogOpen, setIsAddPhotoDialogOpen] = useState(false);
@@ -202,21 +202,20 @@ const PhotoChallenge = ({ user, db, onBack, onStationComplete }: ChallengeProps)
         return;
     };
 
-    const currentPhotos = type === 'flora' ? floraPhotos : faunaPhotos;
-    const newPhotos = [...currentPhotos];
-    newPhotos[index] = imageUrl;
+    const currentPhotos = type === 'flora' ? [...floraPhotos] : [...faunaPhotos];
+    currentPhotos[index] = imageUrl;
 
+    if (type === 'flora') {
+        setFloraPhotos(currentPhotos);
+    } else {
+        setFaunaPhotos(currentPhotos);
+    }
+    
     const dbField = type === 'flora' ? 'station1FloraPhotos' : 'station1FaunaPhotos';
 
     try {
         const userDocRef = doc(db, 'users', user.uid);
-        await setDoc(userDocRef, { [dbField]: newPhotos }, { merge: true });
-        
-        if (type === 'flora') {
-            setFloraPhotos(newPhotos);
-        } else {
-            setFaunaPhotos(newPhotos);
-        }
+        await setDoc(userDocRef, { [dbField]: currentPhotos }, { merge: true });
         
     } catch (error) {
         console.error(`Failed to save ${type} photos to Firestore:`, error);
@@ -671,3 +670,5 @@ export default function Station1({ user, db }: { user: User | null; db: Firestor
     </>
   );
 }
+
+    
