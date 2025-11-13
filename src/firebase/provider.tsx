@@ -4,6 +4,7 @@ import React, { createContext, useContext, ReactNode, useMemo, useState, useEffe
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
+import { FirebaseStorage } from 'firebase/storage';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
 import Logo from '@/app/components/Logo';
 
@@ -12,12 +13,14 @@ interface FirebaseProviderProps {
   firebaseApp: FirebaseApp | null;
   firestore: Firestore | null;
   auth: Auth | null;
+  storage: FirebaseStorage | null;
 }
 
 export interface FirebaseContextState {
   app: FirebaseApp | null;
   db: Firestore | null;
   auth: Auth | null; 
+  storage: FirebaseStorage | null;
   user: User | null;
   loading: boolean;
   error: Error | null;
@@ -30,6 +33,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   firebaseApp,
   firestore,
   auth,
+  storage,
 }) => {
   const [authState, setAuthState] = useState<{
     user: User | null;
@@ -65,11 +69,12 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       app: firebaseApp,
       db: firestore,
       auth: auth,
+      storage: storage,
       user: authState.user,
       loading: authState.loading,
       error: authState.error,
     };
-  }, [firebaseApp, firestore, auth, authState]);
+  }, [firebaseApp, firestore, auth, storage, authState]);
 
   if (authState.loading) {
     return (

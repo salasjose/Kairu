@@ -21,7 +21,8 @@ import TypewriterText from "../auth/TypewriterText";
 import ResponsiveBackground from "../ResponsiveBackground";
 import { doc, getDoc, setDoc, Firestore } from "firebase/firestore";
 import type { User } from 'firebase/auth';
-
+import { useStorage } from "@/firebase/hooks";
+import { ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
 
 const faunaImage = PlaceHolderImages.find((p) => p.id === "fauna-capybara");
 const habitatImage = PlaceHolderImages.find((p) => p.id === "habitat-build-1");
@@ -39,6 +40,24 @@ const challenges = {
     imageHint: habitatImage?.imageHint ?? "wildlife habitat",
   },
 };
+
+// Helper function to resize image
+const resizeImage = (dataUrl: string, maxWidth: number): Promise<string> => {
+    return new Promise((resolve) => {
+        const img = document.createElement('img');
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const aspect = img.width / img.height;
+            canvas.width = Math.min(img.width, maxWidth);
+            canvas.height = canvas.width / aspect;
+            const ctx = canvas.getContext('2d');
+            ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', 0.8)); // Use JPEG for better compression
+        };
+        img.src = dataUrl;
+    });
+};
+
 
 const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void; onCancel: () => void; }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -84,7 +103,7 @@ const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void;
     };
   }, []);
 
-  const handleCapture = () => {
+  const handleCapture = async () => {
     if (videoRef.current) {
         const canvas = document.createElement('canvas');
         canvas.width = videoRef.current.videoWidth;
@@ -92,7 +111,9 @@ const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void;
         const ctx = canvas.getContext('2d');
         if (ctx) {
             ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-            onCapture(canvas.toDataURL('image/jpeg'));
+            const fullSizeDataUrl = canvas.toDataURL('image/jpeg');
+            const resizedDataUrl = await resizeImage(fullSizeDataUrl, 1024);
+            onCapture(resizedDataUrl);
         }
     }
   };
@@ -176,6 +197,16 @@ const PhotoChallenge = ({ user, db, onBack, onStationComplete }: ChallengeProps)
   const [isAddPhotoDialogOpen, setIsAddPhotoDialogOpen] = useState(false);
   const [photoToAdd, setPhotoToAdd] = useState<{type: "flora" | "fauna", index: number} | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const storage = useStorage();
+
+  const uploadImage = async (dataUrl: string): Promise<string> => {
+    if (!user || !storage) throw new Error("User or Storage not available");
+
+    const imageRef = storageRef(storage, `users/${user.uid}/station1/${Date.now()}-${Math.random()}.jpg`);
+    await uploadString(imageRef, dataUrl, 'data_url');
+    const downloadUrl = await getDownloadURL(imageRef);
+    return downloadUrl;
+  };
 
   const updatePhotos = useCallback(async (type: "flora" | "fauna", index: number, imageUrl: string) => {
     if (!user || !db) {
@@ -212,8 +243,8 @@ const PhotoChallenge = ({ user, db, onBack, onStationComplete }: ChallengeProps)
             const docSnap = await getDoc(userDocRef);
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                setFloraPhotos(data.station1FloraPhotos || Array(4).fill(null));
-                setFaunaPhotos(data.station1FaunaPhotos || Array(4).fill(null));
+                if(data.station1FloraPhotos) setFloraPhotos(data.station1FloraPhotos);
+                if(data.station1FaunaPhotos) setFaunaPhotos(data.station1FaunaPhotos);
             }
         } catch (error) {
             console.error("Error fetching photos from Firestore:", error);
@@ -228,21 +259,30 @@ const PhotoChallenge = ({ user, db, onBack, onStationComplete }: ChallengeProps)
     setIsAddPhotoDialogOpen(true);
   };
 
-  const handleCapture = (imageUrl: string) => {
+  const handleCapture = async (dataUrl: string) => {
     if (photoToAdd) {
-        const { type, index } = photoToAdd;
-        updatePhotos(type, index, imageUrl);
+        try {
+            const imageUrl = await uploadImage(dataUrl);
+            const { type, index } = photoToAdd;
+            await updatePhotos(type, index, imageUrl);
+            toast({ title: "¡Foto subida!", description: "Tu imagen ha sido guardada." });
+        } catch (error) {
+            console.error("Error uploading image:", error);
+            toast({ title: "Error al subir", description: "No se pudo subir la imagen.", variant: "destructive" });
+        }
     }
     setIsCameraOpen(false);
     setPhotoToAdd(null);
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        handleCapture(e.target?.result as string);
+      reader.onload = async (e) => {
+        const fullSizeDataUrl = e.target?.result as string;
+        const resizedDataUrl = await resizeImage(fullSizeDataUrl, 1024);
+        await handleCapture(resizedDataUrl);
       };
       reader.readAsDataURL(file);
     }
@@ -340,6 +380,16 @@ const HabitatChallenge = ({ user, db, onBack, onStationComplete }: ChallengeProp
   const [isAddPhotoDialogOpen, setIsAddPhotoDialogOpen] = useState(false);
   const [photoToAddIndex, setPhotoToAddIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const storage = useStorage();
+
+  const uploadImage = async (dataUrl: string): Promise<string> => {
+    if (!user || !storage) throw new Error("User or Storage not available");
+
+    const imageRef = storageRef(storage, `users/${user.uid}/station1-habitat/${Date.now()}-${Math.random()}.jpg`);
+    await uploadString(imageRef, dataUrl, 'data_url');
+    const downloadUrl = await getDownloadURL(imageRef);
+    return downloadUrl;
+  };
 
   const updatePhotosInDb = useCallback(async (newPhotos: (string | null)[]) => {
     if (!user || !db) {
@@ -349,7 +399,6 @@ const HabitatChallenge = ({ user, db, onBack, onStationComplete }: ChallengeProp
     try {
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { station1HabitatPhotos: newPhotos }, { merge: true });
-        setHabitatPhotos(newPhotos);
     } catch (error) {
         console.error("Failed to save habitat photos to Firestore:", error);
         toast({ title: "Error al guardar", description: "No se pudo guardar la imagen en la nube.", variant: "destructive" });
@@ -372,11 +421,19 @@ const HabitatChallenge = ({ user, db, onBack, onStationComplete }: ChallengeProp
     fetchPhotos();
   }, [user, db]);
 
-  const handleCapture = async (imageUrl: string) => {
+  const handleCapture = async (dataUrl: string) => {
     if (photoToAddIndex !== null) {
-      const newPhotos = [...habitatPhotos];
-      newPhotos[photoToAddIndex] = imageUrl;
-      await updatePhotosInDb(newPhotos);
+      try {
+        const imageUrl = await uploadImage(dataUrl);
+        const newPhotos = [...habitatPhotos];
+        newPhotos[photoToAddIndex] = imageUrl;
+        setHabitatPhotos(newPhotos);
+        await updatePhotosInDb(newPhotos);
+        toast({ title: "¡Foto subida!", description: "Tu imagen ha sido guardada." });
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        toast({ title: "Error al subir", description: "No se pudo subir la imagen.", variant: "destructive" });
+      }
     }
     setIsCameraOpen(false);
     setPhotoToAddIndex(null);
@@ -387,12 +444,14 @@ const HabitatChallenge = ({ user, db, onBack, onStationComplete }: ChallengeProp
     setIsAddPhotoDialogOpen(true);
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        handleCapture(e.target?.result as string);
+      reader.onload = async (e) => {
+        const fullSizeDataUrl = e.target?.result as string;
+        const resizedDataUrl = await resizeImage(fullSizeDataUrl, 1024);
+        await handleCapture(resizedDataUrl);
       };
       reader.readAsDataURL(file);
     }
@@ -665,5 +724,3 @@ export default function Station1({ user, db }: { user: User | null; db: Firestor
     </>
   );
 }
-
-    
