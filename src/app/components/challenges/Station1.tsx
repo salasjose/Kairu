@@ -18,9 +18,9 @@ import PrizeDialog from "../PrizeDialog";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-import { useUser, useFirestore } from "@/firebase/hooks";
 import ResponsiveBackground from "../ResponsiveBackground";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, Firestore } from "firebase/firestore";
+import type { User } from 'firebase/auth';
 
 
 const faunaImage = PlaceHolderImages.find((p) => p.id === "fauna-capybara");
@@ -162,11 +162,14 @@ const PhotoSlot = ({
   );
 };
 
+interface ChallengeProps {
+  user: User | null;
+  db: Firestore | null;
+  onBack: () => void;
+  onStationComplete: () => void;
+}
 
-const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: () => void }) => {
-  const { user } = useUser();
-  const db = useFirestore();
-
+const PhotoChallenge = ({ user, db, onBack, onStationComplete }: ChallengeProps) => {
   const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>(Array(4).fill(null));
 
@@ -194,10 +197,13 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
   }, [user, db]);
 
   const updatePhotos = useCallback(async (type: "flora" | "fauna", index: number, imageUrl: string) => {
-    if (!user || !db) return;
+    if (!user || !db) {
+        toast({ title: "Error", description: "No se puede guardar. Usuario no autenticado.", variant: "destructive"});
+        return;
+    };
 
-    const updater = async (setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, dbField: string) => {
-        const newPhotos = [...(type === "flora" ? floraPhotos : faunaPhotos)];
+    const updater = async (setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, dbField: string, currentPhotos: (string|null)[]) => {
+        const newPhotos = [...currentPhotos];
         newPhotos[index] = imageUrl;
         setter(newPhotos);
 
@@ -211,11 +217,11 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
     };
 
     if (type === "flora") {
-        await updater(setFloraPhotos, 'station1FloraPhotos');
+        await updater(setFloraPhotos, 'station1FloraPhotos', floraPhotos);
     } else {
-        await updater(setFaunaPhotos, 'station1FaunaPhotos');
+        await updater(setFaunaPhotos, 'station1FaunaPhotos', faunaPhotos);
     }
-}, [user, db, floraPhotos, faunaPhotos]);
+  }, [user, db, floraPhotos, faunaPhotos]);
 
 
   const handleAddPhotoClick = (type: "flora" | "fauna", index: number) => {
@@ -329,10 +335,7 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
   );
 };
 
-const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onStationComplete: () => void }) => {
-  const { user } = useUser();
-  const db = useFirestore();
-  
+const HabitatChallenge = ({ user, db, onBack, onStationComplete }: ChallengeProps) => {
   const [habitatPhotos, setHabitatPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAddPhotoDialogOpen, setIsAddPhotoDialogOpen] = useState(false);
@@ -356,7 +359,10 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
   }, [user, db]);
 
   const updatePhotosInDb = async (newPhotos: (string | null)[]) => {
-    if (!user || !db) return;
+    if (!user || !db) {
+        toast({ title: "Error", description: "No se puede guardar. Usuario no autenticado.", variant: "destructive"});
+        return;
+    }
     try {
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { station1HabitatPhotos: newPhotos }, { merge: true });
@@ -469,7 +475,7 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
 };
 
 
-export default function Station1() {
+export default function Station1({ user, db }: { user: User | null; db: Firestore | null; }) {
   const stationId = 1;
   const [selectedChallenge, setSelectedChallenge] = useState<string | null>(null);
   const { completedChallenges, completeChallenge } = useChallengeProgress();
@@ -540,11 +546,11 @@ export default function Station1() {
   };
   
   if (selectedChallenge === "Fauna y Flora") {
-    return <PhotoChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={() => handleChallengeComplete("Fauna y Flora")} />;
+    return <PhotoChallenge user={user} db={db} onBack={() => setSelectedChallenge(null)} onStationComplete={() => handleChallengeComplete("Fauna y Flora")} />;
   }
 
   if (selectedChallenge === "Cuidado Animal") {
-    return <HabitatChallenge onBack={() => setSelectedChallenge(null)} onStationComplete={() => handleChallengeComplete("Cuidado Animal")} />;
+    return <HabitatChallenge user={user} db={db} onBack={() => setSelectedChallenge(null)} onStationComplete={() => handleChallengeComplete("Cuidado Animal")} />;
   }
 
   const stationCompletedChallenges = completedChallenges[stationId] || {};
@@ -619,7 +625,7 @@ export default function Station1() {
       </ResponsiveBackground>
       
        {/* Yara Character and Dialog */}
-      <div className="absolute bottom-4 right-4 md:right-8 lg:right-12 z-20 flex items-end gap-0 md:gap-2 pointer-events-none">
+       <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4 pointer-events-none">
         <AnimatePresence>
             {showYaraDialog && (
               <motion.div
@@ -664,5 +670,3 @@ export default function Station1() {
     </>
   );
 }
-
-    

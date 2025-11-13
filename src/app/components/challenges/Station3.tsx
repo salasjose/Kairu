@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -24,9 +25,9 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-import { useUser, useFirestore } from "@/firebase/hooks";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, Firestore } from "firebase/firestore";
 import { useChallengeProgress } from "@/hooks/use-challenge-progress";
+import type { User } from 'firebase/auth';
 
 const STORAGE_KEY_PREFIX = "kairu-station3-challenge-";
 
@@ -36,15 +37,17 @@ const ChallengeDetail = ({
   onComplete,
   onBack,
   challengeId,
+  user,
+  db
 }: {
   title: string;
   description: string;
   onComplete: () => void;
   onBack: () => void;
   challengeId: ChallengeId;
+  user: User | null;
+  db: Firestore | null;
 }) => {
-  const { user } = useUser();
-  const db = useFirestore();
   const [url, setUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   
@@ -210,7 +213,7 @@ const challenges = {
 
 type ChallengeId = keyof typeof challenges;
 
-export default function Station3() {
+export default function Station3({ user, db }: { user: User | null; db: Firestore | null; }) {
   const stationId = 3;
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeId | null>(null);
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
@@ -283,6 +286,8 @@ export default function Station3() {
         challengeId={selectedChallenge}
         onComplete={() => handleChallengeComplete(selectedChallenge)}
         onBack={() => setSelectedChallenge(null)}
+        user={user}
+        db={db}
       />
     );
   }

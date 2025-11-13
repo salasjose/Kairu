@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -10,20 +11,18 @@ import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import PrizeDialog from "../PrizeDialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { useUser, useFirestore } from "@/firebase/hooks";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, Firestore } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
+import type { User } from 'firebase/auth';
 
-export default function Station6() {
+export default function Station6({ user, db }: { user: User | null; db: Firestore | null; }) {
   const stationId = 6;
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { user } = useUser();
-  const db = useFirestore();
   const [isLoading, setIsLoading] = useState(true);
 
   const [showYaraDialog, setShowYaraDialog] = useState(false);

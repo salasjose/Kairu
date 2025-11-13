@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -10,13 +11,13 @@ import PrizeDialog from "../PrizeDialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { useUser, useFirestore } from "@/firebase/hooks";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, Firestore } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
+import type { User } from 'firebase/auth';
 
 type Business = {
   name: string;
@@ -100,7 +101,7 @@ const AddBusinessDialog = ({
 };
 
 
-export default function Station7() {
+export default function Station7({ user, db }: { user: User | null; db: Firestore | null; }) {
   const stationId = 7;
   const [businesses, setBusinesses] = useState<(Business | null)[]>(Array(4).fill(null));
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -108,8 +109,6 @@ export default function Station7() {
   
   const { unlockStation } = useStationProgress();
   const router = useRouter();
-  const { user } = useUser();
-  const db = useFirestore();
 
   const [showYaraDialog, setShowYaraDialog] = useState(false);
   const yaraMessage = "¡Te doy la bienvenida a VerdeLab! Este es el laboratorio donde los sueños sostenibles se convierten en proyectos reales. ¡Emprende con propósito, crea con el corazón y demuestra que cuidar también puede ser una gran idea!";

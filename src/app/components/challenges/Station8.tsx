@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -12,9 +13,9 @@ import { useRouter } from "next/navigation";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-import { useUser, useFirestore } from "@/firebase/hooks";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, Firestore } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
+import type { User } from 'firebase/auth';
 
 const challenges = {
   learn: {
@@ -27,12 +28,10 @@ const challenges = {
 
 type ChallengeId = keyof typeof challenges;
 
-const ChallengeScreen = ({ challengeId, onBack, onComplete }: { challengeId: ChallengeId, onBack: () => void, onComplete: () => void }) => {
+const ChallengeScreen = ({ challengeId, user, db, onBack, onComplete }: { challengeId: ChallengeId, user: User | null, db: Firestore | null, onBack: () => void, onComplete: () => void }) => {
     const challenge = challenges[challengeId];
     const imageInfo = PlaceHolderImages.find(p => p.id === challenge.imageId);
-    const { user } = useUser();
-    const db = useFirestore();
-
+    
     const [url, setUrl] = useState("");
     const [videoUrl, setVideoUrl] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -148,7 +147,7 @@ const ChallengeScreen = ({ challengeId, onBack, onComplete }: { challengeId: Cha
 };
 
 
-export default function Station8() {
+export default function Station8({ user, db }: { user: User | null; db: Firestore | null; }) {
   const stationId = 8;
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeId | null>(null);
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
@@ -193,7 +192,7 @@ export default function Station8() {
   };
   
   if (selectedChallenge) {
-    return <ChallengeScreen challengeId={selectedChallenge} onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete(selectedChallenge)} />
+    return <ChallengeScreen challengeId={selectedChallenge} user={user} db={db} onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete(selectedChallenge)} />
   }
 
   return (

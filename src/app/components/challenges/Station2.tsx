@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -15,8 +16,8 @@ import AddPhotoDialog from "./AddPhotoDialog";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-import { useUser, useFirestore } from "@/firebase/hooks";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, Firestore } from "firebase/firestore";
+import type { User } from 'firebase/auth';
 
 type DayStatus = "locked" | "unlocked" | "completed";
 
@@ -249,10 +250,8 @@ const PhotoUploadChallenge = ({
   );
 };
 
-export default function Station2() {
+export default function Station2({ user, db }: { user: User | null; db: Firestore | null; }) {
   const stationId = 2;
-  const { user } = useUser();
-  const db = useFirestore();
 
   const [days, setDays] = useState<DayState[]>(initialDays);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
@@ -292,14 +291,16 @@ export default function Station2() {
 
   const updateAndSaveChanges = useCallback(async (newDays: DayState[]) => {
     setDays(newDays);
-    if (user && db) {
-        try {
-            const userDocRef = doc(db, 'users', user.uid);
-            await setDoc(userDocRef, { station2Days: newDays }, { merge: true });
-        } catch (error) {
-            console.error("Failed to save station 2 progress to Firestore", error);
-            toast({ title: "Error", description: "No se pudo guardar tu progreso en la nube.", variant: "destructive" });
-        }
+    if (!user || !db) {
+        toast({ title: "Error", description: "No se pudo guardar tu progreso. Usuario no autenticado.", variant: "destructive" });
+        return;
+    }
+    try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { station2Days: newDays }, { merge: true });
+    } catch (error) {
+        console.error("Failed to save station 2 progress to Firestore", error);
+        toast({ title: "Error", description: "No se pudo guardar tu progreso en la nube.", variant: "destructive" });
     }
   }, [user, db]);
 

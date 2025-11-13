@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -15,8 +16,8 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
 import ResponsiveBackground from "../ResponsiveBackground";
-import { useUser, useFirestore } from "@/firebase/hooks";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, Firestore } from "firebase/firestore";
+import type { User } from 'firebase/auth';
 
 const challenges = {
   quiz: {
@@ -35,15 +36,16 @@ const challenges = {
 type ChallengeId = keyof typeof challenges;
 
 const PostChallenge = ({
+  user,
+  db,
   onComplete,
   onBack,
 }: {
+  user: User | null;
+  db: Firestore | null;
   onComplete: () => void;
   onBack: () => void;
 }) => {
-  const { user } = useUser();
-  const db = useFirestore();
-
   const [url, setUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const waterPostImage = PlaceHolderImages.find((p) => p.id === "water-post");
@@ -160,7 +162,7 @@ const PostChallenge = ({
   );
 };
 
-export default function Station4() {
+export default function Station4({ user, db }: { user: User | null; db: Firestore | null; }) {
   const stationId = 4;
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeId | null>(null);
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
@@ -217,6 +219,8 @@ export default function Station4() {
     if (selectedChallenge === "post") {
       return (
         <PostChallenge
+          user={user}
+          db={db}
           onComplete={() => handleComplete("post")}
           onBack={() => setSelectedChallenge(null)}
         />

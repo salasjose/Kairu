@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore } from "@/firebase/hooks";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, Firestore } from "firebase/firestore";
 import { usePrizeCart } from "@/hooks/use-prize-cart";
 import { motion, useDragControls, PanInfo, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
@@ -16,6 +17,7 @@ import TypewriterText from "../auth/TypewriterText";
 import { Slider } from "@/components/ui/slider";
 import { Trash2, Gift, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { User } from 'firebase/auth';
 
 
 const DRAGGABLE_AREA_ID = "station-9-canvas";
@@ -59,7 +61,7 @@ const DraggablePrize = ({
 }
 
 
-export default function Station9() {
+export default function Station9({ user, db }: { user: User | null; db: Firestore | null; }) {
   const [chosenScenario, setChosenScenario] = useState<string | null>(null);
   const [playerName, setPlayerName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
@@ -69,8 +71,6 @@ export default function Station9() {
   const [isYaraMessageVisible, setIsYaraMessageVisible] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
-  const { user } = useUser();
-  const db = useFirestore();
   const { prizes: collectedPrizes, addPrize, clearCart: clearPrizeCart } = usePrizeCart();
   const collectedPrizesFromStations1to8 = collectedPrizes.filter(p => p.stationId <= 8);
 
@@ -258,11 +258,12 @@ export default function Station9() {
                         boxShadow: isSelected ? "0px 0px 15px rgba(255,255,100,0.8)" : "0px 0px 0px rgba(0,0,0,0)",
                     }}
                     transition={{ duration: 0.2 }}
-                    >
-                    <div className="w-full h-full relative" onPointerDown={(e) => {
+                    onPointerDown={(e) => {
                         e.stopPropagation(); // Prevent canvas click from deselecting
                         dragControls.start(e, { snapToCursor: false });
-                    }}>
+                    }}
+                    >
+                    <div className="w-full h-full relative">
                         <Image src={prize.imageUrl} alt={prize.name} fill style={{objectFit:'contain'}} />
                     </div>
 

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -13,9 +14,9 @@ import { toast } from "@/hooks/use-toast";
 import WordSearchGame from "./WordSearchGame";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-import { useUser, useFirestore } from "@/firebase/hooks";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, Firestore } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
+import type { User } from 'firebase/auth';
 
 const challenges = {
   learn: {
@@ -32,9 +33,7 @@ const challenges = {
 
 type ChallengeId = keyof typeof challenges;
 
-const LearnChallenge = ({ onBack, onComplete }: { onBack: () => void; onComplete: () => void; }) => {
-    const { user } = useUser();
-    const db = useFirestore();
+const LearnChallenge = ({ user, db, onBack, onComplete }: { user: User | null; db: Firestore | null; onBack: () => void; onComplete: () => void; }) => {
     const [url, setUrl] = useState("");
     const [videoUrl, setVideoUrl] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -157,7 +156,7 @@ const LearnChallenge = ({ onBack, onComplete }: { onBack: () => void; onComplete
 };
 
 
-export default function Station5() {
+export default function Station5({ user, db }: { user: User | null; db: Firestore | null; }) {
   const stationId = 5;
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeId | null>(null);
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
@@ -202,7 +201,7 @@ export default function Station5() {
   };
   
   if (selectedChallenge === "learn") {
-    return <LearnChallenge onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("learn")} />;
+    return <LearnChallenge user={user} db={db} onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("learn")} />;
   }
    if (selectedChallenge === "wordsearch") {
     return <WordSearchGame gameId="station5" onComplete={() => handleComplete("wordsearch")} onBack={() => setSelectedChallenge(null)} />;
