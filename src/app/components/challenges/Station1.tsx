@@ -168,7 +168,7 @@ const PhotoSlot = ({
             fill
             className="object-cover rounded-lg"
           />
-          <div className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
             <CheckCircle className="h-8 w-8 text-white" />
           </div>
         </>
@@ -205,8 +205,8 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
             const docSnap = await getDoc(userDocRef);
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                setFloraPhotos(data.station1FloraPhotos || Array(4).fill(null));
-                setFaunaPhotos(data.station1FaunaPhotos || Array(4).fill(null));
+                if (data.station1FloraPhotos) setFloraPhotos(data.station1FloraPhotos);
+                if (data.station1FaunaPhotos) setFaunaPhotos(data.station1FaunaPhotos);
             }
         } catch (error) {
             console.error("Error fetching photos from Firestore:", error);
@@ -218,33 +218,27 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
   const updatePhotos = useCallback(async (type: "flora" | "fauna", index: number, imageUrl: string) => {
     if (!user || !db) return;
 
-    const updater = async (setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, dbField: string) => {
-        const currentPhotos = (type === "flora" ? floraPhotos : faunaPhotos);
-        const newPhotos = [...currentPhotos];
-        newPhotos[index] = imageUrl;
-        setter(newPhotos); 
-
-        try {
-            const userDocRef = doc(db, 'users', user.uid);
-            await setDoc(userDocRef, { [dbField]: newPhotos }, { merge: true });
-        } catch (error) {
-            console.error(`Failed to save ${type} photos to Firestore:`, error);
-            toast({ title: "Error al guardar URL", description: "No se pudo guardar la URL de la imagen en la nube.", variant: "destructive" });
-        }
-    };
+    const currentPhotos = type === "flora" ? floraPhotos : faunaPhotos;
+    const newPhotos = [...currentPhotos];
+    newPhotos[index] = imageUrl;
 
     if (type === "flora") {
-        await updater(setFloraPhotos, 'station1FloraPhotos');
+        setFloraPhotos(newPhotos);
     } else {
-        await updater(setFaunaPhotos, 'station1FaunaPhotos');
+        setFaunaPhotos(newPhotos);
     }
-}, [user, db, floraPhotos, faunaPhotos]);
 
+    const dbField = type === "flora" ? 'station1FloraPhotos' : 'station1FaunaPhotos';
 
-  const handleAddPhotoClick = (type: "flora" | "fauna", index: number) => {
-    setPhotoToAdd({ type, index });
-    setIsAddPhotoDialogOpen(true);
-  };
+    try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { [dbField]: newPhotos }, { merge: true });
+    } catch (error) {
+        console.error(`Failed to save ${type} photos to Firestore:`, error);
+        toast({ title: "Error al guardar URL", description: "No se pudo guardar la URL de la imagen en la nube.", variant: "destructive" });
+    }
+  }, [user, db, floraPhotos, faunaPhotos]);
+
 
   const handleCapture = async (imageUrl: string) => {
     if (photoToAdd && user && db) {
@@ -253,7 +247,6 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
         toast({ 
             title: "Subiendo Imagen...", 
             description: "Espera un momento, estamos guardando tu foto.", 
-            variant: "default" 
         });
 
         try {
@@ -277,6 +270,11 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
     }
     setIsCameraOpen(false);
     setPhotoToAdd(null);
+  };
+
+  const handleAddPhotoClick = (type: "flora" | "fauna", index: number) => {
+    setPhotoToAdd({ type, index });
+    setIsAddPhotoDialogOpen(true);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -418,8 +416,7 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
         
         toast({ 
             title: "Subiendo Imagen...", 
-            description: "Estamos guardando tu foto del bebedero/comedero.", 
-            variant: "default" 
+            description: "Estamos guardando tu foto del bebedero/comedero.",
         });
 
         try {
@@ -576,21 +573,17 @@ export default function Station1() {
     const imageInfo = PlaceHolderImages.find((p) => p.id === (challengeName === "Fauna y Flora" ? "fauna-capybara" : "habitat-build-1"));
     completeChallenge(stationId, challengeName, imageInfo?.imageUrl);
   
-    // Check if ALL challenges for this station will be complete *after* this one
     const stationChallenges = Object.keys(challenges);
     const currentCompletedForStation = Object.keys(completedChallenges[stationId] || {});
-    // Add the newly completed challenge to the list for the check
     const allChallengesDone = stationChallenges.every(ch => 
       currentCompletedForStation.includes(ch) || ch === challengeName
     );
 
-    setSelectedChallenge(null); // Go back to challenge selection screen
+    setSelectedChallenge(null);
 
     if (allChallengesDone) {
-      // If all are done, show the prize modal
       setIsPrizeModalOpen(true);
     } else {
-      // If not all are done, just show a toast notification
       toast({
         title: `¡Reto '${challengeName}' Completado!`,
         description: "¡Bien hecho! Completa el otro reto para ganar tu insignia.",
@@ -733,3 +726,5 @@ export default function Station1() {
     </>
   );
 }
+
+    
