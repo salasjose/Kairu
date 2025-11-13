@@ -18,8 +18,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore, useStorage } from "@/firebase/hooks";
 import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
-import { ref as storageRef, uploadString, getDownloadURL, deleteObject, uploadBytes } from "firebase/storage";
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import ResponsiveBackground from "../ResponsiveBackground";
+import { useChallengeProgress } from "@/hooks/use-challenge-progress";
 
 const resizeImage = (dataUrl: string, maxWidth: number): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -44,6 +45,21 @@ const resizeImage = (dataUrl: string, maxWidth: number): Promise<string> => {
   });
 };
 
+const uploadDataUrlAsBlob = async (dataUrl: string, userId: string, path: string): Promise<string> => {
+  const storage = useStorage()();
+  if (!storage) throw new Error("Storage not available");
+  
+  const storagePathRef = storageRef(storage, `${userId}/${path}_${Date.now()}.jpeg`);
+
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+
+  const snapshot = await uploadBytes(storagePathRef, blob, { contentType: 'image/jpeg' });
+  
+  const downloadUrl = await getDownloadURL(snapshot.ref);
+  return downloadUrl;
+};
+
 type PhotoData = {
   url: string;
   storagePath: string;
@@ -66,25 +82,6 @@ const challenges = {
     imageHint: habitatImage?.imageHint ?? "wildlife habitat",
   },
 };
-
-const uploadDataUrlAsBlob = async (dataUrl: string, userId: string, path: string): Promise<string> => {
-  const storage = useStorage()();
-  if (!storage) throw new Error("Storage not available");
-  
-  const storagePathRef = storageRef(storage, `${userId}/${path}_${Date.now()}.jpeg`);
-
-  // Convert Data URL to Blob
-  const response = await fetch(dataUrl);
-  const blob = await response.blob();
-
-  // Upload Blob
-  const snapshot = await uploadBytes(storagePathRef, blob, { contentType: 'image/jpeg' });
-  
-  // Get public URL
-  const downloadUrl = await getDownloadURL(snapshot.ref);
-  return downloadUrl;
-};
-
 
 const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void; onCancel: () => void; }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -308,7 +305,10 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
     if (file) {
       const reader = new FileReader();
       reader.onload = async (e) => {
-        await handleProcessPhoto(e.target?.result as string);
+        const dataUrl = e.target?.result as string;
+        if (dataUrl) {
+            await handleProcessPhoto(dataUrl);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -330,7 +330,6 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
     const photoToDelete = photos[type][index];
     if (!photoToDelete) return;
     
-    // Optimistically update UI
     const newPhotosForType = [...photos[type]];
     newPhotosForType[index] = null;
     setPhotos(prev => ({ ...prev, [type]: newPhotosForType }));
@@ -346,7 +345,7 @@ const PhotoChallenge = ({ onBack, onStationComplete }: { onBack: () => void, onS
     }
     
     updatePhotosInFirestore(type, newPhotosForType);
-  }, [user, photos, updatePhotosInFirestore]);
+  }, [user, photos, updatePhotosInFirestore, useStorage]);
 
 
   const areAllPhotosUploaded = photos.flora.every(p => p !== null) && photos.fauna.every(p => p !== null);
@@ -506,7 +505,10 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
     if (file) {
       const reader = new FileReader();
       reader.onload = async (e) => {
-        await handleProcessPhoto(e.target?.result as string);
+        const dataUrl = e.target?.result as string;
+        if(dataUrl) {
+            await handleProcessPhoto(dataUrl);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -542,7 +544,7 @@ const HabitatChallenge = ({ onBack, onStationComplete }: { onBack: () => void, o
     }
     
     updatePhotosInDb(newPhotos);
-  }, [user, habitatPhotos, updatePhotosInDb]);
+  }, [user, habitatPhotos, updatePhotosInDb, useStorage]);
 
 
   const areAllPhotosUploaded = habitatPhotos.every(p => p !== null);
@@ -618,7 +620,7 @@ export default function Station1() {
   const router = useRouter();
   
   const [showYaraDialog, setShowYaraDialog] = useState(false);
-  const [yaraMessage, setYaraMessage] = useState("¡Bienvenido a Bionexus! Aquí comienza nuestra gran aventura. Prepárate para descubrir los secretos que conectan toda la vida del planeta. Cada especie, cada árbol, cada gota todos formamos parte de la misma red. ¡Vamos a explorarla juntos! Para ellos debe seleccionar uno de los retos para completar la estación. ¡Debes completarlos todos para avanzar!");
+  const yaraMessage = "¡Bienvenido a Bionexus! Aquí comienza nuestra gran aventura. Prepárate para descubrir los secretos que conectan toda la vida del planeta. Cada especie, cada árbol, cada gota todos formamos parte de la misma red. ¡Vamos a explorarla juntos! Para ellos debe seleccionar uno de los retos para completar la estación. ¡Debes completarlos todos para avanzar!";
   const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const { completedChallenges, completeChallenge } = useChallengeProgress();
