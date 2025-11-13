@@ -130,6 +130,15 @@ export default function Station6({ user, db }: { user: User | null; db: Firestor
     });
     setIsPrizeModalOpen(true);
   };
+
+  const handleSimulateComplete = () => {
+    unlockStation(stationId + 1);
+    toast({
+      title: `¡Estación ${stationId} Simulada!`,
+      description: `Has completado la simulación del reto.`,
+    });
+    setIsPrizeModalOpen(true);
+  };
   
   const handleClaimPrize = () => {
     setIsPrizeModalOpen(false);
@@ -187,13 +196,16 @@ export default function Station6({ user, db }: { user: User | null; db: Firestor
                       )}
                     </div>
                      
-                     <div className="flex justify-center gap-4">
+                     <div className="flex justify-center gap-4 flex-wrap">
                         <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="lg">
                             <Upload className="mr-2"/>
                             Cargar Video
                         </Button>
                         <Button onClick={handleComplete} size="lg" disabled={!videoUrl}>
                             Completar Reto
+                        </Button>
+                        <Button onClick={handleSimulateComplete} size="lg" variant="secondary">
+                           Simular Reto Completado
                         </Button>
                      </div>
                 </CardContent>
