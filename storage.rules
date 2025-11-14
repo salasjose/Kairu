@@ -1,9 +1,7 @@
 rules_version = '2';
-
 service firebase.storage {
   match /b/{bucket}/o {
-    // Permite a un usuario autenticado leer y escribir archivos
-    // únicamente dentro de su propia carpeta (identificada por su UID).
+    // Permitir leer y escribir SOLO al dueño de la carpeta users/{uid}/...
     match /users/{userId}/{allPaths=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }

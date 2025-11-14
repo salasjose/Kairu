@@ -17,18 +17,16 @@ import PrizeDialog from "../PrizeDialog";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-import { useUser, useFirestore } from "@/firebase/hooks";
+import { useUser, useFirestore, useStorage } from "@/firebase/hooks";
 import ResponsiveBackground from "../ResponsiveBackground";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getStorage, ref, uploadBytes, getDownloadURL, type FirebaseStorage } from "firebase/storage";
 
 // -----------------------------------------------
 // 🔹 Helper para subir imágenes a Firebase Storage
 // -----------------------------------------------
 
-const storage = getStorage();
-
-const uploadImageAndGetUrl = async (file: Blob | File, storagePath: string) => {
+const uploadImageAndGetUrl = async (storage: FirebaseStorage, file: Blob | File, storagePath: string) => {
   const storageRef = ref(storage, storagePath);
 
   // Sube el archivo
@@ -223,6 +221,7 @@ const PhotoChallenge = ({
 }) => {
   const { user } = useUser();
   const db = useFirestore();
+  const storage = useStorage();
 
   const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>(Array(4).fill(null));
@@ -284,13 +283,8 @@ const PhotoChallenge = ({
     [user, db, floraPhotos, faunaPhotos]
   );
 
-  const handleAddPhotoClick = (type: "flora" | "fauna", index: number) => {
-    setPhotoToAdd({ type, index });
-    setIsAddPhotoDialogOpen(true);
-  };
-
   const handleCapture = async (file: Blob | File) => {
-    if (!user || !db) {
+    if (!user || !db || !storage) {
       toast({
         variant: "destructive",
         title: "Sesión requerida",
@@ -305,7 +299,7 @@ const PhotoChallenge = ({
     const path = `users/${user.uid}/station1/${type}/${index}_${Date.now()}.jpg`;
 
     try {
-      const downloadUrl = await uploadImageAndGetUrl(file, path);
+      const downloadUrl = await uploadImageAndGetUrl(storage, file, path);
       await updatePhotos(type, index, downloadUrl);
     } catch (error) {
       console.error("Error al subir imagen a Storage:", error);
@@ -337,6 +331,11 @@ const PhotoChallenge = ({
   const handleTakeNewPhotoClick = () => {
     setIsAddPhotoDialogOpen(false);
     setIsCameraOpen(true);
+  };
+
+  const handleAddPhotoClick = (type: "flora" | "fauna", index: number) => {
+    setPhotoToAdd({ type, index });
+    setIsAddPhotoDialogOpen(true);
   };
 
   const areAllPhotosUploaded =
@@ -434,6 +433,7 @@ const HabitatChallenge = ({
 }) => {
   const { user } = useUser();
   const db = useFirestore();
+  const storage = useStorage();
 
   const [habitatPhotos, setHabitatPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -479,7 +479,7 @@ const HabitatChallenge = ({
   };
 
   const handleCapture = async (file: Blob | File) => {
-    if (!user || !db) {
+    if (!user || !db || !storage) {
       toast({
         variant: "destructive",
         title: "Sesión requerida",
@@ -493,7 +493,7 @@ const HabitatChallenge = ({
     const path = `users/${user.uid}/station1/habitat/${photoToAddIndex}_${Date.now()}.jpg`;
 
     try {
-      const downloadUrl = await uploadImageAndGetUrl(file, path);
+      const downloadUrl = await uploadImageAndGetUrl(storage, file, path);
 
       const newPhotos = [...habitatPhotos];
       newPhotos[photoToAddIndex] = downloadUrl;
