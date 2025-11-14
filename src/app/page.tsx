@@ -1,10 +1,10 @@
 import BackgroundImage from "./components/BackgroundImage";
-import GameLoader from '@/app/components/GameLoader';
+import GameClient from '@/app/components/GameClient';
 
 export default function HomePage() {
   return (
     <BackgroundImage>
-      <GameLoader />
+      <GameClient />
     </BackgroundImage>
   );
 }
