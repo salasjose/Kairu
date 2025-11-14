@@ -16,6 +16,7 @@ import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore } from "@/firebase/hooks";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
+import { useChallengeProgress } from "@/hooks/use-challenge-progress";
 
 const challenges = {
   learn: {
@@ -162,6 +163,7 @@ export default function Station5() {
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeId | null>(null);
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
+  const { completedChallenges, completeChallenge } = useChallengeProgress();
   const router = useRouter();
   
   const [showYaraDialog, setShowYaraDialog] = useState(false);
@@ -188,16 +190,26 @@ export default function Station5() {
 
 
   const handleComplete = (challengeId: ChallengeId) => {
-    unlockStation(stationId + 1);
-    toast({
-      title: `¡Estación ${stationId} Completada!`,
-      description: `¡Reto '${challenges[challengeId].title}' superado!`,
-    });
-    setIsPrizeModalOpen(true);
+    completeChallenge(stationId, challengeId);
+    
+    const allChallengesDone = Object.keys(challenges).every(
+      (ch) => completedChallenges[stationId]?.[ch] || ch === challengeId
+    );
+
+    if (allChallengesDone) {
+        setIsPrizeModalOpen(true);
+    } else {
+        toast({
+            title: `¡Reto '${challenges[challengeId].title}' completado!`,
+            description: "¡Sigue así! Completa el otro reto para avanzar.",
+        });
+        setSelectedChallenge(null);
+    }
   };
   
    const handleClaimPrize = () => {
     setIsPrizeModalOpen(false);
+    unlockStation(stationId + 1);
     router.push("/");
   };
   
@@ -205,7 +217,13 @@ export default function Station5() {
     return <LearnChallenge onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("learn")} />;
   }
    if (selectedChallenge === "wordsearch") {
-    return <WordSearchGame gameId="station5" onComplete={() => handleComplete("wordsearch")} onBack={() => setSelectedChallenge(null)} />;
+    const isCompleted = !!completedChallenges[stationId]?.['wordsearch'];
+    return <WordSearchGame 
+                gameId="station5" 
+                onComplete={() => handleComplete("wordsearch")} 
+                onBack={() => setSelectedChallenge(null)}
+                isCompleted={isCompleted}
+            />;
   }
 
 

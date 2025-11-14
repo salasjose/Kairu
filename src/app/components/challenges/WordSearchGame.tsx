@@ -23,13 +23,26 @@ const grid = [
   ['S', 'O', 'L', 'A', 'M', 'B', 'I', 'E', 'N', 'T'],
 ];
 
-const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack: () => void; gameId: string }) => {
+// Pre-calculate word positions for instant solve
+const wordPositions: { [word: string]: [number, number][] } = {
+    'RECICLAR': [[1,1],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[1,8]],
+    'FAUNA': [[2,1],[2,2],[2,3],[2,4],[2,5]],
+    'FLORA': [[3,1],[3,2],[3,3],[3,4],[3,5]],
+    'AGUA': [[0,9],[1,9],[2,9],[3,9]],
+    'SUELO': [[7,8],[6,8],[5,8],[4,8],[3,8]],
+    'BOSQUE': [[7,0],[7,1],[7,2],[7,3],[7,4],[7,5]],
+    'SOL': [[9,0],[9,1],[9,2]],
+    'COMPOST': [[2,8],[3,8],[4,8],[5,8],[6,8],[7,8],[8,8]],
+};
+
+
+const WordSearchGame = ({ onComplete, onBack, gameId, isCompleted }: { onComplete: () => void; onBack: () => void; gameId: string, isCompleted?: boolean }) => {
   const [selectedCells, setSelectedCells] = useState<[number, number][]>([]);
-  const [foundWords, setFoundWords] = useState<string[]>([]);
-  const [foundCells, setFoundCells] = useState<[number, number][]>([]);
+  const [foundWords, setFoundWords] = useState<string[]>(isCompleted ? wordsToFind : []);
+  const [foundCells, setFoundCells] = useState<[number, number][]>(isCompleted ? Object.values(wordPositions).flat() as [number, number][] : []);
   const [isSelecting, setIsSelecting] = useState(false);
   const [timeLeft, setTimeLeft] = useState(240);
-  const [gameState, setGameState] = useState<'playing' | 'won' | 'lost'>('playing');
+  const [gameState, setGameState] = useState<'playing' | 'won' | 'lost'>(isCompleted ? 'won' : 'playing');
 
   useEffect(() => {
     if (gameState !== 'playing' || timeLeft <= 0) {
@@ -45,11 +58,11 @@ const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack
   }, [timeLeft, gameState]);
 
   useEffect(() => {
-    if (foundWords.length === wordsToFind.length) {
+    if (foundWords.length === wordsToFind.length && !isCompleted) {
       setGameState('won');
       toast({ title: "¡Ganaste!", description: "Has encontrado todas las palabras." });
     }
-  }, [foundWords]);
+  }, [foundWords, isCompleted]);
 
   const startSelection = (r: number, c: number) => {
     if (gameState !== 'playing') return;
@@ -141,10 +154,12 @@ const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack
             <h2 className="text-4xl font-bold font-headline text-primary mb-2">¡Reto Completado!</h2>
             <p className="text-muted-foreground text-lg mb-6">¡Encontraste todas las palabras! Eres un experto ambiental.</p>
             <div className='flex gap-4'>
-                <Button onClick={handleRestart} variant="outline" size="lg">
-                    <RefreshCw className="mr-2" />
-                    Jugar de Nuevo
-                </Button>
+                {!isCompleted && (
+                    <Button onClick={handleRestart} variant="outline" size="lg">
+                        <RefreshCw className="mr-2" />
+                        Jugar de Nuevo
+                    </Button>
+                )}
                 <Button onClick={onComplete} size="lg">
                     <CheckCircle className="mr-2" />
                     Continuar Aventura
@@ -171,24 +186,29 @@ const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack
 
   return (
      <div className="w-full max-w-5xl mx-auto p-4">
-      <div className="flex justify-between items-center mb-4">
-        <Button variant="ghost" onClick={onBack}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Volver al menú
-        </Button>
-        <h2 className="text-2xl md:text-3xl font-bold text-primary font-headline text-center">Sopa de Letras</h2>
-         <div className="text-2xl font-bold text-primary tabular-nums">
-            {formatTime(timeLeft)}
+        <div className="flex justify-between items-center mb-4">
+            <Button variant="ghost" onClick={onBack}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Volver al menú
+            </Button>
+            <h2 className="text-2xl md:text-3xl font-bold text-primary font-headline text-center">Sopa de Letras</h2>
+            { !isCompleted ? (
+                <div className="text-2xl font-bold text-primary tabular-nums">
+                    {formatTime(timeLeft)}
+                </div>
+            ) : <div className="w-24"/> }
         </div>
-      </div>
        <div className="grid md:grid-cols-3 gap-8 items-start">
          <div 
-           className="md:col-span-2 grid grid-cols-10 gap-1 bg-card border p-2 rounded-lg aspect-square select-none touch-none"
-           onMouseUp={endSelection}
-           onMouseLeave={endSelection}
-           onTouchEnd={endSelection}
-           onTouchCancel={endSelection}
-           onTouchMove={handleTouchMove}
+           className={cn(
+                "md:col-span-2 grid grid-cols-10 gap-1 bg-card border p-2 rounded-lg aspect-square select-none",
+                !isCompleted && "touch-none"
+            )}
+           onMouseUp={!isCompleted ? endSelection : undefined}
+           onMouseLeave={!isCompleted ? endSelection : undefined}
+           onTouchEnd={!isCompleted ? endSelection : undefined}
+           onTouchCancel={!isCompleted ? endSelection : undefined}
+           onTouchMove={!isCompleted ? handleTouchMove : undefined}
          >
            {grid.map((row, r) =>
              row.map((letter, c) => (
@@ -196,11 +216,12 @@ const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack
                  key={`${r}-${c}`}
                  data-r={r}
                  data-c={c}
-                 onMouseDown={() => startSelection(r, c)}
-                 onMouseEnter={() => moveSelection(r, c)}
-                 onTouchStart={(e) => { e.preventDefault(); startSelection(r, c); }}
+                 onMouseDown={!isCompleted ? () => startSelection(r, c) : undefined}
+                 onMouseEnter={!isCompleted ? () => moveSelection(r, c) : undefined}
+                 onTouchStart={!isCompleted ? (e) => { e.preventDefault(); startSelection(r, c); } : undefined}
                  className={cn(
-                   'flex items-center justify-center aspect-square text-lg font-bold uppercase cursor-pointer rounded-md transition-colors',
+                   'flex items-center justify-center aspect-square text-lg font-bold uppercase rounded-md transition-colors',
+                   !isCompleted && 'cursor-pointer',
                    isCellSelected(r,c) ? 'bg-primary/50 text-primary-foreground' 
                    : isCellFound(r, c) ? 'bg-green-500/30'
                    : 'bg-background hover:bg-accent'
@@ -223,6 +244,7 @@ const WordSearchGame = ({ onComplete, onBack }: { onComplete: () => void; onBack
                  </li>
                ))}
              </ul>
+             {isCompleted && <p className="mt-4 text-sm text-green-600 font-bold">¡Ya has completado este reto!</p>}
            </CardContent>
          </Card>
        </div>
