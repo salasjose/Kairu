@@ -2,46 +2,6 @@
 
 import { generateCrosswordPuzzle } from "@/ai/flows/adaptive-crossword-puzzle";
 import type { CrosswordData } from "@/lib/types";
-import { initializeAdminApp, getAdminStorage } from "@/firebase/admin";
-
-export async function uploadImageAction(dataUrl: string, storagePath: string): Promise<{ success: boolean; url?: string; error?: string }> {
-  try {
-    const adminApp = initializeAdminApp();
-    const bucket = getAdminStorage(adminApp).bucket();
-    
-    // Extract content type and base64 data from data URL
-    const matches = dataUrl.match(/^data:(.+);base64,(.*)$/);
-    if (!matches || matches.length !== 3) {
-      return { success: false, error: "Formato de URL de datos inválido." };
-    }
-
-    const contentType = matches[1];
-    const base64Data = matches[2];
-    const buffer = Buffer.from(base64Data, 'base64');
-    
-    const file = bucket.file(storagePath);
-    
-    await file.save(buffer, {
-      metadata: {
-        contentType: contentType,
-      },
-    });
-
-    // Make the file publicly readable
-    await file.makePublic();
-
-    // Return the public URL
-    const publicUrl = file.publicUrl();
-
-    return { success: true, url: publicUrl };
-
-  } catch (e) {
-    console.error("Error uploading image via Server Action:", e);
-    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred during upload.";
-    return { success: false, error: errorMessage };
-  }
-}
-
 
 export async function handleGenerateCrossword(topic: string, size: number): Promise<{ success: boolean; data?: CrosswordData; error?: string }> {
   try {
