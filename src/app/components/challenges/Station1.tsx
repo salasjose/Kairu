@@ -18,10 +18,10 @@ import PrizeDialog from "../PrizeDialog";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-import { useUser, useFirestore, useStorage } from "@/firebase/hooks";
+import { useUser, useFirestore } from "@/firebase/hooks";
 import ResponsiveBackground from "../ResponsiveBackground";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
+import { handlePhotoUpload } from "@/app/actions";
 
 
 const fileToDataUrl = (file: Blob | File): Promise<string> => {
@@ -186,7 +186,6 @@ const PhotoChallenge = ({
 }) => {
   const { user } = useUser();
   const db = useFirestore();
-  const storage = useStorage();
 
   const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>(Array(4).fill(null));
@@ -245,7 +244,7 @@ const PhotoChallenge = ({
   }, [user, db]);
 
   const handleCapture = async (dataUrl: string) => {
-    if (!user || !storage) {
+    if (!user) {
       toast({
         variant: "destructive",
         title: "Sesión requerida",
@@ -261,17 +260,9 @@ const PhotoChallenge = ({
     try {
       const { type, index } = photoToAdd;
       const storagePath = `users/${user.uid}/station1/${type}/${index}_${Date.now()}.jpg`;
+      
+      const downloadUrl = await handlePhotoUpload(dataUrl, storagePath);
   
-      // 1. Referencia en Storage
-      const storageRef = ref(storage, storagePath);
-  
-      // 2. Subimos el dataURL directamente
-      await uploadString(storageRef, dataUrl, "data_url");
-  
-      // 3. Obtenemos la URL pública de descarga
-      const downloadUrl = await getDownloadURL(storageRef);
-  
-      // 4. Guardamos la URL en Firestore
       await updatePhotos(type, index, downloadUrl);
   
       toast({
@@ -408,7 +399,6 @@ const HabitatChallenge = ({
 }) => {
   const { user } = useUser();
   const db = useFirestore();
-  const storage = useStorage();
 
   const [habitatPhotos, setHabitatPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -454,7 +444,7 @@ const HabitatChallenge = ({
   };
 
   const handleCapture = async (dataUrl: string) => {
-    if (!user || !storage) {
+    if (!user) {
       toast({
         variant: "destructive",
         title: "Sesión requerida",
@@ -469,17 +459,9 @@ const HabitatChallenge = ({
   
     try {
       const storagePath = `users/${user.uid}/station1/habitat/${photoToAddIndex}_${Date.now()}.jpg`;
+      
+      const downloadUrl = await handlePhotoUpload(dataUrl, storagePath);
   
-      // 1. Referencia en Storage
-      const storageRef = ref(storage, storagePath);
-  
-      // 2. Subimos el dataURL directamente
-      await uploadString(storageRef, dataUrl, "data_url");
-  
-      // 3. Obtenemos la URL pública
-      const downloadUrl = await getDownloadURL(storageRef);
-  
-      // 4. Actualizamos estado local y Firestore
       const newPhotos = [...habitatPhotos];
       newPhotos[photoToAddIndex] = downloadUrl;
       setHabitatPhotos(newPhotos);

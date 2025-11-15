@@ -3,6 +3,32 @@
 
 import { generateCrosswordPuzzle } from "@/ai/flows/adaptive-crossword-puzzle";
 import type { CrosswordData } from "@/lib/types";
+import { getAdminStorage } from "@/firebase/admin";
+import { getDownloadURL } from "firebase-admin/storage";
+
+export async function handlePhotoUpload(dataUrl: string, path: string): Promise<string> {
+    const storage = getAdminStorage();
+    const bucket = storage.bucket();
+    
+    // Create a buffer from the base64 data
+    const buffer = Buffer.from(dataUrl.split(',')[1], 'base64');
+    
+    // Create a file reference in the bucket
+    const file = bucket.file(path);
+
+    // Upload the file
+    await file.save(buffer, {
+        metadata: {
+            contentType: 'image/jpeg', // O el tipo de contenido que corresponda
+        },
+    });
+
+    // Get the public URL
+    const downloadUrl = await getDownloadURL(file);
+
+    return downloadUrl;
+}
+
 
 export async function handleGenerateCrossword(topic: string, size: number): Promise<{ success: boolean; data?: CrosswordData; error?: string }> {
   try {
