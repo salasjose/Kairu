@@ -28,9 +28,12 @@ export default function StationPage({ params }: { params: { id: string } }) {
   const stationId = parseInt(params.id, 10);
   
   // Encuentra la estación y el componente correspondiente.
-  const station = stations.find(s => s.id === stationId);
-  const StationComponent = station ? stationComponents[station.id] : null;
+  const StationComponent = stationId ? stationComponents[stationId] : null;
+
+  if (!StationComponent) {
+    notFound();
+  }
 
   // Esta estructura es más estable para React que un switch.
-  return StationComponent ? <StationComponent /> : notFound();
+  return <StationComponent />;
 }
