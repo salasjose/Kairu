@@ -18,10 +18,10 @@ import PrizeDialog from "../PrizeDialog";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-import { useUser, useFirestore, useStorage } from "@/firebase/hooks";
+import { useUser, useFirestore } from "@/firebase/hooks";
 import ResponsiveBackground from "../ResponsiveBackground";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import { handlePhotoUpload } from "@/app/actions";
 
 
 const fileToDataUrl = (file: Blob | File): Promise<string> => {
@@ -34,8 +34,6 @@ const fileToDataUrl = (file: Blob | File): Promise<string> => {
 };
 
 
-const faunaImage = PlaceHolderImages.find((p) => p.id === "fauna-capybara");
-const habitatImage = PlaceHolderImages.find((p) => p.id === "habitat-build-1");
 const yaraCharacterImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
 const challenges = {
@@ -48,8 +46,6 @@ const challenges = {
     title: "Cuidado Animal",
     description:
       "¡Tienes una gran misión! Crea e instala un bebedero o comedero para animales y compártenos cómo te quedó.",
-    image: habitatImage?.imageUrl ?? "https://picsum.photos/seed/habitat/400/300",
-    imageHint: habitatImage?.imageHint ?? "wildlife habitat",
   },
 };
 
@@ -190,7 +186,6 @@ const PhotoChallenge = ({
 }) => {
   const { user } = useUser();
   const db = useFirestore();
-  const storage = useStorage();
 
   const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>(Array(4).fill(null));
@@ -242,7 +237,7 @@ const PhotoChallenge = ({
   );
 
   const handleCapture = async (dataUrl: string) => {
-    if (!user || !storage) {
+    if (!user) {
       toast({
         variant: "destructive",
         title: "Sesión requerida",
@@ -257,16 +252,15 @@ const PhotoChallenge = ({
     
     const { type, index } = photoToAdd;
     const storagePath = `users/${user.uid}/station1/${type}/${index}_${Date.now()}.jpg`;
-    const storageRef = ref(storage, storagePath);
 
     try {
-        const snapshot = await uploadString(storageRef, dataUrl, 'data_url');
-        const downloadURL = await getDownloadURL(snapshot.ref);
+      const result = await handlePhotoUpload(dataUrl, storagePath);
 
+      if (result.success && result.downloadURL) {
         const isFlora = type === "flora";
         const currentArray = isFlora ? floraPhotos : faunaPhotos;
         const newPhotos = [...currentArray];
-        newPhotos[index] = downloadURL;
+        newPhotos[index] = result.downloadURL;
 
         if (isFlora) {
           setFloraPhotos(newPhotos);
@@ -275,9 +269,10 @@ const PhotoChallenge = ({
         }
         
         await updatePhotosInDb(type, newPhotos);
-
         toast({ title: "¡Foto subida!", description: "Tu foto se ha guardado correctamente."});
-
+      } else {
+        throw new Error(result.error || "Error desconocido al subir la imagen.");
+      }
     } catch (error) {
         console.error("Error en el proceso de subida:", error);
         toast({ title: "Error al subir", description: `No se pudo subir la imagen.`, variant: "destructive"});
@@ -402,7 +397,6 @@ const HabitatChallenge = ({
 }) => {
   const { user } = useUser();
   const db = useFirestore();
-  const storage = useStorage();
 
   const [habitatPhotos, setHabitatPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -448,7 +442,7 @@ const HabitatChallenge = ({
   };
 
   const handleCapture = async (dataUrl: string) => {
-    if (!user || !storage) {
+    if (!user) {
       toast({
         variant: "destructive",
         title: "Sesión requerida",
@@ -462,19 +456,19 @@ const HabitatChallenge = ({
     setIsCameraOpen(false);
     
     const storagePath = `users/${user.uid}/station1/habitat/${photoToAddIndex}_${Date.now()}.jpg`;
-    const storageRef = ref(storage, storagePath);
     
     try {
-      const snapshot = await uploadString(storageRef, dataUrl, 'data_url');
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      
-      const newPhotos = [...habitatPhotos];
-      newPhotos[photoToAddIndex] = downloadURL;
-      setHabitatPhotos(newPhotos);
-      await updatePhotosInDb(newPhotos);
+      const result = await handlePhotoUpload(dataUrl, storagePath);
+      if (result.success && result.downloadURL) {
+        const newPhotos = [...habitatPhotos];
+        newPhotos[photoToAddIndex] = result.downloadURL;
+        setHabitatPhotos(newPhotos);
+        await updatePhotosInDb(newPhotos);
 
-      toast({ title: "¡Foto subida!", description: "Tu foto se ha guardado correctamente."});
-
+        toast({ title: "¡Foto subida!", description: "Tu foto se ha guardado correctamente."});
+      } else {
+        throw new Error(result.error || "Error desconocido al subir la imagen.");
+      }
     } catch(error) {
       console.error("Error en el proceso de subida:", error);
       toast({ title: "Error al subir", description: `No se pudo subir la imagen.`, variant: "destructive"});

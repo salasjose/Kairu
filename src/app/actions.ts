@@ -2,6 +2,8 @@
 
 import { generateCrosswordPuzzle } from "@/ai/flows/adaptive-crossword-puzzle";
 import type { CrosswordData } from "@/lib/types";
+import { initializeAdminApp, getAdminStorage } from "@/firebase/admin";
+import { getDownloadURL } from "firebase-admin/storage";
 
 export async function handleGenerateCrossword(topic: string, size: number): Promise<{ success: boolean; data?: CrosswordData; error?: string }> {
   try {
@@ -25,7 +27,7 @@ export async function handleGenerateCrossword(topic: string, size: number): Prom
     } catch (e) {
       console.error("Error parsing crossword JSON from AI:", e, "Raw data:", result.puzzle);
       // Attempt to fix common markdown issues from the AI
-      const fixedJsonString = result.puzzle.replace(/```json/g, '').replace(/```/g, '').trim();
+      const fixedJsonString = result.puzzle.replace(/'''json/g, '').replace(/'''/g, '').trim();
        try {
          puzzleData = JSON.parse(fixedJsonString);
        } catch (finalError) {
@@ -49,3 +51,38 @@ export async function handleGenerateCrossword(topic: string, size: number): Prom
     return { success: false, error: "No se pudo conectar con el servicio de generación de crucigramas." };
   }
 }
+
+export async function handlePhotoUpload(dataUrl: string, path: string): Promise<{ success: boolean; downloadURL?: string; error?: string }> {
+  try {
+    const adminApp = initializeAdminApp();
+    const storage = getAdminStorage(adminApp);
+    const bucket = storage.bucket();
+
+    // Extraer el tipo de contenido y los datos base64 de la data URL
+    const match = dataUrl.match(/^data:(image\/\w+);base64,(.*)$/);
+    if (!match) {
+      return { success: false, error: 'Formato de Data URL inválido.' };
+    }
+
+    const contentType = match[1];
+    const base64Data = match[2];
+    
+    const buffer = Buffer.from(base64Data, 'base64');
+    const file = bucket.file(path);
+
+    await file.save(buffer, {
+      metadata: {
+        contentType: contentType,
+      },
+    });
+    
+    const downloadURL = await getDownloadURL(file);
+
+    return { success: true, downloadURL: downloadURL };
+  } catch (error) {
+    console.error('Error subiendo la imagen desde la Server Action:', error);
+    const errorMessage = error instanceof Error ? error.message : "Error desconocido en el servidor.";
+    return { success: false, error: `Error en el servidor: ${errorMessage}` };
+  }
+}
+
