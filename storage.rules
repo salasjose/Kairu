@@ -1,9 +1,12 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Permitir leer y escribir SOLO al dueño de la carpeta users/{uid}/...
-    match /users/{userId}/{allPaths=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    match /{allPaths=**} {
+      // Allow read and write access for all authenticated users.
+      // This is a common setup for development. For production, you might
+      // want to restrict this further, for example:
+      // allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null;
     }
   }
 }
