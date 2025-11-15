@@ -11,16 +11,7 @@ import Station7 from '@/app/components/challenges/Station7';
 import Station8 from '@/app/components/challenges/Station8';
 import Station9 from '@/app/components/challenges/Station9';
 
-export default function StationPage({ params }: { params: { id: string } }) {
-  const stationId = parseInt(params.id, 10);
-  const station = stations.find(s => s.id === stationId);
-
-  if (!station) {
-    notFound();
-  }
-
-  // Se mueve la lógica del switch directamente al return
-  // para evitar el error de renderizado de hooks.
+function StationContent({ stationId }: { stationId: number }) {
   switch (stationId) {
     case 1:
       return <Station1 />;
@@ -43,4 +34,15 @@ export default function StationPage({ params }: { params: { id: string } }) {
     default:
       return <div>Challenge coming soon!</div>;
   }
+}
+
+export default function StationPage({ params }: { params: { id: string } }) {
+  const stationId = parseInt(params.id, 10);
+  const station = stations.find(s => s.id === stationId);
+
+  if (!station) {
+    notFound();
+  }
+
+  return <StationContent stationId={station.id} />;
 }
