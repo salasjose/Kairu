@@ -10,9 +10,7 @@ import {
   CheckCircle,
   Recycle,
   Trash2,
-  Video,
   Sparkles,
-  Upload,
   Link as LinkIcon,
 } from "lucide-react";
 import Image from "next/image";
@@ -27,8 +25,6 @@ import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore } from "@/firebase/hooks";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useChallengeProgress } from "@/hooks/use-challenge-progress";
-
-const STORAGE_KEY_PREFIX = "kairu-station3-challenge-";
 
 const ChallengeDetail = ({
   title,
@@ -243,8 +239,12 @@ export default function Station3() {
   }, [scheduleYaraDialog]);
   
   const handleChallengeComplete = (challengeId: ChallengeId) => {
-    completeChallenge(stationId, challengeId);
-    setSelectedChallenge(null); // Go back to challenge selection
+    // For the "game" challenge, the individual game components will handle completion state.
+    // This function is now mainly for the other challenges.
+    if (challengeId !== 'game') {
+      completeChallenge(stationId, challengeId);
+    }
+    setSelectedChallenge(null); 
     toast({
         title: `¡Reto '${challenges[challengeId].title}' completado!`,
         description: "¡Sigue así! Completa todos los retos para avanzar."
@@ -267,7 +267,6 @@ export default function Station3() {
   if (selectedChallenge === "game") {
     return (
       <RecyclingGame
-        onComplete={() => handleChallengeComplete("game")}
         onBack={() => setSelectedChallenge(null)}
       />
     );

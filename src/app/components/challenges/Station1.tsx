@@ -1,8 +1,6 @@
-
 "use client";
 
-import * as React from "react";
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Camera, CheckCircle, Video, X } from "lucide-react";
@@ -21,26 +19,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore } from "@/firebase/hooks";
 import ResponsiveBackground from "../ResponsiveBackground";
-import { doc, getDoc, setDoc, arrayUnion } from "firebase/firestore";
-import { handlePhotoUpload } from "@/app/actions";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
-// Types
-type ChallengeType = 'flora' | 'fauna' | 'habitat';
-type ChallengeKey = 'Fauna y Flora' | 'Cuidado Animal';
+// 👇 NUEVO: usar Firebase Storage desde el cliente
+import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
 
-interface PhotoToAdd {
-  type: ChallengeType;
-  index: number;
-}
+const storage = getStorage();
 
-interface ChallengeConfig {
-  title: string;
-  description: string;
-  slots: number;
-  dbField: string;
-}
-
-// Utility functions
 const fileToDataUrl = (file: Blob | File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -50,122 +35,21 @@ const fileToDataUrl = (file: Blob | File): Promise<string> => {
   });
 };
 
-const validateImage = (dataUrl: string): boolean => {
-  try {
-    if (!dataUrl.startsWith('data:image/')) {
-      return false;
-    }
-    
-    // Validar tamaño máximo (10MB)
-    const base64 = dataUrl.split(',')[1];
-    if (!base64) return false;
-    
-    const sizeInBytes = 4 * Math.ceil(base64.length / 3) * 0.5624896334383812;
-    const sizeInMB = sizeInBytes / (1024 * 1024);
-    
-    return sizeInMB <= 10;
-  } catch {
-    return false;
-  }
+const yaraCharacterImage = PlaceHolderImages.find((p) => p.id === "char-yara");
+
+const challenges = {
+  "Fauna y Flora": {
+    title: "Fauna y Flora",
+    description:
+      "Identifica las especies nativas de fauna y flora de tu región y carga tus fotos en cada espacio.",
+  },
+  "Cuidado Animal": {
+    title: "Cuidado Animal",
+    description:
+      "¡Tienes una gran misión! Crea e instala un bebedero o comedero para animales y compártenos cómo te quedó.",
+  },
 };
 
-// Custom Hooks
-const usePhotoManagement = (stationId: number, type: ChallengeType, slotCount: number) => {
-  const { user } = useUser();
-  const db = useFirestore();
-  const [photos, setPhotos] = useState<(string | null)[]>(Array(slotCount).fill(null));
-  const [isLoading, setIsLoading] = useState(true);
-
-  const dbField = `station${stationId}${type.charAt(0).toUpperCase() + type.slice(1)}Photos`;
-
-  const fetchPhotos = useCallback(async () => {
-    if (!user || !db) {
-      setIsLoading(false);
-      return;
-    }
-    
-    const userDocRef = doc(db, "users", user.uid);
-    try {
-      const docSnap = await getDoc(userDocRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        const savedPhotos = data[dbField] || [];
-        const newPhotos = Array(slotCount).fill(null);
-        savedPhotos.forEach((photo: string, index: number) => {
-            if (index < slotCount) newPhotos[index] = photo;
-        });
-        setPhotos(newPhotos);
-      }
-    } catch (error) {
-      console.error(`Error fetching ${type} photos from Firestore:`, error);
-      toast({
-        title: "Error al cargar",
-        description: "No se pudieron cargar las fotos guardadas.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user, db, dbField, slotCount, type]);
-
-
-  useEffect(() => {
-    fetchPhotos();
-  }, [fetchPhotos]);
-
-  const updatePhotos = useCallback(async (type: ChallengeType, index: number, url: string) => {
-    if (!user || !db) return;
-    
-    const newPhotos = [...photos];
-    newPhotos[index] = url;
-
-    // To be safe, filter out nulls before saving
-    const photosToSave = newPhotos.filter(p => p !== null);
-
-    try {
-      const userDocRef = doc(db, "users", user.uid);
-      await setDoc(userDocRef, { [dbField]: photosToSave }, { merge: true });
-      // After successful save, update local state to match exactly what's in DB
-      await fetchPhotos();
-    } catch (error) {
-      console.error(`Failed to save ${type} photos:`, error);
-      throw error;
-    }
-  }, [user, db, dbField, type, photos, fetchPhotos]);
-
-
-  const updateAllPhotosInDb = useCallback(async (newPhotos: (string | null)[]) => {
-    if (!user || !db) return;
-    try {
-      const userDocRef = doc(db, "users", user.uid);
-      await setDoc(userDocRef, { [dbField]: newPhotos.filter(p => p !== null) }, { merge: true });
-      await fetchPhotos();
-    } catch (error) {
-      console.error(`Failed to save ${type} photos:`, error);
-      throw error;
-    }
-  }, [user, db, dbField, type, fetchPhotos]);
-
-  return { photos, updatePhotos, updateAllPhotosInDb, isLoading, setPhotos };
-};
-
-const useCamera = () => {
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
-
-  const openCamera = useCallback(() => setIsCameraOpen(true), []);
-  const closeCamera = useCallback(() => setIsCameraOpen(false), []);
-
-  return {
-    isCameraOpen,
-    hasCameraPermission,
-    setHasCameraPermission,
-    openCamera,
-    closeCamera
-  };
-};
-
-// Components
 const CameraView = ({
   onCapture,
   onCancel,
@@ -177,10 +61,8 @@ const CameraView = ({
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
 
   useEffect(() => {
-    let stream: MediaStream | null = null;
-
     const getCameraPermission = async () => {
-      if (!navigator.mediaDevices?.getUserMedia) {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         console.error("Camera API is not supported by this browser.");
         setHasCameraPermission(false);
         toast({
@@ -190,14 +72,8 @@ const CameraView = ({
         });
         return;
       }
-
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { 
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          } 
-        });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         setHasCameraPermission(true);
 
         if (videoRef.current) {
@@ -217,13 +93,14 @@ const CameraView = ({
     getCameraPermission();
 
     return () => {
-      if (stream) {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
         stream.getTracks().forEach((track) => track.stop());
       }
     };
   }, []);
 
-  const handleCapture = useCallback(() => {
+  const handleCapture = () => {
     if (videoRef.current) {
       const canvas = document.createElement("canvas");
       canvas.width = videoRef.current.videoWidth;
@@ -234,18 +111,12 @@ const CameraView = ({
         onCapture(canvas.toDataURL("image/jpeg", 0.9));
       }
     }
-  }, [onCapture]);
+  };
 
   return (
     <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4">
       <div className="relative w-full max-w-lg aspect-[4/3] bg-black rounded-lg overflow-hidden">
-        <video 
-          ref={videoRef} 
-          className="w-full h-full object-cover" 
-          autoPlay 
-          playsInline 
-          muted 
-        />
+        <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
         {hasCameraPermission === false && (
           <div className="absolute inset-0 flex items-center justify-center bg-black">
             <Alert variant="destructive" className="max-w-sm">
@@ -264,10 +135,10 @@ const CameraView = ({
           <X className="h-6 w-6 mr-2" />
           Cancelar
         </Button>
-        <Button 
-          onClick={handleCapture} 
-          size="lg" 
-          disabled={!hasCameraPermission} 
+        <Button
+          onClick={handleCapture}
+          size="lg"
+          disabled={!hasCameraPermission}
           className="rounded-full"
         >
           <Camera className="h-6 w-6 mr-2" />
@@ -281,22 +152,15 @@ const CameraView = ({
 const PhotoSlot = ({
   imageUrl,
   onAddPhoto,
-  isLoading = false,
 }: {
   imageUrl: string | null;
   onAddPhoto: () => void;
-  isLoading?: boolean;
 }) => {
   return (
     <div className="aspect-square border-2 border-dashed rounded-lg flex items-center justify-center relative bg-card/50">
       {imageUrl ? (
         <>
-          <Image 
-            src={imageUrl} 
-            alt="Uploaded content" 
-            fill 
-            className="object-cover rounded-lg" 
-          />
+          <Image src={imageUrl} alt="Uploaded content" fill className="object-cover rounded-lg" />
           <div className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center">
             <CheckCircle className="h-8 w-8 text-white" />
           </div>
@@ -306,13 +170,10 @@ const PhotoSlot = ({
           <Button
             variant="ghost"
             onClick={onAddPhoto}
-            disabled={isLoading}
             className="flex flex-col h-auto items-center gap-1"
           >
             <Camera className="h-8 w-8 text-muted-foreground" />
-            <span className="text-xs">
-              {isLoading ? "Cargando..." : "Añadir foto"}
-            </span>
+            <span className="text-xs">Añadir foto</span>
           </Button>
         </div>
       )}
@@ -320,9 +181,6 @@ const PhotoSlot = ({
   );
 };
 
-const MemoizedPhotoSlot = React.memo(PhotoSlot);
-
-// Photo Challenge Component
 const PhotoChallenge = ({
   onBack,
   onStationComplete,
@@ -331,87 +189,150 @@ const PhotoChallenge = ({
   onStationComplete: () => void;
 }) => {
   const { user } = useUser();
+  const db = useFirestore();
+
+  const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>(Array(4).fill(null));
+  const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>(Array(4).fill(null));
+
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAddPhotoDialogOpen, setIsAddPhotoDialogOpen] = useState(false);
-  const [photoToAdd, setPhotoToAdd] = useState<PhotoToAdd | null>(null);
+  const [photoToAdd, setPhotoToAdd] = useState<{ type: "flora" | "fauna"; index: number } | null>(
+    null
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isUploading, setIsUploading] = useState(false);
 
-  const { photos: floraPhotos, updatePhotos: updateFloraPhotos, isLoading: floraLoading } = 
-    usePhotoManagement(1, 'flora', 4);
-  const { photos: faunaPhotos, updatePhotos: updateFaunaPhotos, isLoading: faunaLoading } = 
-    usePhotoManagement(1, 'fauna', 4);
+  const updatePhotos = useCallback(
+    async (type: "flora" | "fauna", index: number, url: string) => {
+      if (!user || !db) return;
 
-  const { isCameraOpen, openCamera, closeCamera } = useCamera();
+      const currentPhotos = type === "flora" ? floraPhotos : faunaPhotos;
+      const newPhotos = [...currentPhotos];
+      newPhotos[index] = url;
 
-  const handleCapture = useCallback(async (dataUrl: string) => {
-    if (!user) {
-      toast({ variant: "destructive", title: "Sesión requerida", description: "Debes iniciar sesión para guardar tus fotos." });
-      return;
-    }
-    if (!photoToAdd) return;
-
-    closeCamera();
-    setIsUploading(true);
-
-    try {
-      if (!validateImage(dataUrl)) throw new Error('La imagen no es válida o es demasiado grande (máximo 10MB)');
-      
-      const { type, index } = photoToAdd;
-      const downloadUrl = await handlePhotoUpload(dataUrl, `users/${user.uid}/station1/${type}/${index}_${Date.now()}.jpg`);
-      
-      if (type === 'flora') {
-        await updateFloraPhotos(type, index, downloadUrl);
+      if (type === "flora") {
+        setFloraPhotos(newPhotos);
       } else {
-        await updateFaunaPhotos(type, index, downloadUrl);
+        setFaunaPhotos(newPhotos);
       }
 
-      toast({ title: "¡Foto subida!", description: "Tu foto se ha guardado correctamente." });
-    } catch (error) {
-      console.error("Error en el proceso de subida:", error);
-      toast({ title: "Error al subir", description: error instanceof Error ? error.message : "No se pudo subir la imagen. Intenta de nuevo.", variant: "destructive" });
-    } finally {
-      setPhotoToAdd(null);
-      setIsUploading(false);
-    }
-  }, [user, photoToAdd, closeCamera, updateFloraPhotos, updateFaunaPhotos]);
-
-
-  const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
+      const dbField = type === "flora" ? "station1FloraPhotos" : "station1FaunaPhotos";
       try {
-        const dataUrl = await fileToDataUrl(file);
-        await handleCapture(dataUrl);
+        const userDocRef = doc(db, "users", user.uid);
+        await setDoc(
+          userDocRef,
+          {
+            [dbField]: newPhotos,
+          },
+          { merge: true }
+        );
       } catch (error) {
-        console.error("Error processing file:", error);
-        toast({ title: "Error al procesar archivo", description: "No se pudo procesar la imagen seleccionada.", variant: "destructive" });
-      } finally {
-        if (event.target) event.target.value = "";
+        console.error(`Failed to save ${type} photos to Firestore:`, error);
+        toast({
+          title: "Error al guardar",
+          description: "No se pudo guardar la galería en la nube.",
+          variant: "destructive",
+        });
       }
-    }
-  }, [handleCapture]);
-
-  const handleUploadClick = useCallback(() => {
-    setIsAddPhotoDialogOpen(false);
-    fileInputRef.current?.click();
-  }, []);
-
-  const handleTakeNewPhotoClick = useCallback(() => {
-    setIsAddPhotoDialogOpen(false);
-    openCamera();
-  }, [openCamera]);
-
-  const handleAddPhotoClick = useCallback((type: "flora" | "fauna", index: number) => {
-    setPhotoToAdd({ type, index });
-    setIsAddPhotoDialogOpen(true);
-  }, []);
-
-  const areAllPhotosUploaded = useMemo(() =>
-    floraPhotos.every((p) => p !== null) && faunaPhotos.every((p) => p !== null),
-    [floraPhotos, faunaPhotos]
+    },
+    [user, db, floraPhotos, faunaPhotos]
   );
 
-  const onChallengeCompleteClick = useCallback(() => {
+  useEffect(() => {
+    const fetchPhotos = async () => {
+      if (!user || !db) return;
+      const userDocRef = doc(db, "users", user.uid);
+      try {
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setFloraPhotos(data.station1FloraPhotos || Array(4).fill(null));
+          setFaunaPhotos(data.station1FaunaPhotos || Array(4).fill(null));
+        }
+      } catch (error) {
+        console.error("Error fetching photos from Firestore:", error);
+      }
+    };
+    fetchPhotos();
+  }, [user, db]);
+
+  const handleCapture = async (dataUrl: string) => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Sesión requerida",
+        description: "Debes iniciar sesión para guardar tus fotos.",
+      });
+      return;
+    }
+
+    if (!photoToAdd) return;
+
+    setIsCameraOpen(false);
+
+    try {
+      const { type, index } = photoToAdd;
+
+      // 1. Ruta en Storage
+      const storagePath = `users/${user.uid}/station1/${type}/${index}_${Date.now()}.jpg`;
+
+      // 2. Referencia en Storage
+      const storageRef = ref(storage, storagePath);
+
+      // 3. Subir dataURL directamente
+      await uploadString(storageRef, dataUrl, "data_url");
+
+      // 4. Obtener URL de descarga
+      const downloadUrl = await getDownloadURL(storageRef);
+
+      // 5. Guardar en Firestore
+      await updatePhotos(type, index, downloadUrl);
+
+      toast({
+        title: "¡Foto subida!",
+        description: "Tu foto se ha guardado correctamente.",
+      });
+    } catch (error) {
+      console.error("Error en el proceso de subida:", error);
+      toast({
+        title: "Error al subir",
+        description: `No se pudo subir la imagen: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }.`,
+        variant: "destructive",
+      });
+    } finally {
+      setPhotoToAdd(null);
+    }
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const dataUrl = await fileToDataUrl(file);
+      await handleCapture(dataUrl);
+      event.target.value = "";
+    }
+  };
+
+  const handleUploadClick = () => {
+    setIsAddPhotoDialogOpen(false);
+    fileInputRef.current?.click();
+  };
+
+  const handleTakeNewPhotoClick = () => {
+    setIsAddPhotoDialogOpen(false);
+    setIsCameraOpen(true);
+  };
+
+  const handleAddPhotoClick = (type: "flora" | "fauna", index: number) => {
+    setPhotoToAdd({ type, index });
+    setIsAddPhotoDialogOpen(true);
+  };
+
+  const areAllPhotosUploaded =
+    floraPhotos.every((p) => p !== null) && faunaPhotos.every((p) => p !== null);
+
+  const onChallengeCompleteClick = () => {
     if (areAllPhotosUploaded) {
       onStationComplete();
     } else {
@@ -421,29 +342,7 @@ const PhotoChallenge = ({
         variant: "destructive",
       });
     }
-  }, [areAllPhotosUploaded, onStationComplete]);
-
-  const floraSlots = useMemo(() => 
-    floraPhotos.map((photo, index) => (
-      <MemoizedPhotoSlot
-        key={`flora-${index}`}
-        imageUrl={photo}
-        onAddPhoto={() => handleAddPhotoClick("flora", index)}
-        isLoading={floraLoading || isUploading}
-      />
-    )), [floraPhotos, handleAddPhotoClick, floraLoading, isUploading]
-  );
-
-  const faunaSlots = useMemo(() => 
-    faunaPhotos.map((photo, index) => (
-      <MemoizedPhotoSlot
-        key={`fauna-${index}`}
-        imageUrl={photo}
-        onAddPhoto={() => handleAddPhotoClick("fauna", index)}
-        isLoading={faunaLoading || isUploading}
-      />
-    )), [faunaPhotos, handleAddPhotoClick, faunaLoading, isUploading]
-  );
+  };
 
   return (
     <>
@@ -455,7 +354,7 @@ const PhotoChallenge = ({
         accept="image/*"
       />
       {isCameraOpen && (
-        <CameraView onCapture={handleCapture} onCancel={closeCamera} />
+        <CameraView onCapture={handleCapture} onCancel={() => setIsCameraOpen(false)} />
       )}
       <AddPhotoDialog
         open={isAddPhotoDialogOpen}
@@ -466,7 +365,7 @@ const PhotoChallenge = ({
       <ChallengeContainer
         stationId={1}
         title="Estación Bionexus"
-        description="Identifica las especies nativas de fauna y flora de tu región y carga tus fotos en cada espacio."
+        description={challenges["Fauna y Flora"].description}
       >
         <div className="w-full max-w-4xl mx-auto">
           <Button variant="ghost" onClick={onBack} className="mb-4">
@@ -478,24 +377,32 @@ const PhotoChallenge = ({
             <section>
               <h3 className="text-2xl font-bold font-headline text-primary mb-4">Flora Local</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {floraSlots}
+                {floraPhotos.map((photo, index) => (
+                  <PhotoSlot
+                    key={`flora-${index}`}
+                    imageUrl={photo}
+                    onAddPhoto={() => handleAddPhotoClick("flora", index)}
+                  />
+                ))}
               </div>
             </section>
 
             <section>
               <h3 className="text-2xl font-bold font-headline text-primary mb-4">Fauna Local</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {faunaSlots}
+                {faunaPhotos.map((photo, index) => (
+                  <PhotoSlot
+                    key={`fauna-${index}`}
+                    imageUrl={photo}
+                    onAddPhoto={() => handleAddPhotoClick("fauna", index)}
+                  />
+                ))}
               </div>
             </section>
           </div>
           <div className="mt-8 text-center">
-            <Button 
-              size="lg" 
-              onClick={onChallengeCompleteClick} 
-              disabled={!areAllPhotosUploaded || floraLoading || faunaLoading || isUploading}
-            >
-              {isUploading ? "Subiendo..." : "Completar Reto"}
+            <Button size="lg" onClick={onChallengeCompleteClick} disabled={!areAllPhotosUploaded}>
+              Completar Reto
             </Button>
           </div>
         </div>
@@ -504,7 +411,6 @@ const PhotoChallenge = ({
   );
 };
 
-// Habitat Challenge Component
 const HabitatChallenge = ({
   onBack,
   onStationComplete,
@@ -513,82 +419,124 @@ const HabitatChallenge = ({
   onStationComplete: () => void;
 }) => {
   const { user } = useUser();
+  const db = useFirestore();
+
+  const [habitatPhotos, setHabitatPhotos] = useState<(string | null)[]>(Array(4).fill(null));
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAddPhotoDialogOpen, setIsAddPhotoDialogOpen] = useState(false);
   const [photoToAddIndex, setPhotoToAddIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isUploading, setIsUploading] = useState(false);
 
-  const { photos: habitatPhotos, setPhotos: setHabitatPhotos, updateAllPhotosInDb } = 
-    usePhotoManagement(1, 'habitat', 4);
+  useEffect(() => {
+    const fetchPhotos = async () => {
+      if (!user || !db) return;
+      const userDocRef = doc(db, "users", user.uid);
+      try {
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists() && docSnap.data().station1HabitatPhotos) {
+          setHabitatPhotos(docSnap.data().station1HabitatPhotos);
+        }
+      } catch (error) {
+        console.error("Error fetching habitat photos from Firestore:", error);
+      }
+    };
+    fetchPhotos();
+  }, [user, db]);
 
-  const { isCameraOpen, openCamera, closeCamera } = useCamera();
+  const updatePhotosInDb = async (newPhotos: (string | null)[]) => {
+    if (!user || !db) return;
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      await setDoc(
+        userDocRef,
+        {
+          station1HabitatPhotos: newPhotos,
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.error("Failed to save habitat photos to Firestore:", error);
+      toast({
+        title: "Error al guardar",
+        description: "No se pudo guardar la imagen en la nube.",
+        variant: "destructive",
+      });
+    }
+  };
 
-  const handleCapture = useCallback(async (dataUrl: string) => {
+  const handleCapture = async (dataUrl: string) => {
     if (!user) {
-      toast({ variant: "destructive", title: "Sesión requerida", description: "Debes iniciar sesión para guardar tus fotos." });
+      toast({
+        variant: "destructive",
+        title: "Sesión requerida",
+        description: "Debes iniciar sesión para guardar tus fotos.",
+      });
       return;
     }
+
     if (photoToAddIndex === null) return;
 
-    closeCamera();
-    setIsUploading(true);
+    setIsCameraOpen(false);
 
     try {
-      if (!validateImage(dataUrl)) throw new Error('La imagen no es válida o es demasiado grande (máximo 10MB)');
-      
-      const downloadUrl = await handlePhotoUpload(dataUrl, `users/${user.uid}/station1/habitat/${photoToAddIndex}_${Date.now()}.jpg`);
-      
+      const storagePath = `users/${user.uid}/station1/habitat/${photoToAddIndex}_${Date.now()}.jpg`;
+
+      const storageRef = ref(storage, storagePath);
+
+      await uploadString(storageRef, dataUrl, "data_url");
+
+      const downloadUrl = await getDownloadURL(storageRef);
+
       const newPhotos = [...habitatPhotos];
       newPhotos[photoToAddIndex] = downloadUrl;
       setHabitatPhotos(newPhotos);
-      await updateAllPhotosInDb(newPhotos);
+      await updatePhotosInDb(newPhotos);
 
-      toast({ title: "¡Foto subida!", description: "Tu foto se ha guardado correctamente." });
+      toast({
+        title: "¡Foto subida!",
+        description: "Tu foto se ha guardado correctamente.",
+      });
     } catch (error) {
       console.error("Error en el proceso de subida:", error);
-      toast({ title: "Error al subir", description: error instanceof Error ? error.message : "No se pudo subir la imagen. Intenta de nuevo.", variant: "destructive" });
+      toast({
+        title: "Error al subir",
+        description: `No se pudo subir la imagen: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }.`,
+        variant: "destructive",
+      });
     } finally {
       setPhotoToAddIndex(null);
-      setIsUploading(false);
     }
-  }, [user, photoToAddIndex, closeCamera, habitatPhotos, setHabitatPhotos, updateAllPhotosInDb]);
+  };
 
-  const handleAddPhotoClick = useCallback((index: number) => {
+  const handleAddPhotoClick = (index: number) => {
     setPhotoToAddIndex(index);
     setIsAddPhotoDialogOpen(true);
-  }, []);
+  };
 
-  const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      try {
-        const dataUrl = await fileToDataUrl(file);
-        await handleCapture(dataUrl);
-      } catch (error) {
-        console.error("Error processing file:", error);
-        toast({ title: "Error al procesar archivo", description: "No se pudo procesar la imagen seleccionada.", variant: "destructive" });
-      } finally {
-        if(event.target) event.target.value = "";
-      }
+      const dataUrl = await fileToDataUrl(file);
+      await handleCapture(dataUrl);
+      event.target.value = "";
     }
-  }, [handleCapture]);
+  };
 
-  const handleUploadClick = useCallback(() => {
+  const handleUploadClick = () => {
     setIsAddPhotoDialogOpen(false);
     fileInputRef.current?.click();
-  }, []);
+  };
 
-  const handleTakeNewPhotoClick = useCallback(() => {
+  const handleTakeNewPhotoClick = () => {
     setIsAddPhotoDialogOpen(false);
-    openCamera();
-  }, [openCamera]);
+    setIsCameraOpen(true);
+  };
 
-  const areAllPhotosUploaded = useMemo(() => 
-    habitatPhotos.every((p) => p !== null),
-    [habitatPhotos]
-  );
+  const areAllPhotosUploaded = habitatPhotos.every((p) => p !== null);
 
-  const onChallengeCompleteClick = useCallback(() => {
+  const onChallengeCompleteClick = () => {
     if (areAllPhotosUploaded) {
       onStationComplete();
     } else {
@@ -598,18 +546,7 @@ const HabitatChallenge = ({
         variant: "destructive",
       });
     }
-  }, [areAllPhotosUploaded, onStationComplete]);
-
-  const habitatSlots = useMemo(() => 
-    habitatPhotos.map((photo, index) => (
-      <MemoizedPhotoSlot
-        key={`habitat-${index}`}
-        imageUrl={photo}
-        onAddPhoto={() => handleAddPhotoClick(index)}
-        isLoading={isUploading}
-      />
-    )), [habitatPhotos, handleAddPhotoClick, isUploading]
-  );
+  };
 
   return (
     <>
@@ -621,7 +558,7 @@ const HabitatChallenge = ({
         accept="image/*"
       />
       {isCameraOpen && (
-        <CameraView onCapture={handleCapture} onCancel={closeCamera} />
+        <CameraView onCapture={handleCapture} onCancel={() => setIsCameraOpen(false)} />
       )}
       <AddPhotoDialog
         open={isAddPhotoDialogOpen}
@@ -632,7 +569,7 @@ const HabitatChallenge = ({
       <ChallengeContainer
         stationId={1}
         title="Estación Bionexus"
-        description="¡Tienes una gran misión! Crea e instala un bebedero o comedero para animales y compártenos cómo te quedó."
+        description={challenges["Cuidado Animal"].description}
       >
         <div className="w-full max-w-4xl mx-auto">
           <Button variant="ghost" onClick={onBack} className="mb-4">
@@ -645,16 +582,18 @@ const HabitatChallenge = ({
               Tu Bebedero/Comedero
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {habitatSlots}
+              {habitatPhotos.map((photo, index) => (
+                <PhotoSlot
+                  key={`habitat-${index}`}
+                  imageUrl={photo}
+                  onAddPhoto={() => handleAddPhotoClick(index)}
+                />
+              ))}
             </div>
           </section>
           <div className="mt-8 text-center">
-            <Button 
-              size="lg" 
-              onClick={onChallengeCompleteClick} 
-              disabled={!areAllPhotosUploaded || isUploading}
-            >
-              {isUploading ? "Subiendo..." : "Completar Reto"}
+            <Button size="lg" onClick={onChallengeCompleteClick} disabled={!areAllPhotosUploaded}>
+              Completar Reto
             </Button>
           </div>
         </div>
@@ -663,21 +602,9 @@ const HabitatChallenge = ({
   );
 };
 
-// Main Station Component
-const challenges = {
-  "Fauna y Flora": {
-    title: "Fauna y Flora",
-    description: "Identifica las especies nativas de fauna y flora de tu región y carga tus fotos en cada espacio.",
-  },
-  "Cuidado Animal": {
-    title: "Cuidado Animal",
-    description: "¡Tienes una gran misión! Crea e instala un bebedero o comedero para animales y compártenos cómo te quedó.",
-  },
-} as const;
-
 export default function Station1() {
   const stationId = 1;
-  const [selectedChallenge, setSelectedChallenge] = useState<ChallengeKey | null>(null);
+  const [selectedChallenge, setSelectedChallenge] = useState<string | null>(null);
   const { completedChallenges, completeChallenge } = useChallengeProgress();
   const { unlockStation } = useStationProgress();
   const router = useRouter();
@@ -705,17 +632,17 @@ export default function Station1() {
 
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
 
-  const handleChallengeSelection = useCallback((challenge: ChallengeKey) => {
+  const handleChallengeSelection = (challenge: string) => {
     setSelectedChallenge(challenge);
-  }, []);
+  };
 
-  const handleChallengeComplete = useCallback((challengeName: ChallengeKey) => {
+  const handleChallengeComplete = (challengeName: string) => {
     const imageInfo = PlaceHolderImages.find((p) =>
       challengeName === "Fauna y Flora" ? p.id === "fauna-capybara" : p.id === "habitat-build-1"
     );
     completeChallenge(stationId, challengeName, imageInfo?.imageUrl);
 
-    const stationChallenges = Object.keys(challenges) as ChallengeKey[];
+    const stationChallenges = Object.keys(challenges);
     const currentCompletedForStation = Object.keys(completedChallenges[stationId] || {});
     const allChallengesDone = stationChallenges.every(
       (ch) => currentCompletedForStation.includes(ch) || ch === challengeName
@@ -731,9 +658,9 @@ export default function Station1() {
         description: "¡Bien hecho! Completa el otro reto para ganar tu insignia.",
       });
     }
-  }, [completeChallenge, completedChallenges, stationId]);
+  };
 
-  const handleClaimPrize = useCallback(() => {
+  const handleClaimPrize = () => {
     setIsPrizeModalOpen(false);
     unlockStation(stationId + 1);
     toast({
@@ -741,12 +668,7 @@ export default function Station1() {
       description: "¡Has completado todos los retos! Regresando al mapa...",
     });
     router.push("/");
-  }, [stationId, unlockStation, router]);
-
-  const yaraCharacterImage = useMemo(() => 
-    PlaceHolderImages.find((p) => p.id === "char-yara"),
-    []
-  );
+  };
 
   if (selectedChallenge === "Fauna y Flora") {
     return (
@@ -768,73 +690,6 @@ export default function Station1() {
 
   const stationCompletedChallenges = completedChallenges[stationId] || {};
 
-  const challengeCards = useMemo(() => 
-    (Object.keys(challenges) as ChallengeKey[]).map((reto, index) => {
-      const challengeProgress = stationCompletedChallenges[reto];
-      const isCompleted = !!challengeProgress;
-      const imageUrl = challengeProgress?.imageUrl;
-
-      return (
-        <button
-          key={reto}
-          onClick={() => handleChallengeSelection(reto)}
-          className={cn(
-            "relative w-full transition-transform duration-300 hover:scale-105",
-            index === 0 ? "md:-rotate-6" : "md:rotate-6"
-          )}
-        >
-          <div className="absolute inset-0 bg-white shadow-2xl rounded-2xl transform -rotate-1" />
-          <Card
-            className="relative
-                    w-[88vw] max-w-[420px] h-64
-                    md:w-80 md:h-80
-                    lg:w-96 lg:h-96
-                    rounded-2xl shadow-2xl
-                    flex flex-col items-center justify-center
-                    p-6 border-4 border-gray-200 overflow-hidden"
-          >
-            {isCompleted && imageUrl && (
-              <>
-                <Image
-                  src={imageUrl}
-                  alt={`Completado: ${challenges[reto].title}`}
-                  fill
-                  className="object-cover z-0"
-                />
-                <div className="absolute inset-0 bg-black/40 z-10" />
-              </>
-            )}
-            <div className="relative z-20 text-center">
-              <CardHeader>
-                <CardTitle
-                  className={cn(
-                    "font-kalam text-4xl md:text-5xl",
-                    isCompleted && imageUrl ? "text-white" : "text-primary"
-                  )}
-                >
-                  {challenges[reto].title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent
-                className={cn(
-                  "text-base md:text-lg",
-                  isCompleted && imageUrl && "text-gray-200"
-                )}
-              >
-                <p>{challenges[reto].description}</p>
-              </CardContent>
-            </div>
-            {isCompleted && (
-              <div className="absolute top-3 right-3 z-30 bg-green-500 rounded-full p-2.5 shadow-lg">
-                <CheckCircle className="text-white h-6 w-6" />
-              </div>
-            )}
-          </Card>
-        </button>
-      );
-    }), [stationCompletedChallenges, handleChallengeSelection]
-  );
-
   return (
     <>
       <ResponsiveBackground>
@@ -844,7 +699,70 @@ export default function Station1() {
           </div>
 
           <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
-            {challengeCards}
+            {(Object.keys(challenges) as (keyof typeof challenges)[]).map((reto, index) => {
+              const challengeProgress = stationCompletedChallenges[reto];
+              const isCompleted = !!challengeProgress;
+              const imageUrl = challengeProgress?.imageUrl;
+
+              return (
+                <button
+                  key={reto}
+                  onClick={() => handleChallengeSelection(reto)}
+                  className={cn(
+                    "relative w-full transition-transform duration-300 hover:scale-105",
+                    index === 0 ? "md:-rotate-6" : "md:rotate-6"
+                  )}
+                >
+                  <div className="absolute inset-0 bg-white shadow-2xl rounded-2xl transform -rotate-1" />
+                  <Card
+                    className="relative
+                            w-[88vw] max-w-[420px] h-64
+                            md:w-80 md:h-80
+                            lg:w-96 lg:h-96
+                            rounded-2xl shadow-2xl
+                            flex flex-col items-center justify-center
+                            p-6 border-4 border-gray-200 overflow-hidden"
+                  >
+                    {isCompleted && imageUrl && (
+                      <>
+                        <Image
+                          src={imageUrl}
+                          alt={`Completado: ${challenges[reto].title}`}
+                          fill
+                          className="object-cover z-0"
+                        />
+                        <div className="absolute inset-0 bg-black/40 z-10" />
+                      </>
+                    )}
+                    <div className="relative z-20 text-center">
+                      <CardHeader>
+                        <CardTitle
+                          className={cn(
+                            "font-kalam text-4xl md:text-5xl",
+                            isCompleted && imageUrl ? "text-white" : "text-primary"
+                          )}
+                        >
+                          {challenges[reto].title}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent
+                        className={cn(
+                          "text-base md:text-lg",
+                          isCompleted && imageUrl && "text-gray-200"
+                        )}
+                      >
+                        <p>{challenges[reto].description}</p>
+                      </CardContent>
+                    </div>
+                    {isCompleted && (
+                      <div className="absolute top-3 right-3 z-30 bg-green-500 rounded-full p-2.5 shadow-lg">
+                        <CheckCircle className="text-white h-6 w-6" />
+                      </div>
+                    )}
+                  </Card>
+                </button>
+              );
+            })}
           </div>
         </div>
       </ResponsiveBackground>

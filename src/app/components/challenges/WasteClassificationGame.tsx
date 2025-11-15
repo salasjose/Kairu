@@ -39,6 +39,20 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+const GameWonScreen = ({ onBack }: { onBack: () => void }) => {
+    return (
+        <div className="w-full flex flex-col items-center justify-center text-center min-h-[300px]">
+            <PartyPopper className="w-24 h-24 text-yellow-500 animate-bounce mb-4" />
+            <h2 className="text-3xl font-bold font-headline text-primary mb-2">¡Juego Ganado!</h2>
+            <p className="text-muted-foreground text-lg mb-6">¡Felicitaciones, has completado este reto!</p>
+            <Button onClick={onBack} size="lg">
+                <ArrowLeft className="mr-2" />
+                Volver al Menú
+            </Button>
+        </div>
+    );
+};
+
 
 const GameWithImages = ({ onGameWin, onBack, gameState, updateGameState }: { onGameWin: () => void; onBack: () => void; gameState: GameState, updateGameState: (newState: Partial<GameState>) => void }) => {
     const [wasteItems, setWasteItems] = useState(() => shuffle([...wasteItemsData]));
@@ -360,6 +374,7 @@ export default function WasteClassificationGameContainer({ gameId, onComplete, o
 
 
   const handleGameWin = useCallback(() => {
+    setPageState('won');
     onComplete();
   }, [onComplete]);
 
@@ -368,6 +383,11 @@ export default function WasteClassificationGameContainer({ gameId, onComplete, o
     setKey(prevKey => prevKey + 1);
     updateGameState({lives: 3, lockoutUntil: null});
   }, [updateGameState]);
+
+  if (pageState === 'won') {
+      return <GameWonScreen onBack={onBack} />;
+  }
+
 
   if (pageState === 'locked') {
     return (
@@ -381,7 +401,7 @@ export default function WasteClassificationGameContainer({ gameId, onComplete, o
     )
   }
 
-  const gameTitle = gameId === 'classify' ? "Clasificación por Imagen" : "Arrastra y Recicla";
+  const gameTitle = gameId === 'game-classify' ? "Clasificación por Imagen" : "Arrastra y Recicla";
 
   return (
     <div className="w-full max-w-5xl mx-auto p-4">
@@ -396,7 +416,7 @@ export default function WasteClassificationGameContainer({ gameId, onComplete, o
             Reiniciar
         </Button>
       </div>
-      {gameId === 'classify' ? (
+      {gameId === 'game-classify' ? (
         <GameWithImages
           key={key}
           onGameWin={handleGameWin}
