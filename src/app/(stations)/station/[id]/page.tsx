@@ -1,3 +1,4 @@
+
 import { stations } from '@/lib/data';
 import { notFound } from 'next/navigation';
 import Station1 from '@/app/components/challenges/Station1';
@@ -18,20 +19,28 @@ export default function StationPage({ params }: { params: { id: string } }) {
     notFound();
   }
 
-  const getStationComponent = () => {
-    switch (stationId) {
-      case 1: return <Station1 />;
-      case 2: return <Station2 />;
-      case 3: return <Station3 />;
-      case 4: return <Station4 />;
-      case 5: return <Station5 />;
-      case 6: return <Station6 />;
-      case 7: return <Station7 />;
-      case 8: return <Station8 />;
-      case 9: return <Station9 />;
-      default: return <div>Challenge coming soon!</div>;
-    }
-  };
-
-  return getStationComponent();
+  // Se mueve la lógica del switch directamente al return
+  // para evitar el error de renderizado de hooks.
+  switch (stationId) {
+    case 1:
+      return <Station1 />;
+    case 2:
+      return <Station2 />;
+    case 3:
+      return <Station3 />;
+    case 4:
+      return <Station4 />;
+    case 5:
+      return <Station5 />;
+    case 6:
+      return <Station6 />;
+    case 7:
+      return <Station7 />;
+    case 8:
+      return <Station8 />;
+    case 9:
+      return <Station9 />;
+    default:
+      return <div>Challenge coming soon!</div>;
+  }
 }
