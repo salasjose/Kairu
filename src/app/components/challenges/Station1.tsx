@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -17,10 +18,10 @@ import PrizeDialog from "../PrizeDialog";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-import { useUser, useFirestore, useStorage } from "@/firebase/hooks";
+import { useUser, useFirestore } from "@/firebase/hooks";
 import ResponsiveBackground from "../ResponsiveBackground";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { ref, uploadString, getDownloadURL, type FirebaseStorage } from "firebase/storage";
+import { uploadImageAction } from "@/app/actions";
 
 
 const fileToDataUrl = (file: Blob | File): Promise<string> => {
@@ -30,14 +31,6 @@ const fileToDataUrl = (file: Blob | File): Promise<string> => {
         reader.onerror = reject;
         reader.readAsDataURL(file);
     });
-};
-
-
-const uploadImageAndGetUrl = async (storage: FirebaseStorage, dataUrl: string, storagePath: string): Promise<string> => {
-  const storageRef = ref(storage, storagePath);
-  await uploadString(storageRef, dataUrl, 'data_url');
-  const downloadUrl = await getDownloadURL(storageRef);
-  return downloadUrl;
 };
 
 
@@ -197,7 +190,6 @@ const PhotoChallenge = ({
 }) => {
   const { user } = useUser();
   const db = useFirestore();
-  const storage = useStorage();
 
   const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>(Array(4).fill(null));
@@ -260,7 +252,7 @@ const PhotoChallenge = ({
   );
 
   const handleCapture = async (dataUrl: string) => {
-    if (!user || !storage) {
+    if (!user) {
       toast({
         variant: "destructive",
         title: "Sesión requerida",
@@ -276,13 +268,19 @@ const PhotoChallenge = ({
     try {
         const { type, index } = photoToAdd;
         const storagePath = `users/${user.uid}/station1/${type}/${index}_${Date.now()}.jpg`;
-        const downloadUrl = await uploadImageAndGetUrl(storage, dataUrl, storagePath);
-        await updatePhotos(type, index, downloadUrl);
-        toast({ title: "¡Foto subida!", description: "Tu foto se ha guardado correctamente."});
+        
+        const result = await uploadImageAction(dataUrl, storagePath);
+
+        if (result.success && result.url) {
+            await updatePhotos(type, index, result.url);
+            toast({ title: "¡Foto subida!", description: "Tu foto se ha guardado correctamente."});
+        } else {
+            throw new Error(result.error || "Error desconocido en la subida del servidor.");
+        }
 
     } catch (error) {
         console.error("Error en el proceso de subida:", error);
-        toast({ title: "Error al subir", description: "No se pudo subir la imagen.", variant: "destructive"});
+        toast({ title: "Error al subir", description: `No se pudo subir la imagen: ${error instanceof Error ? error.message : 'Error desconocido'}.`, variant: "destructive"});
     } finally {
         setPhotoToAdd(null);
     }
@@ -404,7 +402,6 @@ const HabitatChallenge = ({
 }) => {
   const { user } = useUser();
   const db = useFirestore();
-  const storage = useStorage();
 
   const [habitatPhotos, setHabitatPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -450,7 +447,7 @@ const HabitatChallenge = ({
   };
 
   const handleCapture = async (dataUrl: string) => {
-    if (!user || !storage) {
+    if (!user) {
       toast({
         variant: "destructive",
         title: "Sesión requerida",
@@ -465,18 +462,21 @@ const HabitatChallenge = ({
     
     try {
       const storagePath = `users/${user.uid}/station1/habitat/${photoToAddIndex}_${Date.now()}.jpg`;
-      const downloadUrl = await uploadImageAndGetUrl(storage, dataUrl, storagePath);
+      const result = await uploadImageAction(dataUrl, storagePath);
       
-      const newPhotos = [...habitatPhotos];
-      newPhotos[photoToAddIndex] = downloadUrl;
-      setHabitatPhotos(newPhotos);
-      await updatePhotosInDb(newPhotos);
-      
-      toast({ title: "¡Foto subida!", description: "Tu foto se ha guardado correctamente."});
+      if (result.success && result.url) {
+        const newPhotos = [...habitatPhotos];
+        newPhotos[photoToAddIndex] = result.url;
+        setHabitatPhotos(newPhotos);
+        await updatePhotosInDb(newPhotos);
+        toast({ title: "¡Foto subida!", description: "Tu foto se ha guardado correctamente."});
+      } else {
+        throw new Error(result.error || "Error desconocido en la subida del servidor.");
+      }
 
     } catch(error) {
       console.error("Error en el proceso de subida:", error);
-      toast({ title: "Error al subir", description: "No se pudo subir la imagen.", variant: "destructive"});
+      toast({ title: "Error al subir", description: `No se pudo subir la imagen: ${error instanceof Error ? error.message : 'Error desconocido'}.`, variant: "destructive"});
     } finally {
       setPhotoToAddIndex(null);
     }
