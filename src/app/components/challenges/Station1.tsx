@@ -17,30 +17,26 @@ import PrizeDialog from "../PrizeDialog";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-import { useUser, useFirestore, useStorage } from "@/firebase/hooks";
+import { useUser, useFirestore } from "@/firebase/hooks";
 import ResponsiveBackground from "../ResponsiveBackground";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL, type FirebaseStorage } from "firebase/storage";
+import { type FirebaseStorage } from "firebase/storage";
 
-// -----------------------------------------------
-// 🔹 Helper para subir imágenes a Firebase Storage
-// -----------------------------------------------
 
-const uploadImageAndGetUrl = async (storage: FirebaseStorage, file: Blob | File, storagePath: string) => {
-  const storageRef = ref(storage, storagePath);
-
-  // Sube el archivo
-  await uploadBytes(storageRef, file);
-
-  // Obtiene la URL descargable
-  const downloadUrl = await getDownloadURL(storageRef);
-
-  return downloadUrl; // URL que se guardará en Firestore
+const fileToDataUrl = (file: Blob | File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
 };
 
-// -----------------------------------------------
-// 🔹 Configuración de imágenes y retos
-// -----------------------------------------------
+
+const uploadImageAndGetUrl = async (storage: FirebaseStorage, file: Blob | File, storagePath: string): Promise<string> => {
+  return fileToDataUrl(file);
+};
+
 
 const faunaImage = PlaceHolderImages.find((p) => p.id === "fauna-capybara");
 const habitatImage = PlaceHolderImages.find((p) => p.id === "habitat-build-1");
@@ -61,15 +57,11 @@ const challenges = {
   },
 };
 
-// -----------------------------------------------
-// 🔹 Componente CameraView (ahora devuelve Blob)
-// -----------------------------------------------
-
 const CameraView = ({
   onCapture,
   onCancel,
 }: {
-  onCapture: (file: Blob) => void;
+  onCapture: (dataUrl: string) => void;
   onCancel: () => void;
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -120,23 +112,10 @@ const CameraView = ({
       const canvas = document.createElement("canvas");
       canvas.width = videoRef.current.videoWidth;
       canvas.height = videoRef.current.videoHeight;
-
       const ctx = canvas.getContext("2d");
-
       if (ctx) {
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              onCapture(blob); // 👉 devolvemos un Blob
-            } else {
-              console.error("No se pudo generar el blob de la imagen.");
-            }
-          },
-          "image/jpeg",
-          0.9
-        );
+        onCapture(canvas.toDataURL("image/jpeg", 0.9)); 
       }
     }
   };
@@ -172,9 +151,6 @@ const CameraView = ({
   );
 };
 
-// -----------------------------------------------
-// 🔹 Componente PhotoSlot (muestra cada foto)
-// -----------------------------------------------
 
 const PhotoSlot = ({
   imageUrl,
@@ -208,9 +184,6 @@ const PhotoSlot = ({
   );
 };
 
-// -----------------------------------------------
-// 🔹 Reto Fauna y Flora (PhotoChallenge)
-// -----------------------------------------------
 
 const PhotoChallenge = ({
   onBack,
@@ -221,7 +194,7 @@ const PhotoChallenge = ({
 }) => {
   const { user } = useUser();
   const db = useFirestore();
-  const storage = useStorage();
+  const storage = null; // Storage not used directly, but keep for function signature compatibility
 
   const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>(Array(4).fill(null));
@@ -283,8 +256,8 @@ const PhotoChallenge = ({
     [user, db, floraPhotos, faunaPhotos]
   );
 
-  const handleCapture = async (file: Blob | File) => {
-    if (!user || !db || !storage) {
+  const handleCapture = async (file: Blob | File | string) => {
+    if (!user || !db) {
       toast({
         variant: "destructive",
         title: "Sesión requerida",
@@ -296,29 +269,24 @@ const PhotoChallenge = ({
     if (!photoToAdd) return;
 
     const { type, index } = photoToAdd;
-    const path = `users/${user.uid}/station1/${type}/${index}_${Date.now()}.jpg`;
+    let dataUrl: string;
 
-    try {
-      const downloadUrl = await uploadImageAndGetUrl(storage, file, path);
-      await updatePhotos(type, index, downloadUrl);
-    } catch (error) {
-      console.error("Error al subir imagen a Storage:", error);
-      toast({
-        variant: "destructive",
-        title: "Error al subir imagen",
-        description: "No se pudo subir la imagen. Inténtalo de nuevo.",
-      });
-    } finally {
-      setIsCameraOpen(false);
-      setPhotoToAdd(null);
+    if (typeof file === 'string') {
+        dataUrl = file;
+    } else {
+        dataUrl = await fileToDataUrl(file);
     }
+    
+    await updatePhotos(type, index, dataUrl);
+    
+    setIsCameraOpen(false);
+    setPhotoToAdd(null);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       void handleCapture(file);
-      // opcional: limpiar el value para permitir re-subir la misma imagen
       event.target.value = "";
     }
   };
@@ -420,9 +388,6 @@ const PhotoChallenge = ({
   );
 };
 
-// -----------------------------------------------
-// 🔹 Reto Cuidado Animal (HabitatChallenge)
-// -----------------------------------------------
 
 const HabitatChallenge = ({
   onBack,
@@ -433,7 +398,6 @@ const HabitatChallenge = ({
 }) => {
   const { user } = useUser();
   const db = useFirestore();
-  const storage = useStorage();
 
   const [habitatPhotos, setHabitatPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -478,8 +442,8 @@ const HabitatChallenge = ({
     }
   };
 
-  const handleCapture = async (file: Blob | File) => {
-    if (!user || !db || !storage) {
+  const handleCapture = async (fileOrDataUrl: Blob | File | string) => {
+    if (!user || !db) {
       toast({
         variant: "destructive",
         title: "Sesión requerida",
@@ -489,27 +453,22 @@ const HabitatChallenge = ({
     }
 
     if (photoToAddIndex === null) return;
+    
+    let dataUrl: string;
 
-    const path = `users/${user.uid}/station1/habitat/${photoToAddIndex}_${Date.now()}.jpg`;
-
-    try {
-      const downloadUrl = await uploadImageAndGetUrl(storage, file, path);
-
-      const newPhotos = [...habitatPhotos];
-      newPhotos[photoToAddIndex] = downloadUrl;
-      setHabitatPhotos(newPhotos);
-      await updatePhotosInDb(newPhotos);
-    } catch (error) {
-      console.error("Error al subir imagen de hábitat:", error);
-      toast({
-        variant: "destructive",
-        title: "Error al subir imagen",
-        description: "No se pudo subir la imagen. Inténtalo de nuevo.",
-      });
-    } finally {
-      setIsCameraOpen(false);
-      setPhotoToAddIndex(null);
+    if (typeof fileOrDataUrl === 'string') {
+        dataUrl = fileOrDataUrl;
+    } else {
+        dataUrl = await fileToDataUrl(fileOrDataUrl);
     }
+
+    const newPhotos = [...habitatPhotos];
+    newPhotos[photoToAddIndex] = dataUrl;
+    setHabitatPhotos(newPhotos);
+    await updatePhotosInDb(newPhotos);
+
+    setIsCameraOpen(false);
+    setPhotoToAddIndex(null);
   };
 
   const handleAddPhotoClick = (index: number) => {
@@ -603,9 +562,6 @@ const HabitatChallenge = ({
   );
 };
 
-// -----------------------------------------------
-// 🔹 Componente principal Station1
-// -----------------------------------------------
 
 export default function Station1() {
   const stationId = 1;
