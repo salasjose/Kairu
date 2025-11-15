@@ -1,4 +1,3 @@
-
 import { stations } from '@/lib/data';
 import { notFound } from 'next/navigation';
 import Station1 from '@/app/components/challenges/Station1';
@@ -35,6 +34,7 @@ export default function StationPage({ params }: { params: { id: string } }) {
   // Si la estación o el componente no existen, muestra notFound.
   if (!station || !StationComponent) {
     notFound();
+    return null; // Aseguramos que el componente retorne algo.
   }
 
   // Renderiza el componente de la estación de forma dinámica.
