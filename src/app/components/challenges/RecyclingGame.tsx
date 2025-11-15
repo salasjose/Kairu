@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, CheckCircle, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,10 +37,29 @@ export default function RecyclingGamesMenu({ onBack }: RecyclingGamesMenuProps) 
   const stationProgress = completedChallenges[stationId] || {};
 
   const handleGameComplete = (gameId: string) => {
+    // 1. Mark the specific sub-game as complete
     completeChallenge(stationId, gameId);
-    completeChallenge(stationId, 'game'); // Also mark the parent challenge as done
+    
+    // 2. Check if the OTHER game is also complete
+    const otherGameId = games.find(g => g.id !== gameId)?.id;
+    const allGamesCompleted = otherGameId && (completedChallenges[stationId]?.[otherGameId]?.completed || false);
+    
+    // 3. If both games are complete, mark the parent 'game' challenge as complete
+    if (allGamesCompleted) {
+        completeChallenge(stationId, 'game');
+    }
+
+    // Return to the menu
     setSelectedGameId(null); 
   };
+  
+  useEffect(() => {
+    // This effect runs after a game is completed and the state updates
+    const allGamesCompleted = games.every(game => stationProgress[game.id]?.completed);
+    if(allGamesCompleted && !stationProgress['game']?.completed) {
+        completeChallenge(stationId, 'game');
+    }
+  }, [stationProgress, completeChallenge]);
 
   const gameInfo = games.find(g => g.id === selectedGameId);
   if (gameInfo) {
@@ -50,7 +69,7 @@ export default function RecyclingGamesMenu({ onBack }: RecyclingGamesMenuProps) 
       const GameComponent = gameInfo.component;
       return (
         <GameComponent
-          gameId={selectedGameId}
+          gameId={selectedGameId!}
           onComplete={() => handleGameComplete(selectedGameId!)}
           onBack={() => setSelectedGameId(null)}
         />
