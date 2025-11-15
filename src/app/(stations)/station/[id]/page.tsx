@@ -31,13 +31,6 @@ export default function StationPage({ params }: { params: { id: string } }) {
   const station = stations.find(s => s.id === stationId);
   const StationComponent = station ? stationComponents[station.id] : null;
 
-  // Si la estación o el componente no existen, muestra notFound.
-  if (!station || !StationComponent) {
-    notFound();
-    return null; // Aseguramos que el componente retorne algo.
-  }
-
-  // Renderiza el componente de la estación de forma dinámica.
   // Esta estructura es más estable para React que un switch.
-  return <StationComponent />;
+  return StationComponent ? <StationComponent /> : notFound();
 }
