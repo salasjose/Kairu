@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Camera, CheckCircle, Video, X } from "lucide-react";
@@ -17,23 +17,10 @@ import PrizeDialog from "../PrizeDialog";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-import { useUser, useFirestore } from "@/firebase/hooks";
+import { useUser, useFirestore, useStorage } from "@/firebase/hooks";
 import ResponsiveBackground from "../ResponsiveBackground";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-
-// 👇 NUEVO: usar Firebase Storage desde el cliente
-import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
-
-const storage = getStorage();
-
-const fileToDataUrl = (file: Blob | File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-};
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
 
 const yaraCharacterImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
@@ -48,6 +35,15 @@ const challenges = {
     description:
       "¡Tienes una gran misión! Crea e instala un bebedero o comedero para animales y compártenos cómo te quedó.",
   },
+};
+
+const fileToDataUrl = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 };
 
 const CameraView = ({
@@ -190,6 +186,7 @@ const PhotoChallenge = ({
 }) => {
   const { user } = useUser();
   const db = useFirestore();
+  const storage = useStorage();
 
   const [floraPhotos, setFloraPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [faunaPhotos, setFaunaPhotos] = useState<(string | null)[]>(Array(4).fill(null));
@@ -256,11 +253,11 @@ const PhotoChallenge = ({
   }, [user, db]);
 
   const handleCapture = async (dataUrl: string) => {
-    if (!user) {
+    if (!user || !storage) {
       toast({
         variant: "destructive",
-        title: "Sesión requerida",
-        description: "Debes iniciar sesión para guardar tus fotos.",
+        title: "Servicio no disponible",
+        description: "Debes iniciar sesión y el servicio de almacenamiento debe estar activo.",
       });
       return;
     }
@@ -271,20 +268,11 @@ const PhotoChallenge = ({
 
     try {
       const { type, index } = photoToAdd;
-
-      // 1. Ruta en Storage
       const storagePath = `users/${user.uid}/station1/${type}/${index}_${Date.now()}.jpg`;
-
-      // 2. Referencia en Storage
       const storageRef = ref(storage, storagePath);
 
-      // 3. Subir dataURL directamente
       await uploadString(storageRef, dataUrl, "data_url");
-
-      // 4. Obtener URL de descarga
       const downloadUrl = await getDownloadURL(storageRef);
-
-      // 5. Guardar en Firestore
       await updatePhotos(type, index, downloadUrl);
 
       toast({
@@ -310,9 +298,10 @@ const PhotoChallenge = ({
     if (file) {
       const dataUrl = await fileToDataUrl(file);
       await handleCapture(dataUrl);
-      event.target.value = "";
+      event.target.value = ""; // Reset input
     }
   };
+
 
   const handleUploadClick = () => {
     setIsAddPhotoDialogOpen(false);
@@ -420,6 +409,7 @@ const HabitatChallenge = ({
 }) => {
   const { user } = useUser();
   const db = useFirestore();
+  const storage = useStorage();
 
   const [habitatPhotos, setHabitatPhotos] = useState<(string | null)[]>(Array(4).fill(null));
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -465,11 +455,11 @@ const HabitatChallenge = ({
   };
 
   const handleCapture = async (dataUrl: string) => {
-    if (!user) {
-      toast({
+    if (!user || !storage) {
+       toast({
         variant: "destructive",
-        title: "Sesión requerida",
-        description: "Debes iniciar sesión para guardar tus fotos.",
+        title: "Servicio no disponible",
+        description: "Debes iniciar sesión y el servicio de almacenamiento debe estar activo.",
       });
       return;
     }
@@ -480,11 +470,8 @@ const HabitatChallenge = ({
 
     try {
       const storagePath = `users/${user.uid}/station1/habitat/${photoToAddIndex}_${Date.now()}.jpg`;
-
       const storageRef = ref(storage, storagePath);
-
       await uploadString(storageRef, dataUrl, "data_url");
-
       const downloadUrl = await getDownloadURL(storageRef);
 
       const newPhotos = [...habitatPhotos];
@@ -811,3 +798,5 @@ export default function Station1() {
     </>
   );
 }
+
+    
