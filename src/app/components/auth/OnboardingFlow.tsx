@@ -126,7 +126,21 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
                 chosenScenario: selectedScenario,
                 signupData: signupData,
             });
-        } else {
+        } else if (!selectedAvatar) {
+            setStep('avatar');
+             toast({
+                title: "Falta un paso",
+                description: "Por favor, selecciona un avatar para continuar.",
+                variant: "destructive"
+            });
+        } else if (!selectedScenario) {
+             toast({
+                title: "Falta un paso",
+                description: "Por favor, selecciona un escenario para continuar.",
+                variant: "destructive"
+            });
+        }
+         else {
             toast({
                 title: "Error",
                 description: "Faltan datos para completar el registro.",
@@ -209,13 +223,13 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
                                 </Card>
                             ))}
                         </div>
-                        {selectedScenario && (
-                            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="mt-8">
-                                <Button onClick={handleScenarioConfirm} size="lg">
-                                    Confirmar y Empezar Aventura
-                                </Button>
-                            </motion.div>
-                        )}
+                        
+                        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="mt-8">
+                            <Button onClick={handleScenarioConfirm} size="lg">
+                                Confirmar y Empezar Aventura
+                            </Button>
+                        </motion.div>
+                        
                     </motion.div>
                 );
             default:

@@ -43,7 +43,7 @@ interface PlayerState {
   chosenScenario: string | null;
 }
 
-const SettingsPanel = ({ playerState, setPlayerState }: { playerState: PlayerState; setPlayerState: (state: PlayerState) => void; }) => {
+const SettingsPanel = ({ playerState, setPlayerState, onFullReset }: { playerState: PlayerState; setPlayerState: (state: PlayerState) => void; onFullReset: () => void; }) => {
     const db = useFirestore();
     const { resetProgress } = useStationProgress();
     const { clearCart } = usePrizeCart();
@@ -82,16 +82,15 @@ const SettingsPanel = ({ playerState, setPlayerState }: { playerState: PlayerSta
     const handleClearCacheAndReset = () => {
         resetChallengeProgress();
         clearCart();
-        resetProgress();
+        resetProgress(); // Resets station progress in DB
+        onFullReset(); // Triggers the onboarding flow in the parent
         toast({
-            title: "Caché Limpiado",
-            description: "Todo el progreso local ha sido eliminado. La aplicación se recargará."
+            title: "Reiniciando",
+            description: "Puedes elegir tu avatar y escenario de nuevo."
         });
-        setTimeout(() => {
-            window.location.reload();
-        }, 1500);
         setIsAlertOpen(false);
     };
+
 
     return (
       <>
@@ -100,12 +99,12 @@ const SettingsPanel = ({ playerState, setPlayerState }: { playerState: PlayerSta
                 <AlertDialogHeader>
                 <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                 <AlertDialogDescription>
-                    Esta acción eliminará todo tu progreso guardado en este navegador (retos completados, fotos subidas, premios). Tu cuenta y progreso en la nube no se verán afectados. La aplicación se recargará.
+                    Esta acción reiniciará tu progreso local y te permitirá elegir tu avatar y escenario de nuevo. Tu cuenta y progreso en la nube no se verán afectados.
                 </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleClearCacheAndReset}>Sí, limpiar caché</AlertDialogAction>
+                <AlertDialogAction onClick={handleClearCacheAndReset}>Sí, reiniciar</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
@@ -144,7 +143,7 @@ const SettingsPanel = ({ playerState, setPlayerState }: { playerState: PlayerSta
             <SheetFooter className="mt-auto">
                 <Button variant="destructive" className="w-full" onClick={() => setIsAlertOpen(true)}>
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Limpiar Caché y Reiniciar
+                    Reiniciar Avatar y Escenario
                 </Button>
             </SheetFooter>
         </SheetContent>
@@ -185,7 +184,13 @@ export default function GameClient() {
             unlockedStations: data.unlockedStations || [1],
         };
         setPlayerState(newState);
-        setIsNewUser(false);
+
+        // If user has no avatar or scenario, force them back to onboarding
+        if (!newState.avatar || !newState.chosenScenario) {
+            setIsNewUser(true);
+        } else {
+            setIsNewUser(false);
+        }
 
         const allStationsComplete = stations.every(s => newState.unlockedStations?.includes(s.id));
 
@@ -225,6 +230,10 @@ export default function GameClient() {
       setIsFetchingPlayer(false);
     }
   }, [user, userLoading, fetchInitialPlayerState]);
+  
+  const handleResetOnboarding = () => {
+    setIsNewUser(true);
+  };
 
   const handleOnboardingComplete = async (data: { name: string; avatar: string; chosenScenario: string; signupData: z.infer<typeof SignUpFormSchema>}) => {
     if (!user || !db) return;
@@ -320,7 +329,7 @@ export default function GameClient() {
                             <Settings />
                         </Button>
                     </SheetTrigger>
-                    <SettingsPanel playerState={playerState} setPlayerState={setPlayerState} />
+                    <SettingsPanel playerState={playerState} setPlayerState={setPlayerState} onFullReset={handleResetOnboarding} />
                 </Sheet>
 
                  <Button variant="outline" size="sm" onClick={handleLogout} className="rounded-full bg-white/90 shadow-md h-10 w-auto px-4">
