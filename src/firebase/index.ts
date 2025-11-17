@@ -24,11 +24,6 @@ auth = getAuth(firebaseApp);
 firestore = getFirestore(firebaseApp);
 storage = getStorage(firebaseApp);
 
-// 👇 Log para verificar si la app usa el bucket correcto en runtime
-if (typeof window !== 'undefined') {
-  console.log('🔥 Storage bucket en runtime:', firebaseApp.options.storageBucket);
-}
-
 export { firebaseApp, auth, firestore, storage };
 
 // Opcional: función para inicializar desde proveedores externos

@@ -6,7 +6,6 @@ import { Firestore } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseStorage } from 'firebase/storage';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
-import Logo from '@/app/components/Logo';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -40,8 +39,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     loading: boolean;
     error: Error | null;
   }>({
-    user: null,
-    loading: true,
+    user: auth?.currentUser ?? null,
+    loading: !auth?.currentUser,
     error: null,
   });
 
@@ -75,15 +74,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       error: authState.error,
     };
   }, [firebaseApp, firestore, auth, storage, authState]);
-
-  if (authState.loading) {
-    return (
-       <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background">
-        <Logo className="h-24 animate-pulse" />
-        <p className="text-primary/70 mt-4">Estableciendo Conexión...</p>
-      </main>
-    )
-  }
 
   return (
     <FirebaseContext.Provider value={contextValue}>
