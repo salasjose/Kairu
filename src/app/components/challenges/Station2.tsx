@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -6,7 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, CheckCircle, Lock, Upload, Camera, X, Video } from "lucide-react";
+import { ArrowLeft, CheckCircle, Lock, Camera, X, Video } from "lucide-react";
 import PrizeDialog from "../PrizeDialog";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -15,8 +16,9 @@ import AddPhotoDialog from "./AddPhotoDialog";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-import { useUser, useFirestore } from "@/firebase/hooks";
+import { useUser, useFirestore, useStorage } from "@/firebase/hooks";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
 
 type DayStatus = "locked" | "unlocked" | "completed";
 
@@ -33,7 +35,7 @@ const initialDays: DayState[] = Array(7)
     unlockTime: i === 0 ? Date.now() : null,
     photoUrl: null,
   }));
-  
+
 const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void; onCancel: () => void; }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
@@ -122,6 +124,15 @@ const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void;
   );
 };
 
+const fileToDataUrl = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
 
 const PhotoUploadChallenge = ({
   day,
@@ -134,6 +145,9 @@ const PhotoUploadChallenge = ({
   onComplete: (photoUrl: string) => void;
   onBack: () => void;
 }) => {
+  const { user } = useUser();
+  const storage = useStorage();
+  
   const [imageUrl, setImageUrl] = useState<string | null>(photoUrl);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAddPhotoDialogOpen, setIsAddPhotoDialogOpen] = useState(false);
@@ -143,24 +157,41 @@ const PhotoUploadChallenge = ({
     (p) => p.id === "sustainable-practice"
   );
 
-  const handlePhotoTaken = (url: string) => {
-    setImageUrl(url);
+  const handlePhotoTaken = async (dataUrl: string) => {
+    setIsAddPhotoDialogOpen(false);
     setIsCameraOpen(false);
-    toast({
-      title: `Foto del Día ${day} guardada`,
-      description: "¡Has completado el reto de hoy!",
-    });
-    onComplete(url);
+
+    if (!user || !storage) {
+        toast({ title: "Error", description: "Debes iniciar sesión para subir una imagen.", variant: "destructive" });
+        return;
+    }
+
+    try {
+        const storagePath = `users/${user.uid}/station2/day_${day}_${Date.now()}.jpg`;
+        const storageRef = ref(storage, storagePath);
+        
+        await uploadString(storageRef, dataUrl, "data_url");
+        const downloadUrl = await getDownloadURL(storageRef);
+
+        setImageUrl(downloadUrl);
+        toast({
+            title: `Foto del Día ${day} subida`,
+            description: "¡Has completado el reto de hoy!",
+        });
+        onComplete(downloadUrl);
+
+    } catch (error) {
+        console.error("Error uploading photo:", error);
+        toast({ title: "Error al Subir", description: "No se pudo subir la foto. Inténtalo de nuevo.", variant: "destructive" });
+    }
   };
   
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        handlePhotoTaken(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+      const dataUrl = await fileToDataUrl(file);
+      await handlePhotoTaken(dataUrl);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
