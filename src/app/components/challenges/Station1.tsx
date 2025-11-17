@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
@@ -253,6 +254,9 @@ const PhotoChallenge = ({
   }, [user, db]);
 
   const handleCapture = async (dataUrl: string) => {
+    setIsAddPhotoDialogOpen(false);
+    setIsCameraOpen(false);
+
     if (!user || !storage) {
       toast({
         variant: "destructive",
@@ -264,7 +268,6 @@ const PhotoChallenge = ({
 
     if (!photoToAdd) return;
 
-    setIsCameraOpen(false);
 
     try {
       const { type, index } = photoToAdd;
@@ -294,22 +297,21 @@ const PhotoChallenge = ({
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    setIsAddPhotoDialogOpen(false);
     const file = event.target.files?.[0];
     if (file) {
       const dataUrl = await fileToDataUrl(file);
       await handleCapture(dataUrl);
-      event.target.value = ""; // Reset input
+      if(fileInputRef.current) fileInputRef.current.value = ""; // Reset input
     }
   };
 
 
   const handleUploadClick = () => {
-    setIsAddPhotoDialogOpen(false);
     fileInputRef.current?.click();
   };
 
   const handleTakeNewPhotoClick = () => {
-    setIsAddPhotoDialogOpen(false);
     setIsCameraOpen(true);
   };
 
@@ -455,6 +457,9 @@ const HabitatChallenge = ({
   };
 
   const handleCapture = async (dataUrl: string) => {
+    setIsAddPhotoDialogOpen(false);
+    setIsCameraOpen(false);
+
     if (!user || !storage) {
        toast({
         variant: "destructive",
@@ -466,7 +471,6 @@ const HabitatChallenge = ({
 
     if (photoToAddIndex === null) return;
 
-    setIsCameraOpen(false);
 
     try {
       const storagePath = `users/${user.uid}/station1/habitat/${photoToAddIndex}_${Date.now()}.jpg`;
@@ -503,21 +507,20 @@ const HabitatChallenge = ({
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    setIsAddPhotoDialogOpen(false);
     const file = event.target.files?.[0];
     if (file) {
       const dataUrl = await fileToDataUrl(file);
       await handleCapture(dataUrl);
-      event.target.value = "";
+      if(fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
   const handleUploadClick = () => {
-    setIsAddPhotoDialogOpen(false);
     fileInputRef.current?.click();
   };
 
   const handleTakeNewPhotoClick = () => {
-    setIsAddPhotoDialogOpen(false);
     setIsCameraOpen(true);
   };
 
@@ -628,23 +631,11 @@ export default function Station1() {
       challengeName === "Fauna y Flora" ? p.id === "fauna-capybara" : p.id === "habitat-build-1"
     );
     completeChallenge(stationId, challengeName, imageInfo?.imageUrl);
-
-    const stationChallenges = Object.keys(challenges);
-    const currentCompletedForStation = Object.keys(completedChallenges[stationId] || {});
-    const allChallengesDone = stationChallenges.every(
-      (ch) => currentCompletedForStation.includes(ch) || ch === challengeName
-    );
-
     setSelectedChallenge(null);
-
-    if (allChallengesDone) {
-      setIsPrizeModalOpen(true);
-    } else {
-      toast({
-        title: `¡Reto '${challengeName}' Completado!`,
-        description: "¡Bien hecho! Completa el otro reto para ganar tu insignia.",
-      });
-    }
+    toast({
+      title: `¡Reto '${challengeName}' Completado!`,
+      description: "¡Bien hecho! Vuelve al menú de la estación.",
+    });
   };
 
   const handleClaimPrize = () => {
@@ -676,6 +667,9 @@ export default function Station1() {
   }
 
   const stationCompletedChallenges = completedChallenges[stationId] || {};
+  const areAllChallengesComplete = Object.keys(challenges).every(
+    (ch) => stationCompletedChallenges[ch]?.completed
+  );
 
   return (
     <>
@@ -751,6 +745,22 @@ export default function Station1() {
               );
             })}
           </div>
+
+          <div className="mt-4 flex flex-col items-center gap-2">
+            <Button
+              onClick={() => setIsPrizeModalOpen(true)}
+              disabled={!areAllChallengesComplete}
+              size="lg"
+            >
+              Completar Estación y Reclamar Insignia
+            </Button>
+            {!areAllChallengesComplete && (
+              <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
+                Completa ambos retos para activar este botón.
+              </p>
+            )}
+          </div>
+
         </div>
       </ResponsiveBackground>
 
