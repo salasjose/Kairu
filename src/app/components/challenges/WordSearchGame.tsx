@@ -60,9 +60,9 @@ const WordSearchGame = ({ onComplete, onBack, gameId, isCompleted }: { onComplet
   useEffect(() => {
     if (foundWords.length === wordsToFind.length && !isCompleted) {
       setGameState('won');
-      toast({ title: "¡Ganaste!", description: "Has encontrado todas las palabras." });
+      onComplete();
     }
-  }, [foundWords, isCompleted]);
+  }, [foundWords, isCompleted, onComplete]);
 
   const startSelection = (r: number, c: number) => {
     if (gameState !== 'playing') return;
@@ -154,15 +154,13 @@ const WordSearchGame = ({ onComplete, onBack, gameId, isCompleted }: { onComplet
             <h2 className="text-4xl font-bold font-headline text-primary mb-2">¡Reto Completado!</h2>
             <p className="text-muted-foreground text-lg mb-6">¡Encontraste todas las palabras! Eres un experto ambiental.</p>
             <div className='flex gap-4'>
-                {!isCompleted && (
-                    <Button onClick={handleRestart} variant="outline" size="lg">
-                        <RefreshCw className="mr-2" />
-                        Jugar de Nuevo
-                    </Button>
-                )}
-                <Button onClick={onComplete} size="lg">
+                <Button onClick={handleRestart} variant="outline" size="lg">
+                    <RefreshCw className="mr-2" />
+                    Jugar de Nuevo
+                </Button>
+                <Button onClick={onBack} size="lg">
                     <CheckCircle className="mr-2" />
-                    Continuar Aventura
+                    Volver a la Estación
                 </Button>
             </div>
         </div>

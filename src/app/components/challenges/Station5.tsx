@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, FileText, Gamepad2, Puzzle, Link as LinkIcon } from "lucide-react";
+import { ArrowLeft, FileText, Gamepad2, Puzzle, Link as LinkIcon, CheckCircle } from "lucide-react";
 import PrizeDialog from "../PrizeDialog";
 import { useRouter } from "next/navigation";
 import { useStationProgress } from "@/hooks/use-station-progress";
@@ -17,6 +17,7 @@ import { useUser, useFirestore } from "@/firebase/hooks";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { useChallengeProgress } from "@/hooks/use-challenge-progress";
+import { cn } from "@/lib/utils";
 
 const challenges = {
   learn: {
@@ -191,20 +192,11 @@ export default function Station5() {
 
   const handleComplete = (challengeId: ChallengeId) => {
     completeChallenge(stationId, challengeId);
-    
-    const allChallengesDone = Object.keys(challenges).every(
-      (ch) => completedChallenges[stationId]?.[ch] || ch === challengeId
-    );
-
-    if (allChallengesDone) {
-        setIsPrizeModalOpen(true);
-    } else {
-        toast({
-            title: `¡Reto '${challenges[challengeId].title}' completado!`,
-            description: "¡Sigue así! Completa el otro reto para avanzar.",
-        });
-        setSelectedChallenge(null);
-    }
+    toast({
+        title: `¡Reto '${challenges[challengeId].title}' completado!`,
+        description: "Regresando al menú de la estación...",
+    });
+    setSelectedChallenge(null);
   };
   
    const handleClaimPrize = () => {
@@ -212,6 +204,9 @@ export default function Station5() {
     unlockStation(stationId + 1);
     router.push("/");
   };
+
+  const stationProgress = completedChallenges[stationId] || {};
+  const areAllChallengesComplete = Object.keys(challenges).every(id => stationProgress[id]?.completed);
   
   if (selectedChallenge === "learn") {
     return <LearnChallenge onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("learn")} />;
@@ -249,14 +244,20 @@ export default function Station5() {
             {(Object.keys(challenges) as ChallengeId[]).map((key) => {
               const challenge = challenges[key];
               const Icon = challenge.icon;
+              const isCompleted = stationProgress[key]?.completed;
               return (
                 <button
                   key={key}
                   onClick={() => setSelectedChallenge(key)}
                   className="transition-transform duration-300 hover:scale-105 group"
                 >
-                  <Card className="w-60 h-auto bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors">
+                  <Card className={cn("w-60 h-auto bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors relative", isCompleted && "border-green-500 border-2")}>
                     <CardContent className="flex flex-col items-center justify-center text-center p-4 h-full">
+                       {isCompleted && (
+                        <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1.5 shadow-lg z-10">
+                            <CheckCircle className="text-white h-5 w-5" />
+                        </div>
+                      )}
                       <Icon className="w-12 h-12 text-primary mb-3" />
                       <h2 className="font-bold font-headline text-xl text-primary">
                         {challenge.title}
@@ -270,6 +271,20 @@ export default function Station5() {
               );
             })}
           </div>
+            <div className="mt-4 flex flex-col items-center gap-2">
+                <Button
+                onClick={() => setIsPrizeModalOpen(true)}
+                disabled={!areAllChallengesComplete}
+                size="lg"
+                >
+                Completar Estación y Reclamar Insignia
+                </Button>
+                {!areAllChallengesComplete && (
+                <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
+                    Completa ambos retos para activar este botón.
+                </p>
+                )}
+            </div>
         </div>
 
         {/* Yara Character and Dialog */}
