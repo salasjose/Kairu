@@ -15,6 +15,7 @@ import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore } from "@/firebase/hooks";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
+import ArtDirectedBackground from "../ArtDirectedBackground";
 
 const challenges = {
   learn: {
@@ -159,7 +160,6 @@ export default function Station8() {
   const yaraMessage = "¡Has llegado a Vitalia! La energía del sol, del viento y del agua nos impulsa hacia un futuro más limpio. Recarga tu energía, comparte tu luz y sigue construyendo un planeta lleno de vida. ¡Tu fuerza también renueva el mundo!";
   const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
   
-  const vitaliaBgImage = PlaceHolderImages.find(p => p.id === 'vitalia-background');
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara');
 
   const scheduleYaraDialog = useCallback(() => {
@@ -198,17 +198,11 @@ export default function Station8() {
 
   return (
     <>
-      <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden">
-        {vitaliaBgImage && (
-            <Image
-                src={vitaliaBgImage.imageUrl}
-                alt={vitaliaBgImage.description}
-                fill
-                style={{objectFit: 'cover'}}
-                className="z-0"
-                data-ai-hint={vitaliaBgImage.imageHint}
-            />
-        )}
+      <ArtDirectedBackground
+        desktopSrc="/backgrounds/Verdelab1366x_768.png"
+        tabletSrc="/backgrounds/Verdelab1024_X_768.png"
+        mobileSrc="/backgrounds/Verdelab1075_X_1944.png"
+      >
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
           <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
             <h1 className="text-3xl md:text-5xl">Vitalia</h1>
@@ -274,7 +268,7 @@ export default function Station8() {
                 </motion.div>
             )}
         </div>
-      </div>
+      </ArtDirectedBackground>
       <PrizeDialog
         open={isPrizeModalOpen}
         stationId={stationId}
