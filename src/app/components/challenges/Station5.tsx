@@ -18,6 +18,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { useChallengeProgress } from "@/hooks/use-challenge-progress";
 import { cn } from "@/lib/utils";
+import ArtDirectedBackground from "../ArtDirectedBackground";
 
 const challenges = {
   learn: {
@@ -170,8 +171,7 @@ export default function Station5() {
   const [showYaraDialog, setShowYaraDialog] = useState(false);
   const yaraMessage = "¡Wow, llegamos a ZonaCreativa! Este es el espacio donde tu imaginación se vuelve sostenible transformando ideas que inspiren un cambio positivo. ¡Tu creatividad puede cambiar el mundo!";
   const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const sostenibilidadBgImage = PlaceHolderImages.find(p => p.id === 'sostenibilidad-background');
+  
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara');
 
   const scheduleYaraDialog = useCallback(() => {
@@ -206,7 +206,7 @@ export default function Station5() {
   };
 
   const stationProgress = completedChallenges[stationId] || {};
-  const areAllChallengesComplete = Object.keys(challenges).every(id => stationProgress[id]?.completed);
+  const areAllChallengesComplete = Object.keys(challenges).every(id => stationProgress[id as ChallengeId]?.completed);
   
   if (selectedChallenge === "learn") {
     return <LearnChallenge onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("learn")} />;
@@ -224,17 +224,11 @@ export default function Station5() {
 
   return (
      <>
-      <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden">
-        {sostenibilidadBgImage && (
-            <Image
-                src={sostenibilidadBgImage.imageUrl}
-                alt={sostenibilidadBgImage.description}
-                fill
-                style={{objectFit: 'cover'}}
-                className="z-0"
-                data-ai-hint={sostenibilidadBgImage.imageHint}
-            />
-        )}
+      <ArtDirectedBackground
+        desktopSrc="/backgrounds/Zonacreativa1366_X_768.png"
+        tabletSrc="/backgrounds/Zonacreativa1024_X_768.png"
+        mobileSrc="/backgrounds/Zonacreativa1075_X_1944.png"
+      >
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
           <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
             <h1 className="text-3xl md:text-5xl">ZonaCreativa</h1>
@@ -324,7 +318,7 @@ export default function Station5() {
             )}
         </div>
 
-      </div>
+      </ArtDirectedBackground>
        <PrizeDialog
         open={isPrizeModalOpen}
         stationId={stationId}
