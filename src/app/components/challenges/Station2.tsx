@@ -19,6 +19,7 @@ import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore, useStorage } from "@/firebase/hooks";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import ArtDirectedBackground from "../ArtDirectedBackground";
 
 type DayStatus = "locked" | "unlocked" | "completed";
 
@@ -252,12 +253,12 @@ const PhotoUploadChallenge = ({
                         </div>
                     </>
                 ) : (
-                    <Image
-                        src={sustainablePracticeImage?.imageUrl ?? "https://picsum.photos/seed/sustainability-day/400/300"}
-                        alt={sustainablePracticeImage?.imageHint ?? "sustainable practice"}
+                    sustainablePracticeImage?.imageUrl && <Image
+                        src={sustainablePracticeImage.imageUrl}
+                        alt={sustainablePracticeImage.imageHint}
                         fill
                         className="object-cover rounded-md opacity-20"
-                        data-ai-hint={sustainablePracticeImage?.imageHint ?? "sustainable practice"}
+                        data-ai-hint={sustainablePracticeImage.imageHint}
                     />
                 )}
             </div>
@@ -296,9 +297,6 @@ export default function Station2() {
   const yaraMessage = "¡Llegamos a ImpacTrack! Aquí aprenderás que cada acción deja huella. Observa tu entorno, registra tus buenas prácticas y demuestra que tu impacto puede ser positivo. ¡Haz que tus pasos cuenten por el planeta!";
   const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const sostenibilidadBgImage = PlaceHolderImages.find(
-    (p) => p.id === "sostenibilidad-background"
-  );
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
   useEffect(() => {
@@ -478,17 +476,11 @@ export default function Station2() {
 
   return (
     <>
-      <div className="w-full flex-grow flex flex-col items-center p-4 relative overflow-hidden">
-        {sostenibilidadBgImage && (
-          <Image
-            src={sostenibilidadBgImage.imageUrl}
-            alt={sostenibilidadBgImage.description}
-            fill
-            style={{ objectFit: "cover" }}
-            className="z-0 opacity-90"
-            data-ai-hint={sostenibilidadBgImage.imageHint}
-          />
-        )}
+      <ArtDirectedBackground
+          desktopSrc="/backgrounds/Impactrack1366_X_768.png"
+          tabletSrc="/backgrounds/Impactrack1024_X_768.png"
+          mobileSrc="/backgrounds/Impactrack1075_X_1944.png"
+        >
         <div className="relative z-10 w-full h-full flex flex-col items-center justify-center text-center">
             <div className="bg-white/90 backdrop-blur-sm text-primary font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
                 <h1 className="text-4xl md:text-5xl">ImpacTrack</h1>
@@ -541,7 +533,7 @@ export default function Station2() {
                 </motion.div>
             )}
           </div>
-      </div>
+      </ArtDirectedBackground>
       <PrizeDialog
         open={isPrizeModalOpen}
         stationId={stationId}
