@@ -199,9 +199,9 @@ export default function Station8() {
   return (
     <>
       <ArtDirectedBackground
-        desktopSrc="/backgrounds/Verdelab1366x_768.png"
-        tabletSrc="/backgrounds/Verdelab1024_X_768.png"
-        mobileSrc="/backgrounds/Verdelab1075_X_1944.png"
+        desktopSrc="/backgrounds/Vitalia1366_X_768.png"
+        tabletSrc="/backgrounds/Vitalia1024_X_768.png"
+        mobileSrc="/backgrounds/Vitalia1075_X_1944.png"
       >
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
           <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
