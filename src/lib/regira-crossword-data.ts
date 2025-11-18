@@ -1,18 +1,17 @@
 import type { CrosswordData } from '@/lib/types';
 
 const gridLayout: (string | null)[][] = [
-    [null, null, null, 'E', null, null, null, null, null, null, null, null],
-    [null, 'R', 'E', 'C', 'I', 'C', 'L', 'O', null, null, null, null],
-    ['E', 'M', 'P', 'R', 'E', 'N', 'D', 'E', 'D', 'O', 'R', null],
-    ['C', null, null, 'E', null, null, null, null, null, 'C', null, null],
-    ['O', null, null, 'U', 'D', 'U', 'R', 'A', 'B', 'L', 'E', null],
-    ['I', null, null, 'S', null, null, null, null, 'C', null, null, 'V'],
-    ['D', null, 'C', 'A', null, null, null, 'V', 'O', 'M', 'P', 'E'],
-    ['E', null, 'O', 'R', null, null, null, 'E', null, 'P', null, 'R'],
-    ['A', null, 'M', null, null, null, null, 'R', null, 'O', null, 'D'],
-    ['S', null, 'P', null, null, null, null, 'D', null, 'S', null, 'E'],
-    [null, null, 'O', null, null, null, null, 'E', null, 'T', null, null],
-    [null, null, 'S', 'T', null, null, null, null, null, null, null, null],
+  [null, null, null, null, null, 'E', null, null, null, null, null, null],
+  [null, null, null, 'R', null, 'M', null, 'R', null, null, null, null],
+  [null, null, null, 'E', null, 'P', null, 'E', null, null, null, null],
+  [null, null, null, 'C', 'i',  'R', 'C',  'U','L', 'A', 'R', null],
+  ['E',  'C',  'O',  'I', 'D', 'E', 'A', 'S', null, null, null, null],
+  [null, null, null, 'C', null, 'N', null, 'A', 'R', null, null, 'V'],
+  [null, null, null, 'L', null, 'D', 'U', 'R', 'A', 'B', 'L', 'E'],
+  [null, null, null, 'O', null, 'E', null, null, 'R', null, null, 'R'],
+  [null, null, null, null, null, 'D', null, null, 'R', null, null, 'D'],
+  [null, 'C',  'O', 'M',   'P',  'O', 'S', 'T', null, null, null, 'E'],
+  [null, null, null, null, null, 'R', null, null, null, null, null, null],
 ];
 
 

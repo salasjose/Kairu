@@ -7,7 +7,7 @@ import { useStationProgress } from '@/hooks/use-station-progress';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, ArrowLeft, Puzzle, CheckCircle, Lock } from 'lucide-react';
+import { Upload, ArrowLeft, Puzzle, CheckCircle, Lock, Link as LinkIcon } from 'lucide-react';
 import PrizeDialog from '../PrizeDialog';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useUser, useFirestore } from '@/firebase/hooks';
@@ -18,6 +18,7 @@ import { useChallengeProgress } from '@/hooks/use-challenge-progress';
 import CrosswordGame from './CrosswordGame';
 import { REGIRA_CROSSWORD_DATA } from '@/lib/regira-crossword-data';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 
 const challenges = {
   video: {
@@ -36,12 +37,29 @@ type ChallengeId = keyof typeof challenges;
 const VideoChallenge = ({ onBack, onComplete }: { onBack: () => void; onComplete: () => void }) => {
   const { user } = useUser();
   const db = useFirestore();
+  const [url, setUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const circularEconomyImage = PlaceHolderImages.find(
     p => p.id === 'circular-economy-product'
   );
+
+  const handleUrlChange = useCallback((newUrl: string) => {
+    setUrl(newUrl);
+    if (newUrl.trim() && (newUrl.startsWith('http://') || newUrl.startsWith('https://'))) {
+      if (newUrl.includes('youtube.com/watch?v=')) {
+        const videoId = newUrl.split('v=')[1].split('&')[0];
+        setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
+      } else if (newUrl.includes('youtu.be/')) {
+        const videoId = newUrl.split('youtu.be/')[1].split('?')[0];
+        setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
+      } else {
+        setVideoUrl(null);
+      }
+    } else {
+      setVideoUrl(null);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchVideo = async () => {
@@ -54,7 +72,8 @@ const VideoChallenge = ({ onBack, onComplete }: { onBack: () => void; onComplete
       try {
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists() && docSnap.data().station6VideoUrl) {
-          setVideoUrl(docSnap.data().station6VideoUrl);
+          const savedUrl = docSnap.data().station6VideoUrl;
+          handleUrlChange(savedUrl);
         }
       } catch (error) {
         console.error('Error fetching video URL from Firestore:', error);
@@ -63,66 +82,34 @@ const VideoChallenge = ({ onBack, onComplete }: { onBack: () => void; onComplete
       }
     };
     fetchVideo();
-  }, [user, db]);
+  }, [user, db, handleUrlChange]);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && file.type.startsWith('video/')) {
-      const reader = new FileReader();
-      reader.onload = async e => {
-        const dataUrl = e.target?.result as string;
-        if (!user || !db) {
-          toast({
-            title: 'Error',
-            description: 'Debes iniciar sesión para guardar tu progreso.',
-            variant: 'destructive',
-          });
-          return;
-        }
-        const userDocRef = doc(db, 'users', user.uid);
-        try {
-          await setDoc(userDocRef, { station6VideoUrl: dataUrl }, { merge: true });
-          setVideoUrl(dataUrl);
-          toast({ title: 'Video Guardado', description: 'Tu video ha sido guardado.' });
-        } catch (error) {
-          toast({
-            title: 'Error al Guardar',
-            description: 'No se pudo guardar el video.',
-            variant: 'destructive',
-          });
-        }
-      };
-      reader.readAsDataURL(file);
-    } else {
-      toast({
-        title: 'Archivo no válido',
-        description: 'Por favor, selecciona un archivo de video.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleCompleteClick = () => {
-    if (!videoUrl) {
+  const handleCompleteClick = async () => {
+    if (!url.trim()) {
       toast({
         title: 'Reto Incompleto',
-        description: 'Debes cargar un video para completar el reto.',
+        description: 'Debes pegar una URL para completar el reto.',
         variant: 'destructive',
       });
       return;
     }
-    onComplete();
+
+     if (user && db) {
+        try {
+            const userDocRef = doc(db, 'users', user.uid);
+            await setDoc(userDocRef, { station6VideoUrl: url }, { merge: true });
+            toast({ title: 'URL Guardada', description: 'Tu enlace ha sido guardado.' });
+            onComplete();
+        } catch (error) {
+            toast({ title: 'Error', description: 'No se pudo guardar la URL.', variant: 'destructive' });
+        }
+    } else {
+        toast({ title: 'Error', description: 'Debes iniciar sesión para guardar.', variant: 'destructive' });
+    }
   };
 
   return (
     <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-full">
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        className="hidden"
-        accept="video/*"
-      />
       <div className="w-full">
         <Button variant="ghost" onClick={onBack} className="mb-4">
           <ArrowLeft className="mr-2 h-4 w-4" /> Volver a los retos
@@ -136,9 +123,14 @@ const VideoChallenge = ({ onBack, onComplete }: { onBack: () => void; onComplete
           <CardContent className="text-center">
             <div className="bg-black rounded-lg border-4 border-white shadow-md mx-auto mb-6 w-full max-w-sm h-auto aspect-video flex items-center justify-center">
               {isLoading ? (
-                <p className="text-white">Cargando video...</p>
-              ) : videoUrl ? (
-                <video src={videoUrl} controls className="w-full h-full rounded-md" />
+                <p className="text-white">Cargando...</p>
+              ) : videoUrl && videoUrl.includes("youtube.com/embed") ? (
+                <iframe
+                    src={videoUrl}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="rounded-lg w-full h-full"
+                ></iframe>
               ) : (
                 circularEconomyImage && (
                   <Image
@@ -152,14 +144,20 @@ const VideoChallenge = ({ onBack, onComplete }: { onBack: () => void; onComplete
                 )
               )}
             </div>
-            <div className="flex justify-center gap-4">
-              <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="lg">
-                <Upload className="mr-2" /> Cargar Video
-              </Button>
-              <Button onClick={handleCompleteClick} size="lg" disabled={!videoUrl}>
-                Completar Reto
-              </Button>
+            <p className="text-muted-foreground mb-4">{challenges.video.description}</p>
+            <div className="flex justify-center gap-2 max-w-md mx-auto mb-4">
+               <LinkIcon className="h-10 text-muted-foreground" />
+               <Input 
+                 type="url"
+                 placeholder="Pega el enlace de tu video aquí"
+                 value={url}
+                 onChange={(e) => handleUrlChange(e.target.value)}
+                 disabled={isLoading}
+               />
             </div>
+            <Button onClick={handleCompleteClick} size="lg">
+                Completar Reto
+            </Button>
           </CardContent>
         </Card>
       </div>
