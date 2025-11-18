@@ -54,10 +54,10 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
     }, []);
 
     const scenarios = useMemo(() => [
-        PlaceHolderImages.find(p => p.id === 'scenario-bosque-seco'),
-        PlaceHolderImages.find(p => p.id === 'scenario-ciudad'),
-        PlaceHolderImages.find(p => p.id === 'scenario-mar-costero'),
-        PlaceHolderImages.find(p => p.id === 'scenario-manglares'),
+        { name: "Terral", ...PlaceHolderImages.find(p => p.id === 'scenario-bosque-seco') },
+        { name: "Civika", ...PlaceHolderImages.find(p => p.id === 'scenario-ciudad') },
+        { name: "Mareva", ...PlaceHolderImages.find(p => p.id === 'scenario-mar-costero') },
+        { name: "Manglia", ...PlaceHolderImages.find(p => p.id === 'scenario-manglares') },
     ].filter(Boolean) as any[], []);
 
 
@@ -209,7 +209,7 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
                         <h2 className="text-3xl font-bold font-headline text-primary mb-2">Elige tu Lienzo</h2>
                         <p className="text-muted-foreground mb-6">Selecciona el escenario para tu estación personalizada.</p>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-                            {scenarios.map((scenario, index) => (
+                            {scenarios.map((scenario) => (
                                 <Card 
                                     key={scenario.id} 
                                     onClick={() => handleScenarioSelect(scenario.imageUrl)} 
@@ -219,7 +219,7 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
                                     )}
                                 >
                                     <Image src={scenario.imageUrl} alt={scenario.description} width={200} height={200} className="rounded-md aspect-square object-cover" />
-                                     <p className="font-bold mt-2 text-sm">Escenario {index + 1}</p>
+                                     <p className="font-bold mt-2 text-sm">{scenario.name}</p>
                                 </Card>
                             ))}
                         </div>
