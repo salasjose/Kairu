@@ -285,38 +285,37 @@ export default function Station5() {
         {/* Yara Character and Dialog */}
         <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4 pointer-events-none">
             <AnimatePresence>
-                {showYaraDialog && (
+                {showYaraDialog && yaraCharImage && (
                   <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 20 }}
+                      exit={{ opacity: 0, y: 20, transition: { duration: 0.5 } }}
                       transition={{ duration: 0.5 }}
-                      className="w-64 mb-4"
+                      className="flex items-end gap-4"
                   >
-                      <Card className="p-3 shadow-lg bg-white/95 relative">
-                          <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium"/>
-                          <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
-                      </Card>
+                      <div className="w-64 mb-4">
+                        <Card className="p-3 shadow-lg bg-white/95 relative">
+                            <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium"/>
+                            <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
+                        </Card>
+                      </div>
+                      <motion.div
+                          initial={{ opacity: 0, x: 50 }}
+                          animate={{ opacity: 1, x: 0, transition: { delay: 0.5, duration: 0.8 } }}
+                          className="w-24 h-auto md:w-32"
+                      >
+                          <Image
+                              src={yaraCharImage.imageUrl}
+                              alt={yaraCharImage.description}
+                              width={150}
+                              height={187}
+                              className="h-auto w-full select-none"
+                              priority
+                          />
+                      </motion.div>
                   </motion.div>
                 )}
             </AnimatePresence>
-            
-            {yaraCharImage && (
-                <motion.div
-                    initial={{ opacity: 0, x: 50 }}
-                    animate={{ opacity: 1, x: 0, transition: { delay: 0.5, duration: 0.8 } }}
-                    className="w-24 h-auto md:w-32"
-                >
-                    <Image
-                        src={yaraCharImage.imageUrl}
-                        alt={yaraCharImage.description}
-                        width={150}
-                        height={187}
-                        className="h-auto w-full select-none"
-                        priority
-                    />
-                </motion.div>
-            )}
         </div>
 
       </ArtDirectedBackground>
