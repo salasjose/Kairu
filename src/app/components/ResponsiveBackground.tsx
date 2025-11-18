@@ -16,11 +16,13 @@ export default function ResponsiveBackground({ children }: { children: React.Rea
         aria-hidden="true"
         role="presentation"
       >
-        {/* Desktop & Tablet >= 768px */}
-        <source media="(min-width: 768px)" srcSet="/backgrounds/Biodiversidad.png" />
+        {/* Desktop >= 1025px */}
+        <source media="(min-width: 1025px)" srcSet="/backgrounds/Bionexus1366_X_768.png" />
+        {/* Tablet >= 650px */}
+        <source media="(min-width: 650px)" srcSet="/backgrounds/Bionexus1024_X_768.png" />
         {/* Móvil (fallback) */}
         <img
-          src="/backgrounds/Biodiversidad360x649.png"
+          src="/backgrounds/Bionexus1075_X_1944.png"
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
           sizes="100vw"
