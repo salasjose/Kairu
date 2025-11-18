@@ -297,7 +297,7 @@ export default function Station2() {
   const yaraMessage = "¡Llegamos a ImpacTrack! Aquí aprenderás que cada acción deja huella. Observa tu entorno, registra tus buenas prácticas y demuestra que tu impacto puede ser positivo. ¡Haz que tus pasos cuenten por el planeta!";
   const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
+  const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara-talking");
 
   useEffect(() => {
     setIsClient(true);
@@ -504,7 +504,7 @@ export default function Station2() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
+                exit={{ opacity: 0, y: 20, transition: { duration: 0.5 } }}
                 transition={{ duration: 0.5 }}
                 className="flex items-end gap-4"
               >
@@ -517,7 +517,7 @@ export default function Station2() {
                 <motion.div
                   initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0, transition: { delay: 0.2 } }}
-                  exit={{ opacity: 0, x: 50 }}
+                  exit={{ opacity: 0, x: 50, transition: { duration: 0.5 } }}
                   className="w-24 h-auto md:w-32"
                 >
                   <Image
