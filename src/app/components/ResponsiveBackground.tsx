@@ -11,25 +11,28 @@ export default function ResponsiveBackground({ children }: { children: React.Rea
   return (
     <div className="relative w-full min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
       {/* Capa de imagen de fondo responsiva */}
-      <picture
-        className="pointer-events-none select-none absolute inset-0 z-0 block"
-        aria-hidden="true"
-        role="presentation"
-      >
-        {/* Desktop >= 1025px */}
-        <source media="(min-width: 1025px)" srcSet="/backgrounds/BionexusPC.png" />
-        {/* Tablet >= 650px */}
-        <source media="(min-width: 650px)" srcSet="/backgrounds/BionexusTablet.png" />
-        {/* Móvil (fallback) */}
-        <img
-          src="/backgrounds/Bionexus1075_X_1944.png"
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover"
-          sizes="100vw"
-          decoding="async"
-          loading="eager"
-        />
-      </picture>
+      <div className="absolute inset-0 -z-10">
+        <picture
+          className="pointer-events-none select-none absolute inset-0 z-0 block"
+          aria-hidden="true"
+          role="presentation"
+        >
+          {/* Desktop >= 1025px */}
+          <source media="(min-width: 1025px)" srcSet="/backgrounds/BionexusPC.png" />
+          {/* Tablet >= 650px */}
+          <source media="(min-width: 650px)" srcSet="/backgrounds/BionexusTablet.png" />
+          {/* Móvil (fallback) */}
+          <img
+            src="/backgrounds/Bionexus1075_X_1944.png"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+            sizes="100vw"
+            decoding="async"
+            loading="eager"
+          />
+        </picture>
+      </div>
+
 
       {/* Contenido del app sobre el fondo */}
       <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">

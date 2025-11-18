@@ -19,8 +19,7 @@ export default function ArtDirectedBackground({
     mobileSrc 
 }: ArtDirectedBackgroundProps) {
   return (
-    <div className="relative w-full min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
-      <picture
+    <picture
         className="pointer-events-none select-none absolute inset-0 z-0 block"
         aria-hidden="true"
         role="presentation"
@@ -38,7 +37,6 @@ export default function ArtDirectedBackground({
           decoding="async"
           loading="eager"
         />
-      </picture>
-    </div>
+    </picture>
   );
 }

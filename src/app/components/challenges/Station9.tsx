@@ -290,6 +290,15 @@ export default function Station9() {
         }
     }
 
+    // Fallback if the URL doesn't match a known key, though this is less likely now
+    // We can default to one or return null
+    // Let's try to match on the name from the picker if possible
+    if(chosenScenario.includes('scenario-bosque-seco')) return scenarioMap['Bosque_Seco_Tropical'];
+    if(chosenScenario.includes('scenario-ciudad')) return scenarioMap['Ciudad_Sostenible'];
+    if(chosenScenario.includes('scenario-mar-costero')) return scenarioMap['Mar_Costero'];
+    if(chosenScenario.includes('scenario-manglares')) return scenarioMap['Manglares'];
+    
+
     return null;
   };
 
@@ -301,14 +310,18 @@ export default function Station9() {
            if ((e.target as HTMLElement).closest('.placed-prize-wrapper')) return;
            setSelectedPrizeId(null);
       }}>
-        {/* Canvas Area */}
-        <div id={DRAGGABLE_AREA_ID} ref={canvasRef} className="absolute inset-0">
+        
+        {/* Background layer */}
+        <div className="absolute inset-0 z-10">
           {backgroundSources ? (
             <ArtDirectedBackground {...backgroundSources} />
           ) : (
              <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
           )}
-
+        </div>
+        
+        {/* Canvas Area */}
+        <div id={DRAGGABLE_AREA_ID} ref={canvasRef} className="absolute inset-0 z-20">
           {/* Placed Prizes */}
           {placedPrizes.map((prize) => {
             const isSelected = selectedPrizeId === prize.id;
@@ -320,7 +333,7 @@ export default function Station9() {
                     dragMomentum={false}
                     onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
                     dragConstraints={canvasRef}
-                    className="placed-prize-wrapper absolute cursor-grab active:cursor-grabbing z-20"
+                    className="placed-prize-wrapper absolute cursor-grab active:cursor-grabbing"
                     style={{ 
                         x: prize.x, 
                         y: prize.y, 
@@ -417,7 +430,7 @@ export default function Station9() {
         </AnimatePresence>
         
         {/* Yara Character and Dialog */}
-        <div className="absolute bottom-4 right-40 z-20 flex items-end gap-4 pointer-events-none">
+        <div className="absolute bottom-4 right-40 z-30 flex items-end gap-4 pointer-events-none">
           <AnimatePresence>
             {isYaraMessageVisible && yaraCharImage && (
               <motion.div
