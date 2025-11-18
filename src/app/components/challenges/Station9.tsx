@@ -304,9 +304,7 @@ export default function Station9() {
         {/* Canvas Area */}
         <div id={DRAGGABLE_AREA_ID} ref={canvasRef} className="absolute inset-0">
           {backgroundSources ? (
-            <ArtDirectedBackground {...backgroundSources}>
-                {/* Children are placed on top */}
-            </ArtDirectedBackground>
+            <ArtDirectedBackground {...backgroundSources} />
           ) : (
              <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
           )}

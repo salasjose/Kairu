@@ -3,7 +3,6 @@
 import React from "react";
 
 interface ArtDirectedBackgroundProps {
-  children: React.ReactNode;
   desktopSrc: string;
   tabletSrc: string;
   mobileSrc: string;
@@ -15,7 +14,6 @@ interface ArtDirectedBackgroundProps {
  * - Usa <picture> para cargar la imagen más adecuada según el breakpoint.
  */
 export default function ArtDirectedBackground({ 
-    children, 
     desktopSrc, 
     tabletSrc, 
     mobileSrc 
@@ -41,7 +39,6 @@ export default function ArtDirectedBackground({
           loading="eager"
         />
       </picture>
-      {children}
     </div>
   );
 }
