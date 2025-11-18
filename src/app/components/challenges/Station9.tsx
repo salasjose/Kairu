@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore } from "@/firebase/hooks";
@@ -18,7 +18,6 @@ import { Slider } from "@/components/ui/slider";
 import { Trash2, Gift, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ArtDirectedBackground from "../ArtDirectedBackground";
-
 
 const DRAGGABLE_AREA_ID = "station-9-canvas";
 
@@ -60,6 +59,38 @@ const DraggablePrize = ({
   );
 }
 
+const ScenarioPicker = ({ onScenarioSelect }: { onScenarioSelect: (url: string) => void }) => {
+    const scenarios = useMemo(() => [
+        { name: "Terral", ...PlaceHolderImages.find(p => p.id === 'scenario-bosque-seco') },
+        { name: "Civika", ...PlaceHolderImages.find(p => p.id === 'scenario-ciudad') },
+        { name: "Mareva", ...PlaceHolderImages.find(p => p.id === 'scenario-mar-costero') },
+        { name: "Manglia", ...PlaceHolderImages.find(p => p.id === 'scenario-manglares') },
+    ].filter(s => s.imageUrl) as any[], []);
+
+    return (
+        <div className="w-full h-full bg-background/80 backdrop-blur-sm flex items-center justify-center p-8 text-center">
+            <Card className="p-8">
+                <h2 className="text-2xl font-bold text-primary mb-4">Elige tu Lienzo</h2>
+                <p className="text-muted-foreground mb-6">
+                    Parece que no tienes un lienzo asignado. Por favor, selecciona uno para continuar y crear tu estación.
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {scenarios.map(scenario => (
+                        <Card 
+                            key={scenario.id} 
+                            onClick={() => onScenarioSelect(scenario.imageUrl)}
+                            className="p-2 cursor-pointer hover:border-primary hover:scale-105 transition-transform duration-300"
+                        >
+                            <Image src={scenario.imageUrl} alt={scenario.description} width={200} height={200} className="rounded-md aspect-square object-cover" />
+                            <p className="font-bold mt-2 text-sm">{scenario.name}</p>
+                        </Card>
+                    ))}
+                </div>
+            </Card>
+        </div>
+    );
+};
+
 
 export default function Station9() {
   const [chosenScenario, setChosenScenario] = useState<string | null>(null);
@@ -73,7 +104,7 @@ export default function Station9() {
   
   const { user } = useUser();
   const db = useFirestore();
-  const { prizes: collectedPrizes, addPrize, clearCart: clearPrizeCart } = usePrizeCart();
+  const { prizes: collectedPrizes } = usePrizeCart();
   const collectedPrizesFromStations1to8 = collectedPrizes.filter(p => p.stationId <= 8);
 
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -121,10 +152,10 @@ export default function Station9() {
   }, []);
   
   useEffect(() => {
-    if (isLoading) return; 
+    if (isLoading || !chosenScenario) return; 
     const clearTimers = scheduleYaraDialog();
     return clearTimers;
-  }, [isLoading, scheduleYaraDialog]);
+  }, [isLoading, chosenScenario, scheduleYaraDialog]);
 
   const savePrizesToDb = useCallback(async (prizesToSave: PlacedPrize[]) => {
       if (!user || !db) return;
@@ -194,6 +225,22 @@ export default function Station9() {
     setIsCompletionDialogOpen(true);
   }
 
+  const handleScenarioSelect = async (scenarioUrl: string) => {
+    if (!user || !db) {
+        toast({ title: "Error", description: "No se puede guardar la selección. Intenta iniciar sesión de nuevo.", variant: "destructive" });
+        return;
+    }
+    try {
+        const userDocRef = doc(db, "users", user.uid);
+        await setDoc(userDocRef, { chosenScenario: scenarioUrl }, { merge: true });
+        setChosenScenario(scenarioUrl);
+        toast({ title: "Lienzo guardado", description: "Tu estación ahora tiene un fondo." });
+    } catch (error) {
+        console.error("Failed to save chosen scenario:", error);
+        toast({ title: "Error", description: "No se pudo guardar tu selección de lienzo.", variant: "destructive" });
+    }
+  };
+
   const unplacedPrizes = collectedPrizesFromStations1to8.filter(
     p => !placedPrizes.some(pp => pp.id === p.id)
   );
@@ -213,35 +260,36 @@ export default function Station9() {
 
   const getBackgroundSources = () => {
     if (!chosenScenario) return null;
-
-    if (chosenScenario.includes("Bosque_Seco_Tropical")) {
-        return {
+    
+    const scenarioMap: { [key: string]: { [key: string]: string } } = {
+        'Bosque_Seco_Tropical': {
             desktopSrc: "/backgrounds/Terral1366_X_768.png",
             tabletSrc: "/backgrounds/Terral1024_X_768.png",
             mobileSrc: "/backgrounds/Terral1075_X_1944.png",
-        };
-    }
-    if (chosenScenario.includes("Ciudad_Sostenible")) {
-        return {
+        },
+        'Ciudad_Sostenible': {
             desktopSrc: "/backgrounds/Civika1366_X_768.png",
             tabletSrc: "/backgrounds/Civika1024_X_768.png",
             mobileSrc: "/backgrounds/Civika1075_X_1944.png",
-        };
-    }
-    if (chosenScenario.includes("Mar_Costero")) {
-        return {
+        },
+        'Mar_Costero': {
             desktopSrc: "/backgrounds/Mareva1366_X_768.png",
             tabletSrc: "/backgrounds/Mareva1024_X_768.png",
             mobileSrc: "/backgrounds/Mareva1075_X_1944.png",
-        };
-    }
-    if (chosenScenario.includes("Manglares")) {
-        return {
+        },
+        'Manglares': {
             desktopSrc: "/backgrounds/Manglia1366_X_768.png",
             tabletSrc: "/backgrounds/Manglia1024_X_768.png",
             mobileSrc: "/backgrounds/Manglia1075_X_1944.png",
-        };
+        }
+    };
+
+    for (const key in scenarioMap) {
+        if (chosenScenario.includes(key)) {
+            return scenarioMap[key];
+        }
     }
+
     return null;
   };
 
@@ -260,14 +308,7 @@ export default function Station9() {
                 {/* Children are placed on top */}
             </ArtDirectedBackground>
           ) : (
-            <div className="w-full h-full bg-muted flex items-center justify-center p-8 text-center">
-                <Card className="p-8">
-                    <h2 className="text-2xl font-bold text-primary mb-4">¡Lienzo no encontrado!</h2>
-                    <p className="text-muted-foreground">
-                        Parece que no has elegido un lienzo para tu estación. Por favor, reinicia tu sesión para poder elegir uno y comenzar a crear.
-                    </p>
-                </Card>
-            </div>
+             <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
           )}
 
           {/* Placed Prizes */}
@@ -422,4 +463,3 @@ export default function Station9() {
     </>
   );
 }
-
