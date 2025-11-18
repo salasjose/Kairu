@@ -61,7 +61,7 @@ const PostChallenge = ({
         const videoId = newUrl.split("youtu.be/")[1].split("?")[0];
         setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
       } else {
-        setVideoUrl(newUrl); 
+        setVideoUrl(null); 
       }
     } else {
       setVideoUrl(null);
@@ -129,14 +129,16 @@ const PostChallenge = ({
                     className="rounded-lg w-full h-full"
                   ></iframe>
               ) : (
-                <Image
-                  src={waterPostImage?.imageUrl ?? "https://picsum.photos/seed/waterpost/400/300"}
-                  alt={waterPostImage?.description ?? "Social media post about water conservation"}
-                  width={400}
-                  height={300}
-                  className="rounded-lg object-cover w-full h-full"
-                  data-ai-hint={waterPostImage?.imageHint ?? "water conservation post"}
-                />
+                waterPostImage && (
+                    <Image
+                      src={waterPostImage.imageUrl}
+                      alt={waterPostImage.description}
+                      width={400}
+                      height={300}
+                      className="rounded-lg object-cover w-full h-full"
+                      data-ai-hint={waterPostImage.imageHint}
+                    />
+                )
               )}
             </div>
 
@@ -216,8 +218,8 @@ export default function Station4() {
       const isQuizCompleted = !!stationProgress['quiz']?.completed;
       if (isQuizCompleted) {
         toast({ title: "Reto ya completado", description: "¡Ya has superado este quiz!"});
-        setSelectedChallenge(null);
-        return;
+        setSelectedChallenge(null); // Return to menu if already completed
+        return null; // Avoid rendering quiz
       }
       return (
         <WaterQuiz
