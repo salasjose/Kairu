@@ -49,6 +49,12 @@
       "imageHint": "frog character"
     },
     {
+      "id": "char-yara-3",
+      "description": "Yara the frog speaking.",
+      "imageUrl": "/characters/YARA_3.png",
+      "imageHint": "speaking frog"
+    },
+    {
       "id": "char-yara-talking",
       "description": "Yara the frog speaking.",
       "imageUrl": "/characters/Rana_hablando_2.png",
