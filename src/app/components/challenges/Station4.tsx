@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -212,6 +213,12 @@ export default function Station4() {
 
   const renderContent = () => {
     if (selectedChallenge === "quiz") {
+      const isQuizCompleted = !!stationProgress['quiz']?.completed;
+      if (isQuizCompleted) {
+        toast({ title: "Reto ya completado", description: "¡Ya has superado este quiz!"});
+        setSelectedChallenge(null);
+        return;
+      }
       return (
         <WaterQuiz
           onComplete={() => handleChallengeComplete("quiz")}
@@ -242,11 +249,10 @@ export default function Station4() {
             return (
               <button
                 key={key}
-                onClick={() => !isCompleted && setSelectedChallenge(key)}
-                disabled={isCompleted}
+                onClick={() => setSelectedChallenge(key)}
                 className={cn(
                   "transition-transform duration-300 group",
-                  !isCompleted && "hover:scale-105"
+                  "hover:scale-105"
                 )}
               >
                 <Card className="relative w-60 md:w-64 h-auto md:h-56 bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors">
