@@ -15,9 +15,8 @@ import { doc, setDoc, getDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
 import { useChallengeProgress } from "@/hooks/use-challenge-progress";
-import { handleGenerateCrossword } from "@/app/actions";
 import CrosswordGame from "./CrosswordGame";
-import type { CrosswordData } from "@/lib/types";
+import { REGIRA_CROSSWORD_DATA } from "@/lib/regira-crossword-data";
 import { cn } from "@/lib/utils";
 
 const challenges = {
@@ -132,49 +131,8 @@ const VideoChallenge = ({ onBack, onComplete }: { onBack: () => void, onComplete
 };
 
 const CrosswordChallenge = ({ onBack, onComplete }: { onBack: () => void, onComplete: () => void }) => {
-    const [crosswordData, setCrosswordData] = useState<CrosswordData | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const generate = async () => {
-            setIsLoading(true);
-            setError(null);
-            const result = await handleGenerateCrossword("Economía Circular", 15);
-            if (result.success && result.data) {
-                // The AI returns clues as a flat string, let's parse them.
-                const parsedAcross = typeof result.data.across === 'string' ? JSON.parse(result.data.across) : result.data.across;
-                const parsedDown = typeof result.data.down === 'string' ? JSON.parse(result.data.down) : result.data.down;
-                
-                setCrosswordData({
-                    ...result.data,
-                    // The AI is supposed to return clues as {number, clue, answer}, but it is returning {number, text}
-                    // We adapt to what the AI is actually sending
-                    across: parsedAcross.map((c: any) => ({number: c.number, text: c.clue || c.text})),
-                    down: parsedDown.map((c: any) => ({number: c.number, text: c.clue || c.text})),
-                });
-            } else {
-                setError(result.error || "No se pudo generar el crucigrama.");
-            }
-            setIsLoading(false);
-        };
-        generate();
-    }, []);
-
-    if (isLoading) {
-        return <div className="text-white text-center p-8">Generando tu crucigrama sobre Economía Circular...</div>;
-    }
-
-    if (error) {
-        return <div className="text-red-400 text-center p-8">Error: {error}</div>;
-    }
-
-    if (!crosswordData) {
-        return <div className="text-center p-8">No hay datos de crucigrama disponibles.</div>;
-    }
-
     return (
-        <CrosswordGame data={crosswordData} onComplete={onComplete} onBack={onBack} />
+        <CrosswordGame data={REGIRA_CROSSWORD_DATA} onComplete={onComplete} onBack={onBack} />
     );
 };
 
