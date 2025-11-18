@@ -7,7 +7,7 @@ import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BrainCircuit, Link as LinkIcon, Upload } from "lucide-react";
+import { ArrowLeft, BrainCircuit, CheckCircle, Link as LinkIcon } from "lucide-react";
 import WaterQuiz from "@/app/components/challenges/WaterQuiz";
 import { Input } from "@/components/ui/input";
 import PrizeDialog from "../PrizeDialog";
@@ -17,6 +17,8 @@ import TypewriterText from "../auth/TypewriterText";
 import ResponsiveBackground from "../ResponsiveBackground";
 import { useUser, useFirestore } from "@/firebase/hooks";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import { useChallengeProgress } from "@/hooks/use-challenge-progress";
+import { cn } from "@/lib/utils";
 
 const challenges = {
   quiz: {
@@ -27,7 +29,7 @@ const challenges = {
   },
   post: {
     title: "Post",
-    description: "Crea un post de conservación del agua, carga tu foto de evidencia, etiquétanos @fundaciontekara y @corpoguajira y comparte el enlace.",
+    description: "Crea un post de conservación del agua, etiquétanos @fundaciontekara y @corpoguajira y comparte el enlace.",
     icon: LinkIcon,
   },
 };
@@ -141,7 +143,6 @@ const PostChallenge = ({
               {challenges.post.description}
             </p>
             <div className="flex flex-col gap-4 max-w-md mx-auto">
-                <Button size="lg" variant="outline"><Upload className="mr-2"/> Cargar Foto de Evidencia</Button>
                 <div className="flex gap-2">
                     <LinkIcon className="h-10 text-muted-foreground" />
                     <Input
@@ -165,6 +166,7 @@ export default function Station4() {
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeId | null>(null);
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
+  const { completedChallenges, completeChallenge } = useChallengeProgress();
   const router = useRouter();
 
   const [showYaraDialog, setShowYaraDialog] = useState(false);
@@ -190,25 +192,29 @@ export default function Station4() {
   }, [scheduleYaraDialog]);
 
 
-  const handleComplete = (challengeId: ChallengeId) => {
-    unlockStation(stationId + 1);
+  const handleChallengeComplete = (challengeId: ChallengeId) => {
+    completeChallenge(stationId, challengeId);
+    setSelectedChallenge(null);
     toast({
-      title: `¡Estación ${stationId} Completada!`,
-      description: `¡Reto '${challenges[challengeId].title}' superado!`,
+      title: `¡Reto '${challenges[challengeId].title}' superado!`,
+      description: "¡Excelente! Completa el otro reto para avanzar.",
     });
-    setIsPrizeModalOpen(true);
   };
 
   const handleClaimPrize = () => {
     setIsPrizeModalOpen(false);
+    unlockStation(stationId + 1);
     router.push("/");
   };
   
+  const stationProgress = completedChallenges[stationId] || {};
+  const areAllChallengesComplete = Object.keys(challenges).every(id => stationProgress[id]?.completed);
+
   const renderContent = () => {
     if (selectedChallenge === "quiz") {
       return (
         <WaterQuiz
-          onComplete={() => handleComplete("quiz")}
+          onComplete={() => handleChallengeComplete("quiz")}
           onBack={() => setSelectedChallenge(null)}
           onSwitchChallenge={() => setSelectedChallenge("post")}
         />
@@ -217,7 +223,7 @@ export default function Station4() {
     if (selectedChallenge === "post") {
       return (
         <PostChallenge
-          onComplete={() => handleComplete("post")}
+          onComplete={() => handleChallengeComplete("post")}
           onBack={() => setSelectedChallenge(null)}
         />
       );
@@ -232,13 +238,23 @@ export default function Station4() {
           {(Object.keys(challenges) as ChallengeId[]).map((key) => {
             const challenge = challenges[key];
             const Icon = challenge.icon;
+            const isCompleted = stationProgress[key]?.completed;
             return (
               <button
                 key={key}
-                onClick={() => setSelectedChallenge(key)}
-                className="transition-transform duration-300 hover:scale-105 group"
+                onClick={() => !isCompleted && setSelectedChallenge(key)}
+                disabled={isCompleted}
+                className={cn(
+                  "transition-transform duration-300 group",
+                  !isCompleted && "hover:scale-105"
+                )}
               >
-                <Card className="w-60 md:w-64 h-auto md:h-56 bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors">
+                <Card className="relative w-60 md:w-64 h-auto md:h-56 bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors">
+                   {isCompleted && (
+                      <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1.5 shadow-lg z-10">
+                          <CheckCircle className="text-white h-5 w-5" />
+                      </div>
+                    )}
                   <CardContent className="flex flex-col items-center justify-center text-center p-4 h-full">
                     <Icon className="w-12 h-12 md:w-16 md:h-16 text-primary mb-3" />
                     <h2 className="font-bold font-headline text-xl md:text-2xl text-primary">
@@ -254,11 +270,19 @@ export default function Station4() {
           })}
         </div>
 
-        <div className="mt-4 max-w-md mx-auto space-y-4">
-          <p className="bg-background/80 p-4 rounded-md text-center">
-            Selecciona uno de los retos para demostrar tu compromiso con la
-            conservación del agua.
-          </p>
+        <div className="mt-4 max-w-md mx-auto space-y-2 text-center">
+            <Button
+                size="lg"
+                disabled={!areAllChallengesComplete}
+                onClick={() => setIsPrizeModalOpen(true)}
+            >
+                Completar Estación y Reclamar Insignia
+            </Button>
+            {!areAllChallengesComplete && (
+                <p className="bg-background/80 p-2 rounded-md text-sm text-muted-foreground">
+                    Completa ambos retos para reclamar tu insignia.
+                </p>
+            )}
         </div>
       </ResponsiveBackground>
     );
