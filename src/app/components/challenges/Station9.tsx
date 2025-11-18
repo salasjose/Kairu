@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -16,6 +17,7 @@ import TypewriterText from "../auth/TypewriterText";
 import { Slider } from "@/components/ui/slider";
 import { Trash2, Gift, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ArtDirectedBackground from "../ArtDirectedBackground";
 
 
 const DRAGGABLE_AREA_ID = "station-9-canvas";
@@ -209,6 +211,41 @@ export default function Station9() {
 
   const yaraMessage = `${playerName}, ¡Ya eres un Guardián de la Naturaleza! Ahora es tiempo de armar tu Estación. Moverás tus Insignias por todo tu lienzo; para ello, debes hacer doble clic y sostener tu insignia sin soltarla hasta el lugar donde la quieras tener.`;
 
+  const getBackgroundSources = () => {
+    if (!chosenScenario) return null;
+
+    if (chosenScenario.includes("Bosque_Seco_Tropical")) {
+        return {
+            desktopSrc: "/backgrounds/Terral1366_X_768.png",
+            tabletSrc: "/backgrounds/Terral1024_X_768.png",
+            mobileSrc: "/backgrounds/Terral1075_X_1944.png",
+        };
+    }
+    if (chosenScenario.includes("Ciudad_Sostenible")) {
+        return {
+            desktopSrc: "/backgrounds/Civika1366_X_768.png",
+            tabletSrc: "/backgrounds/Civika1024_X_768.png",
+            mobileSrc: "/backgrounds/Civika1075_X_1944.png",
+        };
+    }
+    if (chosenScenario.includes("Mar_Costero")) {
+        return {
+            desktopSrc: "/backgrounds/Mareva1366_X_768.png",
+            tabletSrc: "/backgrounds/Mareva1024_X_768.png",
+            mobileSrc: "/backgrounds/Mareva1075_X_1944.png",
+        };
+    }
+    if (chosenScenario.includes("Manglares")) {
+        return {
+            desktopSrc: "/backgrounds/Manglia1366_X_768.png",
+            tabletSrc: "/backgrounds/Manglia1024_X_768.png",
+            mobileSrc: "/backgrounds/Manglia1075_X_1944.png",
+        };
+    }
+    return null;
+  };
+
+  const backgroundSources = getBackgroundSources();
 
   return (
     <>
@@ -218,18 +255,18 @@ export default function Station9() {
       }}>
         {/* Canvas Area */}
         <div id={DRAGGABLE_AREA_ID} ref={canvasRef} className="absolute inset-0">
-          {chosenScenario ? (
-            <Image
-              src={chosenScenario}
-              alt="Lienzo de estación personalizada"
-              fill
-              style={{objectFit: 'cover'}}
-              className="z-0"
-              priority
-            />
+          {backgroundSources ? (
+            <ArtDirectedBackground {...backgroundSources}>
+                {/* Children are placed on top */}
+            </ArtDirectedBackground>
           ) : (
-            <div className="w-full h-full bg-muted flex items-center justify-center">
-                <p>No se encontró el lienzo. Por favor, vuelve a empezar.</p>
+            <div className="w-full h-full bg-muted flex items-center justify-center p-8 text-center">
+                <Card className="p-8">
+                    <h2 className="text-2xl font-bold text-primary mb-4">¡Lienzo no encontrado!</h2>
+                    <p className="text-muted-foreground">
+                        Parece que no has elegido un lienzo para tu estación. Por favor, reinicia tu sesión para poder elegir uno y comenzar a crear.
+                    </p>
+                </Card>
             </div>
           )}
 
@@ -385,3 +422,4 @@ export default function Station9() {
     </>
   );
 }
+
