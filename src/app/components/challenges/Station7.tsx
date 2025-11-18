@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -17,6 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
+import ArtDirectedBackground from "../ArtDirectedBackground";
 
 type Business = {
   name: string;
@@ -115,7 +117,6 @@ export default function Station7() {
   const yaraMessage = "¡Te doy la bienvenida a VerdeLab! Este es el laboratorio donde los sueños sostenibles se convierten en proyectos reales. ¡Emprende con propósito, crea con el corazón y demuestra que cuidar también puede ser una gran idea!";
   const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const verdeLabBgImage = PlaceHolderImages.find(p => p.id === 'regira-background');
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara');
 
   const scheduleYaraDialog = useCallback(() => {
@@ -217,17 +218,11 @@ export default function Station7() {
         onSave={handleSaveBusiness} 
       />
 
-      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
-        {verdeLabBgImage && (
-            <Image
-                src={verdeLabBgImage.imageUrl}
-                alt={verdeLabBgImage.description}
-                fill
-                style={{objectFit: 'cover'}}
-                className="z-0"
-                data-ai-hint={verdeLabBgImage.imageHint}
-            />
-        )}
+      <ArtDirectedBackground
+        desktopSrc="/backgrounds/Verdelab1366x_768.png"
+        tabletSrc="/backgrounds/Verdelab1024_X_768.png"
+        mobileSrc="/backgrounds/Verdelab1075_X_1944.png"
+      >
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full max-w-4xl mx-auto">
           <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
             <h1 className="text-3xl md:text-5xl">VerdeLAb</h1>
@@ -318,7 +313,7 @@ export default function Station7() {
                 </motion.div>
             )}
         </div>
-      </div>
+      </ArtDirectedBackground>
       <PrizeDialog
         open={isPrizeModalOpen}
         stationId={stationId}
@@ -327,3 +322,5 @@ export default function Station7() {
     </>
   );
 }
+
+    
