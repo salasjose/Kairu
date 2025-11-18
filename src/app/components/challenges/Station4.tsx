@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -15,11 +14,11 @@ import PrizeDialog from "../PrizeDialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-import ResponsiveBackground from "../ResponsiveBackground";
 import { useUser, useFirestore } from "@/firebase/hooks";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useChallengeProgress } from "@/hooks/use-challenge-progress";
 import { cn } from "@/lib/utils";
+import ArtDirectedBackground from "../ArtDirectedBackground";
 
 const challenges = {
   quiz: {
@@ -211,7 +210,7 @@ export default function Station4() {
   };
   
   const stationProgress = completedChallenges[stationId] || {};
-  const areAllChallengesComplete = Object.keys(challenges).every(id => stationProgress[id]?.completed);
+  const areAllChallengesComplete = Object.keys(challenges).every(id => stationProgress[id as ChallengeId]?.completed);
 
   const renderContent = () => {
     if (selectedChallenge === "quiz") {
@@ -238,7 +237,11 @@ export default function Station4() {
       );
     }
     return (
-      <ResponsiveBackground>
+      <ArtDirectedBackground
+        desktopSrc="/backgrounds/TerrAzul1024x_768.png"
+        tabletSrc="/backgrounds/TerrAzul1024x_768.png"
+        mobileSrc="/backgrounds/TerrAzul1075_X_1944.png"
+      >
         <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
           <h1 className="text-3xl md:text-5xl">TerrAzul</h1>
         </div>
@@ -247,11 +250,11 @@ export default function Station4() {
           {(Object.keys(challenges) as ChallengeId[]).map((key) => {
             const challenge = challenges[key];
             const Icon = challenge.icon;
-            const isCompleted = stationProgress[key]?.completed;
+            const isCompleted = stationProgress[key as ChallengeId]?.completed;
             return (
               <button
                 key={key}
-                onClick={() => setSelectedChallenge(key)}
+                onClick={() => setSelectedChallenge(key as ChallengeId)}
                 className={cn(
                   "transition-transform duration-300 group",
                   "hover:scale-105"
@@ -292,7 +295,7 @@ export default function Station4() {
                 </p>
             )}
         </div>
-      </ResponsiveBackground>
+      </ArtDirectedBackground>
     );
   };
 
