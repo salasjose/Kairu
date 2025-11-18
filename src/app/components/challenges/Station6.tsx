@@ -19,6 +19,7 @@ import CrosswordGame from './CrosswordGame';
 import { REGIRA_CROSSWORD_DATA } from '@/lib/regira-crossword-data';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import ArtDirectedBackground from '../ArtDirectedBackground';
 
 const challenges = {
   video: {
@@ -214,7 +215,6 @@ export default function Station6() {
     '¡Estamos en ReGira! Aquí aprenderás que todo en la naturaleza gira y se renueva. Cada recurso tiene una segunda oportunidad. ¡Es momento de cerrar el ciclo y darle nueva vida a lo que parecía terminar!';
   const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const regiraBgImage = PlaceHolderImages.find(p => p.id === 'regira-background');
   const yaraCharImage = PlaceHolderImages.find(p => p.id === 'char-yara');
 
   const scheduleYaraDialog = useCallback(() => {
@@ -367,18 +367,11 @@ export default function Station6() {
 
   return (
     <>
-      <div className="w-full min-h-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
-        {regiraBgImage && (
-          <Image
-            src={regiraBgImage.imageUrl}
-            alt={regiraBgImage.description}
-            fill
-            style={{ objectFit: 'cover' }}
-            className="z-0"
-            data-ai-hint={regiraBgImage.imageHint}
-          />
-        )}
-
+       <ArtDirectedBackground
+          desktopSrc="/backgrounds/Regira1366_X_768.png"
+          tabletSrc="/backgrounds/Regira1024_X_768.png"
+          mobileSrc="/backgrounds/Regira1075_X_1944.png"
+        >
         {renderContent()}
 
         {/* Yara Character and Dialog */}
@@ -417,7 +410,7 @@ export default function Station6() {
             </motion.div>
           )}
         </div>
-      </div>
+      </ArtDirectedBackground>
       <PrizeDialog open={isPrizeModalOpen} stationId={stationId} onClaim={handleClaimPrize} />
     </>
   );
