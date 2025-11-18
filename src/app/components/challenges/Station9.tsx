@@ -108,7 +108,7 @@ export default function Station9() {
   const collectedPrizesFromStations1to8 = collectedPrizes.filter(p => p.stationId <= 8);
 
   const canvasRef = useRef<HTMLDivElement>(null);
-  const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara');
+  const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara-final');
   const dragControls = useDragControls();
 
   useEffect(() => {
@@ -420,39 +420,38 @@ export default function Station9() {
         
         {/* Yara Character and Dialog */}
         <div className="absolute bottom-4 right-40 z-20 flex items-end gap-4 pointer-events-none">
-            <AnimatePresence>
-                {isYaraMessageVisible && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 20 }}
-                        transition={{ duration: 0.5 }}
-                        className="w-80 mb-4"
-                    >
-                        <Card className="p-3 shadow-lg bg-white/95 relative pointer-events-auto">
-                            <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium" />
-                            <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
-                        </Card>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-            
-            {yaraCharImage && isYaraMessageVisible && (
+          <AnimatePresence>
+            {isYaraMessageVisible && yaraCharImage && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.5 }}
+                className="flex items-end gap-4"
+              >
+                <div className="w-80 mb-4">
+                  <Card className="p-3 shadow-lg bg-white/95 relative pointer-events-auto">
+                    <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium" />
+                    <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
+                  </Card>
+                </div>
                 <motion.div
-                    initial={{ opacity: 0, x: 50 }}
-                    animate={{ opacity: 1, x: 0, transition: { delay: 0.2 } }}
-                     exit={{ opacity: 0, x: 50, transition: {duration: 0.5 } }}
-                    className="w-24 h-auto md:w-32"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0, transition: { delay: 0.2 } }}
+                  exit={{ opacity: 0, x: 50, transition: { duration: 0.5 } }}
+                  className="w-24 h-auto md:w-32"
                 >
-                    <Image
-                        src={yaraCharImage.imageUrl}
-                        alt={yaraCharImage.description}
-                        width={150}
-                        height={187}
-                        className="h-auto w-full select-none"
-                    />
+                  <Image
+                    src={yaraCharImage.imageUrl}
+                    alt={yaraCharImage.description}
+                    width={150}
+                    height={187}
+                    className="h-auto w-full select-none"
+                  />
                 </motion.div>
+              </motion.div>
             )}
+          </AnimatePresence>
         </div>
 
       </div>

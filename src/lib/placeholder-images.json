@@ -45,7 +45,7 @@
     {
       "id": "char-yara",
       "description": "A friendly, smiling cartoon frog character named Yara, ready for adventure.",
-      "imageUrl": "/characters/YARA_3.png",
+      "imageUrl": "/characters/Rana.png",
       "imageHint": "frog character"
     },
     {
@@ -59,6 +59,12 @@
       "description": "Yara the frog looking through a magnifying glass.",
       "imageUrl": "/characters/Rana_con_lupa.png",
       "imageHint": "frog magnifying glass"
+    },
+    {
+      "id": "char-yara-final",
+      "description": "Yara the frog character, happy and triumphant.",
+      "imageUrl": "/characters/YARA_LA_RANA.png",
+      "imageHint": "happy frog"
     },
     {
       "id": "scenario-bosque-seco",
