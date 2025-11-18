@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -25,6 +26,7 @@ import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore } from "@/firebase/hooks";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useChallengeProgress } from "@/hooks/use-challenge-progress";
+import ArtDirectedBackground from "../ArtDirectedBackground";
 
 const ChallengeDetail = ({
   title,
@@ -288,17 +290,11 @@ export default function Station3() {
 
   return (
     <>
-      <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden">
-        {streetBgImage && (
-          <Image
-            src={streetBgImage.imageUrl}
-            alt={streetBgImage.description}
-            fill
-            style={{ objectFit: "cover" }}
-            className="z-0 opacity-70"
-            data-ai-hint={streetBgImage.imageHint}
-          />
-        )}
+      <ArtDirectedBackground
+        desktopSrc="/backgrounds/Renova1366_X_768.png"
+        tabletSrc="/backgrounds/Renova1024_X_768.png"
+        mobileSrc="/backgrounds/Renova1075_X_1944.png"
+      >
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
           <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
             <h1 className="text-3xl md:text-5xl">ReNova</h1>
@@ -387,7 +383,7 @@ export default function Station3() {
           )}
         </div>
 
-      </div>
+      </ArtDirectedBackground>
       <PrizeDialog
         open={isPrizeModalOpen}
         stationId={stationId}
