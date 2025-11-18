@@ -23,7 +23,7 @@ import ResponsiveBackground from "../ResponsiveBackground";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 
-const yaraCharacterImage = PlaceHolderImages.find((p) => p.id === "char-yara");
+const yaraCharacterImage = PlaceHolderImages.find((p) => p.id === "char-yara-magnifying-glass");
 
 const challenges = {
   "Fauna y Flora": {

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -172,7 +173,7 @@ export default function Station5() {
   const yaraMessage = "¡Wow, llegamos a ZonaCreativa! Este es el espacio donde tu imaginación se vuelve sostenible transformando ideas que inspiren un cambio positivo. ¡Tu creatividad puede cambiar el mundo!";
   const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
   
-  const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara');
+  const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara-magnifying-glass');
 
   const scheduleYaraDialog = useCallback(() => {
     if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
