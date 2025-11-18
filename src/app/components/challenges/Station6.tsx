@@ -25,7 +25,7 @@ const challenges = {
   video: {
     title: 'Negocios Exitosos',
     description: 'Carga un video sobre un negocio que aplique la economía circular.',
-    icon: Upload,
+    icon: LinkIcon, // <-- Changed from Upload
   },
   crossword: {
     title: 'Crucigrama Circular',
