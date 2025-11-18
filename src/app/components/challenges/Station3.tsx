@@ -223,7 +223,7 @@ export default function Station3() {
   const streetBgImage = PlaceHolderImages.find(
     (p) => p.id === "renova-background"
   );
-  const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara-talking");
+  const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara");
 
    const scheduleYaraDialog = useCallback(() => {
     if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
