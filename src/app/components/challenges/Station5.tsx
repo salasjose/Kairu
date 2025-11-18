@@ -226,8 +226,8 @@ export default function Station5() {
   return (
      <>
       <ArtDirectedBackground
-        desktopSrc="/backgrounds/Zonacreativa1366_X_768.png"
-        tabletSrc="/backgrounds/Zonacreativa1024_X_768.png"
+        desktopSrc="/backgrounds/ZonacreativaPC.png"
+        tabletSrc="/backgrounds/ZonacreativaTablet.png"
         mobileSrc="/backgrounds/Zonacreativa1075_X_1944.png"
       >
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">

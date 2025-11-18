@@ -369,8 +369,8 @@ export default function Station6() {
   return (
     <>
        <ArtDirectedBackground
-          desktopSrc="/backgrounds/Regira1366_X_768.png"
-          tabletSrc="/backgrounds/Regira1024_X_768.png"
+          desktopSrc="/backgrounds/RegiraPC.png"
+          tabletSrc="/backgrounds/RegiraTablet.png"
           mobileSrc="/backgrounds/Regira1075_X_1944.png"
         >
         {renderContent()}

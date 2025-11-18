@@ -219,8 +219,8 @@ export default function Station7() {
       />
 
       <ArtDirectedBackground
-        desktopSrc="/backgrounds/Verdelab1366x_768.png"
-        tabletSrc="/backgrounds/Verdelab1024_X_768.png"
+        desktopSrc="/backgrounds/VerdelabPc.png"
+        tabletSrc="/backgrounds/VVerdelabTablet.png"
         mobileSrc="/backgrounds/Verdelab1075_X_1944.png"
       >
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full max-w-4xl mx-auto">

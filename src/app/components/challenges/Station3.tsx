@@ -291,8 +291,8 @@ export default function Station3() {
   return (
     <>
       <ArtDirectedBackground
-        desktopSrc="/backgrounds/Renova1366_X_768.png"
-        tabletSrc="/backgrounds/Renova1024_X_768.png"
+        desktopSrc="/backgrounds/RenovaPC.png"
+        tabletSrc="/backgrounds/RenovaTablet.png"
         mobileSrc="/backgrounds/Renova1075_X_1944.png"
       >
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">

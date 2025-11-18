@@ -199,8 +199,8 @@ export default function Station8() {
   return (
     <>
       <ArtDirectedBackground
-        desktopSrc="/backgrounds/Vitalia1366_X_768.png"
-        tabletSrc="/backgrounds/Vitalia1024_X_768.png"
+        desktopSrc="/backgrounds/VitaliaPC.png"
+        tabletSrc="/backgrounds/VitaliaTablet.png"
         mobileSrc="/backgrounds/Vitalia1075_X_1944.png"
       >
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">

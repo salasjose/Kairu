@@ -238,8 +238,8 @@ export default function Station4() {
     }
     return (
       <ArtDirectedBackground
-        desktopSrc="/backgrounds/TerrAzul1024x_768.png"
-        tabletSrc="/backgrounds/TerrAzul1024x_768.png"
+        desktopSrc="/backgrounds/TerrAzulPc.png"
+        tabletSrc="/backgrounds/TTerrAzulTablet.png"
         mobileSrc="/backgrounds/TerrAzul1075_X_1944.png"
       >
         <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">

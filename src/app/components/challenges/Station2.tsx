@@ -477,8 +477,8 @@ export default function Station2() {
   return (
     <>
       <ArtDirectedBackground
-          desktopSrc="/backgrounds/Impactrack1366_X_768.png"
-          tabletSrc="/backgrounds/Impactrack1024_X_768.png"
+          desktopSrc="/backgrounds/ImpactrackPC.png"
+          tabletSrc="/backgrounds/ImpactrackTablet.png"
           mobileSrc="/backgrounds/Impactrack1075_X_1944.png"
         >
         <div className="relative z-10 w-full h-full flex flex-col items-center justify-center text-center">

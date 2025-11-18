@@ -17,9 +17,9 @@ export default function ResponsiveBackground({ children }: { children: React.Rea
         role="presentation"
       >
         {/* Desktop >= 1025px */}
-        <source media="(min-width: 1025px)" srcSet="/backgrounds/Bionexus1366_X_768.png" />
+        <source media="(min-width: 1025px)" srcSet="/backgrounds/BionexusPC.png" />
         {/* Tablet >= 650px */}
-        <source media="(min-width: 650px)" srcSet="/backgrounds/Bionexus1024_X_768.png" />
+        <source media="(min-width: 650px)" srcSet="/backgrounds/BionexusTablet.png" />
         {/* Móvil (fallback) */}
         <img
           src="/backgrounds/Bionexus1075_X_1944.png"
