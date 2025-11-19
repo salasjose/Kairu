@@ -31,14 +31,49 @@ export default function CrosswordGame({
   onLose: () => void;
 }) {
   const grid = useMemo(() => data.grid.map(row => row.map(v => v === "#" ? "#" : v)), [data.grid]);
-  const rows = grid.length, cols = grid[0].length;
+  const rows = grid.length;
+  const cols = grid[0].length;
   
-  const allAnswers = useMemo(() => {
-    const answers = new Map<string, string>();
-    data.clues.across.forEach(c => answers.set(`H-${c.number}`, c.answer));
-    data.clues.down.forEach(c => answers.set(`V-${c.number}`, c.answer));
-    return answers;
-  }, [data.clues]);
+  const clueNumbers = useMemo(() => {
+    const numbers: { [key: string]: number } = {};
+    const wordStarts = new Set<string>();
+
+    data.clues.across.forEach(clue => {
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c <= cols - clue.answer.length; c++) {
+          const word = grid[r].slice(c, c + clue.answer.length).join('');
+          if (word === clue.answer && (c === 0 || grid[r][c-1] === '#')) {
+            const key = `${r},${c}`;
+            if(!wordStarts.has(key)){
+              numbers[key] = clue.number;
+              wordStarts.add(key);
+              return; 
+            }
+          }
+        }
+      }
+    });
+
+    data.clues.down.forEach(clue => {
+      for (let c = 0; c < cols; c++) {
+        for (let r = 0; r <= rows - clue.answer.length; r++) {
+          let word = '';
+          for(let i=0; i < clue.answer.length; i++){
+            word += grid[r+i][c];
+          }
+          if (word === clue.answer && (r === 0 || grid[r-1][c] === '#')) {
+             const key = `${r},${c}`;
+             if(!numbers[key]){
+               numbers[key] = clue.number;
+             }
+             wordStarts.add(key);
+             return;
+          }
+        }
+      }
+    });
+    return numbers;
+  }, [data.clues, grid, rows, cols]);
 
   const [selected, setSelected] = useState<{ r: number; c: number } | null>(null);
   const [dir, setDir] = useState<Direction>("across");
@@ -67,7 +102,6 @@ export default function CrosswordGame({
     if (showSolution) {
       setState(grid);
     } else {
-        // Reset only if it was previously showing solution
         if (JSON.stringify(state) === JSON.stringify(grid)) {
             resetGame();
         }
@@ -187,7 +221,7 @@ export default function CrosswordGame({
 
   return (
     <div className="mx-auto w-full max-w-7xl p-2 md:p-4 flex flex-col lg:flex-row gap-4 lg:gap-8 items-start">
-      <div className="w-full lg:w-auto">
+      <div className="w-full lg:w-auto flex-shrink-0">
         <div className="flex justify-between items-center mb-2 md:mb-4 flex-wrap gap-2">
             {onBack && (
               <Button variant="ghost" onClick={onBack}>
@@ -206,13 +240,14 @@ export default function CrosswordGame({
             </div>
         </div>
         <div
-          className="grid gap-px md:gap-1 rounded-md p-1 md:p-2 bg-gray-900 w-full max-w-md mx-auto lg:max-w-none"
+          className="grid gap-px md:gap-0.5 rounded-md p-1 md:p-2 bg-gray-900 w-full max-w-md mx-auto lg:max-w-none"
           style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}
         >
           {grid.map((row, r) =>
             row.map((cell, c) => {
               const isBlock = cell === "#";
               const isSel = selected?.r === r && selected?.c === c;
+              const clueNumber = clueNumbers[`${r},${c}`];
 
               return (
                 <div
@@ -224,6 +259,11 @@ export default function CrosswordGame({
                     isSel && !isBlock && "bg-yellow-200"
                   )}
                 >
+                  {clueNumber && (
+                    <span className="absolute top-0 left-0.5 text-[0.5rem] md:text-[0.6rem] font-bold text-gray-500">
+                      {clueNumber}
+                    </span>
+                  )}
                   {!isBlock && (
                     <input
                       ref={el => { if (refs.current[r]) refs.current[r][c] = el; }}
@@ -233,7 +273,7 @@ export default function CrosswordGame({
                       onChange={(e) => handleInput(e, r, c)}
                       onKeyDown={(e) => handleKey(e, r, c)}
                       onFocus={() => setSelected({r,c})}
-                      className="h-full w-full text-center bg-transparent outline-none border-none text-base md:text-xl font-bold uppercase"
+                      className="h-full w-full text-center bg-transparent outline-none border-none text-sm sm:text-base md:text-xl font-bold uppercase"
                       aria-label={`Fila ${r + 1}, Columna ${c + 1}`}
                       disabled={gameState !== 'playing'}
                     />
@@ -259,7 +299,7 @@ export default function CrosswordGame({
       <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 w-full">
         <Card className="bg-card/80 backdrop-blur-sm">
           <CardHeader><CardTitle>Horizontales</CardTitle></CardHeader>
-          <CardContent className="space-y-2 text-sm max-h-[200px] sm:max-h-[250px] lg:max-h-none overflow-y-auto">
+          <CardContent className="space-y-2 text-sm max-h-[200px] sm:max-h-none overflow-y-auto">
             {data.clues.across.map(cl => (
               <p key={`a-${cl.number}`}><span className="font-bold">{cl.number}.</span> {cl.clue}</p>
             ))}
@@ -267,7 +307,7 @@ export default function CrosswordGame({
         </Card>
         <Card className="bg-card/80 backdrop-blur-sm">
           <CardHeader><CardTitle>Verticales</CardTitle></CardHeader>
-          <CardContent className="space-y-2 text-sm max-h-[200px] sm:max-h-[250px] lg:max-h-none overflow-y-auto">
+          <CardContent className="space-y-2 text-sm max-h-[200px] sm:max-h-none overflow-y-auto">
             {data.clues.down.map(cl => (
               <p key={`d-${cl.number}`}><span className="font-bold">{cl.number}.</span> {cl.clue}</p>
             ))}
