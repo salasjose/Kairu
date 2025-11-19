@@ -186,7 +186,7 @@ export default function Station9() {
         ...prizeData, 
         x, 
         y, 
-        scale: 1
+        scale: 1, // Start at normal size
     };
 
     const newPlacedPrizes = [
