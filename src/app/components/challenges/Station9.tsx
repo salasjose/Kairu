@@ -182,10 +182,16 @@ export default function Station9() {
 
     const prizeData = collectedPrizes.find(p => p.id === prizeId);
     if (!prizeData) return;
+    
+    // Define special prizes
+    const isSpecialPrize = prizeData.imageUrl.includes('Molinos.png') || prizeData.imageUrl.includes('Ciudad.png');
 
-    const existingPrize = placedPrizes.find(p => p.id === prizeId);
-
-    const newPlacedPrize: PlacedPrize = { ...prizeData, x, y, scale: existingPrize?.scale || 1 };
+    const newPlacedPrize: PlacedPrize = { 
+        ...prizeData, 
+        x, 
+        y, 
+        scale: isSpecialPrize ? 1.5 : 1
+    };
 
     const newPlacedPrizes = [
       ...placedPrizes.filter(p => p.id !== prizeId),
@@ -310,8 +316,8 @@ export default function Station9() {
                     style={{ 
                         x: prize.x, 
                         y: prize.y, 
-                        width: `${80 * prize.scale}px`, 
-                        height: `${80 * prize.scale}px`
+                        width: `${100 * prize.scale}px`, 
+                        height: `${100 * prize.scale}px`
                     }}
                     initial={{ x: prize.x, y: prize.y, scale: 1 }}
                     onClick={(e) => {e.stopPropagation(); setSelectedPrizeId(prize.id)}}
@@ -446,3 +452,5 @@ export default function Station9() {
     </>
   );
 }
+
+    
