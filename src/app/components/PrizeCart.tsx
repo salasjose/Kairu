@@ -1,3 +1,4 @@
+
 "use client";
 
 import { usePrizeCart } from "@/hooks/use-prize-cart";
@@ -51,7 +52,7 @@ export default function PrizeCart() {
                                               fill
                                               style={{objectFit: 'contain'}}
                                               className={cn(
-                                                (prize.imageUrl.includes('Molinos.png') || prize.imageUrl.includes('Panal.png')) && "scale-125"
+                                                (prize.imageUrl.includes('Molinos.png') || prize.imageUrl.includes('Panal.png') || prize.imageUrl.includes('Ciudad.png')) && "scale-125"
                                               )}
                                             />
                                         </div>
@@ -75,3 +76,5 @@ export default function PrizeCart() {
         </Sheet>
     );
 }
+
+    

@@ -290,9 +290,6 @@ export default function Station9() {
         }
     }
 
-    // Fallback if the URL doesn't match a known key, though this is less likely now
-    // We can default to one or return null
-    // Let's try to match on the name from the picker if possible
     if(chosenScenario.includes('scenario-bosque-seco')) return scenarioMap['Bosque_Seco_Tropical'];
     if(chosenScenario.includes('scenario-ciudad')) return scenarioMap['Ciudad_Sostenible'];
     if(chosenScenario.includes('scenario-mar-costero')) return scenarioMap['Mar_Costero'];
@@ -314,7 +311,9 @@ export default function Station9() {
         {/* Background layer */}
         <div className="absolute inset-0 z-10">
           {backgroundSources ? (
-            <ArtDirectedBackground {...backgroundSources} />
+            <ArtDirectedBackground {...backgroundSources}>
+              <></>
+            </ArtDirectedBackground>
           ) : (
              <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
           )}
@@ -473,3 +472,5 @@ export default function Station9() {
     </>
   );
 }
+
+    
