@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -183,14 +182,11 @@ export default function Station9() {
     const prizeData = collectedPrizes.find(p => p.id === prizeId);
     if (!prizeData) return;
     
-    // Define special prizes
-    const isSpecialPrize = prizeData.imageUrl.includes('Molinos.png') || prizeData.imageUrl.includes('Ciudad.png');
-
     const newPlacedPrize: PlacedPrize = { 
         ...prizeData, 
         x, 
         y, 
-        scale: isSpecialPrize ? 2.5 : 1
+        scale: 1 // Todas las insignias empiezan con escala 1
     };
 
     const newPlacedPrizes = [
@@ -266,7 +262,8 @@ export default function Station9() {
 
   const getBackgroundSources = () => {
     if (!chosenScenario) return null;
-    if (chosenScenario.includes('Bosque_Seco')) {
+    // Corregido: Se usan los nombres de archivo correctos
+    if (chosenScenario.includes('Bosque_Seco_Tropical')) {
         return { desktopSrc: "/backgrounds/Terral1366_X_768.png", tabletSrc: "/backgrounds/Terral1024_X_768.png", mobileSrc: "/backgrounds/Terral1075_X_1944.png" };
     }
     if (chosenScenario.includes('Ciudad_Sostenible')) {
@@ -304,6 +301,8 @@ export default function Station9() {
           {/* Placed Prizes */}
           {placedPrizes.map((prize) => {
             const isSelected = selectedPrizeId === prize.id;
+            const isSpecialPrize = prize.imageUrl.includes('Molinos.png') || prize.imageUrl.includes('Ciudad.png');
+
             return (
                  <motion.div
                     key={prize.id}
@@ -339,7 +338,7 @@ export default function Station9() {
                             <Slider
                                 defaultValue={[prize.scale]}
                                 min={0.5}
-                                max={2.5}
+                                max={isSpecialPrize ? 7 : 2.5} // Permite escalar hasta 7 (600% más grande) para insignias especiales
                                 step={0.1}
                                 onValueChange={(value) => handleScaleChange(prize.id, value)}
                                 onValueCommit={(value) => handleScaleChangeCommit(prize.id, value)}
