@@ -637,10 +637,11 @@ export default function Station1() {
   };
 
   const handleChallengeComplete = (challengeName: string) => {
-    const imageInfo = PlaceHolderImages.find((p) =>
-      challengeName === "Fauna y Flora" ? p.id === "fauna-capybara" : p.id === "habitat-build-1"
-    );
-    completeChallenge(stationId, challengeName, imageInfo?.imageUrl);
+    const imageInfo = challengeName === "Cuidado Animal" 
+      ? PlaceHolderImages.find((p) => p.id === "habitat-build-1") 
+      : null;
+
+    completeChallenge(stationId, challengeName, imageInfo?.imageUrl || null);
     setSelectedChallenge(null);
     toast({
       title: `¡Reto '${challengeName}' Completado!`,
