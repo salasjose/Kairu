@@ -27,27 +27,74 @@ export default function CrosswordGame({
   
   const clueNumbers = useMemo(() => {
     const numbers: { [key: string]: number } = {};
-    const acrossStarts: { [key: string]: boolean } = {};
-    const downStarts: { [key: string]: boolean } = {};
     let clueCounter = 1;
+    const assignedNumbers: { [key: string]: boolean } = {};
+  
+    const acrossCluesByNumber: { [num: number]: boolean } = data.clues.across.reduce((acc, clue) => {
+      acc[clue.number] = true;
+      return acc;
+    }, {} as { [num: number]: boolean });
+  
+    const downCluesByNumber: { [num: number]: boolean } = data.clues.down.reduce((acc, clue) => {
+      acc[clue.number] = true;
+      return acc;
+    }, {} as { [num: number]: boolean });
+  
+    // Asignar números a las celdas
+    const starts = new Map<number, {r: number, c: number}>();
+    data.clues.across.forEach(c => starts.set(c.number, {r: -1, c: -1}));
+    data.clues.down.forEach(c => starts.set(c.number, {r: -1, c: -1}));
 
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         if (grid[r][c] === '#') continue;
-
-        const isAcrossStart = c === 0 || grid[r][c - 1] === '#';
-        const isDownStart = r === 0 || grid[r - 1][c] === '#';
-
-        if (isAcrossStart || isDownStart) {
-          numbers[`${r},${c}`] = clueCounter;
-          if (isAcrossStart) acrossStarts[`${r},${c}`] = true;
-          if (isDownStart) downStarts[`${r},${c}`] = true;
-          clueCounter++;
+        const isAcrossStart = (c === 0 || grid[r][c - 1] === '#') && c + 1 < cols && grid[r][c + 1] !== '#';
+        const isDownStart = (r === 0 || grid[r - 1][c] === '#') && r + 1 < rows && grid[r + 1][c] !== '#';
+        if(isAcrossStart || isDownStart) {
+          // Find the number from the clues
+          const acrossClue = data.clues.across.find(clue => {
+            const word = clue.answer;
+            if(c + word.length > cols) return false;
+            let match = true;
+            for(let i = 0; i < word.length; i++) {
+              if(grid[r][c+i] !== word[i]) {
+                match = false;
+                break;
+              }
+            }
+            return match;
+          });
+          const downClue = data.clues.down.find(clue => {
+            const word = clue.answer;
+            if(r + word.length > rows) return false;
+            let match = true;
+            for(let i = 0; i < word.length; i++) {
+              if(grid[r+i][c] !== word[i]) {
+                match = false;
+                break;
+              }
+            }
+            return match;
+          });
+          if (isAcrossStart && acrossClue) {
+            starts.set(acrossClue.number, {r,c});
+          }
+          if (isDownStart && downClue) {
+             starts.set(downClue.number, {r,c});
+          }
         }
       }
     }
+    
+    starts.forEach((pos, num) => {
+        if (pos.r !== -1) {
+            numbers[`${pos.r},${pos.c}`] = num;
+        }
+    });
+
     return numbers;
-  }, [grid, rows, cols]);
+
+  }, [grid, rows, cols, data.clues]);
 
 
   const [selected, setSelected] = useState<{ r: number; c: number } | null>(null);
@@ -196,7 +243,7 @@ export default function CrosswordGame({
 
   return (
     <div className="mx-auto w-full max-w-7xl p-2 md:p-4 flex flex-col lg:flex-row gap-4 lg:gap-8 items-start">
-      <div className="w-full lg:max-w-md xl:max-w-xl flex-shrink-0">
+      <div className="w-full lg:w-auto lg:flex-shrink-0">
         <div className="flex justify-between items-center mb-2 md:mb-4 flex-wrap gap-2">
             {onBack && (
               <Button variant="ghost" onClick={onBack}>
@@ -215,7 +262,7 @@ export default function CrosswordGame({
             </div>
         </div>
         <div
-          className="grid gap-px md:gap-0.5 rounded-md p-1 md:p-2 bg-gray-900 w-full mx-auto"
+          className="grid gap-px md:gap-0.5 rounded-md p-1 md:p-2 bg-gray-900 w-full max-w-[500px] mx-auto"
           style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}
         >
           {grid.map((row, r) =>
