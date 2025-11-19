@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, CheckCircle, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +12,7 @@ const stationId = 3;
 
 const games = [
   { id: "game-classify", title: "Clasificación de Residuos", description: "Clasifica 10 residuos con imágenes antes de que se acabe el tiempo. ¡Cuidado, solo tienes 3 vidas!", component: WasteClassificationGame },
-  { id: "game-drag-and-drop", title: "Arrastra y Recicla", description: "Arrastra cada residuo al contenedor correcto. ¡Demuestra tu conocimiento!", component: WasteClassificationGame },
+  { id: "game-drag-and-drop", title: "Arrastra y Recicla", description: "Arrastra cada residuo al contenedor correcto. Tienes 4 minutos y 3 vidas.", component: WasteClassificationGame },
 ];
 
 const WonScreen = ({ gameTitle, onBack }: { gameTitle: string; onBack: () => void; }) => (
@@ -34,27 +34,34 @@ interface RecyclingGamesMenuProps {
 export default function RecyclingGamesMenu({ onBack }: RecyclingGamesMenuProps) {
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const { completedChallenges, completeChallenge } = useChallengeProgress();
+  
+  // Memoize stationProgress to avoid re-renders
   const stationProgress = completedChallenges[stationId] || {};
 
-  const handleGameComplete = (gameId: string) => {
+  const handleGameComplete = useCallback((gameId: string) => {
     // 1. Mark the specific sub-game as complete
     completeChallenge(stationId, gameId);
     
-    // 2. Check if the OTHER game is also complete
-    const otherGameId = games.find(g => g.id !== gameId)?.id;
-    const allGamesCompleted = otherGameId && (completedChallenges[stationId]?.[otherGameId]?.completed || false);
+    // 2. We now need to check if both games are completed to mark the parent 'game' challenge.
+    // The state update from completeChallenge is async, so we check against the *next* state.
+    const updatedStationProgress = {
+        ...stationProgress,
+        [gameId]: { completed: true }
+    };
+
+    const allSubGamesCompleted = games.every(game => updatedStationProgress[game.id]?.completed);
     
     // 3. If both games are complete, mark the parent 'game' challenge as complete
-    if (allGamesCompleted) {
+    if (allSubGamesCompleted) {
         completeChallenge(stationId, 'game');
     }
 
     // Return to the menu
     setSelectedGameId(null); 
-  };
+  }, [stationProgress, completeChallenge]);
   
   useEffect(() => {
-    // This effect runs after a game is completed and the state updates
+    // This effect ensures the parent challenge is marked complete if the hook state has updated.
     const allGamesCompleted = games.every(game => stationProgress[game.id]?.completed);
     if(allGamesCompleted && !stationProgress['game']?.completed) {
         completeChallenge(stationId, 'game');
@@ -63,7 +70,8 @@ export default function RecyclingGamesMenu({ onBack }: RecyclingGamesMenuProps) 
 
   const gameInfo = games.find(g => g.id === selectedGameId);
   if (gameInfo) {
-      if (stationProgress[gameInfo.id]?.completed) {
+      // Check against the latest state for the won screen
+      if (completedChallenges[stationId]?.[gameInfo.id]?.completed) {
           return <WonScreen gameTitle={gameInfo.title} onBack={() => setSelectedGameId(null)} />;
       }
       const GameComponent = gameInfo.component;

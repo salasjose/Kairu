@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { ArrowLeft, CheckCircle, PartyPopper, Recycle, Trash2, Leaf, AlertCircle, RefreshCw, Heart, X, Lock } from 'lucide-react';
+import { ArrowLeft, CheckCircle, PartyPopper, Recycle, Trash2, Leaf, AlertCircle, RefreshCw, Heart, X, Lock, Timer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { WasteItem, wasteItemsData } from '@/lib/data';
@@ -199,13 +199,29 @@ const GameWithImages = ({ onGameWin, onBack, gameState, updateGameState }: { onG
     );
 };
 
-const GameDragAndDrop = ({ onGameWin, onBack }: { onGameWin: () => void; onBack: () => void; }) => {
+const GameDragAndDrop = ({ onGameWin, onBack, gameState, updateGameState }: { onGameWin: () => void; onBack: () => void; gameState: GameState, updateGameState: (newState: Partial<GameState>) => void; }) => {
   const [wasteItems, setWasteItems] = useState(() => shuffle([...wasteItemsData].slice(0, 20)));
   const [animations, setAnimations] = useState<Record<WasteCategory, string>>({ recycle: '', organic: '', trash: '' });
+  const [timeLeft, setTimeLeft] = useState(240); // 4 minutes
   
   const currentItem = wasteItems[wasteItems.length - 1];
   const gameWon = !currentItem;
   
+  useEffect(() => {
+    if (gameWon || gameState.lives <= 0 || timeLeft <= 0) return;
+    const timer = setInterval(() => {
+        setTimeLeft(prev => {
+            if (prev <= 1) {
+                clearInterval(timer);
+                updateGameState({ lockoutUntil: Date.now() + 15 * 60 * 1000 }); // Lock for 15 minutes
+                return 0;
+            }
+            return prev - 1;
+        });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [gameWon, gameState.lives, timeLeft, updateGameState]);
+
   useEffect(() => {
     if (gameWon) {
       onGameWin();
@@ -220,33 +236,65 @@ const GameDragAndDrop = ({ onGameWin, onBack }: { onGameWin: () => void; onBack:
   }
 
   const handleDrop = (category: WasteCategory) => {
-    if (!currentItem) return;
+    if (!currentItem || gameState.lives <= 0 || timeLeft <= 0) return;
 
     if (currentItem.category === category) {
       setWasteItems(prevItems => prevItems.slice(0, prevItems.length - 1));
       triggerAnimation(category, 'correct');
     } else {
+      const newLives = gameState.lives - 1;
+      updateGameState({ lives: newLives });
+      triggerAnimation(category, 'incorrect');
       toast({
         title: "¡Ups! Contenedor incorrecto",
-        description: `"${currentItem.name}" no va en la caneca de ${bins.find(b => b.category === category)?.label}.`,
+        description: `"${currentItem.name}" no va ahí. Te queda${newLives === 1 ? '' : 'n'} ${newLives} vida${newLives === 1 ? '' : 's'}.`,
         variant: "destructive",
       });
-      triggerAnimation(category, 'incorrect');
-      // Shuffle the item back in
+      if (newLives <= 0) {
+        updateGameState({ lockoutUntil: Date.now() + 15 * 60 * 1000 }); // Lock for 15 minutes
+      } else {
         setWasteItems(prev => {
-          const base = prev.slice(0, prev.length - 1); // quitar current
-          const idx = Math.floor(Math.random() * (base.length + 1));
-          base.splice(idx, 0, currentItem);
-          return base;
+            const base = prev.slice(0, prev.length - 1);
+            const idx = Math.floor(Math.random() * (base.length + 1));
+            base.splice(idx, 0, currentItem);
+            return base;
         });
+      }
     }
   };
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+  };
+
+   if (gameState.lives <= 0 || timeLeft <= 0) {
+        return (
+            <div className="w-full flex flex-col items-center justify-center text-center min-h-[300px]">
+                <AlertCircle className="w-24 h-24 text-destructive mb-4" />
+                <h2 className="text-3xl font-bold font-headline text-destructive mb-2">{timeLeft <= 0 ? "¡Se acabó el tiempo!" : "¡Sin vidas!"}</h2>
+                <p className="text-muted-foreground text-lg mb-6">El reto se bloqueará por 15 minutos.</p>
+                <Button onClick={onBack} size="lg">
+                    <ArrowLeft className="mr-2" />
+                    Volver al Menú del Reto
+                </Button>
+            </div>
+        )
+    }
   
   return (
     <div className="flex flex-col items-center">
-      <div className="mb-6 text-center">
-        <p className="text-muted-foreground mt-2">Como Guardián del Planeta, tu misión es dar el destino correcto a cada residuo.</p>
-      </div>
+        <div className="mb-6 text-center w-full flex justify-between items-center px-4">
+            <div className="flex gap-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                    i < gameState.lives ? <Heart key={i} className="w-6 h-6 text-red-500 fill-current" /> : <Heart key={i} className="w-6 h-6 text-gray-300" />
+                ))}
+            </div>
+            <div className="text-2xl font-bold text-primary tabular-nums">
+                {formatTime(timeLeft)}
+            </div>
+        </div>
 
       <div className="relative mb-8 h-24 w-64 flex items-center justify-center">
         <AnimatePresence>
@@ -295,7 +343,6 @@ const GameDragAndDrop = ({ onGameWin, onBack }: { onGameWin: () => void; onBack:
       </div>
        <div className="mt-8 text-center text-sm text-muted-foreground">
         <p><b>Pistas:</b> Observa bien los materiales. ¿Plástico limpio o sucio? ¿Vegetal o no vegetal?</p>
-        <p>No te apresures, una clasificación equivocada te hace perder tiempo.</p>
        </div>
     </div>
   );
@@ -326,22 +373,23 @@ export default function WasteClassificationGameContainer({ gameId, onComplete, o
         const savedState = localStorage.getItem(storageKey);
         if (savedState) {
             const parsedState: GameState = JSON.parse(savedState);
-            setGameState(parsedState);
             if (parsedState.lockoutUntil && parsedState.lockoutUntil > Date.now()) {
+                setGameState(parsedState);
                 setPageState('locked');
+            } else {
+                 updateGameState({ lives: 3, lockoutUntil: null });
             }
         } else {
             localStorage.setItem(storageKey, JSON.stringify({ lives: 3, lockoutUntil: null }));
         }
     }
-  }, [storageKey, key]);
+  }, [storageKey, key, updateGameState]);
 
   const formatLockoutTime = (ms: number) => {
     const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-    const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-    const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
     const seconds = String(totalSeconds % 60).padStart(2, '0');
-    return `${hours}:${minutes}:${seconds}`;
+    return `${minutes}:${seconds}`;
   };
 
   useEffect(() => {
@@ -349,28 +397,19 @@ export default function WasteClassificationGameContainer({ gameId, onComplete, o
 
     const interval = setInterval(() => {
         if (gameState.lockoutUntil) {
-            const timeLeft = gameState.lockoutUntil - Date.now();
-            if (timeLeft <= 0) {
+            const timeLeftMs = gameState.lockoutUntil - Date.now();
+            if (timeLeftMs <= 0) {
                 setPageState('playing');
                 updateGameState({ lives: 3, lockoutUntil: null });
                 clearInterval(interval);
             } else {
-                setLockoutTimeLeft(formatLockoutTime(timeLeft));
+                setLockoutTimeLeft(formatLockoutTime(timeLeftMs));
             }
         }
     }, 1000);
 
     return () => clearInterval(interval);
   }, [pageState, gameState.lockoutUntil, updateGameState]);
-
-  useEffect(() => {
-    if (gameState.lockoutUntil && gameState.lockoutUntil > Date.now()) {
-        setPageState('locked');
-    } else if (gameState.lives <= 0 && pageState !== 'won') {
-        // If lockout expired but lives are still 0, reset
-        updateGameState({ lives: 3, lockoutUntil: null });
-    }
-  }, [gameState, updateGameState, pageState]);
 
 
   const handleGameWin = useCallback(() => {
@@ -390,6 +429,8 @@ export default function WasteClassificationGameContainer({ gameId, onComplete, o
 
 
   if (pageState === 'locked') {
+    const lockoutDuration = gameId === 'game-classify' ? 60 * 60 * 1000 : 15 * 60 * 1000;
+    const lockoutMessage = gameId === 'game-classify' ? "El juego se bloqueará por 1 hora." : "Podrás intentarlo de nuevo en 15 minutos.";
     return (
         <div className="w-full max-w-4xl mx-auto p-4 flex flex-col items-center justify-center text-center min-h-[400px]">
             <Lock className="w-24 h-24 text-destructive mb-4" />
@@ -401,7 +442,9 @@ export default function WasteClassificationGameContainer({ gameId, onComplete, o
     )
   }
 
-  const gameTitle = gameId === 'game-classify' ? "Clasificación por Imagen" : "Arrastra y Recicla";
+  const gameInfo = gameId === 'game-classify' 
+    ? { title: "Clasificación por Imagen", GameComponent: GameWithImages } 
+    : { title: "Arrastra y Recicla", GameComponent: GameDragAndDrop };
 
   return (
     <div className="w-full max-w-5xl mx-auto p-4">
@@ -410,27 +453,19 @@ export default function WasteClassificationGameContainer({ gameId, onComplete, o
           <ArrowLeft className="mr-2 h-4 w-4" />
           Volver al menú
         </Button>
-        <h2 className="text-2xl md:text-3xl font-bold text-primary font-headline text-center">{gameTitle}</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-primary font-headline text-center">{gameInfo.title}</h2>
         <Button onClick={handleRestart} variant="outline">
             <RefreshCw className="mr-2 h-4 w-4" />
             Reiniciar
         </Button>
       </div>
-      {gameId === 'game-classify' ? (
-        <GameWithImages
+      <gameInfo.GameComponent
           key={key}
           onGameWin={handleGameWin}
           onBack={onBack}
           gameState={gameState}
           updateGameState={updateGameState}
         />
-      ) : (
-        <GameDragAndDrop
-          key={key}
-          onGameWin={handleGameWin}
-          onBack={onBack}
-        />
-      )}
     </div>
   );
 }
