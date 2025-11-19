@@ -5,17 +5,28 @@ import Image from "next/image";
 export default function BackgroundImage({ children }: { children?: React.ReactNode }) {
   return (
     <section className="relative min-h-screen w-full overflow-hidden bg-black">
-      {/* Imagen de fondo responsiva */}
-      <Image
-        src="/backgrounds/Mapa.png"
-        alt="Fondo del aplicativo"
-        fill
-        priority
-        className="object-cover object-center"
-        sizes="(max-width: 640px) 100vw, 
-               (max-width: 1024px) 100vw, 
-               100vw"
-      />
+      {/* Fondo responsivo por art-direction */}
+      <div className="absolute inset-0 z-0">
+        <picture
+          className="pointer-events-none select-none block h-full w-full"
+          aria-hidden="true"
+          role="presentation"
+        >
+          {/* PC >= 1025px */}
+          <source media="(min-width: 1025px)" srcSet="/backgrounds/MapaPc.png" />
+          {/* Tablet >= 650px */}
+          <source media="(min-width: 650px)" srcSet="/backgrounds/MapaTablet.png" />
+          {/* Móvil (fallback) */}
+          <img
+            src="/backgrounds/MapaTelefono.png"
+            alt="Fondo del mapa del juego"
+            className="absolute inset-0 h-full w-full object-cover"
+            sizes="100vw"
+            decoding="async"
+            loading="eager"
+          />
+        </picture>
+      </div>
 
       {/* Capa de oscurecimiento opcional */}
       <div className="absolute inset-0 bg-black/20" />
