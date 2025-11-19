@@ -186,7 +186,7 @@ export default function Station9() {
         ...prizeData, 
         x, 
         y, 
-        scale: 1 // Todas las insignias empiezan con escala 1
+        scale: 1
     };
 
     const newPlacedPrizes = [
@@ -262,7 +262,7 @@ export default function Station9() {
 
   const getBackgroundSources = () => {
     if (!chosenScenario) return null;
-    // Corregido: Se usan los nombres de archivo correctos
+    
     if (chosenScenario.includes('Bosque_Seco_Tropical')) {
         return { desktopSrc: "/backgrounds/Terral1366_X_768.png", tabletSrc: "/backgrounds/Terral1024_X_768.png", mobileSrc: "/backgrounds/Terral1075_X_1944.png" };
     }
@@ -338,7 +338,7 @@ export default function Station9() {
                             <Slider
                                 defaultValue={[prize.scale]}
                                 min={0.5}
-                                max={isSpecialPrize ? 7 : 2.5} // Permite escalar hasta 7 (600% más grande) para insignias especiales
+                                max={isSpecialPrize ? 7 : 2.5}
                                 step={0.1}
                                 onValueChange={(value) => handleScaleChange(prize.id, value)}
                                 onValueCommit={(value) => handleScaleChangeCommit(prize.id, value)}
