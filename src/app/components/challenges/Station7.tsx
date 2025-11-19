@@ -127,7 +127,7 @@ export default function Station7() {
   const yaraMessage = "¡Te doy la bienvenida a VerdeLab! Este es el laboratorio donde los sueños sostenibles se convierten en proyectos reales. ¡Emprende con propósito, crea con el corazón y demuestra que cuidar también puede ser una gran idea!";
   const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara');
+  const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara-3');
 
   const scheduleYaraDialog = useCallback(() => {
     if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
@@ -229,7 +229,7 @@ export default function Station7() {
       />
 
       <ArtDirectedBackground
-        desktopSrc="/backgrounds/VerdelabPc.png"
+        desktopSrc="/backgrounds/VerdelabPC.png"
         tabletSrc="/backgrounds/VVerdelabTablet.png"
         mobileSrc="/backgrounds/Verdelab1075_X_1944.png"
       >
@@ -288,38 +288,42 @@ export default function Station7() {
         </div>
 
         {/* Yara Character and Dialog */}
-        <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4 pointer-events-none">
+        <div className="absolute bottom-4 right-4 z-20 flex items-end gap-0 md:gap-2 pointer-events-none">
             <AnimatePresence>
                 {showYaraDialog && yaraCharImage && (
-                  <motion.div
+                  <>
+                    {/* Dialog Box */}
+                    <motion.div
+                      key="dialog"
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 20, transition: { duration: 0.5 } }}
-                      transition={{ duration: 0.5 }}
-                      className="flex items-end gap-4"
-                  >
-                      <div className="w-64 mb-4">
-                        <Card className="p-3 shadow-lg bg-white/95 relative">
-                            <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium"/>
-                            <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
-                        </Card>
-                      </div>
-                      <motion.div
-                          initial={{ opacity: 0, x: 50 }}
-                          animate={{ opacity: 1, x: 0, transition: { delay: 0.5, duration: 0.8 } }}
-                          exit={{ opacity: 0, x: 50, transition: { duration: 0.5 } }}
-                          className="w-24 h-auto md:w-32"
-                      >
-                          <Image
-                              src={yaraCharImage.imageUrl}
-                              alt={yaraCharImage.description}
-                              width={150}
-                              height={187}
-                              className="h-auto w-full select-none"
-                              priority
-                          />
-                      </motion.div>
-                  </motion.div>
+                      animate={{ opacity: 1, y: 0, transition: { delay: 1, duration: 0.5 } }}
+                      exit={{ opacity: 0, y: 10, transition: { duration: 0.4 } }}
+                      className="w-64 mb-4"
+                    >
+                      <Card className="p-3 shadow-lg bg-white/95 relative">
+                          <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium" delay={1} />
+                          <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
+                      </Card>
+                    </motion.div>
+
+                    {/* Yara Image */}
+                    <motion.div
+                        key="yara"
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0, transition: { duration: 0.8 } }}
+                        exit={{ opacity: 0, x: 50, transition: { delay: 0.3, duration: 0.5 } }}
+                        className="w-24 h-auto md:w-32"
+                    >
+                        <Image
+                            src={yaraCharImage.imageUrl}
+                            alt={yaraCharImage.description}
+                            width={150}
+                            height={187}
+                            className="h-auto w-full select-none"
+                            priority
+                        />
+                    </motion.div>
+                  </>
                 )}
             </AnimatePresence>
         </div>
