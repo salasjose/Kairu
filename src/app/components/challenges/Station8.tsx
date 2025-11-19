@@ -171,7 +171,7 @@ export default function Station8() {
   const yaraMessage = "¡Has llegado a Vitalia! La energía del sol, del viento y del agua nos impulsa hacia un futuro más limpio. Recarga tu energía, comparte tu luz y sigue construyendo un planeta lleno de vida. ¡Tu fuerza también renueva el mundo!";
   const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
   
-  const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara-3');
+  const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara');
 
   const scheduleYaraDialog = useCallback(() => {
     if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
