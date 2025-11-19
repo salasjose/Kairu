@@ -97,5 +97,3 @@ export default function PrizeDialog({ open, stationId, onClaim }: PrizeDialogPro
     </Dialog>
   );
 }
-
-    

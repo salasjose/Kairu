@@ -260,42 +260,18 @@ export default function Station9() {
 
   const getBackgroundSources = () => {
     if (!chosenScenario) return null;
-    
-    const scenarioMap: { [key: string]: { [key: string]: string } } = {
-        'Bosque_Seco_Tropical': {
-            desktopSrc: "/backgrounds/Terral1366_X_768.png",
-            tabletSrc: "/backgrounds/Terral1024_X_768.png",
-            mobileSrc: "/backgrounds/Terral1075_X_1944.png",
-        },
-        'Ciudad_Sostenible': {
-            desktopSrc: "/backgrounds/Civika1366_X_768.png",
-            tabletSrc: "/backgrounds/Civika1024_X_768.png",
-            mobileSrc: "/backgrounds/Civika1075_X_1944.png",
-        },
-        'Mar_Costero': {
-            desktopSrc: "/backgrounds/Mareva1366_X_768.png",
-            tabletSrc: "/backgrounds/Mareva1024_X_768.png",
-            mobileSrc: "/backgrounds/Mareva1075_X_1944.png",
-        },
-        'Manglares': {
-            desktopSrc: "/backgrounds/Manglia1366_X_768.png",
-            tabletSrc: "/backgrounds/Manglia1024_X_768.png",
-            mobileSrc: "/backgrounds/Manglia1075_X_1944.png",
-        }
-    };
-
-    for (const key in scenarioMap) {
-        if (chosenScenario.includes(key)) {
-            return scenarioMap[key];
-        }
+    if (chosenScenario.includes('Bosque_Seco')) {
+        return { desktopSrc: "/backgrounds/Terral1366_X_768.png", tabletSrc: "/backgrounds/Terral1024_X_768.png", mobileSrc: "/backgrounds/Terral1075_X_1944.png" };
     }
-
-    if(chosenScenario.includes('scenario-bosque-seco')) return scenarioMap['Bosque_Seco_Tropical'];
-    if(chosenScenario.includes('scenario-ciudad')) return scenarioMap['Ciudad_Sostenible'];
-    if(chosenScenario.includes('scenario-mar-costero')) return scenarioMap['Mar_Costero'];
-    if(chosenScenario.includes('scenario-manglares')) return scenarioMap['Manglares'];
-    
-
+    if (chosenScenario.includes('Ciudad_Sostenible')) {
+        return { desktopSrc: "/backgrounds/Civika1366_X_768.png", tabletSrc: "/backgrounds/Civika1024_X_768.png", mobileSrc: "/backgrounds/Civika1075_X_1944.png" };
+    }
+    if (chosenScenario.includes('Mar_Costero')) {
+        return { desktopSrc: "/backgrounds/Mareva1366_X_768.png", tabletSrc: "/backgrounds/Mareva1024_X_768.png", mobileSrc: "/backgrounds/Mareva1075_X_1944.png" };
+    }
+    if (chosenScenario.includes('Manglares')) {
+        return { desktopSrc: "/backgrounds/Manglia1366_X_768.png", tabletSrc: "/backgrounds/Manglia1024_X_768.png", mobileSrc: "/backgrounds/Manglia1075_X_1944.png" };
+    }
     return null;
   };
 
@@ -311,9 +287,7 @@ export default function Station9() {
         {/* Background layer */}
         <div className="absolute inset-0 z-10">
           {backgroundSources ? (
-            <ArtDirectedBackground {...backgroundSources}>
-              <></>
-            </ArtDirectedBackground>
+            <ArtDirectedBackground {...backgroundSources} />
           ) : (
              <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
           )}
@@ -472,5 +446,3 @@ export default function Station9() {
     </>
   );
 }
-
-    
