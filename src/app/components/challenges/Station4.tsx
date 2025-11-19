@@ -1,6 +1,8 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import dynamic from 'next/dynamic';
 import Image from "next/image";
 import { toast } from "@/hooks/use-toast";
 import { useStationProgress } from "@/hooks/use-station-progress";
@@ -18,7 +20,16 @@ import { useUser, useFirestore } from "@/firebase/hooks";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useChallengeProgress } from "@/hooks/use-challenge-progress";
 import { cn } from "@/lib/utils";
-import ArtDirectedBackground from "../ArtDirectedBackground";
+import Logo from "../Logo";
+
+const ArtDirectedBackground = dynamic(() => import('../ArtDirectedBackground'), {
+  loading: () => <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background">
+      <Logo className="h-24 animate-pulse" />
+      <p className="text-primary/70 mt-4">Cargando Fondo...</p>
+    </div>,
+  ssr: false,
+});
+
 
 const challenges = {
   quiz: {
@@ -175,7 +186,6 @@ export default function Station4() {
   const yaraMessage = "¡Bienvenido a TerrAzul! Aquí fluye la vida. El agua recorre montañas, ríos y mares, y depende de nosotros mantener su pureza. ¡Cuidemos cada gota y protejamos los territorios que le dan vida al planeta!";
   const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const terrazulBgImage = PlaceHolderImages.find((p) => p.id === "terrazul-background");
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara-3");
 
   const scheduleYaraDialog = useCallback(() => {
@@ -328,6 +338,7 @@ export default function Station4() {
                     x: 0,
                     transition: { delay: 0.5, duration: 0.8 },
                   }}
+                  exit={{ opacity: 0, x: 50, transition: { duration: 0.5 } }}
                   className="w-24 h-auto md:w-32 self-end"
                 >
                   <Image

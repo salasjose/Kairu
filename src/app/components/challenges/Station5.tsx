@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import dynamic from 'next/dynamic';
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -19,7 +20,16 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { useChallengeProgress } from "@/hooks/use-challenge-progress";
 import { cn } from "@/lib/utils";
-import ArtDirectedBackground from "../ArtDirectedBackground";
+import Logo from "../Logo";
+
+const ArtDirectedBackground = dynamic(() => import('../ArtDirectedBackground'), {
+  loading: () => <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background">
+      <Logo className="h-24 animate-pulse" />
+      <p className="text-primary/70 mt-4">Cargando Fondo...</p>
+    </div>,
+  ssr: false,
+});
+
 
 const challenges = {
   learn: {
@@ -302,6 +312,7 @@ export default function Station5() {
                       <motion.div
                           initial={{ opacity: 0, x: 50 }}
                           animate={{ opacity: 1, x: 0, transition: { delay: 0.5, duration: 0.8 } }}
+                          exit={{ opacity: 0, x: 50, transition: { duration: 0.5 } }}
                           className="w-24 h-auto md:w-32"
                       >
                           <Image

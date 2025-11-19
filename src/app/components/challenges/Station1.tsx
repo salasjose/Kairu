@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import dynamic from 'next/dynamic';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Camera, CheckCircle, Video, X } from "lucide-react";
@@ -19,9 +20,18 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore, useStorage } from "@/firebase/hooks";
-import ResponsiveBackground from "../ResponsiveBackground";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import Logo from "../Logo";
+
+const ResponsiveBackground = dynamic(() => import('../ResponsiveBackground'), {
+  loading: () => <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background">
+      <Logo className="h-24 animate-pulse" />
+      <p className="text-primary/70 mt-4">Cargando Fondo...</p>
+    </div>,
+  ssr: false,
+});
+
 
 const yaraCharacterImage = PlaceHolderImages.find((p) => p.id === "char-yara-magnifying-glass");
 
@@ -787,6 +797,7 @@ export default function Station1() {
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0, transition: { delay: 0.5, duration: 0.8 } }}
+                 exit={{ opacity: 0, x: 50, transition: { duration: 0.5 } }}
                 className="w-24 h-auto md:w-32 self-end"
               >
                 <Image

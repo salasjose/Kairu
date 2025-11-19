@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import dynamic from 'next/dynamic';
 import { Button } from "@/components/ui/button";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
@@ -26,7 +27,15 @@ import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore } from "@/firebase/hooks";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useChallengeProgress } from "@/hooks/use-challenge-progress";
-import ArtDirectedBackground from "../ArtDirectedBackground";
+import Logo from "../Logo";
+
+const ArtDirectedBackground = dynamic(() => import('../ArtDirectedBackground'), {
+  loading: () => <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background">
+      <Logo className="h-24 animate-pulse" />
+      <p className="text-primary/70 mt-4">Cargando Fondo...</p>
+    </div>,
+  ssr: false,
+});
 
 const ChallengeDetail = ({
   title,
