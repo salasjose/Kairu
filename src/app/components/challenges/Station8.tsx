@@ -244,7 +244,7 @@ export default function Station8() {
         </div>
         
          {/* Yara Character and Dialog */}
-        <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4 pointer-events-none">
+        <div className="absolute bottom-4 right-4 z-20 flex items-end gap-0 md:gap-2 pointer-events-none">
             <AnimatePresence>
                 {showYaraDialog && yaraCharImage && (
                   <>
