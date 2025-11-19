@@ -190,7 +190,7 @@ export default function Station9() {
         ...prizeData, 
         x, 
         y, 
-        scale: isSpecialPrize ? 1.5 : 1
+        scale: isSpecialPrize ? 2.5 : 1
     };
 
     const newPlacedPrizes = [
@@ -316,8 +316,8 @@ export default function Station9() {
                     style={{ 
                         x: prize.x, 
                         y: prize.y, 
-                        width: `${100 * prize.scale}px`, 
-                        height: `${100 * prize.scale}px`
+                        width: `${80 * prize.scale}px`, 
+                        height: `${80 * prize.scale}px`
                     }}
                     initial={{ x: prize.x, y: prize.y, scale: 1 }}
                     onClick={(e) => {e.stopPropagation(); setSelectedPrizeId(prize.id)}}
@@ -452,5 +452,3 @@ export default function Station9() {
     </>
   );
 }
-
-    
