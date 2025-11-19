@@ -10,8 +10,8 @@ const gridLayout: (string | null)[][] = [
   ['E',  'C',  'O',  'I', 'D', 'E', 'A', 'S', null, null, null, null],
   [null, null, null, 'C', null, 'N', null, 'A', 'R', null, null, 'V'],
   [null, null, null, 'L', null, 'D', 'U', 'R', 'A', 'B', 'L', 'E'],
-  [null, null, null, 'O', null, 'E', null, null, 'R', null, null, 'R'],
-  [null, null, null, null, null, 'D', null, null, 'R', null, null, 'D'],
+  [null, null, null, 'O', null, 'E', null, null, null, null, null, 'R'],
+  [null, null, null, null, null, 'D', null, null, null, null, null, 'D'],
   [null, 'C',  'O', 'M',   'P',  'O', 'S', 'T', null, null, null, 'E'],
   [null, null, null, null, null, 'R', null, null, null, null, null, null],
 ];
