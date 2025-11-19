@@ -11,7 +11,7 @@ import { toast } from "@/hooks/use-toast";
 type Direction = "across" | "down";
 
 export interface CrosswordData {
-  grid: string[][]; // '#' = bloque, letra en mayúscula
+  grid: string[][]; 
   clues: {
     across: { number: number; clue: string, answer: string }[];
     down: { number: number; clue: string, answer: string }[];
@@ -38,40 +38,61 @@ export default function CrosswordGame({
     const numbers: { [key: string]: number } = {};
     const wordStarts = new Set<string>();
 
-    data.clues.across.forEach(clue => {
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c <= cols - clue.answer.length; c++) {
-          const word = grid[r].slice(c, c + clue.answer.length).join('');
-          if (word === clue.answer && (c === 0 || grid[r][c-1] === '#')) {
-            const key = `${r},${c}`;
-            if(!wordStarts.has(key)){
-              numbers[key] = clue.number;
-              wordStarts.add(key);
-              return; 
+    const findWordStart = (clue: { answer: string }, direction: 'across' | 'down'): { r: number, c: number } | null => {
+        if (direction === 'across') {
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c <= cols - clue.answer.length; c++) {
+                    const word = grid[r].slice(c, c + clue.answer.length).join('');
+                    if (word === clue.answer) {
+                        if (c === 0 || grid[r][c-1] === '#') {
+                            const key = `${r},${c}`;
+                            if (!wordStarts.has(key)) {
+                                wordStarts.add(key);
+                                return {r, c};
+                            }
+                        }
+                    }
+                }
             }
-          }
+        } else { // down
+            for (let c = 0; c < cols; c++) {
+                for (let r = 0; r <= rows - clue.answer.length; r++) {
+                    let word = '';
+                    for (let i = 0; i < clue.answer.length; i++) {
+                        if (r + i < rows) word += grid[r+i][c];
+                    }
+                    if (word === clue.answer) {
+                         if (r === 0 || grid[r-1][c] === '#') {
+                            const key = `${r},${c}`;
+                             if (!wordStarts.has(key)) {
+                                wordStarts.add(key);
+                                return {r, c};
+                            }
+                        }
+                    }
+                }
+            }
         }
-      }
+        return null;
+    }
+
+    data.clues.across.forEach(clue => {
+        const pos = findWordStart(clue, 'across');
+        if (pos) {
+            numbers[`${pos.r},${pos.c}`] = clue.number;
+        }
     });
 
     data.clues.down.forEach(clue => {
-      for (let c = 0; c < cols; c++) {
-        for (let r = 0; r <= rows - clue.answer.length; r++) {
-          let word = '';
-          for(let i=0; i < clue.answer.length; i++){
-            word += grid[r+i][c];
-          }
-          if (word === clue.answer && (r === 0 || grid[r-1][c] === '#')) {
-             const key = `${r},${c}`;
-             if(!numbers[key]){
-               numbers[key] = clue.number;
-             }
-             wordStarts.add(key);
-             return;
-          }
+        const pos = findWordStart(clue, 'down');
+        if (pos) {
+            const key = `${pos.r},${pos.c}`;
+            if (!numbers[key]) {
+                numbers[key] = clue.number;
+            }
         }
-      }
     });
+
     return numbers;
   }, [data.clues, grid, rows, cols]);
 
@@ -299,7 +320,7 @@ export default function CrosswordGame({
       <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 w-full">
         <Card className="bg-card/80 backdrop-blur-sm">
           <CardHeader><CardTitle>Horizontales</CardTitle></CardHeader>
-          <CardContent className="space-y-2 text-sm max-h-[200px] sm:max-h-none overflow-y-auto">
+          <CardContent className="space-y-2 text-sm max-h-[200px] sm:max-h-[25vh] lg:max-h-none overflow-y-auto">
             {data.clues.across.map(cl => (
               <p key={`a-${cl.number}`}><span className="font-bold">{cl.number}.</span> {cl.clue}</p>
             ))}
@@ -307,7 +328,7 @@ export default function CrosswordGame({
         </Card>
         <Card className="bg-card/80 backdrop-blur-sm">
           <CardHeader><CardTitle>Verticales</CardTitle></CardHeader>
-          <CardContent className="space-y-2 text-sm max-h-[200px] sm:max-h-none overflow-y-auto">
+          <CardContent className="space-y-2 text-sm max-h-[200px] sm:max-h-[25vh] lg:max-h-none overflow-y-auto">
             {data.clues.down.map(cl => (
               <p key={`d-${cl.number}`}><span className="font-bold">{cl.number}.</span> {cl.clue}</p>
             ))}
