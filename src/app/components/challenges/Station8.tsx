@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Lightbulb, Link as LinkIcon, Zap } from "lucide-react";
+import { ArrowLeft, Lightbulb, Link as LinkIcon, Zap, CheckCircle } from "lucide-react";
 import PrizeDialog from "../PrizeDialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
 import Logo from "../Logo";
+import { usePrizeCart } from "@/hooks/use-prize-cart";
 
 const ArtDirectedBackground = dynamic(() => import('../ArtDirectedBackground'), {
   loading: () => <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background">
@@ -165,6 +166,7 @@ export default function Station8() {
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeId | null>(null);
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
+  const { prizes } = usePrizeCart();
   const router = useRouter();
   
   const [showYaraDialog, setShowYaraDialog] = useState(false);
@@ -203,6 +205,9 @@ export default function Station8() {
     router.push("/");
   };
   
+  const hasClaimedPrize = prizes.some(p => p.stationId === stationId);
+  const isChallengeCompleted = hasClaimedPrize; // If prize is claimed, challenge is done.
+
   if (selectedChallenge) {
     return <ChallengeScreen challengeId={selectedChallenge} onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete(selectedChallenge)} />
   }
@@ -228,8 +233,14 @@ export default function Station8() {
                   key={key}
                   onClick={() => setSelectedChallenge(key)}
                   className="transition-transform duration-300 hover:scale-105 group"
+                  disabled={isChallengeCompleted}
                 >
-                  <Card className="w-60 md:w-64 h-auto bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors">
+                  <Card className="w-60 md:w-64 h-auto bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors relative">
+                     {isChallengeCompleted && (
+                      <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1.5 shadow-lg z-10">
+                          <CheckCircle className="text-white h-5 w-5" />
+                      </div>
+                    )}
                     <CardContent className="flex flex-col items-center justify-center text-center p-4 h-full">
                       <Icon className="w-12 h-12 md:w-16 md:h-16 text-primary mb-3" />
                       <h2 className="font-bold font-headline text-xl md:text-2xl text-primary">
@@ -241,29 +252,19 @@ export default function Station8() {
               );
             })}
           </div>
+           {isChallengeCompleted && (
+             <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
+                Ya has completado esta estación y reclamado tu insignia.
+            </p>
+           )}
         </div>
         
          {/* Yara Character and Dialog */}
         <div className="absolute bottom-4 right-4 z-20 flex items-end gap-0 md:gap-2 pointer-events-none">
             <AnimatePresence>
-                {showYaraDialog && yaraCharImage && (
+                {showYaraDialog && yaraCharImage && !selectedChallenge && (
                   <>
-                    {/* Dialog Box */}
-                    <motion.div
-                      key="dialog"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0, transition: { delay: 1, duration: 0.5 } }}
-                      exit={{ opacity: 0, y: 10, transition: { duration: 0.4 } }}
-                      className="w-64 mb-4"
-                    >
-                      <Card className="p-3 shadow-lg bg-white/95 relative">
-                          <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium" delay={1} />
-                          <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
-                      </Card>
-                    </motion.div>
-
-                    {/* Yara Image */}
-                    <motion.div
+                     <motion.div
                         key="yara"
                         initial={{ opacity: 0, x: 50 }}
                         animate={{ opacity: 1, x: 0, transition: { duration: 0.8 } }}
@@ -278,6 +279,18 @@ export default function Station8() {
                             className="h-auto w-full select-none"
                             priority
                         />
+                    </motion.div>
+                    <motion.div
+                      key="dialog"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0, transition: { delay: 1, duration: 0.5 } }}
+                      exit={{ opacity: 0, y: 10, transition: { duration: 0.4 } }}
+                      className="w-64 mb-4"
+                    >
+                      <Card className="p-3 shadow-lg bg-white/95 relative">
+                          <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium" delay={1} />
+                          <div className="absolute bottom-[-10px] left-8 w-0 h-0 border-r-[10px] border-r-transparent border-t-[10px] border-t-white/95 border-l-[10px] border-l-transparent"></div>
+                      </Card>
                     </motion.div>
                   </>
                 )}

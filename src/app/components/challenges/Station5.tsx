@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { useChallengeProgress } from "@/hooks/use-challenge-progress";
 import { cn } from "@/lib/utils";
 import Logo from "../Logo";
+import { usePrizeCart } from "@/hooks/use-prize-cart";
 
 const ArtDirectedBackground = dynamic(() => import('../ArtDirectedBackground'), {
   loading: () => <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background">
@@ -177,6 +178,7 @@ export default function Station5() {
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
   const { completedChallenges, completeChallenge } = useChallengeProgress();
+  const { prizes } = usePrizeCart();
   const router = useRouter();
   
   const [showYaraDialog, setShowYaraDialog] = useState(false);
@@ -218,6 +220,7 @@ export default function Station5() {
 
   const stationProgress = completedChallenges[stationId] || {};
   const areAllChallengesComplete = Object.keys(challenges).every(id => stationProgress[id as ChallengeId]?.completed);
+  const hasClaimedPrize = prizes.some(p => p.stationId === stationId);
   
   if (selectedChallenge === "learn") {
     return <LearnChallenge onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("learn")} />;
@@ -279,15 +282,19 @@ export default function Station5() {
             <div className="mt-4 flex flex-col items-center gap-2">
                 <Button
                 onClick={() => setIsPrizeModalOpen(true)}
-                disabled={!areAllChallengesComplete}
+                disabled={!areAllChallengesComplete || hasClaimedPrize}
                 size="lg"
                 >
                 Completar Estación y Reclamar Insignia
                 </Button>
-                {!areAllChallengesComplete && (
-                <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
-                    Completa ambos retos para activar este botón.
-                </p>
+                {areAllChallengesComplete && hasClaimedPrize ? (
+                    <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
+                        Ya has reclamado la insignia de esta estación.
+                    </p>
+                ) : !areAllChallengesComplete && (
+                    <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
+                        Completa ambos retos para activar este botón.
+                    </p>
                 )}
             </div>
         </div>
@@ -295,7 +302,7 @@ export default function Station5() {
         {/* Yara Character and Dialog */}
         <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4 pointer-events-none">
             <AnimatePresence>
-                {showYaraDialog && yaraCharImage && (
+                {showYaraDialog && yaraCharImage && !selectedChallenge && (
                   <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}

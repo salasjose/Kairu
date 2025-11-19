@@ -23,6 +23,7 @@ import { useUser, useFirestore, useStorage } from "@/firebase/hooks";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import Logo from "../Logo";
+import { usePrizeCart } from "@/hooks/use-prize-cart";
 
 const ResponsiveBackground = dynamic(() => import('../ResponsiveBackground'), {
   loading: () => <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background">
@@ -607,6 +608,7 @@ export default function Station1() {
   const [selectedChallenge, setSelectedChallenge] = useState<string | null>(null);
   const { completedChallenges, completeChallenge } = useChallengeProgress();
   const { unlockStation } = useStationProgress();
+  const { prizes } = usePrizeCart();
   const router = useRouter();
 
   const [showYaraDialog, setShowYaraDialog] = useState(false);
@@ -637,11 +639,7 @@ export default function Station1() {
   };
 
   const handleChallengeComplete = (challengeName: string) => {
-    const imageInfo = challengeName === "Cuidado Animal" 
-      ? PlaceHolderImages.find((p) => p.id === "habitat-build-1") 
-      : null;
-
-    completeChallenge(stationId, challengeName, imageInfo?.imageUrl || null);
+    completeChallenge(stationId, challengeName, null);
     setSelectedChallenge(null);
     toast({
       title: `¡Reto '${challengeName}' Completado!`,
@@ -681,6 +679,7 @@ export default function Station1() {
   const areAllChallengesComplete = Object.keys(challenges).every(
     (ch) => stationCompletedChallenges[ch]?.completed
   );
+  const hasClaimedPrize = prizes.some(p => p.stationId === stationId);
 
   return (
     <>
@@ -760,12 +759,16 @@ export default function Station1() {
           <div className="mt-4 flex flex-col items-center gap-2">
             <Button
               onClick={() => setIsPrizeModalOpen(true)}
-              disabled={!areAllChallengesComplete}
+              disabled={!areAllChallengesComplete || hasClaimedPrize}
               size="lg"
             >
               Completar Estación y Reclamar Insignia
             </Button>
-            {!areAllChallengesComplete && (
+            {areAllChallengesComplete && hasClaimedPrize ? (
+               <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
+                Ya has reclamado la insignia de esta estación.
+              </p>
+            ) : !areAllChallengesComplete && (
               <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
                 Completa ambos retos para activar este botón.
               </p>

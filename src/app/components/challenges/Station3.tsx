@@ -28,6 +28,7 @@ import { useUser, useFirestore } from "@/firebase/hooks";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useChallengeProgress } from "@/hooks/use-challenge-progress";
 import Logo from "../Logo";
+import { usePrizeCart } from "@/hooks/use-prize-cart";
 
 const ArtDirectedBackground = dynamic(() => import('../ArtDirectedBackground'), {
   loading: () => <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background">
@@ -223,6 +224,7 @@ export default function Station3() {
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
   const { completedChallenges, completeChallenge } = useChallengeProgress();
+  const { prizes } = usePrizeCart();
   const router = useRouter();
 
   const [showYaraDialog, setShowYaraDialog] = useState(false);
@@ -250,8 +252,6 @@ export default function Station3() {
   }, [scheduleYaraDialog]);
   
   const handleChallengeComplete = (challengeId: ChallengeId) => {
-    // For the "game" challenge, the individual game components will handle completion state.
-    // This function is now mainly for the other challenges.
     if (challengeId !== 'game') {
       completeChallenge(stationId, challengeId);
     }
@@ -273,11 +273,12 @@ export default function Station3() {
   };
   
   const stationProgress = completedChallenges[stationId] || {};
-  const allChallengesForStation = Object.keys(challenges);
-  const areAllChallengesComplete = allChallengesForStation.every(id => stationProgress[id as ChallengeId]?.completed);
-
-  // Specific check for the main "game" challenge based on its sub-games
-  const isGameChallengeCompleted = stationProgress['game-classify']?.completed && stationProgress['game-drag-and-drop']?.completed;
+  const isGameChallengeCompleted = !!(stationProgress['game-classify']?.completed && stationProgress['game-drag-and-drop']?.completed);
+  const areAllChallengesComplete = Object.keys(challenges).every(id => {
+      if (id === 'game') return isGameChallengeCompleted;
+      return stationProgress[id as ChallengeId]?.completed;
+  });
+  const hasClaimedPrize = prizes.some(p => p.stationId === stationId);
 
   
   if (selectedChallenge === "game") {
@@ -347,17 +348,21 @@ export default function Station3() {
             })}
           </div>
 
-          <div className="mt-4 max-w-md mx-auto space-y-4">
+          <div className="mt-4 max-w-md mx-auto space-y-4 text-center">
              <Button
                 onClick={() => setIsPrizeModalOpen(true)}
-                disabled={!areAllChallengesComplete}
+                disabled={!areAllChallengesComplete || hasClaimedPrize}
                 size="lg"
             >
                 Completar Estación y Reclamar Insignia
             </Button>
-            {!areAllChallengesComplete && (
+            {areAllChallengesComplete && hasClaimedPrize ? (
+              <p className="bg-background/80 p-2 rounded-md text-sm">
+                  Ya has reclamado la insignia de esta estación.
+              </p>
+            ) : !areAllChallengesComplete && (
                 <p className="bg-background/80 p-2 rounded-md text-sm">
-                    Completa los {allChallengesForStation.length - Object.keys(stationProgress).length} retos restantes para reclamar tu insignia.
+                    Completa todos los retos para reclamar tu insignia.
                 </p>
             )}
           </div>

@@ -21,6 +21,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useChallengeProgress } from "@/hooks/use-challenge-progress";
 import { cn } from "@/lib/utils";
 import Logo from "../Logo";
+import { usePrizeCart } from "@/hooks/use-prize-cart";
 
 const ArtDirectedBackground = dynamic(() => import('../ArtDirectedBackground'), {
   loading: () => <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background">
@@ -180,13 +181,14 @@ export default function Station4() {
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
   const { completedChallenges, completeChallenge } = useChallengeProgress();
+  const { prizes } = usePrizeCart();
   const router = useRouter();
 
   const [showYaraDialog, setShowYaraDialog] = useState(false);
   const yaraMessage = "¡Bienvenido a TerrAzul! Aquí fluye la vida. El agua recorre montañas, ríos y mares, y depende de nosotros mantener su pureza. ¡Cuidemos cada gota y protejamos los territorios que le dan vida al planeta!";
   const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara-3");
+  const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara-talking");
 
   const scheduleYaraDialog = useCallback(() => {
     if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
@@ -221,6 +223,7 @@ export default function Station4() {
   
   const stationProgress = completedChallenges[stationId] || {};
   const areAllChallengesComplete = Object.keys(challenges).every(id => stationProgress[id as ChallengeId]?.completed);
+  const hasClaimedPrize = prizes.some(p => p.stationId === stationId);
 
   const renderContent = () => {
     if (selectedChallenge === "quiz") {
@@ -294,12 +297,16 @@ export default function Station4() {
         <div className="mt-4 max-w-md mx-auto space-y-2 text-center">
             <Button
                 size="lg"
-                disabled={!areAllChallengesComplete}
+                disabled={!areAllChallengesComplete || hasClaimedPrize}
                 onClick={() => setIsPrizeModalOpen(true)}
             >
                 Completar Estación y Reclamar Insignia
             </Button>
-            {!areAllChallengesComplete && (
+            {areAllChallengesComplete && hasClaimedPrize ? (
+                 <p className="bg-background/80 p-2 rounded-md text-sm text-muted-foreground">
+                    Ya has reclamado la insignia de esta estación.
+                </p>
+            ) : !areAllChallengesComplete && (
                 <p className="bg-background/80 p-2 rounded-md text-sm text-muted-foreground">
                     Completa ambos retos para reclamar tu insignia.
                 </p>
@@ -314,7 +321,7 @@ export default function Station4() {
       <div className="relative flex-grow flex flex-col">{renderContent()}</div>
         <div className="absolute bottom-4 right-4 md:right-8 lg:right-12 z-20 flex items-end gap-0 md:gap-2 pointer-events-none">
           <AnimatePresence>
-            {showYaraDialog && yaraCharImage && (
+            {showYaraDialog && yaraCharImage && !selectedChallenge && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -362,5 +369,3 @@ export default function Station4() {
     </>
   );
 }
-
-    

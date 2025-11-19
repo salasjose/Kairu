@@ -22,6 +22,7 @@ import { REGIRA_CROSSWORD_DATA } from '@/lib/regira-crossword-data';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import Logo from "../Logo";
+import { usePrizeCart } from '@/hooks/use-prize-cart';
 
 const ArtDirectedBackground = dynamic(() => import('../ArtDirectedBackground'), {
   loading: () => <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background">
@@ -196,6 +197,7 @@ export default function Station6() {
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
   const { completedChallenges, completeChallenge } = useChallengeProgress();
+  const { prizes } = usePrizeCart();
   const router = useRouter();
 
   const [lockoutTime, setLockoutTime] = useState(0);
@@ -274,6 +276,7 @@ export default function Station6() {
 
   const stationProgress = completedChallenges[stationId] || {};
   const areAllChallengesComplete = Object.keys(challenges).every(id => stationProgress[id as ChallengeId]?.completed);
+  const hasClaimedPrize = prizes.some(p => p.stationId === stationId);
 
   const formatLockoutTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -363,11 +366,15 @@ export default function Station6() {
           <Button
             onClick={() => setIsPrizeModalOpen(true)}
             size="lg"
-            disabled={!areAllChallengesComplete}
+            disabled={!areAllChallengesComplete || hasClaimedPrize}
           >
             Completar Estación y Reclamar Insignia
           </Button>
-          {!areAllChallengesComplete && (
+          {areAllChallengesComplete && hasClaimedPrize ? (
+            <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
+              Ya has reclamado la insignia de esta estación.
+            </p>
+          ) : !areAllChallengesComplete && (
             <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
               Completa ambos retos para activar este botón.
             </p>

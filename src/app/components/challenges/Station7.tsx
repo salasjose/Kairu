@@ -20,6 +20,7 @@ import TypewriterText from "../auth/TypewriterText";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
 import Logo from "../Logo";
+import { usePrizeCart } from "@/hooks/use-prize-cart";
 
 const ArtDirectedBackground = dynamic(() => import('../ArtDirectedBackground'), {
   loading: () => <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background">
@@ -122,6 +123,7 @@ export default function Station7() {
   const router = useRouter();
   const { user } = useUser();
   const db = useFirestore();
+  const { prizes } = usePrizeCart();
 
   const [showYaraDialog, setShowYaraDialog] = useState(false);
   const yaraMessage = "¡Te doy la bienvenida a VerdeLab! Este es el laboratorio donde los sueños sostenibles se convierten en proyectos reales. ¡Emprende con propósito, crea con el corazón y demuestra que cuidar también puede ser una gran idea!";
@@ -218,7 +220,8 @@ export default function Station7() {
   };
   
   const businessesCount = businesses.filter(b => b !== null).length;
-  const isCompleteButtonDisabled = businessesCount < 4;
+  const areAllChallengesComplete = businessesCount >= 4;
+  const hasClaimedPrize = prizes.some(p => p.stationId === stationId);
 
   return (
     <>
@@ -274,10 +277,14 @@ export default function Station7() {
               </div>
 
               <div className="flex flex-col items-center justify-center gap-2 pt-4">
-                <Button onClick={handleComplete} size="lg" disabled={isCompleteButtonDisabled}>
-                  Completar Reto
+                <Button onClick={handleComplete} size="lg" disabled={!areAllChallengesComplete || hasClaimedPrize}>
+                  Completar Reto y Reclamar Insignia
                 </Button>
-                {isCompleteButtonDisabled && (
+                {areAllChallengesComplete && hasClaimedPrize ? (
+                    <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
+                        Ya has reclamado la insignia de esta estación.
+                    </p>
+                ) : !areAllChallengesComplete && (
                     <p className="text-sm text-muted-foreground">
                         Faltan {4 - businessesCount} negocio(s) por añadir.
                     </p>
@@ -292,22 +299,8 @@ export default function Station7() {
             <AnimatePresence>
                 {showYaraDialog && yaraCharImage && (
                   <>
-                    {/* Dialog Box */}
-                    <motion.div
-                      key="dialog"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0, transition: { delay: 1, duration: 0.5 } }}
-                      exit={{ opacity: 0, y: 10, transition: { duration: 0.4 } }}
-                      className="w-64 mb-4"
-                    >
-                      <Card className="p-3 shadow-lg bg-white/95 relative">
-                          <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium" delay={1} />
-                          <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
-                      </Card>
-                    </motion.div>
-
                     {/* Yara Image */}
-                    <motion.div
+                     <motion.div
                         key="yara"
                         initial={{ opacity: 0, x: 50 }}
                         animate={{ opacity: 1, x: 0, transition: { duration: 0.8 } }}
@@ -322,6 +315,19 @@ export default function Station7() {
                             className="h-auto w-full select-none"
                             priority
                         />
+                    </motion.div>
+                    {/* Dialog Box */}
+                    <motion.div
+                      key="dialog"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0, transition: { delay: 1, duration: 0.5 } }}
+                      exit={{ opacity: 0, y: 10, transition: { duration: 0.4 } }}
+                      className="w-64 mb-4"
+                    >
+                      <Card className="p-3 shadow-lg bg-white/95 relative">
+                          <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium" delay={1} />
+                          <div className="absolute bottom-[-10px] left-8 w-0 h-0 border-r-[10px] border-r-transparent border-t-[10px] border-t-white/95 border-l-[10px] border-l-transparent"></div>
+                      </Card>
                     </motion.div>
                   </>
                 )}
