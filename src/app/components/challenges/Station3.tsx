@@ -272,8 +272,13 @@ export default function Station3() {
     router.push("/");
   };
   
-  const stationCompletedChallenges = Object.keys(completedChallenges[stationId] || {});
-  const areAllChallengesComplete = (Object.keys(challenges) as ChallengeId[]).every(id => stationCompletedChallenges.includes(id));
+  const stationProgress = completedChallenges[stationId] || {};
+  const allChallengesForStation = Object.keys(challenges);
+  const areAllChallengesComplete = allChallengesForStation.every(id => stationProgress[id as ChallengeId]?.completed);
+
+  // Specific check for the main "game" challenge based on its sub-games
+  const isGameChallengeCompleted = stationProgress['game-classify']?.completed && stationProgress['game-drag-and-drop']?.completed;
+
   
   if (selectedChallenge === "game") {
     return (
@@ -313,7 +318,11 @@ export default function Station3() {
             {(Object.keys(challenges) as ChallengeId[]).map((key) => {
               const challenge = challenges[key];
               const Icon = challenge.icon;
-              const isCompleted = stationCompletedChallenges.includes(key);
+              
+              const isCompleted = key === 'game' 
+                ? isGameChallengeCompleted 
+                : !!stationProgress[key]?.completed;
+
               return (
                 <button
                   key={key}
@@ -348,7 +357,7 @@ export default function Station3() {
             </Button>
             {!areAllChallengesComplete && (
                 <p className="bg-background/80 p-2 rounded-md text-sm">
-                    Completa los {Object.keys(challenges).length - stationCompletedChallenges.length} retos restantes para reclamar tu insignia.
+                    Completa los {allChallengesForStation.length - Object.keys(stationProgress).length} retos restantes para reclamar tu insignia.
                 </p>
             )}
           </div>
