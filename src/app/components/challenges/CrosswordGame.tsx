@@ -6,15 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, CheckCircle, RefreshCw, Eye, Heart, Timer, AlertCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import type { CrosswordData } from '@/lib/types';
 
-/** Tipos */
-type Direction = "across" | "down";
-
-export interface CrosswordData {
-  grid: string[][]; 
-  across: { number: number; clue: string, answer: string }[];
-  down: { number: number; clue: string, answer: string }[];
-}
 
 /** Componente principal */
 export default function CrosswordGame({
@@ -58,7 +51,7 @@ export default function CrosswordGame({
 
 
   const [selected, setSelected] = useState<{ r: number; c: number } | null>(null);
-  const [dir, setDir] = useState<Direction>("across");
+  const [dir, setDir] = useState<"across" | "down">("across");
   const [state, setState] = useState<string[][]>(() => grid.map(row => row.map(cell => (cell === "#" ? "#" : ""))));
   const [showSolution, setShowSolution] = useState(false);
   const [lives, setLives] = useState(3);
@@ -150,7 +143,7 @@ export default function CrosswordGame({
     }
   };
   
-    const findNextCell = (r: number, c: number, direction: Direction, backwards: boolean): {r: number, c: number} | null => {
+    const findNextCell = (r: number, c: number, direction: "across" | "down", backwards: boolean): {r: number, c: number} | null => {
         let { r: newR, c: newC } = { r, c };
         const step = backwards ? -1 : 1;
         
@@ -174,7 +167,7 @@ export default function CrosswordGame({
     else if (e.key === "ArrowRight") { e.preventDefault(); move("across", false); }
     else if (e.key === "Tab" || e.key === " ") { e.preventDefault(); setDir(d => d === 'across' ? 'down' : 'across'); }
 
-    function move(d: Direction, back: boolean) {
+    function move(d: "across" | "down", back: boolean) {
       setDir(d);
       const nxt = findNextCell(r, c, d, back);
       if (nxt) { setSelected(nxt); refs.current[nxt.r][nxt.c]?.focus(); }
@@ -282,7 +275,7 @@ export default function CrosswordGame({
         <Card className="bg-card/80 backdrop-blur-sm">
           <CardHeader><CardTitle>Horizontales</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
-            {data.across.map(cl => (
+            {data.clues.across.map(cl => (
               <p key={`a-${cl.number}`}><span className="font-bold">{cl.number}.</span> {cl.clue}</p>
             ))}
           </CardContent>
@@ -290,7 +283,7 @@ export default function CrosswordGame({
         <Card className="bg-card/80 backdrop-blur-sm">
           <CardHeader><CardTitle>Verticales</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
-            {data.down.map(cl => (
+            {data.clues.down.map(cl => (
               <p key={`d-${cl.number}`}><span className="font-bold">{cl.number}.</span> {cl.clue}</p>
             ))}
           </CardContent>
