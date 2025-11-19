@@ -12,10 +12,8 @@ type Direction = "across" | "down";
 
 export interface CrosswordData {
   grid: string[][]; 
-  clues: {
-    across: { number: number; clue: string, answer: string }[];
-    down: { number: number; clue: string, answer: string }[];
-  };
+  across: { number: number; clue: string, answer: string }[];
+  down: { number: number; clue: string, answer: string }[];
 }
 
 /** Componente principal */
@@ -36,65 +34,28 @@ export default function CrosswordGame({
   
   const clueNumbers = useMemo(() => {
     const numbers: { [key: string]: number } = {};
-    const wordStarts = new Set<string>();
+    const acrossStarts: { [key: string]: boolean } = {};
+    const downStarts: { [key: string]: boolean } = {};
+    let clueCounter = 1;
 
-    const findWordStart = (clue: { answer: string }, direction: 'across' | 'down'): { r: number, c: number } | null => {
-        if (direction === 'across') {
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c <= cols - clue.answer.length; c++) {
-                    const word = grid[r].slice(c, c + clue.answer.length).join('');
-                    if (word === clue.answer) {
-                        if (c === 0 || grid[r][c-1] === '#') {
-                            const key = `${r},${c}`;
-                            if (!wordStarts.has(key)) {
-                                wordStarts.add(key);
-                                return {r, c};
-                            }
-                        }
-                    }
-                }
-            }
-        } else { // down
-            for (let c = 0; c < cols; c++) {
-                for (let r = 0; r <= rows - clue.answer.length; r++) {
-                    let word = '';
-                    for (let i = 0; i < clue.answer.length; i++) {
-                        if (r + i < rows) word += grid[r+i][c];
-                    }
-                    if (word === clue.answer) {
-                         if (r === 0 || grid[r-1][c] === '#') {
-                            const key = `${r},${c}`;
-                             if (!wordStarts.has(key)) {
-                                wordStarts.add(key);
-                                return {r, c};
-                            }
-                        }
-                    }
-                }
-            }
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (grid[r][c] === '#') continue;
+
+        const isAcrossStart = c === 0 || grid[r][c - 1] === '#';
+        const isDownStart = r === 0 || grid[r - 1][c] === '#';
+
+        if (isAcrossStart || isDownStart) {
+          numbers[`${r},${c}`] = clueCounter;
+          if (isAcrossStart) acrossStarts[`${r},${c}`] = true;
+          if (isDownStart) downStarts[`${r},${c}`] = true;
+          clueCounter++;
         }
-        return null;
+      }
     }
-
-    data.clues.across.forEach(clue => {
-        const pos = findWordStart(clue, 'across');
-        if (pos) {
-            numbers[`${pos.r},${pos.c}`] = clue.number;
-        }
-    });
-
-    data.clues.down.forEach(clue => {
-        const pos = findWordStart(clue, 'down');
-        if (pos) {
-            const key = `${pos.r},${pos.c}`;
-            if (!numbers[key]) {
-                numbers[key] = clue.number;
-            }
-        }
-    });
-
     return numbers;
-  }, [data.clues, grid, rows, cols]);
+  }, [grid, rows, cols]);
+
 
   const [selected, setSelected] = useState<{ r: number; c: number } | null>(null);
   const [dir, setDir] = useState<Direction>("across");
@@ -242,7 +203,7 @@ export default function CrosswordGame({
 
   return (
     <div className="mx-auto w-full max-w-7xl p-2 md:p-4 flex flex-col lg:flex-row gap-4 lg:gap-8 items-start">
-      <div className="w-full lg:w-auto flex-shrink-0">
+      <div className="w-full lg:max-w-md xl:max-w-xl flex-shrink-0">
         <div className="flex justify-between items-center mb-2 md:mb-4 flex-wrap gap-2">
             {onBack && (
               <Button variant="ghost" onClick={onBack}>
@@ -261,7 +222,7 @@ export default function CrosswordGame({
             </div>
         </div>
         <div
-          className="grid gap-px md:gap-0.5 rounded-md p-1 md:p-2 bg-gray-900 w-full max-w-md mx-auto lg:max-w-none"
+          className="grid gap-px md:gap-0.5 rounded-md p-1 md:p-2 bg-gray-900 w-full mx-auto"
           style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}
         >
           {grid.map((row, r) =>
@@ -317,19 +278,19 @@ export default function CrosswordGame({
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 w-full">
+      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 w-full h-full lg:max-h-[75vh] lg:overflow-y-auto">
         <Card className="bg-card/80 backdrop-blur-sm">
           <CardHeader><CardTitle>Horizontales</CardTitle></CardHeader>
-          <CardContent className="space-y-2 text-sm max-h-[200px] sm:max-h-[25vh] lg:max-h-none overflow-y-auto">
-            {data.clues.across.map(cl => (
+          <CardContent className="space-y-2 text-sm">
+            {data.across.map(cl => (
               <p key={`a-${cl.number}`}><span className="font-bold">{cl.number}.</span> {cl.clue}</p>
             ))}
           </CardContent>
         </Card>
         <Card className="bg-card/80 backdrop-blur-sm">
           <CardHeader><CardTitle>Verticales</CardTitle></CardHeader>
-          <CardContent className="space-y-2 text-sm max-h-[200px] sm:max-h-[25vh] lg:max-h-none overflow-y-auto">
-            {data.clues.down.map(cl => (
+          <CardContent className="space-y-2 text-sm">
+            {data.down.map(cl => (
               <p key={`d-${cl.number}`}><span className="font-bold">{cl.number}.</span> {cl.clue}</p>
             ))}
           </CardContent>
