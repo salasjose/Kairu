@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 
 interface ArtDirectedBackgroundProps {
   desktopSrc: string;
@@ -12,7 +13,7 @@ interface ArtDirectedBackgroundProps {
 /**
  * Fondo responsivo por art-direction (desktop / tablet / móvil)
  * - Cubre toda la pantalla
- * - Usa <picture> para cargar la imagen más adecuada según el breakpoint.
+ * - Usa <picture> con next/image para cargar la imagen más adecuada.
  */
 export default function ArtDirectedBackground({
   desktopSrc,
@@ -34,13 +35,13 @@ export default function ArtDirectedBackground({
           {/* Tablet >= 650px */}
           <source media="(min-width: 650px)" srcSet={tabletSrc} />
           {/* Móvil (fallback) */}
-          <img
+          <Image
             src={mobileSrc}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
+            alt="Fondo de la estación"
+            fill
+            className="object-cover"
             sizes="100vw"
-            decoding="async"
-            loading="eager"
+            priority
           />
         </picture>
       </div>

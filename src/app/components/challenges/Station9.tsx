@@ -181,15 +181,16 @@ export default function Station9() {
     const x = info.point.x - canvasRect.left;
     const y = info.point.y - canvasRect.top;
 
-    const existingPrize = placedPrizes.find(p => p.id === prizeId);
     const prizeData = collectedPrizes.find(p => p.id === prizeId);
     if (!prizeData) return;
     
+    const isSpecialPrize = prizeData.imageUrl.includes('Molinos.png') || prizeData.imageUrl.includes('Ciudad.png');
+
     const newPlacedPrize: PlacedPrize = { 
         ...prizeData, 
         x, 
         y, 
-        scale: existingPrize?.scale || 1,
+        scale: 1,
     };
 
     const newPlacedPrizes = [
@@ -337,11 +338,21 @@ export default function Station9() {
                  <motion.div
                     key={prize.id}
                     drag
-                    dragControls={dragControls}
                     dragMomentum={false}
-                    onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
-                    dragConstraints={canvasRef}
-                    dragListener={!isStationLocked}
+                    onPan={(event, info) => {
+                      if (!isStationLocked) {
+                        const newPlacedPrizes = placedPrizes.map(p => 
+                          p.id === prize.id ? { ...p, x: p.x + info.delta.x, y: p.y + info.delta.y } : p
+                        );
+                        setPlacedPrizes(newPlacedPrizes);
+                      }
+                    }}
+                    onPanEnd={() => {
+                        if (!isStationLocked) {
+                            savePrizesToDb(placedPrizes)
+                        }
+                    }}
+                    dragListener={false}
                     className={cn(
                       "placed-prize-wrapper absolute",
                       isStationLocked ? "cursor-default" : "cursor-grab active:cursor-grabbing"
