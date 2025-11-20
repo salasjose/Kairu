@@ -236,63 +236,61 @@ export default function Station7() {
         tabletSrc="/backgrounds/VerdelabTablet.png"
         mobileSrc="/backgrounds/Verdelab1075_X_1944.png"
       >
-        <div className="relative z-10 flex flex-col items-center justify-center text-center w-full max-w-4xl mx-auto">
-          <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
-            <h1 className="text-3xl md:text-5xl">VerdeLAb</h1>
-          </div>
-          
-          <Card className="w-full shadow-lg bg-card/80 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="text-center text-2xl font-bold">Reto: Negocios Verdes en Acción</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center space-y-4">
-              <p className="text-muted-foreground">Te invitamos a colocar 4 Negocios que reconozcas como sostenibles.</p>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {businesses.map((business, index) => (
-                  <Card key={index} className="aspect-square flex flex-col items-center justify-center p-2 relative overflow-hidden">
-                    {business ? (
-                      <>
-                        <Image src={business.imageUrl} alt={business.name} fill style={{objectFit: "cover"}} />
-                        <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-end p-2 text-white">
-                           <p className="font-bold text-sm text-center">{business.name}</p>
-                        </div>
-                        <Button 
-                            variant="destructive" 
-                            size="icon" 
-                            className="absolute top-1 right-1 h-6 w-6 z-10"
-                            onClick={() => handleDeleteBusiness(index)}
-                        >
-                            <Trash2 className="h-4 w-4"/>
-                        </Button>
-                      </>
-                    ) : (
-                      <Button variant="ghost" className="flex-col h-full w-full" onClick={() => setIsDialogOpen(true)}>
-                        <Store className="h-10 w-10 text-muted-foreground" />
-                        <span className="text-xs mt-1">Añadir Negocio</span>
-                      </Button>
-                    )}
-                  </Card>
-                ))}
-              </div>
-
-              <div className="flex flex-col items-center justify-center gap-2 pt-4">
-                <Button onClick={handleComplete} size="lg" disabled={!areAllChallengesComplete || hasClaimedPrize}>
-                  Completar Reto y Reclamar Insignia
-                </Button>
-                {areAllChallengesComplete && hasClaimedPrize ? (
-                    <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
-                        Ya has reclamado la insignia de esta estación.
-                    </p>
-                ) : !areAllChallengesComplete && (
-                    <p className="text-sm text-muted-foreground">
-                        Faltan {4 - businessesCount} negocio(s) por añadir.
-                    </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+        <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
+          <h1 className="text-3xl md:text-5xl">VerdeLAb</h1>
         </div>
+        
+        <Card className="w-full shadow-lg bg-card/80 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-center text-2xl font-bold">Reto: Negocios Verdes en Acción</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-muted-foreground">Te invitamos a colocar 4 Negocios que reconozcas como sostenibles.</p>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {businesses.map((business, index) => (
+                <Card key={index} className="aspect-square flex flex-col items-center justify-center p-2 relative overflow-hidden">
+                  {business ? (
+                    <>
+                      <Image src={business.imageUrl} alt={business.name} fill style={{objectFit: "cover"}} />
+                      <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-end p-2 text-white">
+                          <p className="font-bold text-sm text-center">{business.name}</p>
+                      </div>
+                      <Button 
+                          variant="destructive" 
+                          size="icon" 
+                          className="absolute top-1 right-1 h-6 w-6 z-10"
+                          onClick={() => handleDeleteBusiness(index)}
+                      >
+                          <Trash2 className="h-4 w-4"/>
+                      </Button>
+                    </>
+                  ) : (
+                    <Button variant="ghost" className="flex-col h-full w-full" onClick={() => setIsDialogOpen(true)}>
+                      <Store className="h-10 w-10 text-muted-foreground" />
+                      <span className="text-xs mt-1">Añadir Negocio</span>
+                    </Button>
+                  )}
+                </Card>
+              ))}
+            </div>
+
+            <div className="flex flex-col items-center justify-center gap-2 pt-4">
+              <Button onClick={handleComplete} size="lg" disabled={!areAllChallengesComplete || hasClaimedPrize}>
+                Completar Reto y Reclamar Insignia
+              </Button>
+              {areAllChallengesComplete && hasClaimedPrize ? (
+                  <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
+                      Ya has reclamado la insignia de esta estación.
+                  </p>
+              ) : !areAllChallengesComplete && (
+                  <p className="text-sm text-muted-foreground">
+                      Faltan {4 - businessesCount} negocio(s) por añadir.
+                  </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Yara Character and Dialog */}
         <div className="absolute bottom-4 right-4 sm:right-8 z-20 w-full max-w-xs sm:max-w-sm md:max-w-md pointer-events-none">

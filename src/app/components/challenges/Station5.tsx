@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, FileText, Gamepad2, Puzzle, Link as LinkIcon, CheckCircle } from "lucide-react";
+import { ArrowLeft, FileText, Gamepad2, Link as LinkIcon, CheckCircle } from "lucide-react";
 import PrizeDialog from "../PrizeDialog";
 import { useRouter } from "next/navigation";
 import { useStationProgress } from "@/hooks/use-station-progress";
@@ -222,19 +222,78 @@ export default function Station5() {
   const areAllChallengesComplete = Object.keys(challenges).every(id => stationProgress[id as ChallengeId]?.completed);
   const hasClaimedPrize = prizes.some(p => p.stationId === stationId);
   
-  if (selectedChallenge === "learn") {
-    return <LearnChallenge onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("learn")} />;
-  }
-   if (selectedChallenge === "wordsearch") {
-    const isCompleted = !!completedChallenges[stationId]?.['wordsearch'];
-    return <WordSearchGame 
-                gameId="station5" 
-                onComplete={() => handleComplete("wordsearch")} 
-                onBack={() => setSelectedChallenge(null)}
-                isCompleted={isCompleted}
-            />;
-  }
+  const renderContent = () => {
+    if (selectedChallenge === "learn") {
+      return <LearnChallenge onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("learn")} />;
+    }
+    if (selectedChallenge === "wordsearch") {
+      const isCompleted = !!completedChallenges[stationId]?.['wordsearch'];
+      return <WordSearchGame 
+                  gameId="station5" 
+                  onComplete={() => handleComplete("wordsearch")} 
+                  onBack={() => setSelectedChallenge(null)}
+                  isCompleted={isCompleted}
+              />;
+    }
 
+    return (
+      <>
+        <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
+          <h1 className="text-3xl md:text-5xl">ZonaCreativa</h1>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8">
+          {(Object.keys(challenges) as ChallengeId[]).map((key) => {
+            const challenge = challenges[key];
+            const Icon = challenge.icon;
+            const isCompleted = stationProgress[key]?.completed;
+            return (
+              <button
+                key={key}
+                onClick={() => setSelectedChallenge(key)}
+                className="transition-transform duration-300 hover:scale-105 group"
+              >
+                <Card className={cn("w-60 h-auto bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors relative", isCompleted && "border-green-500 border-2")}>
+                  <CardContent className="flex flex-col items-center justify-center text-center p-4 h-full">
+                      {isCompleted && (
+                      <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1.5 shadow-lg z-10">
+                          <CheckCircle className="text-white h-5 w-5" />
+                      </div>
+                    )}
+                    <Icon className="w-12 h-12 text-primary mb-3" />
+                    <h2 className="font-bold font-headline text-xl text-primary">
+                      {challenge.title}
+                    </h2>
+                    <p className="text-muted-foreground text-sm mt-1">
+                      {challenge.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              </button>
+            );
+          })}
+        </div>
+          <div className="mt-4 flex flex-col items-center gap-2">
+              <Button
+              onClick={() => setIsPrizeModalOpen(true)}
+              disabled={!areAllChallengesComplete || hasClaimedPrize}
+              size="lg"
+              >
+              Completar Estación y Reclamar Insignia
+              </Button>
+              {areAllChallengesComplete && hasClaimedPrize ? (
+                  <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
+                      Ya has reclamado la insignia de esta estación.
+                  </p>
+              ) : !areAllChallengesComplete && (
+                  <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
+                      Completa ambos retos para activar este botón.
+                  </p>
+              )}
+          </div>
+      </>
+    );
+  }
 
   return (
      <>
@@ -243,61 +302,7 @@ export default function Station5() {
         tabletSrc="/backgrounds/ZonacreativaTablet.png"
         mobileSrc="/backgrounds/Zonacreativa1075_X_1944.png"
       >
-        <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
-          <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
-            <h1 className="text-3xl md:text-5xl">ZonaCreativa</h1>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8">
-            {(Object.keys(challenges) as ChallengeId[]).map((key) => {
-              const challenge = challenges[key];
-              const Icon = challenge.icon;
-              const isCompleted = stationProgress[key]?.completed;
-              return (
-                <button
-                  key={key}
-                  onClick={() => setSelectedChallenge(key)}
-                  className="transition-transform duration-300 hover:scale-105 group"
-                >
-                  <Card className={cn("w-60 h-auto bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors relative", isCompleted && "border-green-500 border-2")}>
-                    <CardContent className="flex flex-col items-center justify-center text-center p-4 h-full">
-                       {isCompleted && (
-                        <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1.5 shadow-lg z-10">
-                            <CheckCircle className="text-white h-5 w-5" />
-                        </div>
-                      )}
-                      <Icon className="w-12 h-12 text-primary mb-3" />
-                      <h2 className="font-bold font-headline text-xl text-primary">
-                        {challenge.title}
-                      </h2>
-                      <p className="text-muted-foreground text-sm mt-1">
-                        {challenge.description}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </button>
-              );
-            })}
-          </div>
-            <div className="mt-4 flex flex-col items-center gap-2">
-                <Button
-                onClick={() => setIsPrizeModalOpen(true)}
-                disabled={!areAllChallengesComplete || hasClaimedPrize}
-                size="lg"
-                >
-                Completar Estación y Reclamar Insignia
-                </Button>
-                {areAllChallengesComplete && hasClaimedPrize ? (
-                    <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
-                        Ya has reclamado la insignia de esta estación.
-                    </p>
-                ) : !areAllChallengesComplete && (
-                    <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
-                        Completa ambos retos para activar este botón.
-                    </p>
-                )}
-            </div>
-        </div>
+        {renderContent()}
 
         {/* Yara Character and Dialog */}
         <div className="absolute bottom-4 right-4 sm:right-8 z-20 w-full max-w-xs sm:max-w-sm md:max-w-md pointer-events-none">

@@ -19,7 +19,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore, useStorage } from "@/firebase/hooks";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import Logo from "../Logo";
 
 const ArtDirectedBackground = dynamic(() => import('../ArtDirectedBackground'), {
@@ -439,47 +438,67 @@ export default function Station2() {
      );
   }
 
-  if (selectedDay !== null) {
-    const dayIndex = selectedDay - 1;
-    const dayData = days[dayIndex];
-    return (
-      <PhotoUploadChallenge
-        day={selectedDay}
-        photoUrl={dayData.photoUrl ?? null}
-        onComplete={(photoUrl) => handleDayComplete(dayIndex, photoUrl)}
-        onBack={() => setSelectedDay(null)}
-      />
-    );
-  }
+  const renderContent = () => {
+    if (selectedDay !== null) {
+      const dayIndex = selectedDay - 1;
+      const dayData = days[dayIndex];
+      return (
+        <PhotoUploadChallenge
+          day={selectedDay}
+          photoUrl={dayData.photoUrl ?? null}
+          onComplete={(photoUrl) => handleDayComplete(dayIndex, photoUrl)}
+          onBack={() => setSelectedDay(null)}
+        />
+      );
+    }
 
-  const renderDayButton = (dayIndex: number) => {
-    const day = days[dayIndex];
-    return (
-      <button
-        key={dayIndex}
-        disabled={day.status === "locked"}
-        onClick={() => setSelectedDay(dayIndex + 1)}
-        className="transition-transform duration-300 disabled:cursor-not-allowed group hover:scale-105"
-      >
-        <div
-          className={cn(
-            "relative w-24 h-20 md:w-32 md:h-24 bg-primary/80 rounded-lg shadow-lg flex items-center justify-center border-4 border-white/80 group-hover:scale-105 group-disabled:scale-100 group-disabled:bg-primary/40 transition-transform",
-            "transform -rotate-3"
-          )}
+    const renderDayButton = (dayIndex: number) => {
+      const day = days[dayIndex];
+      return (
+        <button
+          key={dayIndex}
+          disabled={day.status === "locked"}
+          onClick={() => setSelectedDay(dayIndex + 1)}
+          className="transition-transform duration-300 disabled:cursor-not-allowed group hover:scale-105"
         >
-          {day.status === "locked" && (
-            <Lock className="w-8 h-8 md:w-10 md:h-10 text-white/70" />
-          )}
-          {day.status === "unlocked" && (
-            <span className="font-kalam text-4xl md:text-5xl text-white">
-              {dayIndex + 1}
-            </span>
-          )}
-          {day.status === "completed" && (
-            <CheckCircle className="w-10 h-10 md:w-12 md:h-12 text-green-300" />
-          )}
+          <div
+            className={cn(
+              "relative w-24 h-20 md:w-32 md:h-24 bg-primary/80 rounded-lg shadow-lg flex items-center justify-center border-4 border-white/80 group-hover:scale-105 group-disabled:scale-100 group-disabled:bg-primary/40 transition-transform",
+              "transform -rotate-3"
+            )}
+          >
+            {day.status === "locked" && (
+              <Lock className="w-8 h-8 md:w-10 md:h-10 text-white/70" />
+            )}
+            {day.status === "unlocked" && (
+              <span className="font-kalam text-4xl md:text-5xl text-white">
+                {dayIndex + 1}
+              </span>
+            )}
+            {day.status === "completed" && (
+              <CheckCircle className="w-10 h-10 md:w-12 md:h-12 text-green-300" />
+            )}
+          </div>
+        </button>
+      );
+    };
+
+    return (
+      <>
+        <div className="bg-white/90 backdrop-blur-sm text-primary font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
+            <h1 className="text-4xl md:text-5xl">ImpacTrack</h1>
         </div>
-      </button>
+        
+        <div className="flex flex-col items-center gap-4 md:gap-6 bg-background/70 backdrop-blur-sm p-6 rounded-xl">
+          <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+            {days.slice(0, 4).map((_, index) => renderDayButton(index))}
+          </div>
+          <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+            {days.slice(4, 7).map((_, index) => renderDayButton(index + 4))}
+          </div>
+            <p className="text-sm text-muted-foreground mt-4">MECÁNICA: Cada vez que subas tu foto, pasadas 2 minutos se activará el siguiente candado para continuar.</p>
+        </div>
+      </>
     );
   };
 
@@ -490,26 +509,11 @@ export default function Station2() {
           tabletSrc="/backgrounds/ImpactrackTablet.png"
           mobileSrc="/backgrounds/Impactrack1075_X_1944.png"
         >
-        <div className="relative z-10 w-full h-full flex flex-col items-center justify-center text-center">
-            <div className="bg-white/90 backdrop-blur-sm text-primary font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
-                <h1 className="text-4xl md:text-5xl">ImpacTrack</h1>
-            </div>
-            
-          <div className="flex flex-col items-center gap-4 md:gap-6 bg-background/70 backdrop-blur-sm p-6 rounded-xl">
-            <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-              {days.slice(0, 4).map((_, index) => renderDayButton(index))}
-            </div>
-            <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-              {days.slice(4, 7).map((_, index) => renderDayButton(index + 4))}
-            </div>
-             <p className="text-sm text-muted-foreground mt-4">MECÁNICA: Cada vez que subas tu foto, pasadas 2 minutos se activará el siguiente candado para continuar.</p>
-          </div>
-          
-        </div>
-          {/* Yara Character and Dialog */}
-          <div className="absolute bottom-4 right-4 sm:right-8 lg:right-12 z-20 w-full max-w-xs sm:max-w-sm md:max-w-md pointer-events-none">
+        {renderContent()}
+        {/* Yara Character and Dialog */}
+        <div className="absolute bottom-4 right-4 sm:right-8 z-20 w-full max-w-xs sm:max-w-sm md:max-w-md pointer-events-none">
           <AnimatePresence>
-            {showYaraDialog && yaraCharImage && (
+            {showYaraDialog && yaraCharImage && !selectedDay && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -541,7 +545,7 @@ export default function Station2() {
               </motion.div>
             )}
           </AnimatePresence>
-          </div>
+        </div>
       </ArtDirectedBackground>
       <PrizeDialog
         open={isPrizeModalOpen}

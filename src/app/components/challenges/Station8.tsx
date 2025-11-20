@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Lightbulb, Link as LinkIcon, Zap, CheckCircle } from "lucide-react";
+import { ArrowLeft, Lightbulb, Link as LinkIcon, CheckCircle } from "lucide-react";
 import PrizeDialog from "../PrizeDialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Input } from "@/components/ui/input";
@@ -221,13 +221,56 @@ export default function Station8() {
   const hasClaimedPrize = prizes.some(p => p.stationId === stationId);
   const isChallengeCompleted = hasClaimedPrize;
 
-  if (selectedChallenge) {
-    return <ChallengeScreen 
-                challengeId={selectedChallenge} 
-                onBack={() => setSelectedChallenge(null)} 
-                onComplete={() => handleComplete(selectedChallenge)}
-                isCompleted={isChallengeCompleted}
-            />
+  const renderContent = () => {
+    if (selectedChallenge) {
+      return <ChallengeScreen 
+                  challengeId={selectedChallenge} 
+                  onBack={() => setSelectedChallenge(null)} 
+                  onComplete={() => handleComplete(selectedChallenge)}
+                  isCompleted={isChallengeCompleted}
+              />
+    }
+
+    return (
+      <>
+        <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
+          <h1 className="text-3xl md:text-5xl">Vitalia</h1>
+        </div>
+        
+        <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
+          {(Object.keys(challenges) as ChallengeId[]).map((key) => {
+            const challenge = challenges[key];
+            const Icon = challenge.icon;
+            return (
+              <button
+                key={key}
+                onClick={() => setSelectedChallenge(key)}
+                className="transition-transform duration-300 hover:scale-105 group"
+              >
+                <Card className="w-60 md:w-64 h-auto bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors relative">
+                    {isChallengeCompleted && (
+                    <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1.5 shadow-lg z-10">
+                        <CheckCircle className="text-white h-5 w-5" />
+                    </div>
+                  )}
+                  <CardContent className="flex flex-col items-center justify-center text-center p-4 h-full">
+                    <Icon className="w-12 h-12 md:w-16 md:h-16 text-primary mb-3" />
+                    <h2 className="font-bold font-headline text-xl md:text-2xl text-primary">
+                      {challenge.title}
+                    </h2>
+                  </CardContent>
+                </Card>
+              </button>
+            );
+          })}
+        </div>
+        {isChallengeCompleted && (
+          <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
+              Ya has completado esta estación.
+          </p>
+        )}
+      </>
+    );
   }
 
   return (
@@ -237,45 +280,7 @@ export default function Station8() {
         tabletSrc="/backgrounds/VitaliaTablet.png"
         mobileSrc="/backgrounds/Vitalia1075_X_1944.png"
       >
-        <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
-          <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
-            <h1 className="text-3xl md:text-5xl">Vitalia</h1>
-          </div>
-           
-          <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
-            {(Object.keys(challenges) as ChallengeId[]).map((key) => {
-              const challenge = challenges[key];
-              const Icon = challenge.icon;
-              return (
-                <button
-                  key={key}
-                  onClick={() => setSelectedChallenge(key)}
-                  className="transition-transform duration-300 hover:scale-105 group"
-                >
-                  <Card className="w-60 md:w-64 h-auto bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors relative">
-                     {isChallengeCompleted && (
-                      <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1.5 shadow-lg z-10">
-                          <CheckCircle className="text-white h-5 w-5" />
-                      </div>
-                    )}
-                    <CardContent className="flex flex-col items-center justify-center text-center p-4 h-full">
-                      <Icon className="w-12 h-12 md:w-16 md:h-16 text-primary mb-3" />
-                      <h2 className="font-bold font-headline text-xl md:text-2xl text-primary">
-                        {challenge.title}
-                      </h2>
-                    </CardContent>
-                  </Card>
-                </button>
-              );
-            })}
-          </div>
-           {isChallengeCompleted && (
-             <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
-                Ya has completado esta estación.
-            </p>
-           )}
-        </div>
-        
+        {renderContent()}
          {/* Yara Character and Dialog */}
         <div className="absolute bottom-4 right-4 sm:right-8 z-20 w-full max-w-xs sm:max-w-sm md:max-w-md pointer-events-none">
             <AnimatePresence>
