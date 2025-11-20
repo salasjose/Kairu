@@ -184,8 +184,6 @@ export default function Station9() {
     const prizeData = collectedPrizes.find(p => p.id === prizeId);
     if (!prizeData) return;
     
-    const isSpecialPrize = prizeData.imageUrl.includes('Molinos.png') || prizeData.imageUrl.includes('Ciudad.png');
-
     const newPlacedPrize: PlacedPrize = { 
         ...prizeData, 
         x, 
@@ -319,13 +317,11 @@ export default function Station9() {
       }}>
         
         {/* Background layer */}
-        <div className="absolute inset-0 z-10">
-          {backgroundSources ? (
-            <ArtDirectedBackground {...backgroundSources} />
-          ) : (
-             <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
-          )}
-        </div>
+        {backgroundSources ? (
+          <ArtDirectedBackground {...backgroundSources} />
+        ) : (
+          <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
+        )}
         
         {/* Canvas Area */}
         <div id={DRAGGABLE_AREA_ID} ref={canvasRef} className="absolute inset-0 z-20">
@@ -376,14 +372,23 @@ export default function Station9() {
                     }}
                     transition={{ duration: 0.2 }}
                     >
-                    <div className="w-full h-full relative" onPointerDown={(e) => {
-                       if (!isStationLocked) {
-                          e.stopPropagation();
-                          dragControls.start(e, { snapToCursor: false });
-                       }
-                    }}>
+                    <motion.div 
+                        className="w-full h-full relative" 
+                        onPointerDown={(e) => {
+                            if (!isStationLocked) {
+                                e.stopPropagation();
+                                dragControls.start(e, { snapToCursor: false });
+                            }
+                        }}
+                        style={{
+                            scale: prize.scale,
+                        }}
+                        initial={{ scale: prize.scale }}
+                        animate={{ scale: prize.scale }}
+                        transition={{duration: 0}} // Prevent animation on re-render
+                    >
                         <Image src={prize.imageUrl} alt={prize.name} fill style={{objectFit:'contain'}} />
-                    </div>
+                    </motion.div>
 
                      {isSelected && !isStationLocked && (
                         <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-40 bg-background/80 p-2 rounded-lg shadow-lg flex items-center gap-2" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
@@ -516,5 +521,3 @@ export default function Station9() {
     </>
   );
 }
-
-    
