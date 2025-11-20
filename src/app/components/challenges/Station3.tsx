@@ -280,9 +280,11 @@ export default function Station3() {
   const renderContent = () => {
     if (selectedChallenge === "game") {
       return (
-        <RecyclingGame
-          onBack={() => setSelectedChallenge(null)}
-        />
+        <div className="flex-grow flex items-center justify-center p-4">
+            <RecyclingGame
+              onBack={() => setSelectedChallenge(null)}
+            />
+        </div>
       );
     }
 
@@ -290,90 +292,92 @@ export default function Station3() {
       const challengeInfo = challenges[selectedChallenge];
 
       return (
-        <ChallengeDetail
-          title={challengeInfo.title}
-          description={challengeInfo.description}
-          challengeId={selectedChallenge}
-          onComplete={() => handleChallengeComplete(selectedChallenge)}
-          onBack={() => setSelectedChallenge(null)}
-        />
+        <div className="flex-grow flex items-center justify-center p-4">
+            <ChallengeDetail
+              title={challengeInfo.title}
+              description={challengeInfo.description}
+              challengeId={selectedChallenge}
+              onComplete={() => handleChallengeComplete(selectedChallenge)}
+              onBack={() => setSelectedChallenge(null)}
+            />
+        </div>
       );
     }
 
     return (
-      <>
-        <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
-          <h1 className="text-3xl md:text-5xl">ReNova</h1>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 mb-8">
-          {(Object.keys(challenges) as ChallengeId[]).map((key) => {
-            const challenge = challenges[key];
-            const Icon = challenge.icon;
+        <ArtDirectedBackground
+            desktopSrc="/backgrounds/RenovaPC.png"
+            tabletSrc="/backgrounds/RenovaTablet.png"
+            mobileSrc="/backgrounds/Renova1075_X_1944.png"
+        >
+            <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
+              <h1 className="text-3xl md:text-5xl">ReNova</h1>
+            </div>
             
-            const isCompleted = key === 'game' 
-              ? isGameChallengeCompleted 
-              : !!stationProgress[key]?.completed;
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 mb-8">
+              {(Object.keys(challenges) as ChallengeId[]).map((key) => {
+                const challenge = challenges[key];
+                const Icon = challenge.icon;
+                
+                const isCompleted = key === 'game' 
+                  ? isGameChallengeCompleted 
+                  : !!stationProgress[key]?.completed;
 
-            return (
-              <button
-                key={key}
-                onClick={() => setSelectedChallenge(key)}
-                className="transition-transform duration-300 hover:scale-105 group"
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setSelectedChallenge(key)}
+                    className="transition-transform duration-300 hover:scale-105 group"
+                  >
+                    <Card className="w-48 h-56 bg-card/70 backdrop-blur-sm hover:bg-card/90 transition-colors relative">
+                      <CardContent className="flex flex-col items-center justify-center text-center p-2 md:p-4 h-full">
+                        <Icon className="w-10 h-10 md:w-12 md:h-12 text-primary mb-2 md:mb-3" />
+                        <h2 className="font-bold font-headline text-base md:text-lg text-primary">
+                          {challenge.title}
+                        </h2>
+                      </CardContent>
+                        {isCompleted && (
+                          <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1 shadow-lg">
+                              <CheckCircle className="text-white h-5 w-5" />
+                          </div>
+                      )}
+                    </Card>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-4 max-w-md mx-auto space-y-4 text-center">
+                <Button
+                  onClick={() => setIsPrizeModalOpen(true)}
+                  disabled={!areAllChallengesComplete || hasClaimedPrize}
+                  size="lg"
               >
-                <Card className="w-48 h-56 bg-card/70 backdrop-blur-sm hover:bg-card/90 transition-colors relative">
-                  <CardContent className="flex flex-col items-center justify-center text-center p-2 md:p-4 h-full">
-                    <Icon className="w-10 h-10 md:w-12 md:h-12 text-primary mb-2 md:mb-3" />
-                    <h2 className="font-bold font-headline text-base md:text-lg text-primary">
-                      {challenge.title}
-                    </h2>
-                  </CardContent>
-                    {isCompleted && (
-                      <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1 shadow-lg">
-                          <CheckCircle className="text-white h-5 w-5" />
-                      </div>
-                  )}
-                </Card>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="mt-4 max-w-md mx-auto space-y-4 text-center">
-            <Button
-              onClick={() => setIsPrizeModalOpen(true)}
-              disabled={!areAllChallengesComplete || hasClaimedPrize}
-              size="lg"
-          >
-              Completar Estación y Reclamar Insignia
-          </Button>
-          {areAllChallengesComplete && hasClaimedPrize ? (
-            <p className="bg-background/80 p-2 rounded-md text-sm">
-                Ya has reclamado la insignia de esta estación.
-            </p>
-          ) : !areAllChallengesComplete && (
-              <p className="bg-background/80 p-2 rounded-md text-sm">
-                  Completa todos los retos para reclamar tu insignia.
-              </p>
-          )}
-        </div>
-      </>
+                  Completar Estación y Reclamar Insignia
+              </Button>
+              {areAllChallengesComplete && hasClaimedPrize ? (
+                <p className="bg-background/80 p-2 rounded-md text-sm">
+                    Ya has reclamado la insignia de esta estación.
+                </p>
+              ) : !areAllChallengesComplete && (
+                  <p className="bg-background/80 p-2 rounded-md text-sm">
+                      Completa todos los retos para reclamar tu insignia.
+                  </p>
+              )}
+            </div>
+        </ArtDirectedBackground>
     );
   }
 
   return (
     <>
-      <ArtDirectedBackground
-        desktopSrc="/backgrounds/RenovaPC.png"
-        tabletSrc="/backgrounds/RenovaTablet.png"
-        mobileSrc="/backgrounds/Renova1075_X_1944.png"
-      >
-        {renderContent()}
+      {renderContent()}
 
-         {/* Yara Character and Dialog */}
+        {/* Yara Character and Dialog */}
+      {!selectedChallenge && (
         <div className="absolute bottom-4 right-4 sm:right-8 z-20 w-full max-w-xs sm:max-w-sm md:max-w-md pointer-events-none">
           <AnimatePresence>
-              {showYaraDialog && yaraCharImage && !selectedChallenge && (
+              {showYaraDialog && yaraCharImage && (
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -406,8 +410,8 @@ export default function Station3() {
               )}
           </AnimatePresence>
         </div>
+      )}
 
-      </ArtDirectedBackground>
       <PrizeDialog
         open={isPrizeModalOpen}
         stationId={stationId}

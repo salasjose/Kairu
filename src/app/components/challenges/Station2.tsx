@@ -19,7 +19,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore, useStorage } from "@/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import Logo from "../Logo";
 
 const ArtDirectedBackground = dynamic(() => import('../ArtDirectedBackground'), {
@@ -444,12 +443,14 @@ export default function Station2() {
       const dayIndex = selectedDay - 1;
       const dayData = days[dayIndex];
       return (
-        <PhotoUploadChallenge
-          day={selectedDay}
-          photoUrl={dayData.photoUrl ?? null}
-          onComplete={(photoUrl) => handleDayComplete(dayIndex, photoUrl)}
-          onBack={() => setSelectedDay(null)}
-        />
+        <div className="flex-grow flex items-center justify-center w-full">
+            <PhotoUploadChallenge
+              day={selectedDay}
+              photoUrl={dayData.photoUrl ?? null}
+              onComplete={(photoUrl) => handleDayComplete(dayIndex, photoUrl)}
+              onBack={() => setSelectedDay(null)}
+            />
+        </div>
       );
     }
 
@@ -485,69 +486,69 @@ export default function Station2() {
     };
 
     return (
-      <>
-        <div className="bg-white/90 backdrop-blur-sm text-primary font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
-            <h1 className="text-4xl md:text-5xl">ImpacTrack</h1>
-        </div>
-        
-        <div className="flex flex-col items-center gap-4 md:gap-6 bg-background/70 backdrop-blur-sm p-6 rounded-xl">
-          <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-            {days.slice(0, 4).map((_, index) => renderDayButton(index))}
-          </div>
-          <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-            {days.slice(4, 7).map((_, index) => renderDayButton(index + 4))}
-          </div>
-            <p className="text-sm text-muted-foreground mt-4">MECÁNICA: Cada vez que subas tu foto, pasadas 2 minutos se activará el siguiente candado para continuar.</p>
-        </div>
-      </>
+        <ArtDirectedBackground
+            desktopSrc="/backgrounds/ImpactrackPC.png"
+            tabletSrc="/backgrounds/ImpactrackTablet.png"
+            mobileSrc="/backgrounds/Impactrack1075_X_1944.png"
+        >
+            <div className="bg-white/90 backdrop-blur-sm text-primary font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
+                <h1 className="text-4xl md:text-5xl">ImpacTrack</h1>
+            </div>
+            
+            <div className="flex flex-col items-center gap-4 md:gap-6 bg-background/70 backdrop-blur-sm p-6 rounded-xl">
+              <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+                {days.slice(0, 4).map((_, index) => renderDayButton(index))}
+              </div>
+              <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+                {days.slice(4, 7).map((_, index) => renderDayButton(index + 4))}
+              </div>
+                <p className="text-sm text-muted-foreground mt-4">MECÁNICA: Cada vez que subas tu foto, pasadas 2 minutos se activará el siguiente candado para continuar.</p>
+            </div>
+       </ArtDirectedBackground>
     );
   };
 
   return (
     <>
-      <ArtDirectedBackground
-          desktopSrc="/backgrounds/ImpactrackPC.png"
-          tabletSrc="/backgrounds/ImpactrackTablet.png"
-          mobileSrc="/backgrounds/Impactrack1075_X_1944.png"
-        >
-        {renderContent()}
-        {/* Yara Character and Dialog */}
-        <div className="absolute bottom-4 right-4 sm:right-8 z-20 w-full max-w-xs sm:max-w-sm md:max-w-md pointer-events-none">
-          <AnimatePresence>
-            {showYaraDialog && yaraCharImage && !selectedDay && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20, transition: { duration: 0.5 } }}
-                transition={{ duration: 0.5 }}
-                className="flex items-end gap-2"
-              >
-                <div className="flex-grow mb-4">
-                  <Card className="p-3 shadow-lg bg-white/95 relative">
-                    <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium"/>
-                    <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
-                  </Card>
-                </div>
+      {renderContent()}
+      {/* Yara Character and Dialog */}
+      {!selectedDay && (
+        <div className="absolute bottom-4 right-4 sm:right-8 lg:right-12 z-20 w-full max-w-xs sm:max-w-sm md:max-w-md pointer-events-none">
+            <AnimatePresence>
+                {showYaraDialog && yaraCharImage && (
                 <motion.div
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0, transition: { delay: 0.2 } }}
-                  exit={{ opacity: 0, x: 50, transition: { duration: 0.5 } }}
-                  className="w-24 h-auto md:w-32 shrink-0"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20, transition: { duration: 0.5 } }}
+                    transition={{ duration: 0.5 }}
+                    className="flex items-end gap-2"
                 >
-                  <Image
-                    src={yaraCharImage.imageUrl}
-                    alt={yaraCharImage.description}
-                    width={150}
-                    height={187}
-                    className="h-auto w-full select-none"
-                    priority
-                  />
+                    <div className="flex-grow mb-4">
+                    <Card className="p-3 shadow-lg bg-white/95 relative">
+                        <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium"/>
+                        <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
+                    </Card>
+                    </div>
+                    <motion.div
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0, transition: { delay: 0.2 } }}
+                    exit={{ opacity: 0, x: 50, transition: { duration: 0.5 } }}
+                    className="w-24 h-auto md:w-32 shrink-0"
+                    >
+                    <Image
+                        src={yaraCharImage.imageUrl}
+                        alt={yaraCharImage.description}
+                        width={150}
+                        height={187}
+                        className="h-auto w-full select-none"
+                        priority
+                    />
+                    </motion.div>
                 </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                )}
+            </AnimatePresence>
         </div>
-      </ArtDirectedBackground>
+      )}
       <PrizeDialog
         open={isPrizeModalOpen}
         stationId={stationId}

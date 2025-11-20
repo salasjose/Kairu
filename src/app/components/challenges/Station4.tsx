@@ -234,95 +234,99 @@ export default function Station4() {
         return null; // Avoid rendering quiz
       }
       return (
-        <WaterQuiz
-          onComplete={() => handleChallengeComplete("quiz")}
-          onBack={() => setSelectedChallenge(null)}
-          onSwitchChallenge={() => setSelectedChallenge("post")}
-        />
+        <div className="flex-grow flex items-center justify-center p-4">
+            <WaterQuiz
+              onComplete={() => handleChallengeComplete("quiz")}
+              onBack={() => setSelectedChallenge(null)}
+              onSwitchChallenge={() => setSelectedChallenge("post")}
+            />
+        </div>
       );
     }
     if (selectedChallenge === "post") {
       return (
-        <PostChallenge
-          onComplete={() => handleChallengeComplete("post")}
-          onBack={() => setSelectedChallenge(null)}
-        />
+        <div className="flex-grow flex items-center justify-center p-4">
+            <PostChallenge
+              onComplete={() => handleChallengeComplete("post")}
+              onBack={() => setSelectedChallenge(null)}
+            />
+        </div>
       );
     }
     return (
-      <>
-        <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
-          <h1 className="text-3xl md:text-5xl">TerrAzul</h1>
-        </div>
+        <ArtDirectedBackground
+            desktopSrc="/backgrounds/TerrAzulPc.png"
+            tabletSrc="/backgrounds/TerrAzulTablet.png"
+            mobileSrc="/backgrounds/TerrAzul1075_X_1944.png"
+        >
+            <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
+            <h1 className="text-3xl md:text-5xl">TerrAzul</h1>
+            </div>
 
-        <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
-          {(Object.keys(challenges) as ChallengeId[]).map((key) => {
-            const challenge = challenges[key];
-            const Icon = challenge.icon;
-            const isCompleted = stationProgress[key as ChallengeId]?.completed;
-            return (
-              <button
-                key={key}
-                onClick={() => setSelectedChallenge(key as ChallengeId)}
-                className={cn(
-                  "transition-transform duration-300 group",
-                  "hover:scale-105"
-                )}
-              >
-                <Card className="relative w-60 md:w-64 h-auto md:h-56 bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors">
-                   {isCompleted && (
-                      <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1.5 shadow-lg z-10">
-                          <CheckCircle className="text-white h-5 w-5" />
-                      </div>
+            <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
+            {(Object.keys(challenges) as ChallengeId[]).map((key) => {
+                const challenge = challenges[key];
+                const Icon = challenge.icon;
+                const isCompleted = stationProgress[key as ChallengeId]?.completed;
+                return (
+                <button
+                    key={key}
+                    onClick={() => setSelectedChallenge(key as ChallengeId)}
+                    className={cn(
+                    "transition-transform duration-300 group",
+                    "hover:scale-105"
                     )}
-                  <CardContent className="flex flex-col items-center justify-center text-center p-4 h-full">
-                    <Icon className="w-12 h-12 md:w-16 md:h-16 text-primary mb-3" />
-                    <h2 className="font-bold font-headline text-xl md:text-2xl text-primary">
-                      {challenge.title}
-                    </h2>
-                    <p className="text-muted-foreground text-sm mt-1">
-                      {challenge.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              </button>
-            );
-          })}
-        </div>
+                >
+                    <Card className="relative w-60 md:w-64 h-auto md:h-56 bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors">
+                    {isCompleted && (
+                        <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1.5 shadow-lg z-10">
+                            <CheckCircle className="text-white h-5 w-5" />
+                        </div>
+                        )}
+                    <CardContent className="flex flex-col items-center justify-center text-center p-4 h-full">
+                        <Icon className="w-12 h-12 md:w-16 md:h-16 text-primary mb-3" />
+                        <h2 className="font-bold font-headline text-xl md:text-2xl text-primary">
+                        {challenge.title}
+                        </h2>
+                        <p className="text-muted-foreground text-sm mt-1">
+                        {challenge.description}
+                        </p>
+                    </CardContent>
+                    </Card>
+                </button>
+                );
+            })}
+            </div>
 
-        <div className="mt-4 max-w-md mx-auto space-y-2 text-center">
-            <Button
-                size="lg"
-                disabled={!areAllChallengesComplete || hasClaimedPrize}
-                onClick={() => setIsPrizeModalOpen(true)}
-            >
-                Completar Estación y Reclamar Insignia
-            </Button>
-            {areAllChallengesComplete && hasClaimedPrize ? (
-                 <p className="bg-background/80 p-2 rounded-md text-sm text-muted-foreground">
-                    Ya has reclamado la insignia de esta estación.
-                </p>
-            ) : !areAllChallengesComplete && (
-                <p className="bg-background/80 p-2 rounded-md text-sm text-muted-foreground">
-                    Completa ambos retos para reclamar tu insignia.
-                </p>
-            )}
-        </div>
-      </>
+            <div className="mt-4 max-w-md mx-auto space-y-2 text-center">
+                <Button
+                    size="lg"
+                    disabled={!areAllChallengesComplete || hasClaimedPrize}
+                    onClick={() => setIsPrizeModalOpen(true)}
+                >
+                    Completar Estación y Reclamar Insignia
+                </Button>
+                {areAllChallengesComplete && hasClaimedPrize ? (
+                    <p className="bg-background/80 p-2 rounded-md text-sm text-muted-foreground">
+                        Ya has reclamado la insignia de esta estación.
+                    </p>
+                ) : !areAllChallengesComplete && (
+                    <p className="bg-background/80 p-2 rounded-md text-sm text-muted-foreground">
+                        Completa ambos retos para reclamar tu insignia.
+                    </p>
+                )}
+            </div>
+        </ArtDirectedBackground>
     );
   };
 
   return (
     <>
-      <ArtDirectedBackground
-        desktopSrc="/backgrounds/TerrAzulPc.png"
-        tabletSrc="/backgrounds/TerrAzulTablet.png"
-        mobileSrc="/backgrounds/TerrAzul1075_X_1944.png"
-      >
-        {renderContent()}
+      {renderContent()}
+      {!selectedChallenge && (
         <div className="absolute bottom-4 right-4 sm:right-8 lg:right-12 z-20 w-full max-w-xs sm:max-w-sm md:max-w-md pointer-events-none">
           <AnimatePresence>
-            {showYaraDialog && yaraCharImage && !selectedChallenge && (
+            {showYaraDialog && yaraCharImage && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -362,7 +366,7 @@ export default function Station4() {
             )}
           </AnimatePresence>
         </div>
-      </ArtDirectedBackground>
+      )}
       <PrizeDialog
         open={isPrizeModalOpen}
         stationId={stationId}

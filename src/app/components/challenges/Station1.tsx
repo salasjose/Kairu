@@ -659,19 +659,23 @@ export default function Station1() {
 
   if (selectedChallenge === "Fauna y Flora") {
     return (
-      <PhotoChallenge
-        onBack={() => setSelectedChallenge(null)}
-        onStationComplete={() => handleChallengeComplete("Fauna y Flora")}
-      />
+      <div className="flex-grow flex items-center justify-center p-4">
+        <PhotoChallenge
+          onBack={() => setSelectedChallenge(null)}
+          onStationComplete={() => handleChallengeComplete("Fauna y Flora")}
+        />
+      </div>
     );
   }
 
   if (selectedChallenge === "Cuidado Animal") {
-    return (
-      <HabitatChallenge
-        onBack={() => setSelectedChallenge(null)}
-        onStationComplete={() => handleChallengeComplete("Cuidado Animal")}
-      />
+     return (
+      <div className="flex-grow flex items-center justify-center p-4">
+        <HabitatChallenge
+          onBack={() => setSelectedChallenge(null)}
+          onStationComplete={() => handleChallengeComplete("Cuidado Animal")}
+        />
+      </div>
     );
   }
 

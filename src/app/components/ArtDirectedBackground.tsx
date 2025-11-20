@@ -1,5 +1,7 @@
+
 "use client";
 
+import Image from "next/image";
 import React from "react";
 
 interface ArtDirectedBackgroundProps {
@@ -9,11 +11,6 @@ interface ArtDirectedBackgroundProps {
   children?: React.ReactNode;
 }
 
-/**
- * Fondo responsivo por art-direction (desktop / tablet / móvil)
- * - Cubre toda la pantalla
- * - Usa <picture> con un <img> interno para la compatibilidad y el renderizado del fondo.
- */
 export default function ArtDirectedBackground({
   desktopSrc,
   tabletSrc,
@@ -21,7 +18,7 @@ export default function ArtDirectedBackground({
   children,
 }: ArtDirectedBackgroundProps) {
   return (
-    <div className="relative w-full flex-grow flex flex-col items-center justify-center p-4 overflow-hidden">
+    <div className="relative w-full h-full min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
       {/* Capa de imagen de fondo responsiva */}
       <div className="absolute inset-0 -z-10">
         <picture>
