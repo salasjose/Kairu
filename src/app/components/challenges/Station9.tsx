@@ -318,7 +318,10 @@ export default function Station9() {
         
         {/* Background layer */}
         {backgroundSources ? (
-          <ArtDirectedBackground {...backgroundSources} />
+          <>
+            <ArtDirectedBackground {...backgroundSources} />
+            <div className="absolute inset-0 bg-black/10 z-10" />
+          </>
         ) : (
           <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
         )}
@@ -355,9 +358,12 @@ export default function Station9() {
                     )}
                     style={{ 
                         x: prize.x, 
-                        y: prize.y, 
-                        width: `${80 * prize.scale}px`, 
-                        height: `${80 * prize.scale}px`
+                        y: prize.y,
+                        // El tamaño se controla mediante la propiedad `scale` en la animación.
+                        // Establecer un tamaño base aquí.
+                        width: '80px', 
+                        height: '80px',
+                        transformOrigin: 'center center' // Asegura que la escala sea desde el centro
                     }}
                     initial={{ x: prize.x, y: prize.y, scale: prize.scale }}
                     onClick={(e) => {
@@ -367,7 +373,7 @@ export default function Station9() {
                       }
                     }}
                     animate={{ 
-                        scale: isSelected ? 1.1 : 1,
+                        scale: isSelected ? prize.scale * 1.1 : prize.scale,
                         boxShadow: isSelected ? "0px 0px 15px rgba(255,255,100,0.8)" : "0px 0px 0px rgba(0,0,0,0)",
                     }}
                     transition={{ duration: 0.2 }}
@@ -380,12 +386,6 @@ export default function Station9() {
                                 dragControls.start(e, { snapToCursor: false });
                             }
                         }}
-                        style={{
-                            scale: prize.scale,
-                        }}
-                        initial={{ scale: prize.scale }}
-                        animate={{ scale: prize.scale }}
-                        transition={{duration: 0}} // Prevent animation on re-render
                     >
                         <Image src={prize.imageUrl} alt={prize.name} fill style={{objectFit:'contain'}} />
                     </motion.div>
