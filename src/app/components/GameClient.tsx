@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
@@ -16,8 +17,9 @@ import { signOut } from 'firebase/auth';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useStationProgress } from '@/hooks/use-station-progress';
 import { usePrizeCart } from '@/hooks/use-prize-cart';
-import { Settings, Trash2 } from 'lucide-react';
+import { Settings, Trash2, MoreVertical, LogOut, Gift } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger, SheetFooter } from '@/components/ui/sheet';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { SignUpFormSchema } from './auth/SignUpForm';
@@ -32,7 +34,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
 interface PlayerState {
@@ -307,38 +308,72 @@ export default function GameClient() {
 
   return (
     <main className="relative w-full min-h-screen flex flex-col overflow-hidden">
-      <header className="absolute top-0 left-0 right-0 p-2 sm:p-4 z-20">
-        <div className="container mx-auto flex items-start justify-between gap-2">
-            <div className="bg-white/90 backdrop-blur-sm p-2 rounded-2xl flex items-center gap-3 shadow-md">
-                <Logo className="h-8" />
-                <div className="pr-2 hidden sm:block">
-                    <h1 className="font-bold text-primary leading-tight font-kalam text-xl"></h1>
-                    <p className="text-xs text-primary/80 leading-tight">
-                        ¡Bienvenido, {playerState.name}!
-                    </p>
+        <header className="absolute top-0 left-0 right-0 p-2 sm:p-4 z-20">
+            <div className="container mx-auto flex items-center justify-between gap-2">
+                <div className="bg-white/90 backdrop-blur-sm p-1.5 sm:p-2 rounded-2xl flex items-center gap-2 sm:gap-3 shadow-md">
+                    <Logo className="h-8 sm:h-10" />
+                    <div className="pr-2 hidden sm:block">
+                        <p className="text-sm text-primary/80 leading-tight">
+                            ¡Bienvenido, {playerState.name}!
+                        </p>
+                    </div>
+                    <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-white">
+                        <AvatarImage src={playerState.avatar} alt="Player Avatar" className="object-contain" />
+                        <AvatarFallback>{playerState?.name?.charAt(0)}</AvatarFallback>
+                    </Avatar>
                 </div>
-                <Avatar className="h-12 w-12 border-2 border-white">
-                    <AvatarImage src={playerState.avatar} alt="Player Avatar" className="object-contain" />
-                    <AvatarFallback>{playerState?.name?.charAt(0)}</AvatarFallback>
-                </Avatar>
+                
+                {/* Desktop Menu */}
+                <div className="hidden sm:flex items-center gap-2">
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="outline" size="icon" className="rounded-full bg-white/90 shadow-md h-10 w-10">
+                                <Settings />
+                            </Button>
+                        </SheetTrigger>
+                        <SettingsPanel playerState={playerState} setPlayerState={setPlayerState} onFullReset={handleResetOnboarding} />
+                    </Sheet>
+                    <Button variant="outline" size="sm" onClick={handleLogout} className="rounded-full bg-white/90 shadow-md h-10 w-auto px-4">
+                        Salir
+                    </Button>
+                    <PrizeCart />
+                </div>
+                
+                {/* Mobile Menu */}
+                <div className="sm:hidden">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                             <Button variant="outline" size="icon" className="rounded-full bg-white/90 shadow-md h-10 w-10">
+                                <MoreVertical />
+                             </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                           <DropdownMenuItem asChild>
+                               <Sheet>
+                                    <SheetTrigger className="w-full">
+                                        <div className="flex items-center gap-2 cursor-pointer relative select-none rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                                            <Settings />
+                                            <span>Configuración</span>
+                                        </div>
+                                    </SheetTrigger>
+                                    <SettingsPanel playerState={playerState} setPlayerState={setPlayerState} onFullReset={handleResetOnboarding} />
+                               </Sheet>
+                           </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <div className="flex items-center gap-2">
+                                  <PrizeCart />
+                                  <span className="-ml-1">Recompensas</span>
+                                </div>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleLogout}>
+                                <LogOut className="mr-2 h-4 w-4" />
+                                <span>Salir</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
-            <div className="flex items-center gap-2">
-                <Sheet>
-                    <SheetTrigger asChild>
-                        <Button variant="outline" size="icon" className="rounded-full bg-white/90 shadow-md h-10 w-10">
-                            <Settings />
-                        </Button>
-                    </SheetTrigger>
-                    <SettingsPanel playerState={playerState} setPlayerState={setPlayerState} onFullReset={handleResetOnboarding} />
-                </Sheet>
-
-                 <Button variant="outline" size="sm" onClick={handleLogout} className="rounded-full bg-white/90 shadow-md h-10 w-auto px-4">
-                  Salir
-                </Button>
-                <PrizeCart />
-            </div>
-        </div>
-      </header>
+        </header>
 
       <div className="relative flex-1 w-full h-screen overflow-hidden z-10">
         <div className="absolute inset-0 grid place-items-center">
