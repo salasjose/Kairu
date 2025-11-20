@@ -14,7 +14,7 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card } from "@/components/ui/card";
 import TypewriterText from "../auth/TypewriterText";
 import { Slider } from "@/components/ui/slider";
-import { Trash2, Gift, X } from "lucide-react";
+import { Trash2, Gift, X, Edit, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ArtDirectedBackground from "../ArtDirectedBackground";
 
@@ -100,6 +100,7 @@ export default function Station9() {
   const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
   const [isYaraMessageVisible, setIsYaraMessageVisible] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isStationLocked, setIsStationLocked] = useState(false);
   
   const { user } = useUser();
   const db = useFirestore();
@@ -125,6 +126,7 @@ export default function Station9() {
           setPlacedPrizes(data.placedPrizes?.map((p: any) => ({ ...p, scale: p.scale || 1 })) || []);
           const fullName = `${data.nombre || ''} ${data.apellido || ''}`.trim();
           setPlayerName(fullName || "Guardián");
+          setIsStationLocked(data.station9Locked || false);
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -179,6 +181,7 @@ export default function Station9() {
     const x = info.point.x - canvasRect.left;
     const y = info.point.y - canvasRect.top;
 
+    const existingPrize = placedPrizes.find(p => p.id === prizeId);
     const prizeData = collectedPrizes.find(p => p.id === prizeId);
     if (!prizeData) return;
     
@@ -186,7 +189,7 @@ export default function Station9() {
         ...prizeData, 
         x, 
         y, 
-        scale: 1, // Start at normal size
+        scale: existingPrize?.scale || 1,
     };
 
     const newPlacedPrizes = [
@@ -222,6 +225,33 @@ export default function Station9() {
     savePrizesToDb(newPlacedPrizes);
     setSelectedPrizeId(null);
   };
+
+  const handleConfirmStation = async () => {
+    if (!user || !db) return;
+    setIsStationLocked(true);
+    try {
+        const userDocRef = doc(db, "users", user.uid);
+        await setDoc(userDocRef, { station9Locked: true }, { merge: true });
+        toast({ title: "Estación Confirmada", description: "¡Tu diseño ha sido guardado!." });
+    } catch(e) {
+        console.error("Error confirming station", e);
+        setIsStationLocked(false);
+        toast({ title: "Error", description: "No se pudo confirmar la estación.", variant: "destructive" });
+    }
+  }
+
+  const handleModifyStation = async () => {
+    if (!user || !db) return;
+    setIsStationLocked(false);
+    try {
+        const userDocRef = doc(db, "users", user.uid);
+        await setDoc(userDocRef, { station9Locked: false }, { merge: true });
+    } catch(e) {
+        console.error("Error unlocking station", e);
+        setIsStationLocked(true);
+        toast({ title: "Error", description: "No se pudo desbloquear la estación.", variant: "destructive" });
+    }
+  }
 
   const handleCompleteChallenge = () => {
     setIsCompletionDialogOpen(true);
@@ -311,15 +341,24 @@ export default function Station9() {
                     dragMomentum={false}
                     onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
                     dragConstraints={canvasRef}
-                    className="placed-prize-wrapper absolute cursor-grab active:cursor-grabbing"
+                    dragListener={!isStationLocked}
+                    className={cn(
+                      "placed-prize-wrapper absolute",
+                      isStationLocked ? "cursor-default" : "cursor-grab active:cursor-grabbing"
+                    )}
                     style={{ 
                         x: prize.x, 
                         y: prize.y, 
                         width: `${80 * prize.scale}px`, 
                         height: `${80 * prize.scale}px`
                     }}
-                    initial={{ x: prize.x, y: prize.y, scale: 1 }}
-                    onClick={(e) => {e.stopPropagation(); setSelectedPrizeId(prize.id)}}
+                    initial={{ x: prize.x, y: prize.y, scale: prize.scale }}
+                    onClick={(e) => {
+                      if (!isStationLocked) {
+                        e.stopPropagation(); 
+                        setSelectedPrizeId(prize.id);
+                      }
+                    }}
                     animate={{ 
                         scale: isSelected ? 1.1 : 1,
                         boxShadow: isSelected ? "0px 0px 15px rgba(255,255,100,0.8)" : "0px 0px 0px rgba(0,0,0,0)",
@@ -327,13 +366,15 @@ export default function Station9() {
                     transition={{ duration: 0.2 }}
                     >
                     <div className="w-full h-full relative" onPointerDown={(e) => {
-                        e.stopPropagation(); // Prevent canvas click from deselecting
-                        dragControls.start(e, { snapToCursor: false });
+                       if (!isStationLocked) {
+                          e.stopPropagation();
+                          dragControls.start(e, { snapToCursor: false });
+                       }
                     }}>
                         <Image src={prize.imageUrl} alt={prize.name} fill style={{objectFit:'contain'}} />
                     </div>
 
-                     {isSelected && (
+                     {isSelected && !isStationLocked && (
                         <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-40 bg-background/80 p-2 rounded-lg shadow-lg flex items-center gap-2" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
                             <Slider
                                 defaultValue={[prize.scale]}
@@ -399,8 +440,21 @@ export default function Station9() {
                         )}
                     </div>
                     {allPrizesPlaced && (
-                        <Button onClick={handleCompleteChallenge} className="mt-4 w-full">
-                            Completar Aventura
+                      isStationLocked ? (
+                        <Button onClick={handleModifyStation} className="mt-4 w-full">
+                            <Edit className="mr-2 h-4 w-4" />
+                            Modificar
+                        </Button>
+                      ) : (
+                        <Button onClick={handleConfirmStation} className="mt-4 w-full">
+                            <Check className="mr-2 h-4 w-4" />
+                            Confirmar
+                        </Button>
+                      )
+                    )}
+                    {isStationLocked && (
+                         <Button onClick={handleCompleteChallenge} className="mt-2 w-full" variant="secondary">
+                            Completar
                         </Button>
                     )}
                 </motion.div>
@@ -451,3 +505,5 @@ export default function Station9() {
     </>
   );
 }
+
+    
