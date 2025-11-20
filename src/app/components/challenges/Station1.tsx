@@ -779,17 +779,17 @@ export default function Station1() {
       </ResponsiveBackground>
 
       {/* Yara Character and Dialog */}
-      <div className="absolute bottom-4 right-4 md:right-8 lg:right-12 z-20 flex items-end gap-0 md:gap-2 pointer-events-none">
+      <div className="absolute bottom-4 right-4 sm:right-8 lg:right-12 z-20 w-full max-w-xs sm:max-w-sm md:max-w-md pointer-events-none">
         <AnimatePresence>
           {showYaraDialog && yaraCharacterImage && (
             <motion.div 
-                className="flex items-end gap-0 md:gap-2"
+                className="flex items-end gap-2"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20, transition: {duration: 0.5 } }}
                 transition={{ duration: 0.5 }}
             >
-              <div className="w-64 md:w-80 mb-4">
+              <div className="flex-grow mb-4">
                 <Card className="p-3 shadow-lg bg-white/95 relative">
                   <TypewriterText
                     text={yaraMessage}
@@ -802,7 +802,7 @@ export default function Station1() {
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0, transition: { delay: 0.5, duration: 0.8 } }}
                  exit={{ opacity: 0, x: 50, transition: { duration: 0.5 } }}
-                className="w-24 h-auto md:w-32 self-end"
+                className="w-24 h-auto md:w-32 self-end shrink-0"
               >
                 <Image
                   src={yaraCharacterImage.imageUrl}

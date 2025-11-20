@@ -394,7 +394,7 @@ export default function Station6() {
         {renderContent()}
 
         {/* Yara Character and Dialog */}
-        <div className="absolute bottom-4 right-4 z-20 flex items-end gap-4 pointer-events-none">
+        <div className="absolute bottom-4 right-4 sm:right-8 z-20 w-full max-w-xs sm:max-w-sm md:max-w-md pointer-events-none">
           <AnimatePresence>
             {showYaraDialog && !selectedChallenge && yaraCharImage && (
               <motion.div
@@ -402,9 +402,9 @@ export default function Station6() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20, transition: { duration: 0.5 } }}
                 transition={{ duration: 0.5 }}
-                className="flex items-end gap-4"
+                className="flex items-end gap-2"
               >
-                <div className="w-64 mb-4">
+                <div className="flex-grow mb-4">
                   <Card className="p-3 shadow-lg bg-white/95 relative">
                     <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium" />
                     <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
@@ -414,7 +414,7 @@ export default function Station6() {
                   initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0, transition: { delay: 0.5, duration: 0.8 } }}
                   exit={{ opacity: 0, x: 50, transition: { duration: 0.5 } }}
-                  className="w-24 h-auto md:w-32"
+                  className="w-24 h-auto md:w-32 shrink-0"
                 >
                   <Image
                     src={yaraCharImage.imageUrl}
