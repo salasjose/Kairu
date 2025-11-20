@@ -153,10 +153,13 @@ export default function Station9() {
   }, []);
   
   useEffect(() => {
-    if (isLoading || !chosenScenario) return; 
-    const clearTimers = scheduleYaraDialog();
-    return clearTimers;
+    // Only show Yara's message if a scenario is chosen and the initial data has loaded
+    if (!isLoading && chosenScenario) {
+        const clearTimers = scheduleYaraDialog();
+        return clearTimers;
+    }
   }, [isLoading, chosenScenario, scheduleYaraDialog]);
+
 
   const savePrizesToDb = useCallback(async (prizesToSave: PlacedPrize[]) => {
       if (!user || !db) return;
@@ -326,7 +329,8 @@ export default function Station9() {
           <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
         )}
         
-        {/* Canvas Area */}
+        {/* Canvas Area - Only render if a scenario is chosen */}
+        {chosenScenario && (
         <div id={DRAGGABLE_AREA_ID} ref={canvasRef} className="absolute inset-0 z-20">
           {/* Placed Prizes */}
           {placedPrizes.map((prize) => {
@@ -359,11 +363,9 @@ export default function Station9() {
                     style={{ 
                         x: prize.x, 
                         y: prize.y,
-                        // El tamaño se controla mediante la propiedad `scale` en la animación.
-                        // Establecer un tamaño base aquí.
                         width: '80px', 
                         height: '80px',
-                        transformOrigin: 'center center' // Asegura que la escala sea desde el centro
+                        transformOrigin: 'center center'
                     }}
                     initial={{ x: prize.x, y: prize.y, scale: prize.scale }}
                     onClick={(e) => {
@@ -409,109 +411,114 @@ export default function Station9() {
             )
           })}
         </div>
+        )}
 
-        {/* Sidebar Toggle Button */}
-        <Button 
-            variant="outline"
-            size="icon"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="absolute top-4 right-4 z-40 bg-white/80"
-        >
-            <AnimatePresence initial={false}>
-                {isSidebarOpen ? (
-                    <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
-                        <X />
-                    </motion.div>
-                ) : (
-                    <motion.div key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
-                        <Gift />
+        {/* Sidebar and Yara only render if a scenario is chosen */}
+        {chosenScenario && (
+        <>
+            {/* Sidebar Toggle Button */}
+            <Button 
+                variant="outline"
+                size="icon"
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="absolute top-4 right-4 z-40 bg-white/80"
+            >
+                <AnimatePresence initial={false}>
+                    {isSidebarOpen ? (
+                        <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
+                            <X />
+                        </motion.div>
+                    ) : (
+                        <motion.div key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
+                            <Gift />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </Button>
+
+            {/* Sidebar with unplaced prizes */}
+            <AnimatePresence>
+                {isSidebarOpen && (
+                    <motion.div 
+                        className="absolute top-0 right-0 h-full w-24 md:w-32 bg-black/50 backdrop-blur-sm p-2 z-30 flex flex-col items-center"
+                        initial={{ x: "100%" }}
+                        animate={{ x: 0 }}
+                        exit={{ x: "100%" }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    >
+                        <h3 className="text-white font-bold text-sm mt-12 mb-2 text-center">Insignias</h3>
+                        <div className="flex-grow overflow-y-auto space-y-2 w-full">
+                            {unplacedPrizes.map(prize => (
+                                <DraggablePrize 
+                                key={prize.id}
+                                prize={prize} 
+                                onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
+                                constraints={canvasRef}
+                                />
+                            ))}
+                            {unplacedPrizes.length === 0 && (
+                                <p className="text-white/70 text-xs text-center pt-4">¡Todas las insignias colocadas!</p>
+                            )}
+                        </div>
+                        {allPrizesPlaced && (
+                        isStationLocked ? (
+                            <Button onClick={handleModifyStation} className="mt-4 w-full">
+                                <Edit className="mr-2 h-4 w-4" />
+                                Modificar
+                            </Button>
+                        ) : (
+                            <Button onClick={handleConfirmStation} className="mt-4 w-full">
+                                <Check className="mr-2 h-4 w-4" />
+                                Confirmar
+                            </Button>
+                        )
+                        )}
+                        {isStationLocked && (
+                            <Button onClick={handleCompleteChallenge} className="mt-2 w-full" variant="secondary">
+                                Completar
+                            </Button>
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>
-        </Button>
-
-
-        {/* Sidebar with unplaced prizes */}
-        <AnimatePresence>
-            {isSidebarOpen && (
-                 <motion.div 
-                    className="absolute top-0 right-0 h-full w-24 md:w-32 bg-black/50 backdrop-blur-sm p-2 z-30 flex flex-col items-center"
-                    initial={{ x: "100%" }}
-                    animate={{ x: 0 }}
-                    exit={{ x: "100%" }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                >
-                    <h3 className="text-white font-bold text-sm mt-12 mb-2 text-center">Insignias</h3>
-                    <div className="flex-grow overflow-y-auto space-y-2 w-full">
-                        {unplacedPrizes.map(prize => (
-                            <DraggablePrize 
-                            key={prize.id}
-                            prize={prize} 
-                            onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
-                            constraints={canvasRef}
-                            />
-                        ))}
-                        {unplacedPrizes.length === 0 && (
-                            <p className="text-white/70 text-xs text-center pt-4">¡Todas las insignias colocadas!</p>
-                        )}
-                    </div>
-                    {allPrizesPlaced && (
-                      isStationLocked ? (
-                        <Button onClick={handleModifyStation} className="mt-4 w-full">
-                            <Edit className="mr-2 h-4 w-4" />
-                            Modificar
-                        </Button>
-                      ) : (
-                        <Button onClick={handleConfirmStation} className="mt-4 w-full">
-                            <Check className="mr-2 h-4 w-4" />
-                            Confirmar
-                        </Button>
-                      )
-                    )}
-                    {isStationLocked && (
-                         <Button onClick={handleCompleteChallenge} className="mt-2 w-full" variant="secondary">
-                            Completar
-                        </Button>
-                    )}
-                </motion.div>
-            )}
-        </AnimatePresence>
-        
-        {/* Yara Character and Dialog */}
-        <div className="absolute bottom-4 right-40 z-30 flex items-end gap-4 pointer-events-none">
-          <AnimatePresence>
-            {isYaraMessageVisible && yaraCharImage && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.5 }}
-                className="flex items-end gap-4"
-              >
-                <div className="w-80 mb-4">
-                  <Card className="p-3 shadow-lg bg-white/95 relative pointer-events-auto">
-                    <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium" />
-                    <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
-                  </Card>
-                </div>
+            
+            {/* Yara Character and Dialog */}
+            <div className="absolute bottom-4 right-40 z-30 flex items-end gap-4 pointer-events-none">
+            <AnimatePresence>
+                {isYaraMessageVisible && yaraCharImage && (
                 <motion.div
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0, transition: { delay: 0.2 } }}
-                  exit={{ opacity: 0, x: 50, transition: { duration: 0.5 } }}
-                  className="w-24 h-auto md:w-32"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.5 }}
+                    className="flex items-end gap-4"
                 >
-                  <Image
-                    src={yaraCharImage.imageUrl}
-                    alt={yaraCharImage.description}
-                    width={150}
-                    height={187}
-                    className="h-auto w-full select-none"
-                  />
+                    <div className="w-80 mb-4">
+                    <Card className="p-3 shadow-lg bg-white/95 relative pointer-events-auto">
+                        <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium" />
+                        <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
+                    </Card>
+                    </div>
+                    <motion.div
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0, transition: { delay: 0.2 } }}
+                    exit={{ opacity: 0, x: 50, transition: { duration: 0.5 } }}
+                    className="w-24 h-auto md:w-32"
+                    >
+                    <Image
+                        src={yaraCharImage.imageUrl}
+                        alt={yaraCharImage.description}
+                        width={150}
+                        height={187}
+                        className="h-auto w-full select-none"
+                    />
+                    </motion.div>
                 </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                )}
+            </AnimatePresence>
+            </div>
+        </>
+        )}
 
       </div>
       <CompletionDialog 
