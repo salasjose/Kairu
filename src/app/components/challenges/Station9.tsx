@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { useUser, useFirestore } from "@/firebase/hooks";
+import { useUser, useFirestore } from "@/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { usePrizeCart } from "@/hooks/use-prize-cart";
 import { motion, useDragControls, PanInfo, AnimatePresence } from "framer-motion";
@@ -46,7 +47,6 @@ const DraggablePrize = ({
         key={prize.id}
         drag
         dragMomentum={false}
-        dragControls={controls}
         onDragEnd={onDragEnd}
         dragConstraints={constraints}
         className="w-full aspect-square bg-white/20 rounded-md p-1 cursor-grab active:cursor-grabbing"
@@ -138,6 +138,7 @@ export default function Station9() {
   }, [user, db]);
 
   const scheduleYaraDialog = useCallback(() => {
+    if (!chosenScenario) return; // Don't show Yara if no scenario is chosen
     const showTimer = setTimeout(() => {
       setIsYaraMessageVisible(true);
     }, 1000); 
@@ -150,15 +151,14 @@ export default function Station9() {
       clearTimeout(showTimer);
       clearTimeout(hideTimer);
     };
-  }, []);
+  }, [chosenScenario]);
   
   useEffect(() => {
-    // Only show Yara's message if a scenario is chosen and the initial data has loaded
-    if (!isLoading && chosenScenario) {
+    if (!isLoading) {
         const clearTimers = scheduleYaraDialog();
         return clearTimers;
     }
-  }, [isLoading, chosenScenario, scheduleYaraDialog]);
+  }, [isLoading, scheduleYaraDialog]);
 
 
   const savePrizesToDb = useCallback(async (prizesToSave: PlacedPrize[]) => {
@@ -321,10 +321,10 @@ export default function Station9() {
         
         {/* Background layer */}
         {backgroundSources ? (
-          <>
-            <ArtDirectedBackground {...backgroundSources} />
-            <div className="absolute inset-0 bg-black/10 z-10" />
-          </>
+            <div className="absolute inset-0 z-0">
+                <ArtDirectedBackground {...backgroundSources} />
+                <div className="absolute inset-0 bg-black/10" />
+            </div>
         ) : (
           <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
         )}
@@ -365,7 +365,8 @@ export default function Station9() {
                         y: prize.y,
                         width: '80px', 
                         height: '80px',
-                        transformOrigin: 'center center'
+                        transformOrigin: 'center center',
+                        scale: prize.scale,
                     }}
                     initial={{ x: prize.x, y: prize.y, scale: prize.scale }}
                     onClick={(e) => {
