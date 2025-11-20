@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { useUser } from '@/firebase/hooks';
+import { useUser } from '@/firebase';
 
 const CHALLENGE_PROGRESS_KEY_PREFIX = 'kairu-challenge-progress-';
 

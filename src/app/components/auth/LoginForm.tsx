@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Mail, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/firebase/hooks";
+import { useAuth } from "@/firebase";
 import { resetPassword } from "@/firebase/auth";
 
 export const LoginFormSchema = z.object({

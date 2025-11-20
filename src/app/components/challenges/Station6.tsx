@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Upload, ArrowLeft, Puzzle, CheckCircle, Lock, Link as LinkIcon } from 'lucide-react';
 import PrizeDialog from '../PrizeDialog';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { useUser, useFirestore } from '@/firebase/hooks';
+import { useUser, useFirestore } from '@/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import TypewriterText from '../auth/TypewriterText';

@@ -12,7 +12,7 @@ import PrizeCart from './PrizeCart';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import OnboardingFlow from './auth/OnboardingFlow';
 import { AnimatePresence } from 'framer-motion';
-import { useUser, useFirestore, useAuth } from '@/firebase/hooks';
+import { useUser, useFirestore, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useStationProgress } from '@/hooks/use-station-progress';
@@ -168,7 +168,7 @@ export default function GameClient() {
   const [isFetchingPlayer, setIsFetchingPlayer] = useState(true);
   const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
   
-  const fetchInitialPlayerState = useCallback(async () => {
+  const fetchInitialPlayerState = useCallback(() => {
     if (!user || !db) return;
 
     const playerDocRef = doc(db, 'users', user.uid);
@@ -184,7 +184,14 @@ export default function GameClient() {
             chosenScenario: data.chosenScenario || null,
             unlockedStations: data.unlockedStations || [1],
         };
-        setPlayerState(newState);
+        
+        // Prevent unnecessary re-renders
+        setPlayerState(currentState => {
+            if (JSON.stringify(currentState) === JSON.stringify(newState)) {
+                return currentState;
+            }
+            return newState;
+        });
 
         // If user has no avatar or scenario, force them back to onboarding
         if (!newState.avatar || !newState.chosenScenario) {
@@ -221,9 +228,9 @@ export default function GameClient() {
     };
     
     if (user) {
-      const unsubPromise = fetchInitialPlayerState();
+      const unsub = fetchInitialPlayerState();
       return () => {
-        unsubPromise?.then(unsub => unsub && unsub());
+        if (unsub) unsub();
       }
     } else {
       setPlayerState(null);

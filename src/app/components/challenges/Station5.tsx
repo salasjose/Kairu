@@ -15,7 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import WordSearchGame from "./WordSearchGame";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-import { useUser, useFirestore } from "@/firebase/hooks";
+import { useUser, useFirestore } from "@/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { useChallengeProgress } from "@/hooks/use-challenge-progress";

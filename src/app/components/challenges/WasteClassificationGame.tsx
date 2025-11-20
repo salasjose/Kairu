@@ -10,7 +10,7 @@ import { toast } from '@/hooks/use-toast';
 import { WasteItem, wasteItemsData } from '@/lib/data';
 import Image from 'next/image';
 import type { LucideIcon } from 'lucide-react';
-import { useUser } from '@/firebase/hooks';
+import { useUser } from '@/firebase';
 
 type WasteCategory = 'recycle' | 'organic' | 'trash';
 

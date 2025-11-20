@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { AlertCircle, ArrowLeft, Lightbulb, Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
-import { useUser } from "@/firebase/hooks";
+import { useUser } from "@/firebase";
 
 type Question = {
   question: string;

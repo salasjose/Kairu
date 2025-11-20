@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from 'react';
-import { useUser, useFirestore } from '@/firebase/hooks';
+import { useUser, useFirestore } from '@/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 export function useStationProgress() {

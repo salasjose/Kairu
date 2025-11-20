@@ -11,7 +11,7 @@ import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { signUp, login } from '@/firebase/auth';
-import { useAuth } from '@/firebase/hooks';
+import { useAuth } from '@/firebase';
 import type { z } from "zod";
 import { Button } from '@/components/ui/button';
 import AnimatedWelcome from './AnimatedWelcome';

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import type { Prize } from '@/lib/data';
-import { useUser } from '@/firebase/hooks';
+import { useUser } from '@/firebase';
 
 
 interface PrizeCartContextType {
