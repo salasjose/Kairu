@@ -17,7 +17,6 @@ export default function StationLayout({
         <nav className="container flex items-center justify-between h-16 px-4">
           <Link href="/" className="flex items-center gap-2">
             <Logo className="h-8" />
-            <span className="font-bold font-headline text-xl hidden sm:inline"></span>
           </Link>
           <div className="flex items-center gap-2">
             <Button asChild variant="outline" size="sm">
