@@ -40,7 +40,7 @@ const challenges = {
 
 type ChallengeId = keyof typeof challenges;
 
-const ChallengeScreen = ({ challengeId, onBack, onComplete }: { challengeId: ChallengeId, onBack: () => void, onComplete: () => void }) => {
+const ChallengeScreen = ({ challengeId, onBack, onComplete, isCompleted }: { challengeId: ChallengeId, onBack: () => void, onComplete: () => void, isCompleted: boolean }) => {
     const challenge = challenges[challengeId];
     const imageInfo = PlaceHolderImages.find(p => p.id === challenge.imageId);
     const { user } = useUser();
@@ -90,6 +90,8 @@ const ChallengeScreen = ({ challengeId, onBack, onComplete }: { challengeId: Cha
     }, [user, db, handleUrlChange]);
 
     const handleSaveAndComplete = async () => {
+        if (isCompleted) return;
+
         if (!url.trim()) {
             toast({ title: "URL vacía", description: "Por favor, ingresa una URL válida.", variant: "destructive" });
             return;
@@ -149,10 +151,17 @@ const ChallengeScreen = ({ challengeId, onBack, onComplete }: { challengeId: Cha
                                 placeholder="https://youtube.com/tu-video"
                                 value={url}
                                 onChange={(e) => handleUrlChange(e.target.value)}
-                                disabled={isLoading}
+                                disabled={isLoading || isCompleted}
                             />
                         </div>
-                        <Button onClick={handleSaveAndComplete} size="lg">Guardar y Completar</Button>
+                        {isCompleted ? (
+                             <Button size="lg" disabled>
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Reto Completado
+                             </Button>
+                        ) : (
+                            <Button onClick={handleSaveAndComplete} size="lg">Guardar y Completar</Button>
+                        )}
                     </CardContent>
                 </Card>
             </div>
@@ -192,12 +201,16 @@ export default function Station8() {
 
 
   const handleComplete = (challengeId: ChallengeId) => {
-    unlockStation(stationId + 1);
-    toast({
-      title: `¡Estación ${stationId} Completada!`,
-      description: `¡Reto '${challenges[challengeId].title}' superado!`,
-    });
-    setIsPrizeModalOpen(true);
+    // Only unlock and show prize if it's not already claimed
+    if (!hasClaimedPrize) {
+        unlockStation(stationId + 1);
+        toast({
+            title: `¡Estación ${stationId} Completada!`,
+            description: `¡Reto '${challenges[challengeId].title}' superado!`,
+        });
+        setIsPrizeModalOpen(true);
+    }
+    setSelectedChallenge(null);
   };
   
   const handleClaimPrize = () => {
@@ -206,10 +219,15 @@ export default function Station8() {
   };
   
   const hasClaimedPrize = prizes.some(p => p.stationId === stationId);
-  const isChallengeCompleted = hasClaimedPrize; // If prize is claimed, challenge is done.
+  const isChallengeCompleted = hasClaimedPrize;
 
   if (selectedChallenge) {
-    return <ChallengeScreen challengeId={selectedChallenge} onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete(selectedChallenge)} />
+    return <ChallengeScreen 
+                challengeId={selectedChallenge} 
+                onBack={() => setSelectedChallenge(null)} 
+                onComplete={() => handleComplete(selectedChallenge)}
+                isCompleted={isChallengeCompleted}
+            />
   }
 
   return (
@@ -233,7 +251,6 @@ export default function Station8() {
                   key={key}
                   onClick={() => setSelectedChallenge(key)}
                   className="transition-transform duration-300 hover:scale-105 group"
-                  disabled={isChallengeCompleted}
                 >
                   <Card className="w-60 md:w-64 h-auto bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors relative">
                      {isChallengeCompleted && (
@@ -254,7 +271,7 @@ export default function Station8() {
           </div>
            {isChallengeCompleted && (
              <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
-                Ya has completado esta estación y reclamado tu insignia.
+                Ya has completado esta estación.
             </p>
            )}
         </div>
