@@ -91,8 +91,8 @@ const SettingsPanel = ({ playerState, setPlayerState, onFullReset }: { playerSta
         await resetProgress(); 
 
         // Then, clear local state which depends on local storage.
-        resetChallengeProgress();
         clearCart();
+        resetChallengeProgress();
         
         // Finally, trigger the UI reset to go to onboarding.
         onFullReset(); 
@@ -112,7 +112,7 @@ const SettingsPanel = ({ playerState, setPlayerState, onFullReset }: { playerSta
                 <AlertDialogHeader>
                 <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
                 <AlertDialogDescription>
-                    Esta acción es irreversible. Se borrará permanentemente todo tu progreso en el juego desde la base de datos, incluyendo fotos, enlaces y progreso de las estaciones. Tu cuenta de usuario se conservará, pero tendrás que empezar la aventura desde cero, eligiendo un nuevo avatar y escenario.
+                    Esta acción es irreversible. Se borrará permanentemente todo tu progreso en el juego desde la base de datos (fotos, enlaces, insignias colocadas, etc.), pero se conservará tu cuenta de usuario. Tendrás que empezar la aventura desde cero, eligiendo un nuevo avatar y escenario.
                 </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

@@ -36,13 +36,11 @@ export function useStationProgress() {
     
     const playerDocRef = doc(db, 'users', user.uid);
     try {
-        // This will overwrite the user's document, keeping only essential fields
-        // and deleting all game-specific progress.
         const docSnap = await getDoc(playerDocRef);
         if (docSnap.exists()) {
             const currentData = docSnap.data();
             
-            // Preserve essential user data
+            // Preserve only essential user registration data
             const dataToKeep = {
                 nombre: currentData.nombre || '',
                 apellido: currentData.apellido || '',
@@ -52,21 +50,16 @@ export function useStationProgress() {
                 edad: currentData.edad || '',
             };
 
-            // Overwrite the document completely, effectively deleting all other fields.
+            // Overwrite the document completely, effectively deleting all other game-related fields.
+            // This also forces the user back to the avatar/scenario selection flow.
             await setDoc(playerDocRef, {
                 ...dataToKeep,
                 unlockedStations: [1], 
-                chosenScenario: null, // Force user to choose scenario again
+                chosenScenario: null, 
+                avatar: null,
             });
         }
         
-        // also clear all related local storage items to be safe
-        Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('kairu-')) {
-                localStorage.removeItem(key);
-            }
-        });
-
     } catch (error) {
         console.error("Failed to reset progress in Firestore", error);
     }
