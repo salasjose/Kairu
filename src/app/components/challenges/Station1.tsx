@@ -25,7 +25,7 @@ import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import Logo from "../Logo";
 import { usePrizeCart } from "@/hooks/use-prize-cart";
 
-const ResponsiveBackground = dynamic(() => import('../ResponsiveBackground'), {
+const ArtDirectedBackground = dynamic(() => import('../ArtDirectedBackground'), {
   loading: () => <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background">
       <Logo className="h-24 animate-pulse" />
       <p className="text-primary/70 mt-4">Cargando Fondo...</p>
@@ -364,51 +364,53 @@ const PhotoChallenge = ({
         onTakePhoto={handleTakeNewPhotoClick}
         onUpload={handleUploadClick}
       />
-      <ChallengeContainer
-        stationId={1}
-        title="Estación Bionexus"
-        description={challenges["Fauna y Flora"].description}
-      >
-        <div className="w-full max-w-4xl mx-auto">
-          <Button variant="ghost" onClick={onBack} className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Volver a los retos
-          </Button>
-
-          <div className="space-y-8">
-            <section>
-              <h3 className="text-2xl font-bold font-headline text-primary mb-4">Flora Local</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {floraPhotos.map((photo, index) => (
-                  <PhotoSlot
-                    key={`flora-${index}`}
-                    imageUrl={photo}
-                    onAddPhoto={() => handleAddPhotoClick("flora", index)}
-                  />
-                ))}
-              </div>
-            </section>
-
-            <section>
-              <h3 className="text-2xl font-bold font-headline text-primary mb-4">Fauna Local</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {faunaPhotos.map((photo, index) => (
-                  <PhotoSlot
-                    key={`fauna-${index}`}
-                    imageUrl={photo}
-                    onAddPhoto={() => handleAddPhotoClick("fauna", index)}
-                  />
-                ))}
-              </div>
-            </section>
-          </div>
-          <div className="mt-8 text-center">
-            <Button size="lg" onClick={onChallengeCompleteClick} disabled={!areAllPhotosUploaded}>
-              Completar Reto
+      <div className="flex-grow flex items-center justify-center p-4">
+        <ChallengeContainer
+          stationId={1}
+          title="Estación Bionexus"
+          description={challenges["Fauna y Flora"].description}
+        >
+          <div className="w-full max-w-4xl mx-auto">
+            <Button variant="ghost" onClick={onBack} className="mb-4">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Volver a los retos
             </Button>
+
+            <div className="space-y-8">
+              <section>
+                <h3 className="text-2xl font-bold font-headline text-primary mb-4">Flora Local</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {floraPhotos.map((photo, index) => (
+                    <PhotoSlot
+                      key={`flora-${index}`}
+                      imageUrl={photo}
+                      onAddPhoto={() => handleAddPhotoClick("flora", index)}
+                    />
+                  ))}
+                </div>
+              </section>
+
+              <section>
+                <h3 className="text-2xl font-bold font-headline text-primary mb-4">Fauna Local</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {faunaPhotos.map((photo, index) => (
+                    <PhotoSlot
+                      key={`fauna-${index}`}
+                      imageUrl={photo}
+                      onAddPhoto={() => handleAddPhotoClick("fauna", index)}
+                    />
+                  ))}
+                </div>
+              </section>
+            </div>
+            <div className="mt-8 text-center">
+              <Button size="lg" onClick={onChallengeCompleteClick} disabled={!areAllPhotosUploaded}>
+                Completar Reto
+              </Button>
+            </div>
           </div>
-        </div>
-      </ChallengeContainer>
+        </ChallengeContainer>
+      </div>
     </>
   );
 };
@@ -567,38 +569,40 @@ const HabitatChallenge = ({
         onTakePhoto={handleTakeNewPhotoClick}
         onUpload={handleUploadClick}
       />
-      <ChallengeContainer
-        stationId={1}
-        title="Estación Bionexus"
-        description={challenges["Cuidado Animal"].description}
-      >
-        <div className="w-full max-w-4xl mx-auto">
-          <Button variant="ghost" onClick={onBack} className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Volver a los retos
-          </Button>
-
-          <section>
-            <h3 className="text-2xl font-bold font-headline text-primary mb-4">
-              Tu Bebedero/Comedero
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {habitatPhotos.map((photo, index) => (
-                <PhotoSlot
-                  key={`habitat-${index}`}
-                  imageUrl={photo}
-                  onAddPhoto={() => handleAddPhotoClick(index)}
-                />
-              ))}
-            </div>
-          </section>
-          <div className="mt-8 text-center">
-            <Button size="lg" onClick={onChallengeCompleteClick} disabled={!areAllPhotosUploaded}>
-              Completar Reto
+      <div className="flex-grow flex items-center justify-center p-4">
+        <ChallengeContainer
+          stationId={1}
+          title="Estación Bionexus"
+          description={challenges["Cuidado Animal"].description}
+        >
+          <div className="w-full max-w-4xl mx-auto">
+            <Button variant="ghost" onClick={onBack} className="mb-4">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Volver a los retos
             </Button>
+
+            <section>
+              <h3 className="text-2xl font-bold font-headline text-primary mb-4">
+                Tu Bebedero/Comedero
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {habitatPhotos.map((photo, index) => (
+                  <PhotoSlot
+                    key={`habitat-${index}`}
+                    imageUrl={photo}
+                    onAddPhoto={() => handleAddPhotoClick(index)}
+                  />
+                ))}
+              </div>
+            </section>
+            <div className="mt-8 text-center">
+              <Button size="lg" onClick={onChallengeCompleteClick} disabled={!areAllPhotosUploaded}>
+                Completar Reto
+              </Button>
+            </div>
           </div>
-        </div>
-      </ChallengeContainer>
+        </ChallengeContainer>
+      </div>
     </>
   );
 };
@@ -658,25 +662,17 @@ export default function Station1() {
   };
 
   if (selectedChallenge === "Fauna y Flora") {
-    return (
-      <div className="flex-grow flex items-center justify-center p-4">
-        <PhotoChallenge
+    return <PhotoChallenge
           onBack={() => setSelectedChallenge(null)}
           onStationComplete={() => handleChallengeComplete("Fauna y Flora")}
-        />
-      </div>
-    );
+        />;
   }
 
   if (selectedChallenge === "Cuidado Animal") {
-     return (
-      <div className="flex-grow flex items-center justify-center p-4">
-        <HabitatChallenge
+     return <HabitatChallenge
           onBack={() => setSelectedChallenge(null)}
           onStationComplete={() => handleChallengeComplete("Cuidado Animal")}
-        />
-      </div>
-    );
+        />;
   }
 
   const stationCompletedChallenges = completedChallenges[stationId] || {};
@@ -687,7 +683,11 @@ export default function Station1() {
 
   return (
     <>
-      <ResponsiveBackground>
+      <ArtDirectedBackground
+        desktopSrc="/backgrounds/BionexusPC.png"
+        tabletSrc="/backgrounds/BionexusTablet.png"
+        mobileSrc="/backgrounds/Bionexus1075_X_1944.png"
+      >
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
           <div className="bg-white/90 backdrop-blur-sm text-primary font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
             <h1 className="text-4xl md:text-5xl">Bionexus</h1>
@@ -780,7 +780,7 @@ export default function Station1() {
           </div>
 
         </div>
-      </ResponsiveBackground>
+      </ArtDirectedBackground>
 
       {/* Yara Character and Dialog */}
       <div className="absolute bottom-4 right-4 sm:right-8 lg:right-12 z-20 w-full max-w-xs sm:max-w-sm md:max-w-md pointer-events-none">
