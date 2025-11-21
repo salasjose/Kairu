@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -305,98 +304,98 @@ export default function Station6() {
     }
 
     return (
-      <div className="relative z-10 flex flex-col items-center justify-center text-center w-full max-w-4xl mx-auto">
-        <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
-          <h1 className="text-3xl md:text-5xl">ReGira</h1>
-        </div>
+      <ArtDirectedBackground
+          desktopSrc="/backgrounds/Regira1366_X_768.png"
+          tabletSrc="/backgrounds/Regira1024_X_768.png"
+          mobileSrc="/backgrounds/Regira1075_X_1944.png"
+      >
+        <div className="relative z-10 flex flex-col items-center justify-center text-center w-full max-w-4xl mx-auto">
+          <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
+            <h1 className="text-3xl md:text-5xl">ReGira</h1>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8">
-          {(Object.keys(challenges) as ChallengeId[]).map(key => {
-            const challenge = challenges[key];
-            const Icon = challenge.icon;
-            const isCompleted = stationProgress[key]?.completed;
-            const isLocked = key === 'crossword' && isClient && lockoutTime > 0;
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8">
+            {(Object.keys(challenges) as ChallengeId[]).map(key => {
+              const challenge = challenges[key];
+              const Icon = challenge.icon;
+              const isCompleted = stationProgress[key]?.completed;
+              const isLocked = key === 'crossword' && isClient && lockoutTime > 0;
 
-            return (
-              <button
-                key={key}
-                onClick={() => {
-                    if (isLocked) {
-                        toast({title: "Reto Bloqueado", description: `Podrás intentarlo en ${formatLockoutTime(lockoutTime)}`, variant: "destructive"});
-                    } else {
-                        setSelectedChallenge(key)
-                    }
-                }}
-                className="transition-transform duration-300 hover:scale-105 group"
-                disabled={isLocked}
-              >
-                <Card
-                  className={cn(
-                    'w-60 h-auto bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors relative',
-                    isCompleted && 'border-green-500 border-2',
-                    isLocked && 'bg-gray-500/30 border-gray-600 cursor-not-allowed'
-                  )}
+              return (
+                <button
+                  key={key}
+                  onClick={() => {
+                      if (isLocked) {
+                          toast({title: "Reto Bloqueado", description: `Podrás intentarlo en ${formatLockoutTime(lockoutTime)}`, variant: "destructive"});
+                      } else {
+                          setSelectedChallenge(key)
+                      }
+                  }}
+                  className="transition-transform duration-300 hover:scale-105 group"
+                  disabled={isLocked}
                 >
-                  <CardContent className="flex flex-col items-center justify-center text-center p-4 h-full">
-                    {isCompleted && (
-                      <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1.5 shadow-lg z-10">
-                        <CheckCircle className="text-white h-5 w-5" />
-                      </div>
+                  <Card
+                    className={cn(
+                      'w-60 h-auto bg-card/80 backdrop-blur-sm hover:bg-card/95 transition-colors relative',
+                      isCompleted && 'border-green-500 border-2',
+                      isLocked && 'bg-gray-500/30 border-gray-600 cursor-not-allowed'
                     )}
-                    {isLocked && (
-                         <div className="absolute top-2 right-2 bg-destructive rounded-full p-1.5 shadow-lg z-10">
-                            <Lock className="text-white h-5 w-5" />
+                  >
+                    <CardContent className="flex flex-col items-center justify-center text-center p-4 h-full">
+                      {isCompleted && (
+                        <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1.5 shadow-lg z-10">
+                          <CheckCircle className="text-white h-5 w-5" />
                         </div>
-                    )}
-                    <Icon className={cn("w-12 h-12 text-primary mb-3", isLocked && "text-gray-400")} />
-                    <h2 className={cn("font-bold font-headline text-xl text-primary", isLocked && "text-gray-400")}>
-                      {challenge.title}
-                    </h2>
-                    <p className={cn("text-muted-foreground text-sm mt-1", isLocked && "text-gray-500")}>
-                        {isLocked ? `Bloqueado por ${formatLockoutTime(lockoutTime)}` : challenge.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              </button>
-            );
-          })}
-        </div>
+                      )}
+                      {isLocked && (
+                          <div className="absolute top-2 right-2 bg-destructive rounded-full p-1.5 shadow-lg z-10">
+                              <Lock className="text-white h-5 w-5" />
+                          </div>
+                      )}
+                      <Icon className={cn("w-12 h-12 text-primary mb-3", isLocked && "text-gray-400")} />
+                      <h2 className={cn("font-bold font-headline text-xl text-primary", isLocked && "text-gray-400")}>
+                        {challenge.title}
+                      </h2>
+                      <p className={cn("text-muted-foreground text-sm mt-1", isLocked && "text-gray-500")}>
+                          {isLocked ? `Bloqueado por ${formatLockoutTime(lockoutTime)}` : challenge.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </button>
+              );
+            })}
+          </div>
 
-        <div className="mt-4 flex flex-col items-center gap-2">
-          <Button
-            onClick={() => setIsPrizeModalOpen(true)}
-            size="lg"
-            disabled={!areAllChallengesComplete || hasClaimedPrize}
-          >
-            Completar Estación y Reclamar Insignia
-          </Button>
-          {areAllChallengesComplete && hasClaimedPrize ? (
-            <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
-              Ya has reclamado la insignia de esta estación.
-            </p>
-          ) : !areAllChallengesComplete && (
-            <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
-              Completa ambos retos para activar este botón.
-            </p>
-          )}
+          <div className="mt-4 flex flex-col items-center gap-2">
+            <Button
+              onClick={() => setIsPrizeModalOpen(true)}
+              size="lg"
+              disabled={!areAllChallengesComplete || hasClaimedPrize}
+            >
+              Completar Estación y Reclamar Insignia
+            </Button>
+            {areAllChallengesComplete && hasClaimedPrize ? (
+              <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
+                Ya has reclamado la insignia de esta estación.
+              </p>
+            ) : !areAllChallengesComplete && (
+              <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
+                Completa ambos retos para activar este botón.
+              </p>
+            )}
+          </div>
         </div>
-      </div>
+      </ArtDirectedBackground>
     );
   };
 
   return (
     <>
-       <ArtDirectedBackground
-          desktopSrc="/backgrounds/RegiraPC.png"
-          tabletSrc="/backgrounds/RegiraTablet.png"
-          mobileSrc="/backgrounds/Regira1075_X_1944.png"
-        >
-        {renderContent()}
-
-        {/* Yara Character and Dialog */}
+       {renderContent()}
+       {!selectedChallenge && (
         <div className="absolute bottom-4 right-4 sm:right-8 z-20 w-full max-w-xs sm:max-w-sm md:max-w-md pointer-events-none">
           <AnimatePresence>
-            {showYaraDialog && !selectedChallenge && yaraCharImage && (
+            {showYaraDialog && yaraCharImage && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -429,7 +428,7 @@ export default function Station6() {
             )}
           </AnimatePresence>
         </div>
-      </ArtDirectedBackground>
+       )}
       <PrizeDialog open={isPrizeModalOpen} stationId={stationId} onClaim={handleClaimPrize} />
     </>
   );

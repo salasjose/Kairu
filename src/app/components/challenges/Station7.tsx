@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -232,8 +231,8 @@ export default function Station7() {
       />
 
       <ArtDirectedBackground
-        desktopSrc="/backgrounds/VerdelabPC.png"
-        tabletSrc="/backgrounds/VerdelabTablet.png"
+        desktopSrc="/backgrounds/Verdelab1366_X_768.png"
+        tabletSrc="/backgrounds/Verdelab1024_X_768.png"
         mobileSrc="/backgrounds/Verdelab1075_X_1944.png"
       >
         <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">

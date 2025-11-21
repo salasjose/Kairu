@@ -21,7 +21,7 @@ export default function ArtDirectedBackground({
       <div className="absolute inset-0 -z-10">
         {/* Desktop */}
         <div
-          className="hidden lg:block w-full h-full bg-contain bg-center bg-no-repeat"
+          className="hidden lg:block w-full h-full bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${desktopSrc})` }}
         />
         {/* Tablet */}

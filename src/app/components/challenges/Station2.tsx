@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -487,8 +486,8 @@ export default function Station2() {
 
     return (
         <ArtDirectedBackground
-            desktopSrc="/backgrounds/ImpactrackPC.png"
-            tabletSrc="/backgrounds/ImpactrackTablet.png"
+            desktopSrc="/backgrounds/Impactrack1366_X_768.png"
+            tabletSrc="/backgrounds/Impactrack1024_X_768.png"
             mobileSrc="/backgrounds/Impactrack1075_X_1944.png"
         >
             <div className="bg-white/90 backdrop-blur-sm text-primary font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">

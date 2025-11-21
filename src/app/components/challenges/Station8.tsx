@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -232,7 +231,11 @@ export default function Station8() {
     }
 
     return (
-      <>
+      <ArtDirectedBackground
+        desktopSrc="/backgrounds/Vitalia1366_X_768.png"
+        tabletSrc="/backgrounds/Vitalia1024_X_768.png"
+        mobileSrc="/backgrounds/Vitalia1075_X_1944.png"
+      >
         <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
           <h1 className="text-3xl md:text-5xl">Vitalia</h1>
         </div>
@@ -269,19 +272,15 @@ export default function Station8() {
               Ya has completado esta estación.
           </p>
         )}
-      </>
+      </ArtDirectedBackground>
     );
   }
 
   return (
     <>
-      <ArtDirectedBackground
-        desktopSrc="/backgrounds/VitaliaPC.png"
-        tabletSrc="/backgrounds/VitaliaTablet.png"
-        mobileSrc="/backgrounds/Vitalia1075_X_1944.png"
-      >
-        {renderContent()}
+      {renderContent()}
          {/* Yara Character and Dialog */}
+      {!selectedChallenge && (
         <div className="absolute bottom-4 right-4 sm:right-8 z-20 w-full max-w-xs sm:max-w-sm md:max-w-md pointer-events-none">
             <AnimatePresence>
                 {showYaraDialog && yaraCharImage && !selectedChallenge && (
@@ -317,7 +316,7 @@ export default function Station8() {
                 )}
             </AnimatePresence>
         </div>
-      </ArtDirectedBackground>
+      )}
       <PrizeDialog
         open={isPrizeModalOpen}
         stationId={stationId}

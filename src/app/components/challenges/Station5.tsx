@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -237,7 +236,11 @@ export default function Station5() {
     }
 
     return (
-      <>
+      <ArtDirectedBackground
+        desktopSrc="/backgrounds/Zonacreativa1366_X_768.png"
+        tabletSrc="/backgrounds/Zonacreativa1024_X_768.png"
+        mobileSrc="/backgrounds/Zonacreativa1075_X_1944.png"
+      >
         <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
           <h1 className="text-3xl md:text-5xl">ZonaCreativa</h1>
         </div>
@@ -291,20 +294,14 @@ export default function Station5() {
                   </p>
               )}
           </div>
-      </>
+      </ArtDirectedBackground>
     );
   }
 
   return (
      <>
-      <ArtDirectedBackground
-        desktopSrc="/backgrounds/ZonacreativaPC.png"
-        tabletSrc="/backgrounds/ZonacreativaTablet.png"
-        mobileSrc="/backgrounds/Zonacreativa1075_X_1944.png"
-      >
-        {renderContent()}
-
-        {/* Yara Character and Dialog */}
+      {renderContent()}
+      {!selectedChallenge && (
         <div className="absolute bottom-4 right-4 sm:right-8 z-20 w-full max-w-xs sm:max-w-sm md:max-w-md pointer-events-none">
             <AnimatePresence>
                 {showYaraDialog && yaraCharImage && !selectedChallenge && (
@@ -340,8 +337,7 @@ export default function Station5() {
                 )}
             </AnimatePresence>
         </div>
-
-      </ArtDirectedBackground>
+      )}
        <PrizeDialog
         open={isPrizeModalOpen}
         stationId={stationId}

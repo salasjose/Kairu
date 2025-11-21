@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
@@ -684,8 +683,8 @@ export default function Station1() {
   return (
     <>
       <ArtDirectedBackground
-        desktopSrc="/backgrounds/BionexusPC.png"
-        tabletSrc="/backgrounds/BionexusTablet.png"
+        desktopSrc="/backgrounds/Bionexus1366_X_768.png"
+        tabletSrc="/backgrounds/Bionexus1024_X_768.png"
         mobileSrc="/backgrounds/Bionexus1075_X_1944.png"
       >
         <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">

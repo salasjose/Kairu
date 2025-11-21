@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -306,8 +305,8 @@ export default function Station3() {
 
     return (
         <ArtDirectedBackground
-            desktopSrc="/backgrounds/RenovaPC.png"
-            tabletSrc="/backgrounds/RenovaTablet.png"
+            desktopSrc="/backgrounds/Renova1366_X_768.png"
+            tabletSrc="/backgrounds/Renova1024_X_768.png"
             mobileSrc="/backgrounds/Renova1075_X_1944.png"
         >
             <div className="bg-primary text-white font-headline py-3 px-8 md:px-10 rounded-lg shadow-lg mb-8 text-center">
