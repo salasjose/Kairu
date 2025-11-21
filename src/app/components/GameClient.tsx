@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
@@ -93,6 +94,7 @@ const SettingsPanel = ({ playerState, setPlayerState, onFullReset }: { playerSta
         // Then, clear local state which depends on local storage.
         clearCart();
         resetChallengeProgress();
+        setPlayerState(null);
         
         // Finally, trigger the UI reset to go to onboarding.
         onFullReset(); 
@@ -112,12 +114,12 @@ const SettingsPanel = ({ playerState, setPlayerState, onFullReset }: { playerSta
                 <AlertDialogHeader>
                 <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
                 <AlertDialogDescription>
-                    Esta acción es irreversible. Se borrará permanentemente todo tu progreso en el juego desde la base de datos (fotos, enlaces, insignias colocadas, etc.), pero se conservará tu cuenta de usuario. Tendrás que empezar la aventura desde cero, eligiendo un nuevo avatar y escenario.
+                    Esta acción es irreversible. Se borrará permanentemente de la base de datos todo tu progreso en el juego (fotos, enlaces, insignias, etc.). Tu cuenta de usuario se conservará, pero tendrás que empezar una nueva aventura desde el principio, eligiendo un nuevo avatar y escenario.
                 </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleClearCacheAndReset} className='bg-destructive hover:bg-destructive/90'>Sí, borrar todo mi progreso</AlertDialogAction>
+                <AlertDialogAction onClick={handleClearCacheAndReset} className='bg-destructive hover:bg-destructive/90'>Sí, borrar mi progreso</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
@@ -263,13 +265,17 @@ export default function GameClient() {
       avatar: data.avatar,
       chosenScenario: data.chosenScenario,
       unlockedStations: [1],
-      ...data.signupData
+      // If it's a new user, merge signup data. If it's an existing user, this will be empty but that's fine.
+      ...(signupData ? data.signupData : {}),
     };
+
     try {
-      await setFirestoreDoc(doc(db, 'users', user.uid), newState, { merge: true });
-      setIsNewUser(false);
+        // Use merge:false for new users or resets to ensure a clean state, but merge:true if just updating
+        const isExistingUserOnboarding = playerState !== null;
+        await setFirestoreDoc(doc(db, 'users', user.uid), newState, { merge: isExistingUserOnboarding });
+        setIsNewUser(false);
     } catch (error) {
-      console.error("Failed to save player data:", error);
+        console.error("Failed to save player data:", error);
     }
   };
 

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 
@@ -37,13 +37,19 @@ type Step = 'welcome' | 'signup' | 'login' | 'avatar' | 'yara' | 'scenario';
 
 export default function OnboardingFlow({ onComplete, onLoginSuccess }: OnboardingFlowProps) {
     const auth = useAuth();
-    const [step, setStep] = useState<Step>('welcome');
+    const [step, setStep] = useState<Step>(auth?.currentUser ? 'avatar' : 'welcome');
     const [signupData, setSignupData] = useState<SignUpData | null>(null);
     const [formName, setFormName] = useState<string>('');
     const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
     const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     
+    useEffect(() => {
+        if (auth?.currentUser && step === 'welcome') {
+            setStep('avatar');
+        }
+    }, [auth, step]);
+
     const background = useMemo(() => PlaceHolderImages.find(p => p.id === 'forest-background'), []);
     const yaraCharImage = useMemo(() => PlaceHolderImages.find((p) => p.id === 'char-yara'), []);
     const avatars = useMemo(() => {
@@ -98,7 +104,7 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
             onLoginSuccess();
         } catch (error: any) {
             let message = "No se pudo iniciar sesión. Inténtalo de nuevo.";
-            if (error.code) {
+             if (error.code) {
                 switch (error.code) {
                     case 'auth/user-not-found':
                     case 'auth/wrong-password':
@@ -106,7 +112,7 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
                         message = "Correo o contraseña incorrectos.";
                         break;
                     default:
-                        // You can add more specific error messages here if needed
+                        message = "Correo o contraseña incorrectos.";
                         break;
                 }
             }
@@ -137,7 +143,25 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
                 chosenScenario: selectedScenario,
                 signupData: signupData,
             });
-        } else if (!selectedAvatar) {
+        } else if (auth?.currentUser && selectedAvatar && selectedScenario) {
+            // Handle case for existing user re-onboarding after reset
+             onComplete({
+                name: auth.currentUser.displayName || "Jugador",
+                avatar: selectedAvatar,
+                chosenScenario: selectedScenario,
+                // We don't have the original signup data, but we can fake it or adjust onComplete
+                signupData: { 
+                    nombre: auth.currentUser.displayName || "", 
+                    apellido: "", 
+                    usuario: "", 
+                    email: auth.currentUser.email || "", 
+                    clave: "", // This is fine as it's not used to set password
+                    telefono: "",
+                    edad: 0,
+                 },
+            });
+        }
+        else if (!selectedAvatar) {
             setStep('avatar');
              toast({
                 title: "Falta un paso",
@@ -207,7 +231,7 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
                      <motion.div key="yara" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center max-w-2xl">
                         {yaraCharImage && <Image src={yaraCharImage.imageUrl} alt="Yara" width={150} height={150} className="mx-auto mb-4" />}
                         <Card className="p-6 shadow-xl">
-                            <h2 className="text-2xl font-bold font-headline text-primary">¡Hola, {formName}!</h2>
+                            <h2 className="text-2xl font-bold font-headline text-primary">¡Hola, {formName || auth?.currentUser?.displayName || 'explorador'}!</h2>
                             <p className="mt-4 text-muted-foreground">Soy Yara, una rana muy curiosa y estaré contigo en este emocionante recorrido. A lo largo del camino conocerás 8 estaciones sorprendentes donde cada desafío superado abrirá nuevas etapas llenas de descubrimientos, aprendizajes y diversión. En el siguiente paso tendrás la oportunidad de escoger el lienzo que te permitirá crear tu propia estación. En cada avance ganarás recompensas especiales que tú mismo elegirás para completar la estación ideal que elijas. Cada paso te conectará más a la naturaleza y te mostrará cómo tus acciones pueden transformar el mundo que te rodea.</p>
                             <p className="mt-4 font-bold text-lg text-primary">¿Listo para comenzar este viaje conmigo?</p>
                             <Button onClick={() => setStep('scenario')} className="mt-6" size="lg">¡Sí!</Button>
