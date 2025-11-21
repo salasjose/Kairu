@@ -22,7 +22,7 @@ export default function ResponsiveBackground({
   children,
 }: ResponsiveBackgroundProps) {
   return (
-    <div className="relative w-full h-full min-h-screen flex flex-col items-center justify-center overflow-hidden bg-black">
+    <div className="relative w-screen h-screen flex flex-col items-center justify-center overflow-hidden bg-black">
       {/* Capa de imagen de fondo responsiva */}
       <div className="absolute inset-0 z-0">
         <picture
@@ -30,7 +30,7 @@ export default function ResponsiveBackground({
           aria-hidden="true"
           role="presentation"
         >
-          {/* PC >= 1025px (se estira para cubrir el ancho) */}
+          {/* PC >= 1025px (cubre el ancho) */}
           <source media="(min-width: 1025px)" srcSet={desktopSrc} />
           {/* Tablet >= 650px (contenida) */}
           <source media="(min-width: 650px)" srcSet={tabletSrc} />
@@ -38,7 +38,7 @@ export default function ResponsiveBackground({
           <img
             src={mobileSrc}
             alt="Fondo de la estación"
-            className="absolute inset-0 h-full w-full object-contain lg:object-cover"
+            className="absolute inset-0 h-full w-full object-cover lg:object-contain"
             sizes="100vw"
             decoding="async"
             loading="eager"
