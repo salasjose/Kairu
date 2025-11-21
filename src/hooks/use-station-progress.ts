@@ -38,7 +38,7 @@ export function useStationProgress() {
     const playerDocRef = doc(db, 'users', user.uid);
     try {
       // Deletes all game-related fields from the document,
-      // leaving only the original registration data.
+      // leaving only the original registration data intact.
       await updateDoc(playerDocRef, {
           unlockedStations: [1],
           avatar: deleteField(),
