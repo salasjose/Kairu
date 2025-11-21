@@ -337,17 +337,23 @@ export default function Station9() {
                     key={prize.id}
                     drag
                     dragMomentum={false}
-                    onDrag={(event, info) => {
-                      if (!isStationLocked) {
-                        const newPlacedPrizes = placedPrizes.map(p => 
-                          p.id === prize.id ? { ...p, x: info.point.x, y: info.point.y } : p
-                        );
-                        setPlacedPrizes(newPlacedPrizes);
-                      }
-                    }}
-                    onDragEnd={() => {
+                    onDragStart={() => {
                         if (!isStationLocked) {
-                            savePrizesToDb(placedPrizes)
+                            setSelectedPrizeId(prize.id);
+                        }
+                    }}
+                    onDragEnd={(e, info) => {
+                        if (!isStationLocked) {
+                            const canvasRect = canvasRef.current?.getBoundingClientRect();
+                            if (!canvasRect) return;
+                            const newX = info.point.x - canvasRect.left;
+                            const newY = info.point.y - canvasRect.top;
+
+                            const newPlacedPrizes = placedPrizes.map(p => 
+                                p.id === prize.id ? { ...p, x: newX, y: newY } : p
+                            );
+                            setPlacedPrizes(newPlacedPrizes);
+                            savePrizesToDb(newPlacedPrizes);
                         }
                     }}
                     dragListener={!isStationLocked}
@@ -358,9 +364,9 @@ export default function Station9() {
                         width: '80px', 
                         height: '80px',
                     }}
-                    initial={{ x: prize.x, y: prize.y }}
+                    initial={{ x: prize.x, y: prize.y, scale: prize.scale || 1 }}
                     animate={{
-                      scale: isSelected ? (prize.scale || 1) * 1.1 : (prize.scale || 1),
+                      scale: prize.scale || 1,
                       boxShadow: isSelected ? "0px 0px 15px rgba(255,255,100,0.8)" : "0px 0px 0px rgba(0,0,0,0)",
                     }}
                     transition={{ duration: 0.2 }}
