@@ -37,26 +37,30 @@ export function useStationProgress() {
     
     const playerDocRef = doc(db, 'users', user.uid);
     try {
-      // Deletes all game-related fields from the document,
-      // leaving only the original registration data intact.
-      await updateDoc(playerDocRef, {
-          unlockedStations: [1],
-          avatar: deleteField(),
-          chosenScenario: deleteField(),
-          placedPrizes: deleteField(),
-          station1FaunaPhotos: deleteField(),
-          station1FloraPhotos: deleteField(),
-          station1HabitatPhotos: deleteField(),
-          station2Days: deleteField(),
-          station3UrlCrafts: deleteField(),
-          station3UrlSeparate: deleteField(),
-          station4Url: deleteField(),
-          station5Url: deleteField(),
-          station6VideoUrl: deleteField(),
-          station7Businesses: deleteField(),
-          station8Url: deleteField(),
-          station9Locked: deleteField(),
+      const docSnap = await getDoc(playerDocRef);
+      if (!docSnap.exists()) return;
+
+      const userData = docSnap.data();
+      const fieldsToDelete: { [key: string]: any } = {
+          unlockedStations: [1], // Reset this field, don't delete
+      };
+      
+      const gameFields = [
+        'avatar', 'chosenScenario', 'placedPrizes', 
+        'station1FaunaPhotos', 'station1FloraPhotos', 'station1HabitatPhotos', 
+        'station2Days', 
+        'station3UrlCrafts', 'station3UrlSeparate', 
+        'station4Url', 'station5Url', 'station6VideoUrl', 
+        'station7Businesses', 'station8Url', 'station9Locked'
+      ];
+      
+      gameFields.forEach(field => {
+        if (Object.prototype.hasOwnProperty.call(userData, field)) {
+            fieldsToDelete[field] = deleteField();
+        }
       });
+
+      await updateDoc(playerDocRef, fieldsToDelete);
         
     } catch (error) {
         console.error("Failed to reset progress in Firestore", error);
