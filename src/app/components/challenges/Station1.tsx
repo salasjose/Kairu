@@ -23,15 +23,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import Logo from "../Logo";
 import { usePrizeCart } from "@/hooks/use-prize-cart";
-
-const ArtDirectedBackground = dynamic(() => import('../ArtDirectedBackground'), {
-  loading: () => <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background">
-      <Logo className="h-24 animate-pulse" />
-      <p className="text-primary/70 mt-4">Cargando Fondo...</p>
-    </div>,
-  ssr: false,
-});
-
+import ResponsiveBackground from "../ResponsiveBackground";
 
 const yaraCharacterImage = PlaceHolderImages.find((p) => p.id === "char-yara-magnifying-glass");
 
@@ -682,7 +674,7 @@ export default function Station1() {
 
   return (
     <>
-      <ArtDirectedBackground
+      <ResponsiveBackground
         desktopSrc="/backgrounds/Bionexus1366_X_768.png"
         tabletSrc="/backgrounds/Bionexus1024_X_768.png"
         mobileSrc="/backgrounds/Bionexus1075_X_1944.png"
@@ -779,7 +771,7 @@ export default function Station1() {
           </div>
 
         </div>
-      </ArtDirectedBackground>
+      </ResponsiveBackground>
 
       {/* Yara Character and Dialog */}
       <div className="absolute bottom-4 right-4 sm:right-8 lg:right-12 z-20 w-full max-w-xs sm:max-w-sm md:max-w-md pointer-events-none">
