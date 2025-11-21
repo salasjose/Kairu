@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -17,7 +16,6 @@ import TypewriterText from "../auth/TypewriterText";
 import { Slider } from "@/components/ui/slider";
 import { Trash2, Gift, X, Edit, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import ArtDirectedBackground from "../ArtDirectedBackground";
 
 const DRAGGABLE_AREA_ID = "station-9-canvas";
 
@@ -154,11 +152,11 @@ export default function Station9() {
   }, [chosenScenario]);
   
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && chosenScenario) {
         const clearTimers = scheduleYaraDialog();
         return clearTimers;
     }
-  }, [isLoading, scheduleYaraDialog]);
+  }, [isLoading, chosenScenario, scheduleYaraDialog]);
 
 
   const savePrizesToDb = useCallback(async (prizesToSave: PlacedPrize[]) => {
@@ -292,37 +290,22 @@ export default function Station9() {
 
   const yaraMessage = `${playerName}, ¡Ya eres un Guardián de la Naturaleza! Ahora es tiempo de armar tu Estación. Moverás tus Insignias por todo tu lienzo; para ello, debes hacer doble clic y sostener tu insignia sin soltarla hasta el lugar donde la quieras tener.`;
 
-  const getBackgroundSources = () => {
-    if (!chosenScenario) return null;
-    
-    if (chosenScenario.includes('Bosque_Seco_Tropical')) {
-        return { desktopSrc: "/backgrounds/Terral1366_X_768.png", tabletSrc: "/backgrounds/Terral1024_X_768.png", mobileSrc: "/backgrounds/Terral1075_X_1944.png" };
-    }
-    if (chosenScenario.includes('Ciudad_Sostenible')) {
-        return { desktopSrc: "/backgrounds/Civika1366_X_768.png", tabletSrc: "/backgrounds/Civika1024_X_768.png", mobileSrc: "/backgrounds/Civika1075_X_1944.png" };
-    }
-    if (chosenScenario.includes('Mar_Costero')) {
-        return { desktopSrc: "/backgrounds/Mareva1366_X_768.png", tabletSrc: "/backgrounds/Mareva1024_X_768.png", mobileSrc: "/backgrounds/Mareva1075_X_1944.png" };
-    }
-    if (chosenScenario.includes('Manglares')) {
-        return { desktopSrc: "/backgrounds/Manglia1366_X_768.png", tabletSrc: "/backgrounds/Manglia1024_X_768.png", mobileSrc: "/backgrounds/Manglia1075_X_1944.png" };
-    }
-    return null;
-  };
-
-  const backgroundSources = getBackgroundSources();
-
   return (
     <>
-      <div className="relative w-screen h-screen overflow-hidden bg-background" onClick={(e) => {
+      <div className="relative w-screen h-screen overflow-hidden bg-black" onClick={(e) => {
            if ((e.target as HTMLElement).closest('.placed-prize-wrapper')) return;
            setSelectedPrizeId(null);
       }}>
         
         {/* Background layer */}
-        {backgroundSources ? (
+        {chosenScenario ? (
             <div className="absolute inset-0 z-0">
-                <ArtDirectedBackground {...backgroundSources} />
+                <Image
+                    src={chosenScenario}
+                    alt="Lienzo de la estación"
+                    fill
+                    className="object-contain"
+                />
                 <div className="absolute inset-0 bg-black/10" />
             </div>
         ) : (
@@ -529,3 +512,5 @@ export default function Station9() {
     </>
   );
 }
+
+    
