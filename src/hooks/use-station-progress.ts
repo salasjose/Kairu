@@ -3,7 +3,7 @@
 
 import { useCallback } from 'react';
 import { useUser, useFirestore } from '@/firebase';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, deleteField } from 'firebase/firestore';
 
 export function useStationProgress() {
   const { user } = useUser();
@@ -37,31 +37,26 @@ export function useStationProgress() {
     
     const playerDocRef = doc(db, 'users', user.uid);
     try {
-        const docSnap = await getDoc(playerDocRef);
-        if (docSnap.exists()) {
-            const currentData = docSnap.data();
-            
-            // Preserve only essential user registration data
-            const dataToKeep = {
-                nombre: currentData.nombre || '',
-                apellido: currentData.apellido || '',
-                usuario: currentData.usuario || '',
-                email: currentData.email || '',
-                telefono: currentData.telefono || '',
-                edad: currentData.edad || '',
-            };
-
-            // Overwrite the document completely, preserving only registration data
-            // and forcing the user back to the avatar/scenario selection flow.
-            await setDoc(playerDocRef, {
-                ...dataToKeep,
-                unlockedStations: [1], 
-                chosenScenario: null, 
-                avatar: null,
-                // By not including other fields (like station1Photos, placedPrizes etc.),
-                // they are effectively deleted from the document.
-            });
-        }
+      // Deletes all game-related fields from the document,
+      // leaving only the original registration data.
+      await updateDoc(playerDocRef, {
+          unlockedStations: [1],
+          avatar: deleteField(),
+          chosenScenario: deleteField(),
+          placedPrizes: deleteField(),
+          station1FaunaPhotos: deleteField(),
+          station1FloraPhotos: deleteField(),
+          station1HabitatPhotos: deleteField(),
+          station2Days: deleteField(),
+          station3UrlCrafts: deleteField(),
+          station3UrlSeparate: deleteField(),
+          station4Url: deleteField(),
+          station5Url: deleteField(),
+          station6VideoUrl: deleteField(),
+          station7Businesses: deleteField(),
+          station8Url: deleteField(),
+          station9Locked: deleteField(),
+      });
         
     } catch (error) {
         console.error("Failed to reset progress in Firestore", error);
