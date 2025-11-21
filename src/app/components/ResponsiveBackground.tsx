@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 
 interface ResponsiveBackgroundProps {
   desktopSrc: string;
@@ -9,11 +10,10 @@ interface ResponsiveBackgroundProps {
   children?: React.ReactNode;
 }
 
-/** Fondo responsivo por art-direction (desktop / tablet / móvil)
- * - Cubre toda la pantalla.
- * - En PC, la imagen se ajusta para cubrir todo el ancho sin recortarse verticalmente.
- * - En tablet/móvil, la imagen se ajusta para ser contenida completamente sin recortarse.
- * - Utiliza un fondo negro para rellenar el espacio sobrante.
+/**
+ * Fondo responsivo por art-direction que cubre toda la pantalla.
+ * - En PC (lg), usa object-cover para llenar el contenedor, recortando si es necesario.
+ * - En tablet y móvil, usa object-contain para asegurar que toda la imagen sea visible.
  */
 export default function ResponsiveBackground({
   desktopSrc,
@@ -30,18 +30,20 @@ export default function ResponsiveBackground({
           aria-hidden="true"
           role="presentation"
         >
-          {/* PC >= 1025px (cubre el ancho) */}
-          <source media="(min-width: 1025px)" srcSet={desktopSrc} />
+          {/* PC >= 1024px (cubre el contenedor) */}
+          <source media="(min-width: 1024px)" srcSet={desktopSrc} />
           {/* Tablet >= 650px (contenida) */}
           <source media="(min-width: 650px)" srcSet={tabletSrc} />
           {/* Móvil (fallback, contenida) */}
-          <img
+          <Image
             src={mobileSrc}
             alt="Fondo de la estación"
-            className="absolute inset-0 h-full w-full object-cover"
+            fill
+            className="object-contain md:object-contain lg:object-cover"
             sizes="100vw"
             decoding="async"
             loading="eager"
+            priority
           />
         </picture>
       </div>

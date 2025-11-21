@@ -6,7 +6,7 @@ const gridLayout: (string | null)[][] = [
   [null, null, null, null, null, 'E', null, null, null, null, null, null],
   [null, null, null, 'R', null, 'M', null, 'R', null, null, null, null],
   [null, null, null, 'E', null, 'P', null, 'E', null, null, null, null],
-  [null, null, null, 'C', 'I',  'R', 'C',  'U','L', 'A', 'R', null],
+  ['C', 'I',  'R', 'C',  'U','L', 'A', 'R', null, null, null, null],
   ['E',  'C',  'O',  'I', 'D', 'E', 'A', 'S', null, null, null, null],
   [null, null, null, 'C', null, 'N', null, 'A', null, null, null, 'V'],
   [null, null, null, 'L', null, 'D', 'U', 'R', 'A', 'B', 'L', 'E'],
@@ -34,8 +34,8 @@ export const REGIRA_CROSSWORD_DATA: CrosswordData = {
   grid: parseGrid(gridLayout),
   clues: {
     across: [
-        { number: 5, clue: 'Modelo que evita desperdicios al mantener los materiales en uso por más tiempo.', answer: 'CIRCULAR' },
-        { number: 6, clue: 'Ideas creativas para cuidar el ambiente y hacer proyectos sostenibles.', answer: 'ECOIDEAS' },
+        { number: 4, clue: 'Modelo que evita desperdicios al mantener los materiales en uso por más tiempo.', answer: 'CIRCULAR' },
+        { number: 5, clue: 'Ideas creativas para cuidar el ambiente y hacer proyectos sostenibles.', answer: 'ECOIDEAS' },
         { number: 7, clue: 'Algo que dura bastante tiempo sin dañarse o romperse.', answer: 'DURABLE' },
         { number: 8, clue: 'Abono natural que se hace con restos de comida y hojas.', answer: 'COMPOST' },
     ],

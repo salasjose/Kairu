@@ -9,6 +9,8 @@ export type Station = {
 
 export type CrosswordData = {
   grid: string[][];
-  across: { number: number; clue: string; answer: string }[];
-  down: { number: number; clue: string; answer: string }[];
+  clues: {
+    across: { number: number; clue: string; answer: string }[];
+    down: { number: number; clue: string; answer: string }[];
+  }
 };

@@ -223,7 +223,7 @@ export default function Station7() {
       />
 
       <ResponsiveBackground
-        desktopSrc="/backgrounds/Verdelab1366_X_768.png"
+        desktopSrc="/backgrounds/Verdelab1366x_768.png"
         tabletSrc="/backgrounds/Verdelab1024_X_768.png"
         mobileSrc="/backgrounds/Verdelab1075_X_1944.png"
       >

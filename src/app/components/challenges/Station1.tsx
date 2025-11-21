@@ -684,8 +684,7 @@ export default function Station1() {
 
           <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
             {(Object.keys(challenges) as (keyof typeof challenges)[]).map((reto, index) => {
-              const challengeProgress = stationCompletedChallenges[reto];
-              const isCompleted = !!challengeProgress;
+              const isCompleted = !!stationCompletedChallenges[reto];
               
               return (
                 <button
