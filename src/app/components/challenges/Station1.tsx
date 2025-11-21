@@ -686,7 +686,7 @@ export default function Station1() {
             {(Object.keys(challenges) as (keyof typeof challenges)[]).map((reto, index) => {
               const challengeProgress = stationCompletedChallenges[reto];
               const isCompleted = !!challengeProgress;
-              const imageUrl = challengeProgress?.imageUrl;
+              const imageUrl = null; // No background image for completed challenges
 
               return (
                 <button
