@@ -97,9 +97,19 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
             await login(auth, data.email, data.clave);
             onLoginSuccess();
         } catch (error: any) {
-            const message = (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential')
-                ? "Correo o contraseña incorrectos."
-                : "No se pudo iniciar sesión. Inténtalo de nuevo.";
+            let message = "No se pudo iniciar sesión. Inténtalo de nuevo.";
+            if (error.code) {
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                    case 'auth/wrong-password':
+                    case 'auth/invalid-credential':
+                        message = "Correo o contraseña incorrectos.";
+                        break;
+                    default:
+                        // You can add more specific error messages here if needed
+                        break;
+                }
+            }
             toast({
                 title: "Error de Inicio de Sesión",
                 description: message,
