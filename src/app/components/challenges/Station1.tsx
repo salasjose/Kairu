@@ -686,8 +686,7 @@ export default function Station1() {
             {(Object.keys(challenges) as (keyof typeof challenges)[]).map((reto, index) => {
               const challengeProgress = stationCompletedChallenges[reto];
               const isCompleted = !!challengeProgress;
-              const imageUrl = null; // No background image for completed challenges
-
+              
               return (
                 <button
                   key={reto}
@@ -707,23 +706,12 @@ export default function Station1() {
                             flex flex-col items-center justify-center
                             p-6 border-4 border-gray-200 overflow-hidden"
                   >
-                    {isCompleted && imageUrl && (
-                      <>
-                        <Image
-                          src={imageUrl}
-                          alt={`Completado: ${challenges[reto].title}`}
-                          fill
-                          className="object-cover z-0"
-                        />
-                        <div className="absolute inset-0 bg-black/40 z-10" />
-                      </>
-                    )}
                     <div className="relative z-20 text-center">
                       <CardHeader>
                         <CardTitle
                           className={cn(
                             "font-kalam text-4xl md:text-5xl",
-                            isCompleted && imageUrl ? "text-white" : "text-primary"
+                            "text-primary"
                           )}
                         >
                           {challenges[reto].title}
@@ -732,7 +720,6 @@ export default function Station1() {
                       <CardContent
                         className={cn(
                           "text-base md:text-lg",
-                          isCompleted && imageUrl && "text-gray-200"
                         )}
                       >
                         <p>{challenges[reto].description}</p>
