@@ -22,15 +22,7 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import Logo from "../Logo";
 import { usePrizeCart } from '@/hooks/use-prize-cart';
-
-const ArtDirectedBackground = dynamic(() => import('../ArtDirectedBackground'), {
-  loading: () => <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background">
-      <Logo className="h-24 animate-pulse" />
-      <p className="text-primary/70 mt-4">Cargando Fondo...</p>
-    </div>,
-  ssr: false,
-});
-
+import ResponsiveBackground from '../ResponsiveBackground';
 
 const challenges = {
   video: {
@@ -304,7 +296,7 @@ export default function Station6() {
     }
 
     return (
-      <ArtDirectedBackground
+      <ResponsiveBackground
           desktopSrc="/backgrounds/Regira1366_X_768.png"
           tabletSrc="/backgrounds/Regira1024_X_768.png"
           mobileSrc="/backgrounds/Regira1075_X_1944.png"
@@ -385,7 +377,7 @@ export default function Station6() {
             )}
           </div>
         </div>
-      </ArtDirectedBackground>
+      </ResponsiveBackground>
     );
   };
 

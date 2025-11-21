@@ -7,7 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, CheckCircle, Lock, Camera, X, Video } from "lucide-react";
+import { ArrowLeft, CheckCircle, Lock, Camera, X, Video, Heart, Timer } from "lucide-react";
 import PrizeDialog from "../PrizeDialog";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -19,14 +19,9 @@ import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore, useStorage } from "@/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import Logo from "../Logo";
-
-const ArtDirectedBackground = dynamic(() => import('../ArtDirectedBackground'), {
-  loading: () => <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background">
-      <Logo className="h-24 animate-pulse" />
-      <p className="text-primary/70 mt-4">Cargando Fondo...</p>
-    </div>,
-  ssr: false,
-});
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import { usePrizeCart } from "@/hooks/use-prize-cart";
+import ResponsiveBackground from "../ResponsiveBackground";
 
 type DayStatus = "locked" | "unlocked" | "completed";
 
@@ -485,25 +480,27 @@ export default function Station2() {
     };
 
     return (
-        <ArtDirectedBackground
+        <ResponsiveBackground
             desktopSrc="/backgrounds/Impactrack1366_X_768.png"
             tabletSrc="/backgrounds/Impactrack1024_X_768.png"
             mobileSrc="/backgrounds/Impactrack1075_X_1944.png"
         >
-            <div className="bg-white/90 backdrop-blur-sm text-primary font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
-                <h1 className="text-4xl md:text-5xl">ImpacTrack</h1>
+            <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
+                <div className="bg-white/90 backdrop-blur-sm text-primary font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
+                    <h1 className="text-4xl md:text-5xl">ImpacTrack</h1>
+                </div>
+                
+                <div className="flex flex-col items-center gap-4 md:gap-6 bg-background/70 backdrop-blur-sm p-6 rounded-xl">
+                  <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+                    {days.slice(0, 4).map((_, index) => renderDayButton(index))}
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+                    {days.slice(4, 7).map((_, index) => renderDayButton(index + 4))}
+                  </div>
+                    <p className="text-sm text-muted-foreground mt-4">MECÁNICA: Cada vez que subas tu foto, pasadas 2 minutos se activará el siguiente candado para continuar.</p>
+                </div>
             </div>
-            
-            <div className="flex flex-col items-center gap-4 md:gap-6 bg-background/70 backdrop-blur-sm p-6 rounded-xl">
-              <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-                {days.slice(0, 4).map((_, index) => renderDayButton(index))}
-              </div>
-              <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-                {days.slice(4, 7).map((_, index) => renderDayButton(index + 4))}
-              </div>
-                <p className="text-sm text-muted-foreground mt-4">MECÁNICA: Cada vez que subas tu foto, pasadas 2 minutos se activará el siguiente candado para continuar.</p>
-            </div>
-       </ArtDirectedBackground>
+       </ResponsiveBackground>
     );
   };
 
