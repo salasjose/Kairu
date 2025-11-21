@@ -80,14 +80,24 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
             setFormName(data.nombre);
             setStep('avatar');
         } catch (error: any) {
-            const message = error.code === 'auth/email-already-in-use'
-                ? "Este correo electrónico ya está en uso."
-                : "No se pudo crear la cuenta. Inténtalo de nuevo.";
-            toast({
-                title: "Error de Registro",
-                description: message,
-                variant: "destructive"
-            });
+             if (error.code === 'auth/email-already-in-use') {
+                toast({
+                    title: "El correo ya está en uso",
+                    description: "Parece que ya tienes una cuenta. Por favor, inicia sesión.",
+                    variant: "destructive",
+                    action: (
+                        <Button variant="secondary" onClick={() => setStep('login')}>
+                          Iniciar Sesión
+                        </Button>
+                    ),
+                });
+            } else {
+                toast({
+                    title: "Error de Registro",
+                    description: "No se pudo crear la cuenta. Inténtalo de nuevo.",
+                    variant: "destructive"
+                });
+            }
         } finally {
             setIsLoading(false);
         }
@@ -104,17 +114,8 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
             onLoginSuccess();
         } catch (error: any) {
             let message = "No se pudo iniciar sesión. Inténtalo de nuevo.";
-             if (error.code) {
-                switch (error.code) {
-                    case 'auth/user-not-found':
-                    case 'auth/wrong-password':
-                    case 'auth/invalid-credential':
-                        message = "Correo o contraseña incorrectos.";
-                        break;
-                    default:
-                        message = "Correo o contraseña incorrectos.";
-                        break;
-                }
+             if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                message = "Correo o contraseña incorrectos.";
             }
             toast({
                 title: "Error de Inicio de Sesión",
@@ -291,3 +292,4 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         </main>
     );
 }
+ 
