@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useCallback } from 'react';
@@ -50,13 +51,15 @@ export function useStationProgress() {
                 edad: currentData.edad || '',
             };
 
-            // Overwrite the document completely, effectively deleting all other game-related fields.
-            // This also forces the user back to the avatar/scenario selection flow.
+            // Overwrite the document completely, preserving only registration data
+            // and forcing the user back to the avatar/scenario selection flow.
             await setDoc(playerDocRef, {
                 ...dataToKeep,
                 unlockedStations: [1], 
                 chosenScenario: null, 
                 avatar: null,
+                // By not including other fields (like station1Photos, placedPrizes etc.),
+                // they are effectively deleted from the document.
             });
         }
         
