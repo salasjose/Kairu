@@ -46,6 +46,7 @@ interface PlayerState {
 
 const SettingsPanel = ({ playerState, setPlayerState, onFullReset }: { playerState: PlayerState; setPlayerState: (state: PlayerState) => void; onFullReset: () => void; }) => {
     const db = useFirestore();
+    const { user } = useUser();
     const { resetProgress } = useStationProgress();
     const { clearCart } = usePrizeCart();
     const { resetChallengeProgress } = useChallengeProgress();
@@ -80,14 +81,25 @@ const SettingsPanel = ({ playerState, setPlayerState, onFullReset }: { playerSta
         }
     };
     
-    const handleClearCacheAndReset = () => {
+    const handleClearCacheAndReset = async () => {
+        if (!user || !db) {
+            toast({ title: "Error", description: "No se puede reiniciar. Intenta iniciar sesión de nuevo.", variant: "destructive" });
+            return;
+        }
+
+        // The sequence is important: First, wipe the DB.
+        await resetProgress(); 
+
+        // Then, clear local state which depends on local storage.
         resetChallengeProgress();
         clearCart();
-        resetProgress(); // Resets station progress in DB
-        onFullReset(); // Triggers the onboarding flow in the parent
+        
+        // Finally, trigger the UI reset to go to onboarding.
+        onFullReset(); 
+        
         toast({
-            title: "Reiniciando",
-            description: "Puedes elegir tu avatar y escenario de nuevo."
+            title: "Reinicio Completo",
+            description: "Tu progreso ha sido borrado. ¡Puedes empezar una nueva aventura!"
         });
         setIsAlertOpen(false);
     };
@@ -98,14 +110,14 @@ const SettingsPanel = ({ playerState, setPlayerState, onFullReset }: { playerSta
         <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
                 <AlertDialogDescription>
-                    Esta acción reiniciará tu progreso local y te permitirá elegir tu avatar y escenario de nuevo. Tu cuenta y progreso en la nube no se verán afectados.
+                    Esta acción es irreversible. Se borrará permanentemente todo tu progreso en el juego desde la base de datos, incluyendo fotos, enlaces y progreso de las estaciones. Tu cuenta de usuario se conservará, pero tendrás que empezar la aventura desde cero, eligiendo un nuevo avatar y escenario.
                 </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleClearCacheAndReset}>Sí, reiniciar</AlertDialogAction>
+                <AlertDialogAction onClick={handleClearCacheAndReset} className='bg-destructive hover:bg-destructive/90'>Sí, borrar todo mi progreso</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
@@ -144,7 +156,7 @@ const SettingsPanel = ({ playerState, setPlayerState, onFullReset }: { playerSta
             <SheetFooter className="mt-auto">
                 <Button variant="destructive" className="w-full" onClick={() => setIsAlertOpen(true)}>
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Reiniciar Avatar y Escenario
+                    Reiniciar Progreso del Juego
                 </Button>
             </SheetFooter>
         </SheetContent>

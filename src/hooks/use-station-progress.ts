@@ -36,13 +36,37 @@ export function useStationProgress() {
     
     const playerDocRef = doc(db, 'users', user.uid);
     try {
-        await setDoc(playerDocRef, { unlockedStations: [1] }, { merge: true });
-        // also clear other station-specific data
+        // This will overwrite the user's document, keeping only essential fields
+        // and deleting all game-specific progress.
+        const docSnap = await getDoc(playerDocRef);
+        if (docSnap.exists()) {
+            const currentData = docSnap.data();
+            
+            // Preserve essential user data
+            const dataToKeep = {
+                nombre: currentData.nombre || '',
+                apellido: currentData.apellido || '',
+                usuario: currentData.usuario || '',
+                email: currentData.email || '',
+                telefono: currentData.telefono || '',
+                edad: currentData.edad || '',
+            };
+
+            // Overwrite the document completely, effectively deleting all other fields.
+            await setDoc(playerDocRef, {
+                ...dataToKeep,
+                unlockedStations: [1], 
+                chosenScenario: null, // Force user to choose scenario again
+            });
+        }
+        
+        // also clear all related local storage items to be safe
         Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('kairu-station') || key.startsWith('kairu-challenge')) {
+            if (key.startsWith('kairu-')) {
                 localStorage.removeItem(key);
             }
         });
+
     } catch (error) {
         console.error("Failed to reset progress in Firestore", error);
     }
