@@ -37,7 +37,7 @@ export default function ResponsiveBackground({
           <img
             src={mobileSrc}
             alt="Fondo de la estación"
-            className="absolute inset-0 h-full w-full object-contain"
+            className="absolute inset-0 h-full w-full object-cover md:object-contain"
             sizes="100vw"
             decoding="async"
             loading="eager"
