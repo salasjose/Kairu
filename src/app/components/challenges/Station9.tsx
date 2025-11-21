@@ -114,16 +114,16 @@ export default function Station9() {
   const scenarioBackgrounds = useMemo(() => {
     if (!chosenScenario) return null;
     if (chosenScenario.includes('Bosque_Seco_Tropical')) {
-        return { desktop: '/backgrounds/Terral1366_X_768.png', tablet: '/backgrounds/Terral1024_X_768.png', mobile: '/backgrounds/Terral1075_X_1944.png' };
+        return { desktopSrc: '/backgrounds/Terral1366_X_768.png', tabletSrc: '/backgrounds/Terral1024_X_768.png', mobileSrc: '/backgrounds/Terral1075_X_1944.png' };
     }
     if (chosenScenario.includes('Ciudad_Sostenible')) {
-        return { desktop: '/backgrounds/Civika1366_X_768.png', tablet: '/backgrounds/Civika1024_X_768.png', mobile: '/backgrounds/Civika1075_X_1944.png' };
+        return { desktopSrc: '/backgrounds/Civika1366_X_768.png', tabletSrc: '/backgrounds/Civika1024_X_768.png', mobileSrc: '/backgrounds/Civika1075_X_1944.png' };
     }
     if (chosenScenario.includes('Mar_Costero')) {
-        return { desktop: '/backgrounds/Mareva1366_X_768.png', tablet: '/backgrounds/Mareva1024_X_768.png', mobile: '/backgrounds/Mareva1075_X_1944.png' };
+        return { desktopSrc: '/backgrounds/Mareva1366_X_768.png', tabletSrc: '/backgrounds/Mareva1024_X_768.png', mobileSrc: '/backgrounds/Mareva1075_X_1944.png' };
     }
     if (chosenScenario.includes('Manglares')) {
-        return { desktop: '/backgrounds/Manglia1366_X_768.png', tablet: '/backgrounds/Manglia1024_X_768.png', mobile: '/backgrounds/Manglia1075_X_1944.png' };
+        return { desktopSrc: '/backgrounds/Manglia1366_X_768.png', tabletSrc: '/backgrounds/Manglia1024_X_768.png', mobileSrc: '/backgrounds/Manglia1075_X_1944.png' };
     }
     return null;
   }, [chosenScenario]);
@@ -316,9 +316,9 @@ export default function Station9() {
         {/* Background layer */}
         {scenarioBackgrounds ? (
             <ResponsiveBackground
-                desktopSrc={scenarioBackgrounds.desktop}
-                tabletSrc={scenarioBackgrounds.tablet}
-                mobileSrc={scenarioBackgrounds.mobile}
+                desktopSrc={scenarioBackgrounds.desktopSrc}
+                tabletSrc={scenarioBackgrounds.tabletSrc}
+                mobileSrc={scenarioBackgrounds.mobileSrc}
             />
         ) : (
           <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
@@ -337,24 +337,21 @@ export default function Station9() {
                     key={prize.id}
                     drag
                     dragMomentum={false}
-                    onPan={(event, info) => {
+                    onDrag={(event, info) => {
                       if (!isStationLocked) {
                         const newPlacedPrizes = placedPrizes.map(p => 
-                          p.id === prize.id ? { ...p, x: p.x + info.delta.x, y: p.y + info.delta.y } : p
+                          p.id === prize.id ? { ...p, x: info.point.x, y: info.point.y } : p
                         );
                         setPlacedPrizes(newPlacedPrizes);
                       }
                     }}
-                    onPanEnd={() => {
+                    onDragEnd={() => {
                         if (!isStationLocked) {
                             savePrizesToDb(placedPrizes)
                         }
                     }}
-                    dragListener={false}
-                    className={cn(
-                      "placed-prize-wrapper absolute",
-                      isStationLocked ? "cursor-default" : "cursor-grab active:cursor-grabbing"
-                    )}
+                    dragListener={!isStationLocked}
+                    className="placed-prize-wrapper absolute cursor-grab active:cursor-grabbing"
                     style={{ 
                         x: prize.x, 
                         y: prize.y,
