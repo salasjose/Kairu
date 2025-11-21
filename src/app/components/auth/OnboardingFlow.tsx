@@ -28,7 +28,7 @@ interface OnboardingFlowProps {
         name: string;
         avatar: string;
         chosenScenario: string;
-        signupData: SignUpData;
+        signupData?: SignUpData;
     }) => void;
     onLoginSuccess: () => void;
 }
@@ -136,6 +136,7 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
     };
 
     const handleScenarioConfirm = () => {
+        // Case 1: New user signing up
         if (formName && selectedAvatar && selectedScenario && signupData) {
             onComplete({
                 name: formName,
@@ -143,22 +144,13 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
                 chosenScenario: selectedScenario,
                 signupData: signupData,
             });
+        // Case 2: Existing user re-onboarding after reset
         } else if (auth?.currentUser && selectedAvatar && selectedScenario) {
-            // Handle case for existing user re-onboarding after reset
              onComplete({
                 name: auth.currentUser.displayName || "Jugador",
                 avatar: selectedAvatar,
                 chosenScenario: selectedScenario,
-                // We don't have the original signup data, but we can fake it or adjust onComplete
-                signupData: { 
-                    nombre: auth.currentUser.displayName || "", 
-                    apellido: "", 
-                    usuario: "", 
-                    email: auth.currentUser.email || "", 
-                    clave: "", // This is fine as it's not used to set password
-                    telefono: "",
-                    edad: 0,
-                 },
+                // No signupData here, as it's not a new registration
             });
         }
         else if (!selectedAvatar) {

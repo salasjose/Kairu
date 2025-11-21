@@ -3,7 +3,7 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
-import { doc, onSnapshot, setDoc as setFirestoreDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc as setFirestoreDoc, updateDoc } from 'firebase/firestore';
 import { stations } from '@/lib/data';
 import StationNode from '@/app/components/StationNode';
 import CompletionDialog from '@/app/components/CompletionDialog';
@@ -45,7 +45,7 @@ interface PlayerState {
   chosenScenario: string | null;
 }
 
-const SettingsPanel = ({ playerState, setPlayerState, onFullReset }: { playerState: PlayerState; setPlayerState: (state: PlayerState) => void; onFullReset: () => void; }) => {
+const SettingsPanel = ({ playerState, setPlayerState, onFullReset }: { playerState: PlayerState; setPlayerState: (state: PlayerState | null) => void; onFullReset: () => void; }) => {
     const db = useFirestore();
     const { user } = useUser();
     const { resetProgress } = useStationProgress();
@@ -62,7 +62,7 @@ const SettingsPanel = ({ playerState, setPlayerState, onFullReset }: { playerSta
     }, []);
 
     const handleAvatarChange = async (newAvatarUrl: string) => {
-        if (!playerState || !db) {
+        if (!playerState || !db || !user) {
              toast({ title: "Error", description: "No se pudo actualizar el avatar. Intenta más tarde.", variant: "destructive" });
              return;
         };
@@ -72,8 +72,8 @@ const SettingsPanel = ({ playerState, setPlayerState, onFullReset }: { playerSta
         toast({ title: "Avatar Actualizado", description: "Tu nuevo avatar ha sido guardado." });
         
         try {
-            const playerDocRef = doc(db, 'users', playerState.id);
-            await setFirestoreDoc(playerDocRef, { avatar: newAvatarUrl }, { merge: true });
+            const playerDocRef = doc(db, 'users', user.uid);
+            await updateDoc(playerDocRef, { avatar: newAvatarUrl });
         } catch (error) {
             console.error("Failed to update avatar in Firestore:", error);
             toast({ title: "Error de Sincronización", description: "No se pudo guardar el avatar en la nube.", variant: "destructive" });
@@ -254,10 +254,11 @@ export default function GameClient() {
   }, [user, userLoading, fetchInitialPlayerState]);
   
   const handleResetOnboarding = () => {
+    setPlayerState(null);
     setIsNewUser(true);
   };
 
-  const handleOnboardingComplete = async (data: { name: string; avatar: string; chosenScenario: string; signupData: z.infer<typeof SignUpFormSchema>}) => {
+  const handleOnboardingComplete = async (data: { name: string; avatar: string; chosenScenario: string; signupData?: z.infer<typeof SignUpFormSchema>}) => {
     if (!user || !db) return;
 
     const newState: Partial<PlayerState> & Partial<z.infer<typeof SignUpFormSchema>> = {
@@ -266,7 +267,7 @@ export default function GameClient() {
       chosenScenario: data.chosenScenario,
       unlockedStations: [1],
       // If it's a new user, merge signup data. If it's an existing user, this will be empty but that's fine.
-      ...(signupData ? data.signupData : {}),
+      ...(data.signupData ? data.signupData : {}),
     };
 
     try {
