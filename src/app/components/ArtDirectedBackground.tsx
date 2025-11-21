@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from "next/image";
@@ -18,7 +17,7 @@ export default function ArtDirectedBackground({
   children,
 }: ArtDirectedBackgroundProps) {
   return (
-    <div className="relative w-full h-full min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
+    <div className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden bg-black">
       {/* Capa de imagen de fondo responsiva */}
       <div className="absolute inset-0 -z-10">
         <picture>
@@ -30,7 +29,7 @@ export default function ArtDirectedBackground({
           <img
             src={mobileSrc}
             alt="Fondo de la estación"
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-contain"
             sizes="100vw"
             decoding="async"
             loading="eager"
