@@ -16,6 +16,7 @@ import TypewriterText from "../auth/TypewriterText";
 import { Slider } from "@/components/ui/slider";
 import { Trash2, Gift, X, Edit, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ResponsiveBackground from "../ResponsiveBackground";
 
 const DRAGGABLE_AREA_ID = "station-9-canvas";
 
@@ -108,6 +109,24 @@ export default function Station9() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara-final');
   const dragControls = useDragControls();
+  const yaraTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const scenarioBackgrounds = useMemo(() => {
+    if (!chosenScenario) return null;
+    if (chosenScenario.includes('Bosque_Seco_Tropical')) {
+        return { desktop: '/backgrounds/Terral1366_X_768.png', tablet: '/backgrounds/Terral1024_X_768.png', mobile: '/backgrounds/Terral1075_X_1944.png' };
+    }
+    if (chosenScenario.includes('Ciudad_Sostenible')) {
+        return { desktop: '/backgrounds/Civika1366_X_768.png', tablet: '/backgrounds/Civika1024_X_768.png', mobile: '/backgrounds/Civika1075_X_1944.png' };
+    }
+    if (chosenScenario.includes('Mar_Costero')) {
+        return { desktop: '/backgrounds/Mareva1366_X_768.png', tablet: '/backgrounds/Mareva1024_X_768.png', mobile: '/backgrounds/Mareva1075_X_1944.png' };
+    }
+    if (chosenScenario.includes('Manglares')) {
+        return { desktop: '/backgrounds/Manglia1366_X_768.png', tablet: '/backgrounds/Manglia1024_X_768.png', mobile: '/backgrounds/Manglia1075_X_1944.png' };
+    }
+    return null;
+  }, [chosenScenario]);
 
   useEffect(() => {
     const fetchPlayerData = async () => {
@@ -136,27 +155,24 @@ export default function Station9() {
   }, [user, db]);
 
   const scheduleYaraDialog = useCallback(() => {
-    if (!chosenScenario) return; // Don't show Yara if no scenario is chosen
-    const showTimer = setTimeout(() => {
-      setIsYaraMessageVisible(true);
-    }, 1000); 
+    if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
+    if (!chosenScenario) return;
 
-    const hideTimer = setTimeout(() => {
-      setIsYaraMessageVisible(false);
-    }, 1000 + 15000); 
-
-    return () => {
-      clearTimeout(showTimer);
-      clearTimeout(hideTimer);
-    };
+    yaraTimerRef.current = setTimeout(() => {
+        setIsYaraMessageVisible(true);
+        const hideTimer = setTimeout(() => setIsYaraMessageVisible(false), 15000);
+        yaraTimerRef.current = hideTimer; 
+    }, 1000);
   }, [chosenScenario]);
   
   useEffect(() => {
-    if (!isLoading && chosenScenario) {
-        const clearTimers = scheduleYaraDialog();
-        return clearTimers;
+    if (!isLoading) {
+      scheduleYaraDialog();
     }
-  }, [isLoading, chosenScenario, scheduleYaraDialog]);
+    return () => {
+        if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
+    };
+  }, [isLoading, scheduleYaraDialog]);
 
 
   const savePrizesToDb = useCallback(async (prizesToSave: PlacedPrize[]) => {
@@ -292,22 +308,18 @@ export default function Station9() {
 
   return (
     <>
-      <div className="relative w-screen h-screen overflow-hidden bg-black" onClick={(e) => {
+      <div className="relative w-screen h-screen overflow-hidden" onClick={(e) => {
            if ((e.target as HTMLElement).closest('.placed-prize-wrapper')) return;
            setSelectedPrizeId(null);
       }}>
         
         {/* Background layer */}
-        {chosenScenario ? (
-            <div className="absolute inset-0 z-0">
-                <Image
-                    src={chosenScenario}
-                    alt="Lienzo de la estación"
-                    fill
-                    className="object-contain"
-                />
-                <div className="absolute inset-0 bg-black/10" />
-            </div>
+        {scenarioBackgrounds ? (
+            <ResponsiveBackground
+                desktopSrc={scenarioBackgrounds.desktop}
+                tabletSrc={scenarioBackgrounds.tablet}
+                mobileSrc={scenarioBackgrounds.mobile}
+            />
         ) : (
           <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
         )}
@@ -348,21 +360,19 @@ export default function Station9() {
                         y: prize.y,
                         width: '80px', 
                         height: '80px',
-                        transformOrigin: 'center center',
-                        scale: prize.scale,
                     }}
-                    initial={{ x: prize.x, y: prize.y, scale: prize.scale }}
+                    initial={{ x: prize.x, y: prize.y }}
+                    animate={{
+                      scale: isSelected ? (prize.scale || 1) * 1.1 : (prize.scale || 1),
+                      boxShadow: isSelected ? "0px 0px 15px rgba(255,255,100,0.8)" : "0px 0px 0px rgba(0,0,0,0)",
+                    }}
+                    transition={{ duration: 0.2 }}
                     onClick={(e) => {
                       if (!isStationLocked) {
                         e.stopPropagation(); 
                         setSelectedPrizeId(prize.id);
                       }
                     }}
-                    animate={{ 
-                        scale: isSelected ? prize.scale * 1.1 : prize.scale,
-                        boxShadow: isSelected ? "0px 0px 15px rgba(255,255,100,0.8)" : "0px 0px 0px rgba(0,0,0,0)",
-                    }}
-                    transition={{ duration: 0.2 }}
                     >
                     <motion.div 
                         className="w-full h-full relative" 
@@ -512,5 +522,3 @@ export default function Station9() {
     </>
   );
 }
-
-    
