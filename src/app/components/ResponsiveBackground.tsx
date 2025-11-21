@@ -11,7 +11,8 @@ interface ResponsiveBackgroundProps {
 
 /** Fondo responsivo por art-direction (desktop / tablet / móvil)
  * - Cubre toda la pantalla.
- * - La imagen se ajusta para ser contenida completamente sin recortarse.
+ * - En PC, la imagen se ajusta para cubrir todo el ancho sin recortarse verticalmente.
+ * - En tablet/móvil, la imagen se ajusta para ser contenida completamente sin recortarse.
  * - Utiliza un fondo negro para rellenar el espacio sobrante.
  */
 export default function ResponsiveBackground({
@@ -29,15 +30,15 @@ export default function ResponsiveBackground({
           aria-hidden="true"
           role="presentation"
         >
-          {/* PC >= 1025px */}
+          {/* PC >= 1025px (se estira para cubrir el ancho) */}
           <source media="(min-width: 1025px)" srcSet={desktopSrc} />
-          {/* Tablet >= 650px */}
+          {/* Tablet >= 650px (contenida) */}
           <source media="(min-width: 650px)" srcSet={tabletSrc} />
-          {/* Móvil (fallback) */}
+          {/* Móvil (fallback, contenida) */}
           <img
             src={mobileSrc}
             alt="Fondo de la estación"
-            className="absolute inset-0 h-full w-full object-cover md:object-contain"
+            className="absolute inset-0 h-full w-full object-contain lg:object-cover"
             sizes="100vw"
             decoding="async"
             loading="eager"

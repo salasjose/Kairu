@@ -350,7 +350,7 @@ export default function Station9() {
                             const newY = info.point.y - canvasRect.top;
 
                             const newPlacedPrizes = placedPrizes.map(p => 
-                                p.id === prize.id ? { ...p, x: newX, y: newY } : p
+                                p.id === prize.id ? { ...p, x: newX, y: newY, scale: prize.scale } : p
                             );
                             setPlacedPrizes(newPlacedPrizes);
                             savePrizesToDb(newPlacedPrizes);
