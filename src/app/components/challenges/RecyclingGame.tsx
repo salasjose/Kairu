@@ -35,42 +35,26 @@ export default function RecyclingGamesMenu({ onBack }: RecyclingGamesMenuProps) 
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const { completedChallenges, completeChallenge } = useChallengeProgress();
   
-  // Memoize stationProgress to avoid re-renders
   const stationProgress = completedChallenges[stationId] || {};
 
   const handleGameComplete = useCallback((gameId: string) => {
-    // 1. Mark the specific sub-game as complete
-    completeChallenge(stationId, gameId);
-    
-    // 2. We now need to check if both games are completed to mark the parent 'game' challenge.
-    // The state update from completeChallenge is async, so we check against the *next* state.
-    const updatedStationProgress = {
+    const newProgress = {
         ...stationProgress,
         [gameId]: { completed: true }
     };
-
-    const allSubGamesCompleted = games.every(game => updatedStationProgress[game.id]?.completed);
     
-    // 3. If both games are complete, mark the parent 'game' challenge as complete
-    if (allSubGamesCompleted) {
+    const allGamesInMenuCompleted = games.every(g => newProgress[g.id]?.completed);
+
+    if (allGamesInMenuCompleted) {
         completeChallenge(stationId, 'game');
     }
 
-    // Return to the menu
-    setSelectedGameId(null); 
+    completeChallenge(stationId, gameId);
+    setSelectedGameId(null);
   }, [stationProgress, completeChallenge]);
   
-  useEffect(() => {
-    // This effect ensures the parent challenge is marked complete if the hook state has updated.
-    const allGamesCompleted = games.every(game => stationProgress[game.id]?.completed);
-    if(allGamesCompleted && !stationProgress['game']?.completed) {
-        completeChallenge(stationId, 'game');
-    }
-  }, [stationProgress, completeChallenge]);
-
   const gameInfo = games.find(g => g.id === selectedGameId);
   if (gameInfo) {
-      // Check against the latest state for the won screen
       if (completedChallenges[stationId]?.[gameInfo.id]?.completed) {
           return <WonScreen gameTitle={gameInfo.title} onBack={() => setSelectedGameId(null)} />;
       }

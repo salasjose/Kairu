@@ -246,7 +246,7 @@ export default function Station4() {
     }
     return (
         <ResponsiveBackground
-            desktopSrc="/backgrounds/TerrAzul1366x_768.png"
+            desktopSrc="/backgrounds/TerrAzul1024x_768.png"
             tabletSrc="/backgrounds/TerrAzul1024x_768.png"
             mobileSrc="/backgrounds/TerrAzul1075_X_1944.png"
         >
