@@ -11,9 +11,9 @@ interface ResponsiveBackgroundProps {
 }
 
 /**
- * Fondo responsivo por art-direction que cubre toda la pantalla.
- * - En PC (lg), usa object-cover para llenar el contenedor, recortando si es necesario.
- * - En tablet y móvil, usa object-contain para asegurar que toda la imagen sea visible.
+ * A responsive background component that covers the entire screen.
+ * It uses the <picture> element to serve the most appropriate image based on screen size,
+ * and next/image with object-fit: cover to ensure it always fills the viewport without distortion.
  */
 export default function ResponsiveBackground({
   desktopSrc,
@@ -23,33 +23,30 @@ export default function ResponsiveBackground({
 }: ResponsiveBackgroundProps) {
   return (
     <div className="relative w-screen h-screen flex flex-col items-center justify-center overflow-hidden bg-black">
-      {/* Capa de imagen de fondo responsiva */}
+      {/* Background Image Layer */}
       <div className="absolute inset-0 z-0">
-        <picture
-          className="pointer-events-none select-none block h-full w-full"
-          aria-hidden="true"
-          role="presentation"
-        >
-          {/* PC >= 1024px (cubre el contenedor) */}
+        <picture className="pointer-events-none select-none block h-full w-full">
+          {/* Desktop >= 1024px */}
           <source media="(min-width: 1024px)" srcSet={desktopSrc} />
-          {/* Tablet >= 650px (contenida) */}
+          {/* Tablet >= 650px */}
           <source media="(min-width: 650px)" srcSet={tabletSrc} />
-          {/* Móvil (fallback, contenida) */}
+          {/* Mobile (fallback) */}
           <Image
             src={mobileSrc}
             alt="Fondo de la estación"
             fill
-            className="object-contain md:object-contain lg:object-cover"
+            className="object-cover" // This is the key change: ensure it covers always.
             sizes="100vw"
-            decoding="async"
-            loading="eager"
             priority
           />
         </picture>
       </div>
 
-      {/* Contenido del app sobre el fondo */}
-      <div className="relative z-10 flex flex-col items-center justify-center text-center w-full h-full p-4">
+      {/* Optional overlay for better text contrast */}
+      <div className="absolute inset-0 bg-black/20 z-10" />
+
+      {/* Content Layer */}
+      <div className="relative z-20 flex flex-col items-center justify-center text-center w-full h-full p-4">
         {children}
       </div>
     </div>
