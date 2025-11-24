@@ -38,18 +38,23 @@ export default function RecyclingGamesMenu({ onBack }: RecyclingGamesMenuProps) 
   const stationProgress = completedChallenges[stationId] || {};
 
   const handleGameComplete = useCallback((gameId: string) => {
+    // This is a new local state that includes the just-completed game
     const newProgress = {
         ...stationProgress,
         [gameId]: { completed: true }
     };
     
+    // Check if all games in the menu are now completed
     const allGamesInMenuCompleted = games.every(g => newProgress[g.id]?.completed);
 
+    // Update the state for the specific sub-game
+    completeChallenge(stationId, gameId);
+    
+    // If all sub-games are done, also update the parent 'game' challenge
     if (allGamesInMenuCompleted) {
         completeChallenge(stationId, 'game');
     }
 
-    completeChallenge(stationId, gameId);
     setSelectedGameId(null);
   }, [stationProgress, completeChallenge]);
   
