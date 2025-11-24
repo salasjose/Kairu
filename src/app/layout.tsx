@@ -6,7 +6,7 @@ import { Providers } from './providers';
 
 export const metadata: Metadata = {
   title: 'Kairu',
-  description: 'Una aventura interactiva de educación ambiental.',
+  description: 'Donde la naturaleza se convierte en misión',
 };
 
 export default function RootLayout({

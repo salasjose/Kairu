@@ -1,5 +1,3 @@
-
-
 'use client';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
@@ -94,7 +92,6 @@ const SettingsPanel = ({ playerState, setPlayerState, onFullReset }: { playerSta
         // Then, clear local state which depends on local storage.
         clearCart();
         resetChallengeProgress();
-        setPlayerState(null);
         
         // Finally, trigger the UI reset to go to onboarding.
         onFullReset(); 

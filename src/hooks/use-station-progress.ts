@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useCallback } from 'react';
@@ -41,25 +40,30 @@ export function useStationProgress() {
       if (!docSnap.exists()) return;
 
       const userData = docSnap.data();
-      const fieldsToDelete: { [key: string]: any } = {
-          unlockedStations: [1], // Reset this field, don't delete
-      };
+      const fieldsToDelete: { [key: string]: any } = {};
       
+      // List of all fields related to game progress
       const gameFields = [
-        'avatar', 'chosenScenario', 'placedPrizes', 
+        'avatar', 'chosenScenario', 'placedPrizes', 'station9Locked',
         'station1FaunaPhotos', 'station1FloraPhotos', 'station1HabitatPhotos', 
         'station2Days', 
         'station3UrlCrafts', 'station3UrlSeparate', 
         'station4Url', 'station5Url', 'station6VideoUrl', 
-        'station7Businesses', 'station8Url', 'station9Locked'
+        'station7Businesses', 'station8Url'
       ];
       
+      // Dynamically create the object for updateDoc
+      // This ensures we only try to delete fields that actually exist in the document
       gameFields.forEach(field => {
         if (Object.prototype.hasOwnProperty.call(userData, field)) {
             fieldsToDelete[field] = deleteField();
         }
       });
 
+      // Always reset unlockedStations to the initial state, don't delete the field itself.
+      fieldsToDelete.unlockedStations = [1];
+
+      // Perform the update operation
       await updateDoc(playerDocRef, fieldsToDelete);
         
     } catch (error) {

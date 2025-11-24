@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -37,7 +36,7 @@ type Step = 'welcome' | 'signup' | 'login' | 'avatar' | 'yara' | 'scenario';
 
 export default function OnboardingFlow({ onComplete, onLoginSuccess }: OnboardingFlowProps) {
     const auth = useAuth();
-    const [step, setStep] = useState<Step>(auth?.currentUser ? 'avatar' : 'welcome');
+    const [step, setStep] = useState<Step>('welcome');
     const [signupData, setSignupData] = useState<SignUpData | null>(null);
     const [formName, setFormName] = useState<string>('');
     const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
@@ -45,7 +44,8 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
     const [isLoading, setIsLoading] = useState(false);
     
     useEffect(() => {
-        if (auth?.currentUser && step === 'welcome') {
+        if (auth?.currentUser && (step === 'welcome' || step === 'signup' || step === 'login')) {
+            setFormName(auth.currentUser.displayName || '');
             setStep('avatar');
         }
     }, [auth, step]);
@@ -292,4 +292,3 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         </main>
     );
 }
- 
