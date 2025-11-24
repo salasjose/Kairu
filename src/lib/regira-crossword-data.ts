@@ -2,21 +2,22 @@
 import type { CrosswordData } from '@/lib/types';
 
 const gridLayout: (string | null)[][] = [
-  [null, null, 'R', null, null, 'E', null, null, null, null, null, null],
-  [null, null, 'E', null, null, 'M', null, 'R', null, null, null, null],
-  [null, null, 'C', null, null, 'P', null, 'E', null, null, null, null],
-  [null, null, 'I', null, null, 'R', 'D', 'U', 'R', 'A', 'B', 'L', 'E'],
-  [null, null, 'C', null, null, 'E', null, 'S', null, null, null, null],
-  [null, null, 'L', null, 'C', 'I', 'R', 'C', 'U', 'L', 'A', 'R'],
-  [null, null, 'A', null, 'O', 'D', null, 'R', null, null, 'V', null],
-  ['C', 'O', 'M', 'P', 'O', 'S', 'T', null, null, null, 'E', null],
-  [null, null, 'R', null, 'I', 'O', null, null, null, null, 'R', null],
-  [null, null, null, null, 'D', 'R', null, null, null, null, 'D', null],
-  [null, 'E', 'C', 'O', 'I', 'D', 'E', 'A', 'S', null, 'E', null],
-  [null, null, 'A', null, 'A', null, null, null, null, null, null, null],
-  [null, null, 'S', null, 'S', null, null, null, null, null, null, null],
+    [null, null, null, null, 'E', null, null, 'R', null, null, null, 'V', null, null, null],
+    [null, 'R', null, null, 'M', null, null, 'E', null, null, null, 'E', null, null, null],
+    ['C', 'E', 'C', 'I', 'P', null, 'C', 'U', 'L', 'A', 'R', 'R', null, null, null],
+    ['O', 'C', 'I', 'D', 'R', 'E', 'N', 'S', 'A', null, null, 'D', null, null, null],
+    [null, 'I', null, null, 'E', null, 'D', null, 'R', 'D', 'U', 'E', null, null, null],
+    [null, 'C', null, 'E', 'C', 'O', 'I', 'D', 'E', 'A', 'S', null, null, null, null],
+    [null, 'L', null, 'M', null, 'R', null, null, null, 'B', null, null, null, null, null],
+    [null, 'O', null, 'P', null, null, null, null, null, 'L', null, null, null, null, null],
+    [null, null, null, 'O', 'D', 'U', 'R', 'A', 'B', 'L', 'E', null, null, null, null],
+    [null, null, null, 'S', 'O', null, null, null, null, null, null, null, null, null, null],
+    [null, 'C', 'O', 'M', 'P', 'O', 'S', 'T', null, null, null, null, null, null, null],
+    [null, null, null, 'T', 'R', null, null, null, null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null]
 ];
-
 
 // Normalize grid to have '#' for nulls and expand to a uniform size of 15x15
 const parseGrid = (layout: (string | null)[][]): string[][] => {
@@ -35,8 +36,8 @@ export const REGIRA_CROSSWORD_DATA: CrosswordData = {
   grid: parseGrid(gridLayout),
   clues: {
     across: [
-      { number: 4, clue: 'Modelo que evita desperdicios al mantener los materiales en uso por más tiempo.', answer: 'CIRCULAR' },
-      { number: 5, clue: 'Ideas creativas para cuidar el ambiente y hacer proyectos sostenibles.', answer: 'ECOIDEAS' },
+      { number: 5, clue: 'Modelo que evita desperdicios al mantener los materiales en uso por más tiempo.', answer: 'CIRCULAR' },
+      { number: 6, clue: 'Ideas creativas para cuidar el ambiente y hacer proyectos sostenibles.', answer: 'ECOIDEAS' },
       { number: 7, clue: 'Algo que dura bastante tiempo sin dañarse o romperse.', answer: 'DURABLE' },
       { number: 8, clue: 'Abono natural que se hace con restos de comida y hojas.', answer: 'COMPOST' },
     ],
@@ -48,3 +49,4 @@ export const REGIRA_CROSSWORD_DATA: CrosswordData = {
     ],
   },
 };
+
