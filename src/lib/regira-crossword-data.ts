@@ -2,18 +2,19 @@
 import type { CrosswordData } from '@/lib/types';
 
 const gridLayout: (string | null)[][] = [
-  
-  [null, null, null, null, null, 'E', null, null, null, null, null, null],
-  [null, null, null, 'R', null, 'M', null, 'R', null, null, null, null],
-  [null, null, null, 'E', null, 'P', null, 'E', null, null, null, null],
-  ['C', 'I',  'R', 'C',  'U','L', 'A', 'R', null, null, null, null],
-  ['E',  'C',  'O',  'I', 'D', 'E', 'A', 'S', null, null, null, null],
-  [null, null, null, 'C', null, 'N', null, 'A', null, null, null, 'V'],
-  [null, null, null, 'L', null, 'D', 'U', 'R', 'A', 'B', 'L', 'E'],
-  [null, null, null, 'O', null, 'E', null, null, null, null, null, 'R'],
-  [null, null, null, null, null, 'D', null, null, null, null, null, 'D'],
-  [null, 'C',  'O', 'M',   'P',  'O', 'S', 'T', null, null, null, 'E'],
-  [null, null, null, null, null, 'R', null, null, null, null, null, null],
+  [null, null, 'R', null, null, 'E', null, null, null, null, null, null],
+  [null, null, 'E', null, null, 'M', null, 'R', null, null, null, null],
+  [null, null, 'C', null, null, 'P', null, 'E', null, null, null, null],
+  [null, null, 'I', null, null, 'R', 'D', 'U', 'R', 'A', 'B', 'L', 'E'],
+  [null, null, 'C', null, null, 'E', null, 'S', null, null, null, null],
+  [null, null, 'L', null, 'C', 'I', 'R', 'C', 'U', 'L', 'A', 'R'],
+  [null, null, 'A', null, 'O', 'D', null, 'R', null, null, 'V', null],
+  ['C', 'O', 'M', 'P', 'O', 'S', 'T', null, null, null, 'E', null],
+  [null, null, 'R', null, 'I', 'O', null, null, null, null, 'R', null],
+  [null, null, null, null, 'D', 'R', null, null, null, null, 'D', null],
+  [null, 'E', 'C', 'O', 'I', 'D', 'E', 'A', 'S', null, 'E', null],
+  [null, null, 'A', null, 'A', null, null, null, null, null, null, null],
+  [null, null, 'S', null, 'S', null, null, null, null, null, null, null],
 ];
 
 
@@ -34,16 +35,16 @@ export const REGIRA_CROSSWORD_DATA: CrosswordData = {
   grid: parseGrid(gridLayout),
   clues: {
     across: [
-        { number: 4, clue: 'Modelo que evita desperdicios al mantener los materiales en uso por más tiempo.', answer: 'CIRCULAR' },
-        { number: 5, clue: 'Ideas creativas para cuidar el ambiente y hacer proyectos sostenibles.', answer: 'ECOIDEAS' },
-        { number: 7, clue: 'Algo que dura bastante tiempo sin dañarse o romperse.', answer: 'DURABLE' },
-        { number: 8, clue: 'Abono natural que se hace con restos de comida y hojas.', answer: 'COMPOST' },
+      { number: 4, clue: 'Modelo que evita desperdicios al mantener los materiales en uso por más tiempo.', answer: 'CIRCULAR' },
+      { number: 5, clue: 'Ideas creativas para cuidar el ambiente y hacer proyectos sostenibles.', answer: 'ECOIDEAS' },
+      { number: 7, clue: 'Algo que dura bastante tiempo sin dañarse o romperse.', answer: 'DURABLE' },
+      { number: 8, clue: 'Abono natural que se hace con restos de comida y hojas.', answer: 'COMPOST' },
     ],
     down: [
-        { number: 1, clue: 'Acción de convertir algo usado en un nuevo objeto útil.', answer: 'RECICLO' },
-        { number: 2, clue: 'Persona que crea ideas y proyectos para hacer cosas nuevas.', answer: 'EMPRENDEDOR' },
-        { number: 3, clue: 'Volver a usar un objeto sin botarlo para darle una segunda vida.', answer: 'REUSAR' },
-        { number: 4, clue: 'Color que se relaciona con la naturaleza y el cuidado del planeta.', answer: 'VERDE' },
+      { number: 1, clue: 'Acción de convertir algo usado en un nuevo objeto útil.', answer: 'RECICLAR' },
+      { number: 2, clue: 'Persona que crea ideas y proyectos para hacer cosas nuevas.', answer: 'EMPRENDEDOR' },
+      { number: 3, clue: 'Volver a usar un objeto sin botarlo para darle una segunda vida.', answer: 'REUSAR' },
+      { number: 4, clue: 'Color que se relaciona con la naturaleza y el cuidado del planeta.', answer: 'VERDE' },
     ],
   },
 };
