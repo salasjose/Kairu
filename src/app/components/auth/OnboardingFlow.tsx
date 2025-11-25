@@ -15,6 +15,8 @@ import { useAuth } from '@/firebase';
 import type { z } from "zod";
 import { Button } from '@/components/ui/button';
 import AnimatedWelcome from './AnimatedWelcome';
+import ArtDirectedBackground from '../ArtDirectedBackground';
+
 
 import { type SignUpFormSchema } from './SignUpForm';
 import { type LoginFormSchema } from './LoginForm';
@@ -50,7 +52,6 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         }
     }, [auth, step]);
 
-    const background = useMemo(() => PlaceHolderImages.find(p => p.id === 'forest-background'), []);
     const yaraCharImage = useMemo(() => PlaceHolderImages.find((p) => p.id === 'char-yara'), []);
     const avatars = useMemo(() => {
         return PlaceHolderImages.filter(p => p.id.startsWith('avatar-')).map(p => ({
@@ -264,31 +265,39 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
                 return null;
         }
     };
-
-    return (
+    
+    if (step !== 'welcome') {
+      return (
         <main className="relative flex flex-col items-center justify-center min-h-screen w-full overflow-hidden">
-            {/* Fondo ocupando todo con Next/Image fill (mejor performance que CSS url) */}
             <div className="absolute inset-0 -z-10">
-                 {background?.imageUrl && (
-                    <Image
-                        src={background.imageUrl}
-                        alt={background.description}
-                        fill
-                        priority
-                        sizes="100vw"
-                        className="object-cover"
-                    />
-                )}
-                {/* Veladura para contraste de UI */}
+                <Image
+                    src="/backgrounds/Mapa.png"
+                    alt="Kairu map background"
+                    fill
+                    priority
+                    sizes="100vw"
+                    className="object-cover"
+                />
                 <div className="absolute inset-0 bg-black/30" />
             </div>
-
-            {/* Contenido */}
             <div className="relative z-10 w-full flex items-center justify-center p-4">
                  <AnimatePresence mode="wait">
                     {renderStep()}
                 </AnimatePresence>
             </div>
         </main>
+      );
+    }
+    
+    return (
+        <ArtDirectedBackground
+            desktopSrc="/backgrounds/MapaPc.png"
+            tabletSrc="/backgrounds/MapaTablet.png"
+            mobileSrc="/backgrounds/MapaTelefono.png"
+        >
+            <AnimatePresence mode="wait">
+                {renderStep()}
+            </AnimatePresence>
+        </ArtDirectedBackground>
     );
 }

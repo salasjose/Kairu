@@ -26,12 +26,12 @@ export default function ArtDirectedBackground({
         />
         {/* Tablet */}
         <div
-          className="hidden md:block lg:hidden w-full h-full bg-contain bg-center bg-no-repeat"
+          className="hidden md:block lg:hidden w-full h-full bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${tabletSrc})` }}
         />
         {/* Mobile */}
         <div
-          className="block md:hidden w-full h-full bg-contain bg-center bg-no-repeat"
+          className="block md:hidden w-full h-full bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${mobileSrc})` }}
         />
       </div>
