@@ -42,9 +42,11 @@ type ChallengeId = keyof typeof challenges;
 const PostChallenge = ({
   onComplete,
   onBack,
+  isCompleted,
 }: {
   onComplete: () => void;
   onBack: () => void;
+  isCompleted: boolean;
 }) => {
   const { user } = useUser();
   const db = useFirestore();
@@ -87,25 +89,35 @@ const PostChallenge = ({
   }, [user, db, handleUrlChange]);
 
   const handleSubmit = async () => {
-    if (url.trim() && (url.startsWith("http://") || url.startsWith("https://"))) {
-        if (user && db) {
-            try {
-                const userDocRef = doc(db, 'users', user.uid);
-                await setDoc(userDocRef, { station4Url: url }, { merge: true });
-                toast({ title: "URL Guardada", description: "Tu enlace ha sido guardado." });
-                onComplete();
-            } catch (error) {
-                toast({ title: "Error", description: "No se pudo guardar la URL.", variant: "destructive" });
-            }
-        } else {
-            toast({ title: "Error", description: "Debes iniciar sesión para guardar.", variant: "destructive" });
-        }
-    } else {
+    const validHosts = ['instagram.com', 'facebook.com', 'linkedin.com', 'x.com', 'twitter.com'];
+    let isValid = false;
+    try {
+        const urlObject = new URL(url);
+        isValid = validHosts.some(host => urlObject.hostname.includes(host));
+    } catch (e) {
+        isValid = false;
+    }
+
+    if (!isValid) {
       toast({
         title: "URL Inválida",
-        description: "Por favor, ingresa una URL válida.",
+        description: "Por favor, ingresa una URL válida de Instagram, Facebook, LinkedIn o X (Twitter).",
         variant: "destructive",
       });
+      return;
+    }
+
+    if (user && db) {
+        try {
+            const userDocRef = doc(db, 'users', user.uid);
+            await setDoc(userDocRef, { station4Url: url }, { merge: true });
+            toast({ title: "URL Guardada", description: "Tu enlace ha sido guardado. ¡Reto completado!" });
+            onComplete();
+        } catch (error) {
+            toast({ title: "Error", description: "No se pudo guardar la URL.", variant: "destructive" });
+        }
+    } else {
+        toast({ title: "Error", description: "Debes iniciar sesión para guardar.", variant: "destructive" });
     }
   };
 
@@ -152,13 +164,19 @@ const PostChallenge = ({
                     <LinkIcon className="h-10 text-muted-foreground" />
                     <Input
                         type="url"
-                        placeholder="https://ejemplo.com/post"
+                        placeholder="https://instagram.com/tu-post"
                         value={url}
                         onChange={(e) => handleUrlChange(e.target.value)}
+                        disabled={isCompleted}
                     />
-                    <Button onClick={handleSubmit}>Enviar</Button>
+                    <Button onClick={handleSubmit} disabled={isCompleted}>
+                        {isCompleted ? "Enviado" : "Enviar"}
+                    </Button>
                 </div>
             </div>
+            {isCompleted && (
+              <p className="mt-4 text-sm text-green-600 font-bold">¡Ya has completado este reto!</p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -235,18 +253,20 @@ export default function Station4() {
       );
     }
     if (selectedChallenge === "post") {
+       const isPostCompleted = !!stationProgress['post']?.completed;
       return (
         <div className="flex-grow flex items-center justify-center p-4">
             <PostChallenge
               onComplete={() => handleChallengeComplete("post")}
               onBack={() => setSelectedChallenge(null)}
+              isCompleted={isPostCompleted}
             />
         </div>
       );
     }
     return (
         <ResponsiveBackground
-            desktopSrc="/backgrounds/TerrAzul1024x_768.png"
+            desktopSrc="/backgrounds/TerrAzul1366x_768.png"
             tabletSrc="/backgrounds/TerrAzul1024x_768.png"
             mobileSrc="/backgrounds/TerrAzul1075_X_1944.png"
         >
