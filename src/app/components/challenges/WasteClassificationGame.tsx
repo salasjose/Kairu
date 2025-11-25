@@ -202,7 +202,7 @@ const GameWithImages = ({ onGameWin, onBack, gameState, updateGameState }: { onG
 const GameDragAndDrop = ({ onGameWin, onBack, gameState, updateGameState }: { onGameWin: () => void; onBack: () => void; gameState: GameState, updateGameState: (newState: Partial<GameState>) => void; }) => {
   const [wasteItems, setWasteItems] = useState(() => shuffle([...wasteItemsData].slice(0, 20)));
   const [animations, setAnimations] = useState<Record<WasteCategory, string>>({ recycle: '', organic: '', trash: '' });
-  const [timeLeft, setTimeLeft] = useState(240); // 4 minutes
+  const [timeLeft, setTimeLeft] = useState(180); // 3 minutes
   
   const currentItem = wasteItems[wasteItems.length - 1];
   const gameWon = !currentItem;
