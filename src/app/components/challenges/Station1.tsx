@@ -19,7 +19,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore, useStorage } from "@/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import { ref, uploadString, getDownloadURL, deleteObject } from "firebase/storage";
 import { usePrizeCart } from "@/hooks/use-prize-cart";
 import ResponsiveBackground from "../ResponsiveBackground";
 
@@ -149,18 +149,35 @@ const CameraView = ({
 const PhotoSlot = ({
   imageUrl,
   onAddPhoto,
+  onDeletePhoto,
+  challengeCompleted,
 }: {
   imageUrl: string | null;
   onAddPhoto: () => void;
+  onDeletePhoto: () => void;
+  challengeCompleted: boolean;
 }) => {
   return (
     <div className="aspect-square border-2 border-dashed rounded-lg flex items-center justify-center relative bg-card/50">
       {imageUrl ? (
         <>
           <Image src={imageUrl} alt="Uploaded content" fill className="object-cover rounded-lg" />
-          <div className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center">
-            <CheckCircle className="h-8 w-8 text-white" />
+          <div className={cn(
+              "absolute inset-0 rounded-lg flex items-center justify-center",
+              challengeCompleted && "bg-black/40"
+          )}>
+            {challengeCompleted && <CheckCircle className="h-8 w-8 text-white" />}
           </div>
+          {!challengeCompleted && (
+            <Button
+              variant="destructive"
+              size="icon"
+              className="absolute top-1 right-1 h-6 w-6 z-10"
+              onClick={onDeletePhoto}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </>
       ) : (
         <div className="text-center">
@@ -181,9 +198,11 @@ const PhotoSlot = ({
 const PhotoChallenge = ({
   onBack,
   onStationComplete,
+  isChallengeCompleted,
 }: {
   onBack: () => void;
   onStationComplete: () => void;
+  isChallengeCompleted: boolean;
 }) => {
   const { user } = useUser();
   const db = useFirestore();
@@ -199,32 +218,22 @@ const PhotoChallenge = ({
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const updatePhotos = useCallback(
-    async (type: "flora" | "fauna", index: number, url: string) => {
+  const updatePhotosInDb = useCallback(
+    async (newFlora: (string|null)[], newFauna: (string|null)[]) => {
       if (!user || !db) return;
 
-      const currentPhotos = type === "flora" ? floraPhotos : faunaPhotos;
-      const newPhotos = [...currentPhotos];
-      newPhotos[index] = url;
-
-      if (type === "flora") {
-        setFloraPhotos(newPhotos);
-      } else {
-        setFaunaPhotos(newPhotos);
-      }
-
-      const dbField = type === "flora" ? "station1FloraPhotos" : "station1FaunaPhotos";
       try {
         const userDocRef = doc(db, "users", user.uid);
         await setDoc(
           userDocRef,
           {
-            [dbField]: newPhotos,
+            station1FloraPhotos: newFlora,
+            station1FaunaPhotos: newFauna,
           },
           { merge: true }
         );
       } catch (error) {
-        console.error(`Failed to save ${type} photos to Firestore:`, error);
+        console.error(`Failed to save photos to Firestore:`, error);
         toast({
           title: "Error al guardar",
           description: "No se pudo guardar la galería en la nube.",
@@ -232,8 +241,33 @@ const PhotoChallenge = ({
         });
       }
     },
-    [user, db, floraPhotos, faunaPhotos]
+    [user, db]
   );
+  
+  const handleDeletePhoto = async (type: "flora" | "fauna", index: number) => {
+    if (isChallengeCompleted) return;
+    
+    const currentPhotos = type === "flora" ? floraPhotos : faunaPhotos;
+    const photoUrl = currentPhotos[index];
+    if (!photoUrl) return;
+
+    try {
+        const photoRef = ref(storage, photoUrl);
+        await deleteObject(photoRef);
+    } catch (error) {
+        console.warn(`Could not delete photo from storage: ${error}`);
+    }
+
+    const newFlora = type === "flora" ? [...floraPhotos] : floraPhotos;
+    const newFauna = type === "fauna" ? [...faunaPhotos] : faunaPhotos;
+
+    if (type === "flora") newFlora[index] = null;
+    else newFauna[index] = null;
+    
+    setFloraPhotos(newFlora);
+    setFaunaPhotos(newFauna);
+    await updatePhotosInDb(newFlora, newFauna);
+  };
 
   useEffect(() => {
     const fetchPhotos = async () => {
@@ -276,7 +310,17 @@ const PhotoChallenge = ({
 
       await uploadString(storageRef, dataUrl, "data_url");
       const downloadUrl = await getDownloadURL(storageRef);
-      await updatePhotos(type, index, downloadUrl);
+      
+      const newFlora = type === 'flora' ? [...floraPhotos] : floraPhotos;
+      const newFauna = type === 'fauna' ? [...faunaPhotos] : faunaPhotos;
+      
+      if (type === 'flora') newFlora[index] = downloadUrl;
+      else newFauna[index] = downloadUrl;
+
+      setFloraPhotos(newFlora);
+      setFaunaPhotos(newFauna);
+      await updatePhotosInDb(newFlora, newFauna);
+
 
       toast({
         title: "¡Foto subida!",
@@ -316,6 +360,7 @@ const PhotoChallenge = ({
   };
 
   const handleAddPhotoClick = (type: "flora" | "fauna", index: number) => {
+    if (isChallengeCompleted) return;
     setPhotoToAdd({ type, index });
     setIsAddPhotoDialogOpen(true);
   };
@@ -326,12 +371,6 @@ const PhotoChallenge = ({
   const onChallengeCompleteClick = () => {
     if (areAllPhotosUploaded) {
       onStationComplete();
-    } else {
-      toast({
-        title: "Reto Incompleto",
-        description: "Debes subir las 8 fotos (4 de flora y 4 de fauna) para completar el reto.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -374,6 +413,8 @@ const PhotoChallenge = ({
                       key={`flora-${index}`}
                       imageUrl={photo}
                       onAddPhoto={() => handleAddPhotoClick("flora", index)}
+                      onDeletePhoto={() => handleDeletePhoto("flora", index)}
+                      challengeCompleted={isChallengeCompleted}
                     />
                   ))}
                 </div>
@@ -387,14 +428,16 @@ const PhotoChallenge = ({
                       key={`fauna-${index}`}
                       imageUrl={photo}
                       onAddPhoto={() => handleAddPhotoClick("fauna", index)}
+                      onDeletePhoto={() => handleDeletePhoto("fauna", index)}
+                      challengeCompleted={isChallengeCompleted}
                     />
                   ))}
                 </div>
               </section>
             </div>
             <div className="mt-8 text-center">
-              <Button size="lg" onClick={onChallengeCompleteClick} disabled={!areAllPhotosUploaded}>
-                Completar Reto
+              <Button size="lg" onClick={onChallengeCompleteClick} disabled={!areAllPhotosUploaded || isChallengeCompleted}>
+                {isChallengeCompleted ? 'Reto Completado' : 'Completar Reto'}
               </Button>
             </div>
           </div>
@@ -407,9 +450,11 @@ const PhotoChallenge = ({
 const HabitatChallenge = ({
   onBack,
   onStationComplete,
+  isChallengeCompleted,
 }: {
   onBack: () => void;
   onStationComplete: () => void;
+  isChallengeCompleted: boolean;
 }) => {
   const { user } = useUser();
   const db = useFirestore();
@@ -421,23 +466,7 @@ const HabitatChallenge = ({
   const [photoToAddIndex, setPhotoToAddIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const fetchPhotos = async () => {
-      if (!user || !db) return;
-      const userDocRef = doc(db, "users", user.uid);
-      try {
-        const docSnap = await getDoc(userDocRef);
-        if (docSnap.exists() && docSnap.data().station1HabitatPhotos) {
-          setHabitatPhotos(docSnap.data().station1HabitatPhotos);
-        }
-      } catch (error) {
-        console.error("Error fetching habitat photos from Firestore:", error);
-      }
-    };
-    fetchPhotos();
-  }, [user, db]);
-
-  const updatePhotosInDb = async (newPhotos: (string | null)[]) => {
+  const updatePhotosInDb = useCallback(async (newPhotos: (string | null)[]) => {
     if (!user || !db) return;
     try {
       const userDocRef = doc(db, "users", user.uid);
@@ -456,8 +485,43 @@ const HabitatChallenge = ({
         variant: "destructive",
       });
     }
-  };
+  }, [user, db]);
 
+  useEffect(() => {
+    const fetchPhotos = async () => {
+      if (!user || !db) return;
+      const userDocRef = doc(db, "users", user.uid);
+      try {
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists() && docSnap.data().station1HabitatPhotos) {
+          setHabitatPhotos(docSnap.data().station1HabitatPhotos);
+        }
+      } catch (error) {
+        console.error("Error fetching habitat photos from Firestore:", error);
+      }
+    };
+    fetchPhotos();
+  }, [user, db]);
+
+  const handleDeletePhoto = async (index: number) => {
+    if (isChallengeCompleted) return;
+    
+    const photoUrl = habitatPhotos[index];
+    if (!photoUrl) return;
+
+    try {
+        const photoRef = ref(storage, photoUrl);
+        await deleteObject(photoRef);
+    } catch (error) {
+        console.warn(`Could not delete photo from storage: ${error}`);
+    }
+
+    const newPhotos = [...habitatPhotos];
+    newPhotos[index] = null;
+    setHabitatPhotos(newPhotos);
+    await updatePhotosInDb(newPhotos);
+  };
+  
   const handleCapture = async (dataUrl: string) => {
     setIsAddPhotoDialogOpen(false);
     setIsCameraOpen(false);
@@ -504,6 +568,7 @@ const HabitatChallenge = ({
   };
 
   const handleAddPhotoClick = (index: number) => {
+    if (isChallengeCompleted) return;
     setPhotoToAddIndex(index);
     setIsAddPhotoDialogOpen(true);
   };
@@ -531,12 +596,6 @@ const HabitatChallenge = ({
   const onChallengeCompleteClick = () => {
     if (areAllPhotosUploaded) {
       onStationComplete();
-    } else {
-      toast({
-        title: "Reto Incompleto",
-        description: "Debes subir las 4 fotos para completar el reto.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -580,13 +639,15 @@ const HabitatChallenge = ({
                     key={`habitat-${index}`}
                     imageUrl={photo}
                     onAddPhoto={() => handleAddPhotoClick(index)}
+                    onDeletePhoto={() => handleDeletePhoto(index)}
+                    challengeCompleted={isChallengeCompleted}
                   />
                 ))}
               </div>
             </section>
             <div className="mt-8 text-center">
-              <Button size="lg" onClick={onChallengeCompleteClick} disabled={!areAllPhotosUploaded}>
-                Completar Reto
+              <Button size="lg" onClick={onChallengeCompleteClick} disabled={!areAllPhotosUploaded || isChallengeCompleted}>
+                {isChallengeCompleted ? 'Reto Completado' : 'Completar Reto'}
               </Button>
             </div>
           </div>
@@ -632,7 +693,9 @@ export default function Station1() {
   };
 
   const handleChallengeComplete = (challengeName: string) => {
-    completeChallenge(stationId, challengeName, null);
+    if (!completedChallenges[stationId]?.[challengeName]) {
+      completeChallenge(stationId, challengeName);
+    }
     setSelectedChallenge(null);
     toast({
       title: `¡Reto '${challengeName}' Completado!`,
@@ -649,22 +712,30 @@ export default function Station1() {
     });
     router.push("/");
   };
-
-  if (selectedChallenge === "Fauna y Flora") {
-    return <PhotoChallenge
-          onBack={() => setSelectedChallenge(null)}
-          onStationComplete={() => handleChallengeComplete("Fauna y Flora")}
-        />;
-  }
-
-  if (selectedChallenge === "Cuidado Animal") {
-     return <HabitatChallenge
-          onBack={() => setSelectedChallenge(null)}
-          onStationComplete={() => handleChallengeComplete("Cuidado Animal")}
-        />;
-  }
-
+  
   const stationCompletedChallenges = completedChallenges[stationId] || {};
+
+  if (selectedChallenge) {
+    const challengeKey = selectedChallenge as keyof typeof challenges;
+    const isCompleted = !!stationCompletedChallenges[challengeKey];
+    if (selectedChallenge === "Fauna y Flora") {
+      return <PhotoChallenge
+            onBack={() => setSelectedChallenge(null)}
+            onStationComplete={() => handleChallengeComplete("Fauna y Flora")}
+            isChallengeCompleted={isCompleted}
+          />;
+    }
+  
+    if (selectedChallenge === "Cuidado Animal") {
+       return <HabitatChallenge
+            onBack={() => setSelectedChallenge(null)}
+            onStationComplete={() => handleChallengeComplete("Cuidado Animal")}
+            isChallengeCompleted={isCompleted}
+          />;
+    }
+  }
+
+
   const areAllChallengesComplete = Object.keys(challenges).every(
     (ch) => stationCompletedChallenges[ch]?.completed
   );
