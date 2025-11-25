@@ -199,13 +199,51 @@ const GameWithImages = ({ onGameWin, onBack, gameState, updateGameState }: { onG
     );
 };
 
+// New data for the drag-and-drop game
+const dragAndDropWasteItems: { name: string; category: WasteCategory }[] = [
+  // Reciclables
+  { name: 'Frasco de mermelada (vidrio)', category: 'recycle' },
+  { name: 'Revista', category: 'recycle' },
+  { name: 'Caja de cereal', category: 'recycle' },
+  { name: 'Tubo de cartón (papel higiénico)', category: 'recycle' },
+  { name: 'Envase de detergente', category: 'recycle' },
+  { name: 'Hojas de papel bond/archivo', category: 'recycle' },
+  { name: 'Bandeja de aluminio limpia', category: 'recycle' },
+  { name: 'Folleto publicitario', category: 'recycle' },
+  { name: 'Tapa plástica', category: 'recycle' },
+  { name: 'Bolsa plástica limpia', category: 'recycle' },
+  // Orgánicos
+  { name: 'Bolsita de té', category: 'organic' },
+  { name: 'Cáscara de papa', category: 'organic' },
+  { name: 'Restos de pan', category: 'organic' },
+  { name: 'Semilla de aguacate', category: 'organic' },
+  { name: 'Flores marchitas', category: 'organic' },
+  { name: 'Corazón de piña', category: 'organic' },
+  { name: 'Aserrín de madera natural', category: 'organic' },
+  { name: 'Restos de lechuga', category: 'organic' },
+  { name: 'Cáscara de sandía', category: 'organic' },
+  { name: 'Pelo o cabello', category: 'organic' },
+  // No Reciclables (Basura)
+  { name: 'Icopor (Poliestireno)', category: 'trash' },
+  { name: 'Colilla de cigarrillo', category: 'trash' },
+  { name: 'Caja de pizza con grasa', category: 'trash' },
+  { name: 'Cepillo de dientes', category: 'trash' },
+  { name: 'Espejo roto', category: 'trash' },
+  { name: 'Recibo de caja (papel térmico)', category: 'trash' },
+  { name: 'Cuchilla de afeitar', category: 'trash' },
+  { name: 'Curita o venda', category: 'trash' },
+  { name: 'Esponja de lavar platos', category: 'trash' },
+  { name: 'Tubo de pasta dental', category: 'trash' },
+];
+
 const GameDragAndDrop = ({ onGameWin, onBack, gameState, updateGameState }: { onGameWin: () => void; onBack: () => void; gameState: GameState, updateGameState: (newState: Partial<GameState>) => void; }) => {
-  const [wasteItems, setWasteItems] = useState(() => shuffle([...wasteItemsData].slice(0, 20)));
+  const [wasteItems, setWasteItems] = useState(() => shuffle([...dragAndDropWasteItems]).slice(0, 15));
+  const [correctlySorted, setCorrectlySorted] = useState(0);
   const [animations, setAnimations] = useState<Record<WasteCategory, string>>({ recycle: '', organic: '', trash: '' });
   const [timeLeft, setTimeLeft] = useState(180); // 3 minutes
-  
-  const currentItem = wasteItems[wasteItems.length - 1];
-  const gameWon = !currentItem;
+
+  const currentItem = wasteItems[0];
+  const gameWon = correctlySorted >= 15;
   
   useEffect(() => {
     if (gameWon || gameState.lives <= 0 || timeLeft <= 0) return;
@@ -213,7 +251,7 @@ const GameDragAndDrop = ({ onGameWin, onBack, gameState, updateGameState }: { on
         setTimeLeft(prev => {
             if (prev <= 1) {
                 clearInterval(timer);
-                updateGameState({ lockoutUntil: Date.now() + 15 * 60 * 1000 }); // Lock for 15 minutes
+                updateGameState({ lockoutUntil: Date.now() + 5 * 60 * 1000 }); // Lock for 5 minutes
                 return 0;
             }
             return prev - 1;
@@ -239,7 +277,8 @@ const GameDragAndDrop = ({ onGameWin, onBack, gameState, updateGameState }: { on
     if (!currentItem || gameState.lives <= 0 || timeLeft <= 0) return;
 
     if (currentItem.category === category) {
-      setWasteItems(prevItems => prevItems.slice(0, prevItems.length - 1));
+      setCorrectlySorted(prev => prev + 1);
+      setWasteItems(prevItems => prevItems.slice(1));
       triggerAnimation(category, 'correct');
     } else {
       const newLives = gameState.lives - 1;
@@ -251,13 +290,14 @@ const GameDragAndDrop = ({ onGameWin, onBack, gameState, updateGameState }: { on
         variant: "destructive",
       });
       if (newLives <= 0) {
-        updateGameState({ lockoutUntil: Date.now() + 15 * 60 * 1000 }); // Lock for 15 minutes
+        updateGameState({ lockoutUntil: Date.now() + 5 * 60 * 1000 }); // Lock for 5 minutes
       } else {
+         // Move the incorrect item to a random position in the remaining list
         setWasteItems(prev => {
-            const base = prev.slice(0, prev.length - 1);
-            const idx = Math.floor(Math.random() * (base.length + 1));
-            base.splice(idx, 0, currentItem);
-            return base;
+            const remaining = prev.slice(1);
+            const indexToInsert = Math.floor(Math.random() * (remaining.length + 1));
+            remaining.splice(indexToInsert, 0, currentItem);
+            return remaining;
         });
       }
     }
@@ -274,7 +314,7 @@ const GameDragAndDrop = ({ onGameWin, onBack, gameState, updateGameState }: { on
             <div className="w-full flex flex-col items-center justify-center text-center min-h-[300px]">
                 <AlertCircle className="w-24 h-24 text-destructive mb-4" />
                 <h2 className="text-3xl font-bold font-headline text-destructive mb-2">{timeLeft <= 0 ? "¡Se acabó el tiempo!" : "¡Sin vidas!"}</h2>
-                <p className="text-muted-foreground text-lg mb-6">El reto se bloqueará por 15 minutos.</p>
+                <p className="text-muted-foreground text-lg mb-6">El reto se bloqueará por 5 minutos.</p>
                 <Button onClick={onBack} size="lg">
                     <ArrowLeft className="mr-2" />
                     Volver al Menú del Reto
@@ -291,6 +331,9 @@ const GameDragAndDrop = ({ onGameWin, onBack, gameState, updateGameState }: { on
                     i < gameState.lives ? <Heart key={i} className="w-6 h-6 text-red-500 fill-current" /> : <Heart key={i} className="w-6 h-6 text-gray-300" />
                 ))}
             </div>
+             <div className="flex-1 text-center">
+                <p className="text-lg font-bold">Progreso: <span className="text-primary">{correctlySorted} / 15</span></p>
+            </div>
             <div className="text-2xl font-bold text-primary tabular-nums">
                 {formatTime(timeLeft)}
             </div>
@@ -300,7 +343,7 @@ const GameDragAndDrop = ({ onGameWin, onBack, gameState, updateGameState }: { on
         <AnimatePresence>
           {currentItem && (
             <motion.div
-              key={currentItem.id}
+              key={currentItem.name} // Use name as key since list is shuffled
               drag
               dragConstraints={{ left: -150, right: 150, top: -80, bottom: 80 }}
               dragSnapToOrigin
@@ -341,9 +384,6 @@ const GameDragAndDrop = ({ onGameWin, onBack, gameState, updateGameState }: { on
           </div>
         ))}
       </div>
-       <div className="mt-8 text-center text-sm text-muted-foreground">
-        <p><b>Pistas:</b> Observa bien los materiales. ¿Plástico limpio o sucio? ¿Vegetal o no vegetal?</p>
-       </div>
     </div>
   );
 }
@@ -429,8 +469,7 @@ export default function WasteClassificationGameContainer({ gameId, onComplete, o
 
 
   if (pageState === 'locked') {
-    const lockoutDuration = gameId === 'game-classify' ? 60 * 60 * 1000 : 15 * 60 * 1000;
-    const lockoutMessage = gameId === 'game-classify' ? "El juego se bloqueará por 1 hora." : "Podrás intentarlo de nuevo en 15 minutos.";
+    const lockoutMinutes = gameId === 'game-classify' ? 60 : 5;
     return (
         <div className="w-full max-w-4xl mx-auto p-4 flex flex-col items-center justify-center text-center min-h-[400px]">
             <Lock className="w-24 h-24 text-destructive mb-4" />
@@ -442,9 +481,12 @@ export default function WasteClassificationGameContainer({ gameId, onComplete, o
     )
   }
 
-  const gameInfo = gameId === 'game-classify' 
-    ? { title: "Clasificación por Imagen", GameComponent: GameWithImages } 
-    : { title: "Arrastra y Recicla", GameComponent: GameDragAndDrop };
+  const isDragAndDrop = gameId === 'game-drag-and-drop';
+  const gameInfo = {
+    title: isDragAndDrop ? 'Arrastra y Recicla' : 'Clasificación por Imagen',
+    GameComponent: isDragAndDrop ? GameDragAndDrop : GameWithImages,
+    description: isDragAndDrop ? 'Arrastra cada residuo al contenedor correcto. Tienes 3 minutos y 3 vidas.' : 'Clasifica 10 residuos con imágenes antes de que se acabe el tiempo. ¡Cuidado, solo tienes 3 vidas!',
+  };
 
   return (
     <div className="w-full max-w-5xl mx-auto p-4">

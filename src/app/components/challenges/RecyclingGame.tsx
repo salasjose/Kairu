@@ -12,7 +12,7 @@ const stationId = 3;
 
 const games = [
   { id: "game-classify", title: "Clasificación de Residuos", description: "Clasifica 10 residuos con imágenes antes de que se acabe el tiempo. ¡Cuidado, solo tienes 3 vidas!", component: WasteClassificationGame },
-  { id: "game-drag-and-drop", title: "Arrastra y Recicla", description: "Arrastra cada residuo al contenedor correcto. Tienes 3 minutos y 3 vidas.", component: WasteClassificationGame },
+  { id: "game-drag-and-drop", title: "Arrastra y Recicla", description: "Arrastra 15 residuos al contenedor correcto. Tienes 3 minutos y 3 vidas.", component: WasteClassificationGame },
 ];
 
 const WonScreen = ({ gameTitle, onBack }: { gameTitle: string; onBack: () => void; }) => (
