@@ -438,7 +438,12 @@ const PhotoChallenge = ({
             </div>
             <div className="mt-8 text-center">
               <Button size="lg" onClick={onChallengeCompleteClick} disabled={!areAllPhotosUploaded || isChallengeCompleted}>
-                {isChallengeCompleted ? 'Reto Completado' : 'Completar Reto'}
+                {isChallengeCompleted ? (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Reto Completado
+                  </>
+                ) : 'Completar Reto'}
               </Button>
             </div>
           </div>
@@ -648,7 +653,12 @@ const HabitatChallenge = ({
             </section>
             <div className="mt-8 text-center">
               <Button size="lg" onClick={onChallengeCompleteClick} disabled={!areAllPhotosUploaded || isChallengeCompleted}>
-                {isChallengeCompleted ? 'Reto Completado' : 'Completar Reto'}
+                {isChallengeCompleted ? (
+                   <>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Reto Completado
+                  </>
+                ) : 'Completar Reto'}
               </Button>
             </div>
           </div>
@@ -723,7 +733,7 @@ export default function Station1() {
     if (areAllChallengesComplete && !prizes.some(p => p.stationId === stationId)) {
         setIsPrizeModalOpen(true);
     }
-  }, [areAllChallengesComplete, prizes]);
+  }, [areAllChallengesComplete, prizes, stationId]);
 
 
   if (selectedChallenge) {
