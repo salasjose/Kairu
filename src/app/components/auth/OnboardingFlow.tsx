@@ -265,19 +265,31 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         }
     };
     
-    const backgroundLayout = (
+    // This component now handles the full-screen responsive background.
+    return (
         <main className="relative flex flex-col items-center justify-center min-h-screen w-full overflow-hidden">
-             <div className="absolute inset-0 -z-10">
-                <Image
-                    src="/backgrounds/Mapa.png"
-                    alt="Kairu map background"
-                    fill
-                    priority
+            <div className="absolute inset-0 z-0">
+                <picture
+                className="pointer-events-none select-none block h-full w-full"
+                aria-hidden="true"
+                role="presentation"
+                >
+                {/* PC >= 1025px */}
+                <source media="(min-width: 1025px)" srcSet="/backgrounds/MapaPc.png" />
+                {/* Tablet >= 650px */}
+                <source media="(min-width: 650px)" srcSet="/backgrounds/MapaTablet.png" />
+                {/* Móvil (fallback) */}
+                <img
+                    src="/backgrounds/MapaTelefono.png"
+                    alt="Fondo del mapa del juego"
+                    className="absolute inset-0 h-full w-full object-cover"
                     sizes="100vw"
-                    className="object-cover"
+                    decoding="async"
+                    loading="eager"
                 />
-                <div className="absolute inset-0 bg-black/30" />
+                </picture>
             </div>
+            <div className="absolute inset-0 bg-black/20" />
             <div className="relative z-10 w-full flex items-center justify-center p-4">
                 <AnimatePresence mode="wait">
                     {renderStep()}
@@ -285,40 +297,4 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
             </div>
         </main>
     );
-
-    if (step === 'welcome') {
-        return (
-             <main className="relative flex flex-col items-center justify-center min-h-screen w-full overflow-hidden">
-                <div className="absolute inset-0 z-0">
-                    <picture
-                    className="pointer-events-none select-none block h-full w-full"
-                    aria-hidden="true"
-                    role="presentation"
-                    >
-                    {/* PC >= 1025px */}
-                    <source media="(min-width: 1025px)" srcSet="/backgrounds/MapaPc.png" />
-                    {/* Tablet >= 650px */}
-                    <source media="(min-width: 650px)" srcSet="/backgrounds/MapaTablet.png" />
-                    {/* Móvil (fallback) */}
-                    <img
-                        src="/backgrounds/MapaTelefono.png"
-                        alt="Fondo del mapa del juego"
-                        className="absolute inset-0 h-full w-full object-cover"
-                        sizes="100vw"
-                        decoding="async"
-                        loading="eager"
-                    />
-                    </picture>
-                </div>
-                <div className="absolute inset-0 bg-black/20" />
-                <div className="relative z-10 w-full flex items-center justify-center p-4">
-                    <AnimatePresence mode="wait">
-                        {renderStep()}
-                    </AnimatePresence>
-                </div>
-            </main>
-        );
-    }
-    
-    return backgroundLayout;
 }
