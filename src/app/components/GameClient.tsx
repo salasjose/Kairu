@@ -34,6 +34,7 @@ export default function GameClient() {
   const fetchInitialPlayerState = useCallback(() => {
     if (!user || !db) return;
 
+    setIsFetchingPlayer(true);
     const playerDocRef = doc(db, 'users', user.uid);
     const unsubscribe = onSnapshot(playerDocRef, (docSnap) => {
       setIsFetchingPlayer(false);
