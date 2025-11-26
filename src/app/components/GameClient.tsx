@@ -12,6 +12,7 @@ import { useUser, useFirestore } from '@/firebase';
 import type { z } from 'zod';
 import type { SignUpFormSchema } from './auth/SignUpForm';
 import GameHeader from './GameHeader';
+import BackgroundImage from './BackgroundImage';
 
 export interface PlayerState {
   id: string;
@@ -169,54 +170,54 @@ export default function GameClient() {
   const pathD = generatePath(stations.map(s => stationPositions[s.id - 1]));
 
   return (
-    <main className="relative w-full min-h-screen flex flex-col overflow-hidden">
-      <GameHeader playerState={playerState} setPlayerState={setPlayerState} onFullReset={handleResetOnboarding} />
+    <BackgroundImage>
+        <GameHeader playerState={playerState} setPlayerState={setPlayerState} onFullReset={handleResetOnboarding} />
 
-      <div className="relative flex-1 w-full h-screen overflow-hidden z-10">
-        <div className="absolute inset-0 grid place-items-center">
-            <svg
-                width="100%"
-                height="100%"
-                viewBox="0 0 100 100"
-                preserveAspectRatio="none"
-                className="absolute top-0 left-0"
-            >
-                <path
-                    d={pathD}
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="0.5"
-                    strokeDasharray="2 3"
-                    strokeLinecap="round"
-                />
-            </svg>
-            {stations.map((station) => {
-                const isUnlocked = playerState?.unlockedStations?.includes(station.id);
-                const pos = stationPositions[station.id - 1];
-                return (
-                <div 
-                    key={station.id} 
-                    className="absolute -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-20 md:h-20"
-                    style={{ 
-                    top: pos.top,
-                    left: pos.left,
-                    }}
+        <div className="relative flex-1 w-full h-screen overflow-hidden z-10">
+            <div className="absolute inset-0 grid place-items-center">
+                <svg
+                    width="100%"
+                    height="100%"
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
+                    className="absolute top-0 left-0"
                 >
-                    <StationNode station={station} isUnlocked={isUnlocked} />
-                </div>
-                );
-            })}
+                    <path
+                        d={pathD}
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="0.5"
+                        strokeDasharray="2 3"
+                        strokeLinecap="round"
+                    />
+                </svg>
+                {stations.map((station) => {
+                    const isUnlocked = playerState?.unlockedStations?.includes(station.id);
+                    const pos = stationPositions[station.id - 1];
+                    return (
+                    <div 
+                        key={station.id} 
+                        className="absolute -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-20 md:h-20"
+                        style={{ 
+                        top: pos.top,
+                        left: pos.left,
+                        }}
+                    >
+                        <StationNode station={station} isUnlocked={isUnlocked} />
+                    </div>
+                    );
+                })}
+            </div>
         </div>
-      </div>
 
-      <AnimatePresence>
-        {isCompletionDialogOpen && (
-          <CompletionDialog 
-            open={isCompletionDialogOpen}
-            onOpenChange={setIsCompletionDialogOpen}
-          />
-        )}
-      </AnimatePresence>
-    </main>
+        <AnimatePresence>
+            {isCompletionDialogOpen && (
+            <CompletionDialog 
+                open={isCompletionDialogOpen}
+                onOpenChange={setIsCompletionDialogOpen}
+            />
+            )}
+        </AnimatePresence>
+    </BackgroundImage>
   );
 }
