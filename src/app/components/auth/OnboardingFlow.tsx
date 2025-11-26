@@ -35,6 +35,36 @@ interface OnboardingFlowProps {
 
 type Step = 'welcome' | 'signup' | 'login' | 'avatar' | 'yara' | 'scenario';
 
+function ResponsiveBackground() {
+  return (
+    <div className="absolute inset-0 -z-10">
+      <picture
+        className="pointer-events-none select-none block h-full w-full"
+        aria-hidden="true"
+        role="presentation"
+      >
+        {/* PC >= 1025px */}
+        <source media="(min-width: 1025px)" srcSet="/backgrounds/MapaPc.png" />
+        {/* Tablet >= 650px */}
+        <source media="(min-width: 650px)" srcSet="/backgrounds/MapaTablet.png" />
+        {/* Móvil (fallback) */}
+        <img
+          src="/backgrounds/MapaTelefono.png"
+          alt="Fondo del mapa del juego"
+          className="h-full w-full object-cover"
+          sizes="100vw"
+          decoding="async"
+          loading="eager"
+        />
+      </picture>
+
+      {/* Capa oscura opcional */}
+      <div className="absolute inset-0 bg-black/30" />
+    </div>
+  );
+}
+
+
 export default function OnboardingFlow({ onComplete, onLoginSuccess }: OnboardingFlowProps) {
     const auth = useAuth();
     const [step, setStep] = useState<Step>('welcome');
@@ -265,36 +295,15 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         }
     };
     
-    // This component now handles the full-screen responsive background.
     return (
-        <main className="relative flex flex-col items-center justify-center min-h-screen w-full overflow-hidden">
-            <div className="absolute inset-0 z-0">
-                <picture
-                className="pointer-events-none select-none block h-full w-full"
-                aria-hidden="true"
-                role="presentation"
-                >
-                {/* PC >= 1025px */}
-                <source media="(min-width: 1025px)" srcSet="/backgrounds/MapaPc.png" />
-                {/* Tablet >= 650px */}
-                <source media="(min-width: 650px)" srcSet="/backgrounds/MapaTablet.png" />
-                {/* Móvil (fallback) */}
-                <img
-                    src="/backgrounds/MapaTelefono.png"
-                    alt="Fondo del mapa del juego"
-                    className="absolute inset-0 h-full w-full object-cover"
-                    sizes="100vw"
-                    decoding="async"
-                    loading="eager"
-                />
-                </picture>
-            </div>
-            <div className="absolute inset-0 bg-black/20" />
-            <div className="relative z-10 w-full flex items-center justify-center p-4">
-                <AnimatePresence mode="wait">
-                    {renderStep()}
-                </AnimatePresence>
-            </div>
-        </main>
+      <main className="relative flex flex-col items-center justify-center min-h-screen w-full overflow-hidden">
+        <ResponsiveBackground />
+
+        <div className="relative z-10 w-full flex items-center justify-center p-4">
+          <AnimatePresence mode="wait">
+            {renderStep()}
+          </AnimatePresence>
+        </div>
+      </main>
     );
 }
