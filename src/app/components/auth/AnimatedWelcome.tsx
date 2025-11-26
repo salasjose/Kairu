@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Logo from '@/app/components/Logo';
 import { Card } from '@/components/ui/card';
-import ArtDirectedBackground from '../ArtDirectedBackground';
 
 interface AnimatedWelcomeProps {
   onLoginClick: () => void;
@@ -33,12 +32,35 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
   }, []);
 
   return (
-    <ArtDirectedBackground
-        desktopSrc="/backgrounds/MapaPc.png"
-        tabletSrc="/backgrounds/MapaTablet.png"
-        mobileSrc="/backgrounds/MapaTelefono.png"
-    >
-        <div className="relative w-full min-h-[80vh] flex items-center justify-center p-4 overflow-hidden">
+    <section className="relative min-h-screen w-full overflow-hidden">
+      {/* Fondo responsivo por art-direction */}
+      <div className="absolute inset-0 z-0">
+        <picture
+          className="pointer-events-none select-none block h-full w-full"
+          aria-hidden="true"
+          role="presentation"
+        >
+          {/* PC >= 1025px */}
+          <source media="(min-width: 1025px)" srcSet="/backgrounds/MapaPc.png" />
+          {/* Tablet >= 650px */}
+          <source media="(min-width: 650px)" srcSet="/backgrounds/MapaTablet.png" />
+          {/* Móvil (fallback) */}
+          <img
+            src="/backgrounds/MapaTelefono.png"
+            alt="Fondo del mapa del juego"
+            className="absolute inset-0 h-full w-full object-cover"
+            sizes="100vw"
+            decoding="async"
+            loading="eager"
+          />
+        </picture>
+      </div>
+
+      {/* Capa de oscurecimiento opcional */}
+      <div className="absolute inset-0 bg-black/20" />
+      
+      {/* Contenido principal centrado */}
+      <div className="relative z-10 w-full min-h-screen flex items-center justify-center p-4">
 
         <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16 z-10">
 
@@ -105,7 +127,7 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
                 </AnimatePresence>
             </div>
         </div>
-        </div>
-    </ArtDirectedBackground>
+      </div>
+    </section>
   );
 }

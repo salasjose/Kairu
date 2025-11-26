@@ -15,7 +15,6 @@ import { useAuth } from '@/firebase';
 import type { z } from "zod";
 import { Button } from '@/components/ui/button';
 import AnimatedWelcome from './AnimatedWelcome';
-import ArtDirectedBackground from '../ArtDirectedBackground';
 
 
 import { type SignUpFormSchema } from './SignUpForm';
@@ -266,6 +265,7 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         }
     };
     
+    // Welcome step manages its own full-screen background
     if (step === 'welcome') {
       return (
         <AnimatePresence mode="wait">
@@ -274,6 +274,7 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
       );
     }
     
+    // Other steps use the shared layout with the blurred map background
     return (
         <main className="relative flex flex-col items-center justify-center min-h-screen w-full overflow-hidden">
             <div className="absolute inset-0 -z-10">
