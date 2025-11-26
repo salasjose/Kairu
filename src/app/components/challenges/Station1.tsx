@@ -715,6 +715,16 @@ export default function Station1() {
   };
   
   const stationCompletedChallenges = completedChallenges[stationId] || {};
+  const areAllChallengesComplete = Object.keys(challenges).every(
+    (ch) => stationCompletedChallenges[ch as keyof typeof challenges]?.completed
+  );
+
+  useEffect(() => {
+    if (areAllChallengesComplete && !prizes.some(p => p.stationId === stationId)) {
+        setIsPrizeModalOpen(true);
+    }
+  }, [areAllChallengesComplete, prizes]);
+
 
   if (selectedChallenge) {
     const challengeKey = selectedChallenge as keyof typeof challenges;
@@ -736,10 +746,6 @@ export default function Station1() {
     }
   }
 
-
-  const areAllChallengesComplete = Object.keys(challenges).every(
-    (ch) => stationCompletedChallenges[ch as keyof typeof challenges]?.completed
-  );
   const hasClaimedPrize = prizes.some(p => p.stationId === stationId);
 
   return (
