@@ -266,8 +266,15 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         }
     };
     
-    if (step !== 'welcome') {
+    if (step === 'welcome') {
       return (
+        <AnimatePresence mode="wait">
+            {renderStep()}
+        </AnimatePresence>
+      );
+    }
+    
+    return (
         <main className="relative flex flex-col items-center justify-center min-h-screen w-full overflow-hidden">
             <div className="absolute inset-0 -z-10">
                 <Image
@@ -286,18 +293,5 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
                 </AnimatePresence>
             </div>
         </main>
-      );
-    }
-    
-    return (
-        <ArtDirectedBackground
-            desktopSrc="/backgrounds/MapaPc.png"
-            tabletSrc="/backgrounds/MapaTablet.png"
-            mobileSrc="/backgrounds/MapaTelefono.png"
-        >
-            <AnimatePresence mode="wait">
-                {renderStep()}
-            </AnimatePresence>
-        </ArtDirectedBackground>
     );
 }
