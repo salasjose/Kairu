@@ -2,12 +2,11 @@
 'use client';
 
 import AuthWrapper from '@/app/components/AuthWrapper';
-import BackgroundImage from "./components/BackgroundImage";
 
 export default function HomePage() {
   return (
-    <BackgroundImage>
-      <AuthWrapper />
-    </BackgroundImage>
+    // AuthWrapper ahora controla el fondo a través de sus subcomponentes,
+    // eliminando la necesidad de un componente de fondo aquí.
+    <AuthWrapper />
   );
 }
