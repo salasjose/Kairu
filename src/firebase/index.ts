@@ -1,78 +1,47 @@
 'use client';
-import { useContext } from 'react';
-import { firebaseConfig } from '@/firebase/config';
+
+// This file is the single entry point for all Firebase-related modules.
+// It initializes the Firebase app and exports all necessary components, hooks, and utilities.
+
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
-import { FirebaseContext } from './provider';
+import { firebaseConfig } from './config';
 
-// Singleton pattern
+// Initialize Firebase App
 let firebaseApp: FirebaseApp;
-let auth: Auth;
-let firestore: Firestore;
-let storage: FirebaseStorage;
-
-// Inicializar Firebase solo una vez
 if (!getApps().length) {
   firebaseApp = initializeApp(firebaseConfig);
 } else {
   firebaseApp = getApp();
 }
 
-// Inicializar servicios
-auth = getAuth(firebaseApp);
-firestore = getFirestore(firebaseApp);
-storage = getStorage(firebaseApp);
+// Initialize Services
+const auth: Auth = getAuth(firebaseApp);
+const firestore: Firestore = getFirestore(firebaseApp);
+const storage: FirebaseStorage = getStorage(firebaseApp);
 
+// Re-export the initialized services
 export { firebaseApp, auth, firestore, storage };
 
-// Opcional: función para inicializar desde proveedores externos
+// Export a function for explicit initialization if needed elsewhere
 export function initializeFirebase() {
   return {
     firebaseApp,
     auth,
     firestore,
-    storage
+    storage,
   };
 }
 
-// Hooks moved from firebase/hooks.ts
-export const useFirebaseApp = () => {
-    const context = useContext(FirebaseContext);
-    if (!context) throw new Error('useFirebaseApp must be used within a FirebaseProvider');
-    return context.app;
-};
-
-export const useAuth = () => {
-    const context = useContext(FirebaseContext);
-    if (!context) throw new Error('useAuth must be used within a FirebaseProvider');
-    return context.auth;
-};
-
-export const useFirestore = () => {
-    const context = useContext(FirebaseContext);
-    if (!context) throw new Error('useFirestore must be used within a FirebaseProvider');
-    return context.db;
-};
-
-export const useStorage = () => {
-    const context = useContext(FirebaseContext);
-    if (!context) throw new Error('useStorage must be used within a FirebaseProvider');
-    return context.storage;
-};
-
-export const useUser = () => {
-    const context = useContext(FirebaseContext);
-    if (!context) throw new Error('useUser must be used within a FirebaseProvider');
-    return { user: context.user, loading: context.loading };
-};
-
-
-// Exportaciones adicionales
+// Export providers and context
 export * from './provider';
 export * from './client-provider';
-export * from './firestore/use-collection';
-export * from './firestore/use-doc';
+
+// Export hooks
+export * from './hooks';
+
+// Export utility functions and classes
 export * from './errors';
 export * from './error-emitter';

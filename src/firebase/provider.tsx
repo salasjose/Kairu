@@ -40,7 +40,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     error: Error | null;
   }>({
     user: auth?.currentUser ?? null,
-    loading: !auth?.currentUser,
+    loading: true, // Start in loading state
     error: null,
   });
 
