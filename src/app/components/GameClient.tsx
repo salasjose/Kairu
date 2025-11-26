@@ -23,7 +23,7 @@ export interface PlayerState {
 }
 
 export default function GameClient() {
-  const { user, loading: userLoading } = useUser();
+  const { user } = useUser();
   const db = useFirestore();
 
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
@@ -83,11 +83,6 @@ export default function GameClient() {
   }, [user, db]);
 
   useEffect(() => {
-    if (userLoading) {
-      setIsFetchingPlayer(true);
-      return;
-    };
-    
     if (user) {
       const unsub = fetchInitialPlayerState();
       return () => {
@@ -98,7 +93,7 @@ export default function GameClient() {
       setIsNewUser(true);
       setIsFetchingPlayer(false);
     }
-  }, [user, userLoading, fetchInitialPlayerState]);
+  }, [user, fetchInitialPlayerState]);
   
   const handleResetOnboarding = () => {
     setPlayerState(null);
@@ -126,7 +121,7 @@ export default function GameClient() {
   };
 
 
-  if (userLoading || isFetchingPlayer) {
+  if (isFetchingPlayer) {
     return (
       <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background/80 backdrop-blur-sm">
         <Logo className="h-24 animate-pulse" />
