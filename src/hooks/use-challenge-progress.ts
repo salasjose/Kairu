@@ -7,7 +7,8 @@ const CHALLENGE_PROGRESS_KEY_PREFIX = 'kairu-challenge-progress-';
 
 type ChallengeInfo = {
   completed: boolean;
-  imageUrl?: string | null;
+  // We can store related data here, like image URLs, links, etc.
+  data?: Record<string, any>;
 };
 
 type ChallengeProgress = {
@@ -41,14 +42,14 @@ export function useChallengeProgress() {
     }
   }, [storageKey]);
 
-  const completeChallenge = useCallback((stationId: number, challengeName: string, imageUrl: string | null = null) => {
+  const completeChallenge = useCallback((stationId: number, challengeName: string, data?: Record<string, any>) => {
     if (!storageKey) return;
     setCompletedChallenges(prev => {
       const stationProgress = prev[stationId] ? { ...prev[stationId] } : {};
       
       stationProgress[challengeName] = {
         completed: true,
-        imageUrl: imageUrl,
+        data: data,
       };
       
       const newProgress = { ...prev, [stationId]: stationProgress };

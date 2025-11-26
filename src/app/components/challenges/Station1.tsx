@@ -185,6 +185,7 @@ const PhotoSlot = ({
             variant="ghost"
             onClick={onAddPhoto}
             className="flex flex-col h-auto items-center gap-1"
+            disabled={challengeCompleted}
           >
             <Camera className="h-8 w-8 text-muted-foreground" />
             <span className="text-xs">Añadir foto</span>
@@ -369,7 +370,7 @@ const PhotoChallenge = ({
     floraPhotos.every((p) => p !== null) && faunaPhotos.every((p) => p !== null);
 
   const onChallengeCompleteClick = () => {
-    if (areAllPhotosUploaded) {
+    if (areAllPhotosUploaded && !isChallengeCompleted) {
       onStationComplete();
     }
   };
@@ -594,7 +595,7 @@ const HabitatChallenge = ({
   const areAllPhotosUploaded = habitatPhotos.every((p) => p !== null);
 
   const onChallengeCompleteClick = () => {
-    if (areAllPhotosUploaded) {
+    if (areAllPhotosUploaded && !isChallengeCompleted) {
       onStationComplete();
     }
   };
@@ -693,7 +694,7 @@ export default function Station1() {
   };
 
   const handleChallengeComplete = (challengeName: string) => {
-    if (!completedChallenges[stationId]?.[challengeName]) {
+    if (!completedChallenges[stationId]?.[challengeName]?.completed) {
       completeChallenge(stationId, challengeName);
     }
     setSelectedChallenge(null);
@@ -717,7 +718,7 @@ export default function Station1() {
 
   if (selectedChallenge) {
     const challengeKey = selectedChallenge as keyof typeof challenges;
-    const isCompleted = !!stationCompletedChallenges[challengeKey];
+    const isCompleted = !!stationCompletedChallenges[challengeKey]?.completed;
     if (selectedChallenge === "Fauna y Flora") {
       return <PhotoChallenge
             onBack={() => setSelectedChallenge(null)}
@@ -737,7 +738,7 @@ export default function Station1() {
 
 
   const areAllChallengesComplete = Object.keys(challenges).every(
-    (ch) => stationCompletedChallenges[ch]?.completed
+    (ch) => stationCompletedChallenges[ch as keyof typeof challenges]?.completed
   );
   const hasClaimedPrize = prizes.some(p => p.stationId === stationId);
 
@@ -755,7 +756,7 @@ export default function Station1() {
 
           <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
             {(Object.keys(challenges) as (keyof typeof challenges)[]).map((reto, index) => {
-              const isCompleted = !!stationCompletedChallenges[reto];
+              const isCompleted = !!stationCompletedChallenges[reto]?.completed;
               
               return (
                 <button
