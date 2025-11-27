@@ -107,38 +107,34 @@ export function useStationProgress() {
   }, [user, db]);
 
   /**
-   * Resets all game progress for the user in Firestore.
+   * Resets all game progress for the user in Firestore, but keeps registration data.
    */
   const resetProgress = useCallback(async () => {
     if (!user || !db) return;
 
-    // This part resets user profile fields, which is correct.
+    // 1. Delete fields related to game progress from the user document.
     const playerDocRef = doc(db, 'users', user.uid);
     try {
-      const docSnap = await getDoc(playerDocRef);
-      if (!docSnap.exists()) return;
+        await updateDoc(playerDocRef, {
+            unlockedStations: [1], // Reset stations
+            avatar: deleteField(),
+            chosenScenario: deleteField(),
+            placedPrizes: deleteField(),
+            station9Locked: deleteField(),
+            station1FaunaPhotos: deleteField(),
+            station1FloraPhotos: deleteField(),
+            station1HabitatPhotos: deleteField(),
+            station2Days: deleteField(),
+            station3UrlCrafts: deleteField(),
+            station3UrlSeparate: deleteField(),
+            station4Url: deleteField(),
+            station5Url: deleteField(),
+            station6VideoUrl: deleteField(),
+            station7Businesses: deleteField(),
+            station8Url: deleteField()
+        });
 
-      const userData = docSnap.data();
-      const fieldsToDelete: { [key: string]: any } = {};
-      
-      const gameFields = [
-        'avatar', 'chosenScenario', 'placedPrizes', 'station9Locked',
-        'station1FaunaPhotos', 'station1FloraPhotos', 'station1HabitatPhotos', 
-        'station2Days', 
-        'station3UrlCrafts', 'station3UrlSeparate', 
-        'station4Url', 'station5Url', 'station6VideoUrl', 
-        'station7Businesses', 'station8Url'
-      ];
-      
-      gameFields.forEach(field => {
-        if (Object.prototype.hasOwnProperty.call(userData, field)) {
-            fieldsToDelete[field] = deleteField();
-        }
-      });
-      fieldsToDelete.unlockedStations = [1];
-      await updateDoc(playerDocRef, fieldsToDelete);
-
-      // We also need to delete all documents in the stationProgress subcollection.
+      // 2. Delete all documents in the stationProgress subcollection.
       if (progressDocs) {
         for (const pDoc of progressDocs) {
           const docToDeleteRef = doc(db, `users/${user.uid}/stationProgress`, pDoc.id);

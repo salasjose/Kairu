@@ -5,7 +5,7 @@ import { signOut } from "firebase/auth";
 import { LogOut, MoreVertical, Settings } from "lucide-react";
 import { useAuth } from "@/firebase";
 import { usePrizeCart } from "@/hooks/use-prize-cart";
-import { useChallengeProgress } from "@/hooks/use-challenge-progress";
+import { useStationProgress } from "@/hooks/use-station-progress";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -24,14 +24,14 @@ interface GameHeaderProps {
 export default function GameHeader({ playerState, setPlayerState, onFullReset }: GameHeaderProps) {
   const auth = useAuth();
   const { clearCart } = usePrizeCart();
-  const { resetChallengeProgress } = useChallengeProgress();
+  const { resetProgress } = useStationProgress();
   
   const handleLogout = async () => {
     if (!auth) return;
     await signOut(auth);
     setPlayerState(null);
-    clearCart();
-    resetChallengeProgress();
+    await clearCart();
+    await resetProgress();
   }
 
   return (

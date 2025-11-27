@@ -43,7 +43,7 @@ export default function GameClient() {
         
         const newState: PlayerState = {
             id: user.uid,
-            name: data.nombre || "Jugador",
+            name: data.usuario || data.nombre || "Jugador",
             avatar: data.avatar || "",
             chosenScenario: data.chosenScenario || null,
             unlockedStations: data.unlockedStations || [1],

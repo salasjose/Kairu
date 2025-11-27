@@ -3,11 +3,10 @@
 
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteField } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { useStationProgress } from '@/hooks/use-station-progress';
 import { usePrizeCart } from '@/hooks/use-prize-cart';
-import { useChallengeProgress } from '@/hooks/use-challenge-progress';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -27,7 +26,6 @@ export default function SettingsPanel({ playerState, setPlayerState, onFullReset
     const db = useFirestore();
     const { resetProgress } = useStationProgress();
     const { clearCart } = usePrizeCart();
-    const { resetChallengeProgress } = useChallengeProgress();
     const [isAlertOpen, setIsAlertOpen] = useState(false);
 
     const avatars = useMemo(() => {
@@ -75,9 +73,11 @@ export default function SettingsPanel({ playerState, setPlayerState, onFullReset
             return;
         }
 
-        await resetProgress();
-        clearCart();
-        resetChallengeProgress();
+        // Reset Firestore data
+        await resetProgress(); // This now handles deleting subcollections
+        await clearCart();
+        
+        // This resets local state and triggers re-onboarding
         onFullReset();
 
         toast({
@@ -94,7 +94,7 @@ export default function SettingsPanel({ playerState, setPlayerState, onFullReset
                     <AlertDialogHeader>
                         <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Esta acción es irreversible. Se borrará permanentemente de la base de datos todo tu progreso en el juego (fotos, enlaces, insignias, etc.). Tu cuenta de usuario se conservará, pero tendrás que empezar una nueva aventura desde el principio, eligiendo un nuevo avatar y escenario.
+                            Esta acción es irreversible. Se borrará permanentemente todo tu progreso en el juego (insignias, lienzo, fotos, etc.), pero tu cuenta y datos de registro se conservarán. Tendrás que empezar una nueva aventura desde el principio.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
