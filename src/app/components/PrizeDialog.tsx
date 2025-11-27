@@ -46,6 +46,8 @@ export default function PrizeDialog({ open, stationId, onClaim }: PrizeDialogPro
         title: `¡Felicidades!`,
         description: `Has ganado la insignia: ${selectedPrize?.name}.`
     });
+
+    // This was the missing critical step.
     onClaim();
   }
 

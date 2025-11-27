@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
@@ -739,7 +740,7 @@ export default function Station1() {
     if (areAllChallengesComplete && !hasClaimedPrize) {
         setIsPrizeModalOpen(true);
     }
-  }, [areAllChallengesComplete, hasClaimedPrize]);
+  }, [areAllChallengesComplete, hasClaimedPrize, prizes, stationId]);
 
 
   if (selectedChallenge) {
