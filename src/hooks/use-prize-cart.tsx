@@ -52,10 +52,18 @@ export function PrizeCartProvider({ children }: { children: ReactNode }) {
 
   const addPrize = useCallback((newPrize: Prize) => {
     if (!storageKey) return;
+    
     setPrizes(prevPrizes => {
-      // Each station can only contribute one prize. Replace if one from same station exists.
-      const otherStationPrizes = prevPrizes.filter(p => p.stationId !== newPrize.stationId);
-      const newPrizes = [...otherStationPrizes, newPrize];
+      // Check if a prize for this station already exists.
+      const prizeExists = prevPrizes.some(p => p.stationId === newPrize.stationId);
+
+      // If it already exists, do nothing and return the current state.
+      if (prizeExists) {
+        return prevPrizes;
+      }
+
+      // Otherwise, add the new prize.
+      const newPrizes = [...prevPrizes, newPrize];
       saveToLocalStorage(newPrizes);
       return newPrizes;
     });
