@@ -33,10 +33,9 @@ export function PrizeCartProvider({ children }: { children: ReactNode }) {
 
     try {
         const docSnap = await getDoc(userDocRef);
-        const currentPrizes = docSnap.exists() && docSnap.data().prizes ? docSnap.data().prizes : [];
+        const currentPrizes: Prize[] = docSnap.exists() && docSnap.data().prizes ? docSnap.data().prizes : [];
         
-        // Corrected logic: Check if the specific prize ID already exists.
-        const prizeExists = currentPrizes.some((p: Prize) => p.id === newPrize.id);
+        const prizeExists = currentPrizes.some((p) => p.id === newPrize.id);
 
         if (!prizeExists) {
             const newPrizes = [...currentPrizes, newPrize];

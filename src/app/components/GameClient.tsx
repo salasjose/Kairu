@@ -106,21 +106,16 @@ export default function GameClient() {
 
     const newState: Partial<PlayerState> & Partial<z.infer<typeof SignUpFormSchema>> = {
       id: user.uid,
+      nombre: data.name, // Asegurarse de que el nombre se guarda.
       avatar: data.avatar,
       chosenScenario: data.chosenScenario,
       unlockedStations: [1],
-      // Mantén los datos de registro existentes si no son parte de un nuevo registro
-      ...(playerState && !data.signupData ? { 
-          nombre: playerState.name, // Asegúrate de preservar los campos necesarios
-      } : {}),
       ...(data.signupData ? data.signupData : {}),
     };
 
     try {
-        const isExistingUserOnboarding = playerState !== null;
-        // Al completar el onboarding después de un reinicio, nos aseguramos de no sobrescribir los datos de registro
         const finalData = { ...newState };
-        if(isExistingUserOnboarding && !data.signupData) {
+        if (playerState && !data.signupData) {
             delete (finalData as any).signupData;
         }
 

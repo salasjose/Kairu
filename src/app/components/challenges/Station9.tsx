@@ -435,7 +435,7 @@ export default function Station9() {
         <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
       ) : (
         <>
-           <div
+          <div
             ref={canvasRef}
             className="absolute inset-0 w-full h-full"
           >
