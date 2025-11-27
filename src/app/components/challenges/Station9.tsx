@@ -342,9 +342,8 @@ export default function Station9() {
     if (!user || !db || !canvasRef.current || !isStationConfirmed) return;
     setIsStationFinalized(true);
     
-    // Ensure the selected prize is deselected before capturing
     setSelectedPrizeId(null);
-    await new Promise(resolve => setTimeout(resolve, 100)); // Short delay for UI to update
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
       const canvas = await html2canvas(canvasRef.current, {
@@ -406,14 +405,12 @@ export default function Station9() {
   const unplacedPrizes = useMemo(
     () =>
       collectedPrizes.filter(
-        (p) => p.stationId <= 8 && !placedPrizes.some((pp) => pp.id === p.id)
+        (p) => !placedPrizes.some((pp) => pp.id === p.id)
       ),
     [collectedPrizes, placedPrizes]
   );
 
-  const allPrizesPlaced =
-    collectedPrizes.filter(p => p.stationId <= 8).length > 0 &&
-    unplacedPrizes.length === 0;
+  const allPrizesPlaced = collectedPrizes.length > 0 && unplacedPrizes.length === 0;
 
   if (isLoading) {
     return (
@@ -426,250 +423,251 @@ export default function Station9() {
   const yaraMessage = `${playerName}, ¡Ya eres un Guardián de la Naturaleza! Ahora es tiempo de armar tu Estación. Moverás tus Insignias por todo tu lienzo; para ello, debes arrastrarlas desde la barra lateral.`;
 
   return (
-    <>
-      <div className="relative w-screen h-screen bg-background"
-        onClick={(e) => {
-          if (!(e.target as HTMLElement).closest(".placed-prize-wrapper")) {
-            setSelectedPrizeId(null);
-          }
-        }}
-      >
-        {!chosenScenario ? (
-          <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
-        ) : (
-          <>
-             <div ref={canvasRef} className="absolute inset-0 w-full h-full">
-              {scenarioBackgrounds && (
-                <ResponsiveBackground
-                  desktopSrc={scenarioBackgrounds.desktopSrc}
-                  tabletSrc={scenarioBackgrounds.tabletSrc}
-                  mobileSrc={scenarioBackgrounds.mobileSrc}
-                />
-              )}
-              <div className="absolute inset-0 z-10">
-                {placedPrizes.map((prize) => {
-                  const isSelected = selectedPrizeId === prize.id;
-                  const isSpecialPrize =
-                        prize.imageUrl.includes("Molinos.png") ||
-                        prize.imageUrl.includes("Ciudad.png");
+    <div
+      className="relative w-screen h-screen bg-background overflow-hidden"
+      onClick={(e) => {
+        if (!(e.target as HTMLElement).closest(".placed-prize-wrapper")) {
+          setSelectedPrizeId(null);
+        }
+      }}
+    >
+      {!chosenScenario ? (
+        <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
+      ) : (
+        <>
+           <div
+            ref={canvasRef}
+            className="absolute inset-0 w-full h-full"
+          >
+            {scenarioBackgrounds && (
+              <ResponsiveBackground
+                desktopSrc={scenarioBackgrounds.desktopSrc}
+                tabletSrc={scenarioBackgrounds.tabletSrc}
+                mobileSrc={scenarioBackgrounds.mobileSrc}
+              />
+            )}
+            <div className="absolute inset-0 z-10">
+              {placedPrizes.map((prize) => {
+                const isSelected = selectedPrizeId === prize.id;
+                const isSpecialPrize =
+                      prize.imageUrl.includes("Molinos.png") ||
+                      prize.imageUrl.includes("Ciudad.png");
 
-                  return (
-                    <motion.div
-                      key={prize.id}
-                      drag={!isStationConfirmed}
-                      dragMomentum={false}
-                      onDragStart={() => {
-                        if (!isStationConfirmed) {
-                          setSelectedPrizeId(prize.id);
-                        }
-                      }}
-                      onDragEnd={async (e, info) => {
-                        if (isStationConfirmed || !canvasRef.current) return;
-
-                        const rect = canvasRef.current.getBoundingClientRect();
-                        const prizeElement = e.target as HTMLDivElement;
-                        
-                        // More accurate drag calculation
-                        const prevX = (prize.x / 100) * rect.width;
-                        const prevY = (prize.y / 100) * rect.height;
-                        
-                        let newXPercent = ((prevX + info.offset.x) / rect.width) * 100;
-                        let newYPercent = ((prevY + info.offset.y) / rect.height) * 100;
-
-                        newXPercent = clamp(newXPercent, 5, 95);
-                        newYPercent = clamp(newYPercent, 5, 95);
-
-                        const updated = placedPrizes.map((p) =>
-                          p.id === prize.id ? { ...p, x: newXPercent, y: newYPercent } : p
-                        );
-                        setPlacedPrizes(updated);
-                        await savePrizesToDb(updated);
-                      }}
-                      className="placed-prize-wrapper absolute cursor-grab active:cursor-grabbing"
-                      style={{
-                        left: `${prize.x}%`,
-                        top: `${prize.y}%`,
-                        width: `calc(clamp(48px, 10vw, 96px) * ${prize.scale || 1})`,
-                        height: `calc(clamp(48px, 10vw, 96px) * ${prize.scale || 1})`,
-                        transform: "translate(-50%, -50%)",
-                        touchAction: "none",
-                      }}
-                      initial={false}
-                      animate={{
-                        boxShadow: isSelected
-                          ? "0px 0px 15px rgba(255,255,100,0.8)"
-                          : "0px 0px 0px rgba(0,0,0,0)",
-                      }}
-                      transition={{ duration: 0.15 }}
-                      onClick={(e) => {
-                        if (isStationConfirmed) return;
-                        e.stopPropagation();
+                return (
+                  <motion.div
+                    key={prize.id}
+                    drag={!isStationConfirmed}
+                    dragMomentum={false}
+                    onDragStart={() => {
+                      if (!isStationConfirmed) {
                         setSelectedPrizeId(prize.id);
-                      }}
-                    >
-                      <div className="w-full h-full relative">
-                        <Image
-                          src={prize.imageUrl}
-                          alt={prize.name}
-                          fill
-                          style={{ objectFit: "contain" }}
-                        />
-                      </div>
+                      }
+                    }}
+                    onDragEnd={async (e, info) => {
+                      if (isStationConfirmed || !canvasRef.current) return;
 
-                      {isSelected && !isStationConfirmed && (
-                        <div
-                          className={`absolute ${prize.y < 70 ? "top-full mt-2" : "bottom-full mb-2"} left-1/2 -translate-x-1/2 w-44 bg-background/90 p-2 rounded-lg shadow-lg flex items-center gap-2`}
-                          onPointerDown={(e) => e.stopPropagation()}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Slider
-                            value={[prize.scale || 1]}
-                            min={0.5}
-                            max={isSpecialPrize ? 7 : 2.5}
-                            step={0.1}
-                            onValueChange={(value) => handleScaleChange(prize.id, value)}
-                            onValueCommit={(value) => handleScaleChangeCommit(prize.id, value)}
-                          />
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleDeletePrize(prize.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
+                      const rect = canvasRef.current.getBoundingClientRect();
+                      const prizeElement = e.target as HTMLDivElement;
+                      
+                      const prevX = (prize.x / 100) * rect.width;
+                      const prevY = (prize.y / 100) * rect.height;
+                      
+                      let newXPercent = ((prevX + info.offset.x) / rect.width) * 100;
+                      let newYPercent = ((prevY + info.offset.y) / rect.height) * 100;
 
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="absolute top-4 right-4 z-40 bg-white/80"
-            >
-              <AnimatePresence initial={false}>
-                {isSidebarOpen ? (
-                  <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
-                    <X />
-                  </motion.div>
-                ) : (
-                  <motion.div key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
-                    <Gift />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </Button>
+                      newXPercent = clamp(newXPercent, 5, 95);
+                      newYPercent = clamp(newYPercent, 5, 95);
 
-            <AnimatePresence>
-              {isSidebarOpen && (
-                <motion.div
-                  className="absolute top-0 right-0 h-full w-24 md:w-32 bg-black/60 backdrop-blur-sm p-2 z-30 flex flex-col items-center"
-                  initial={{ x: "100%" }}
-                  animate={{ x: 0 }}
-                  exit={{ x: "100%" }}
-                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                >
-                  <h3 className="text-white font-bold text-sm mt-12 mb-2 text-center">
-                    Insignias
-                  </h3>
-                  <div className="flex-grow overflow-y-auto space-y-2 w-full">
-                    {unplacedPrizes.map((prize) => (
-                      <DraggablePrize
-                        key={prize.id}
-                        prize={prize}
-                        onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
-                      />
-                    ))}
-                    {unplacedPrizes.length === 0 && (
-                      <p className="text-white/70 text-xs text-center pt-4">
-                        ¡Todas las insignias colocadas!
-                      </p>
-                    )}
-                  </div>
-                  
-                  {allPrizesPlaced && !isStationFinalized && (
-                      <div className="w-full mt-auto space-y-2">
-                          <Button
-                              onClick={handleConfirmStation}
-                              className="w-full"
-                              disabled={isStationConfirmed}
-                          >
-                              <Check className="mr-2 h-4 w-4" />
-                              Confirmar
-                          </Button>
-                          <Button
-                            onClick={handleSaveAndDownload}
-                            className="w-full"
-                            variant="secondary"
-                            disabled={!isStationConfirmed}
-                          >
-                            <Download className="mr-2 h-4 w-4" />
-                            Guardar y Descargar
-                          </Button>
-                      </div>
-                  )}
-                  {isStationFinalized && (
-                     <Button
-                        onClick={() => setIsCompletionDialogOpen(true)}
-                        className="mt-2 w-full"
-                        variant="secondary"
-                      >
-                       Finalizar Aventura
-                      </Button>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <AnimatePresence>
-              {isYaraMessageVisible && yaraCharImage && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.3 }}
-                  className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-                  onClick={() => setIsYaraMessageVisible(false)}
-                >
-                  <div
-                    className="relative flex flex-col md:flex-row items-center gap-4 max-w-2xl mx-auto"
-                    onClick={(e) => e.stopPropagation()}
+                      const updated = placedPrizes.map((p) =>
+                        p.id === prize.id ? { ...p, x: newXPercent, y: newYPercent } : p
+                      );
+                      setPlacedPrizes(updated);
+                      await savePrizesToDb(updated);
+                    }}
+                    className="placed-prize-wrapper absolute cursor-grab active:cursor-grabbing"
+                    style={{
+                      left: `${prize.x}%`,
+                      top: `${prize.y}%`,
+                      width: `calc(clamp(48px, 10vw, 96px) * ${prize.scale || 1})`,
+                      height: `calc(clamp(48px, 10vw, 96px) * ${prize.scale || 1})`,
+                      transform: "translate(-50%, -50%)",
+                      touchAction: "none",
+                    }}
+                    initial={false}
+                    animate={{
+                      boxShadow: isSelected
+                        ? "0px 0px 15px rgba(255,255,100,0.8)"
+                        : "0px 0px 0px rgba(0,0,0,0)",
+                    }}
+                    transition={{ duration: 0.15 }}
+                    onClick={(e) => {
+                      if (isStationConfirmed) return;
+                      e.stopPropagation();
+                      setSelectedPrizeId(prize.id);
+                    }}
                   >
-                    <div className="w-32 h-auto md:w-48 shrink-0 order-first md:order-last">
+                    <div className="w-full h-full relative">
                       <Image
-                        src={yaraCharImage.imageUrl}
-                        alt={yaraCharImage.description}
-                        width={150}
-                        height={187}
-                        className="h-auto w-full select-none"
+                        src={prize.imageUrl}
+                        alt={prize.name}
+                        fill
+                        style={{ objectFit: "contain" }}
                       />
                     </div>
-                    <div className="w-full">
-                      <Card className="p-4 shadow-lg bg-white/95 relative">
-                        <TypewriterText
-                          text={yaraMessage}
-                          className="text-base text-primary font-medium"
+
+                    {isSelected && !isStationConfirmed && (
+                      <div
+                        className={`absolute ${prize.y < 70 ? "top-full mt-2" : "bottom-full mb-2"} left-1/2 -translate-x-1/2 w-44 bg-background/90 p-2 rounded-lg shadow-lg flex items-center gap-2`}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Slider
+                          value={[prize.scale || 1]}
+                          min={0.5}
+                          max={isSpecialPrize ? 7 : 2.5}
+                          step={0.1}
+                          onValueChange={(value) => handleScaleChange(prize.id, value)}
+                          onValueCommit={(value) => handleScaleChangeCommit(prize.id, value)}
                         />
-                        <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 md:left-auto md:right-[-10px] md:top-1/2 md:-translate-y-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-white/95 md:border-t-[10px] md:border-t-transparent md:border-b-[10px] md:border-b-transparent md:border-l-[10px] md:border-l-white/95" />
-                      </Card>
-                    </div>
-                  </div>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleDeletePrize(prize.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="absolute top-4 right-4 z-40 bg-white/80"
+          >
+            <AnimatePresence initial={false}>
+              {isSidebarOpen ? (
+                <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
+                  <X />
+                </motion.div>
+              ) : (
+                <motion.div key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
+                  <Gift />
                 </motion.div>
               )}
             </AnimatePresence>
-          </>
-        )}
-      </div>
+          </Button>
+
+          <AnimatePresence>
+            {isSidebarOpen && (
+              <motion.div
+                className="absolute top-0 right-0 h-full w-24 md:w-32 bg-black/60 backdrop-blur-sm p-2 z-30 flex flex-col items-center"
+                initial={{ x: "100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "100%" }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <h3 className="text-white font-bold text-sm mt-12 mb-2 text-center">
+                  Insignias
+                </h3>
+                <div className="flex-grow overflow-y-auto space-y-2 w-full">
+                  {unplacedPrizes.map((prize) => (
+                    <DraggablePrize
+                      key={prize.id}
+                      prize={prize}
+                      onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
+                    />
+                  ))}
+                  {unplacedPrizes.length === 0 && (
+                    <p className="text-white/70 text-xs text-center pt-4">
+                      ¡Todas las insignias colocadas!
+                    </p>
+                  )}
+                </div>
+                
+                {allPrizesPlaced && !isStationFinalized && (
+                    <div className="w-full mt-auto space-y-2">
+                        <Button
+                            onClick={handleConfirmStation}
+                            className="w-full"
+                            disabled={isStationConfirmed}
+                        >
+                            <Check className="mr-2 h-4 w-4" />
+                            Confirmar
+                        </Button>
+                        <Button
+                          onClick={handleSaveAndDownload}
+                          className="w-full"
+                          variant="secondary"
+                          disabled={!isStationConfirmed}
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          Guardar y Descargar
+                        </Button>
+                    </div>
+                )}
+                {isStationFinalized && (
+                   <Button
+                      onClick={() => setIsCompletionDialogOpen(true)}
+                      className="mt-2 w-full"
+                      variant="secondary"
+                    >
+                     Finalizar Aventura
+                    </Button>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {isYaraMessageVisible && yaraCharImage && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3 }}
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                onClick={() => setIsYaraMessageVisible(false)}
+              >
+                <div
+                  className="relative flex flex-col md:flex-row items-center gap-4 max-w-2xl mx-auto"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="w-32 h-auto md:w-48 shrink-0 order-first md:order-last">
+                    <Image
+                      src={yaraCharImage.imageUrl}
+                      alt={yaraCharImage.description}
+                      width={150}
+                      height={187}
+                      className="h-auto w-full select-none"
+                    />
+                  </div>
+                  <div className="w-full">
+                    <Card className="p-4 shadow-lg bg-white/95 relative">
+                      <TypewriterText
+                        text={yaraMessage}
+                        className="text-base text-primary font-medium"
+                      />
+                      <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 md:left-auto md:right-[-10px] md:top-1/2 md:-translate-y-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-white/95 md:border-t-[10px] md:border-t-transparent md:border-b-[10px] md:border-b-transparent md:border-l-[10px] md:border-l-white/95" />
+                    </Card>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
+      )}
 
       <CompletionDialog
         open={isCompletionDialogOpen}
         onOpenChange={setIsCompletionDialogOpen}
       />
-    </>
+    </div>
   );
 }
