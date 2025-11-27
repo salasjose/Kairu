@@ -253,8 +253,10 @@ const PhotoChallenge = ({
     if (!photoUrl) return;
 
     try {
-        const photoRef = ref(storage, photoUrl);
-        await deleteObject(photoRef);
+        if (storage) {
+            const photoRef = ref(storage, photoUrl);
+            await deleteObject(photoRef);
+        }
     } catch (error) {
         console.warn(`Could not delete photo from storage: ${error}`);
     }
@@ -513,7 +515,7 @@ const HabitatChallenge = ({
     if (isChallengeCompleted) return;
     
     const photoUrl = habitatPhotos[index];
-    if (!photoUrl) return;
+    if (!photoUrl || !storage) return;
 
     try {
         const photoRef = ref(storage, photoUrl);

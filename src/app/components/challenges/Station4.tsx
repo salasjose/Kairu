@@ -262,7 +262,6 @@ export default function Station4() {
   }, [scheduleYaraDialog]);
 
   const handleChallengeComplete = (challengeId: ChallengeId) => {
-    // Check if the challenge is already completed to avoid redundant actions
     if (!completedChallenges[stationId]?.[challengeId]?.completed) {
       completeChallenge(stationId, challengeId);
     }
@@ -284,6 +283,12 @@ export default function Station4() {
     (id) => stationProgress[id as ChallengeId]?.completed
   );
   const hasClaimedPrize = prizes.some((p) => p.stationId === stationId);
+
+  useEffect(() => {
+    if (areAllChallengesComplete && !hasClaimedPrize) {
+      setIsPrizeModalOpen(true);
+    }
+  }, [areAllChallengesComplete, hasClaimedPrize]);
 
   const renderContent = () => {
     if (selectedChallenge === 'quiz') {
