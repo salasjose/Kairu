@@ -314,7 +314,7 @@ export default function Station4() {
   const [selectedChallenge, setSelectedChallenge] =
     useState<ChallengeId | null>(null);
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
-  const { unlockStation, completedChallenges, completeChallenge } = useStationProgress();
+  const { unlockStation, completedChallenges, completeChallenge, unlockedStations } = useStationProgress();
   const { prizes } = usePrizeCart();
   const router = useRouter();
 
@@ -371,8 +371,6 @@ export default function Station4() {
       setIsPrizeModalOpen(true);
     }
   }, [areAllChallengesComplete, hasClaimedPrize]);
-
-  const { unlockedStations } = useStationProgress();
 
   const renderContent = () => {
     if (selectedChallenge === 'quiz') {
