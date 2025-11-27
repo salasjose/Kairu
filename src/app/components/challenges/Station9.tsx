@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -104,7 +105,7 @@ export default function Station9() {
   const { user } = useUser();
   const db = useFirestore();
   const { prizes: collectedPrizes } = usePrizeCart();
-  const collectedPrizesFromStations1to8 = collectedPrizes.filter(p => p.stationId <= 8);
+  const collectedPrizesFromStations1to8 = collectedPrizes.filter(p => p.stationId >= 1 && p.stationId <= 8);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara-final');
@@ -195,8 +196,8 @@ export default function Station9() {
     if (!canvasRef.current) return;
 
     const canvasRect = canvasRef.current.getBoundingClientRect();
-    const x = info.point.x - canvasRect.left;
-    const y = info.point.y - canvasRect.top;
+    const x = ((info.point.x - canvasRect.left) / canvasRect.width) * 100;
+    const y = ((info.point.y - canvasRect.top) / canvasRect.height) * 100;
 
     const prizeData = collectedPrizes.find(p => p.id === prizeId);
     if (!prizeData) return;
@@ -346,8 +347,8 @@ export default function Station9() {
                         if (!isStationLocked) {
                             const canvasRect = canvasRef.current?.getBoundingClientRect();
                             if (!canvasRect) return;
-                            const newX = info.point.x - canvasRect.left;
-                            const newY = info.point.y - canvasRect.top;
+                            const newX = ((info.point.x - canvasRect.left) / canvasRect.width) * 100;
+                            const newY = ((info.point.y - canvasRect.top) / canvasRect.height) * 100;
 
                             const newPlacedPrizes = placedPrizes.map(p => 
                                 p.id === prize.id ? { ...p, x: newX, y: newY, scale: prize.scale } : p
@@ -359,12 +360,13 @@ export default function Station9() {
                     dragListener={!isStationLocked}
                     className="placed-prize-wrapper absolute cursor-grab active:cursor-grabbing"
                     style={{ 
-                        x: prize.x, 
-                        y: prize.y,
+                        left: `${prize.x}%`,
+                        top: `${prize.y}%`,
                         width: '80px', 
                         height: '80px',
+                        transform: 'translate(-50%, -50%)', // Center the prize on its coordinates
                     }}
-                    initial={{ x: prize.x, y: prize.y, scale: prize.scale || 1 }}
+                    initial={{ scale: prize.scale || 1 }}
                     animate={{
                       scale: prize.scale || 1,
                       boxShadow: isSelected ? "0px 0px 15px rgba(255,255,100,0.8)" : "0px 0px 0px rgba(0,0,0,0)",
@@ -480,40 +482,39 @@ export default function Station9() {
             </AnimatePresence>
             
             {/* Yara Character and Dialog */}
-            <div className="absolute bottom-4 right-40 z-30 flex items-end gap-4 pointer-events-none">
             <AnimatePresence>
                 {isYaraMessageVisible && yaraCharImage && (
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 20 }}
-                    transition={{ duration: 0.5 }}
-                    className="flex items-end gap-4"
-                >
-                    <div className="w-80 mb-4">
-                    <Card className="p-3 shadow-lg bg-white/95 relative pointer-events-auto">
-                        <TypewriterText text={yaraMessage} className="text-sm text-primary font-medium" />
-                        <div className="absolute bottom-[-10px] right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white/95 border-r-[10px] border-r-transparent"></div>
-                    </Card>
-                    </div>
                     <motion.div
-                    initial={{ opacity: 0, x: 50 }}
-                    animate={{ opacity: 1, x: 0, transition: { delay: 0.2 } }}
-                    exit={{ opacity: 0, x: 50, transition: { duration: 0.5 } }}
-                    className="w-24 h-auto md:w-32"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        transition={{ duration: 0.3 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                        onClick={() => setIsYaraMessageVisible(false)}
                     >
-                    <Image
-                        src={yaraCharImage.imageUrl}
-                        alt={yaraCharImage.description}
-                        width={150}
-                        height={187}
-                        className="h-auto w-full select-none"
-                    />
+                        <div 
+                            className="relative flex flex-col md:flex-row items-center gap-4 max-w-2xl mx-auto"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                             <div className="w-32 h-auto md:w-48 shrink-0 order-first md:order-last">
+                                <Image
+                                    src={yaraCharImage.imageUrl}
+                                    alt={yaraCharImage.description}
+                                    width={150}
+                                    height={187}
+                                    className="h-auto w-full select-none"
+                                />
+                             </div>
+                             <div className="w-full">
+                                <Card className="p-4 shadow-lg bg-white/95 relative">
+                                    <TypewriterText text={yaraMessage} className="text-base text-primary font-medium" />
+                                    <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 md:left-auto md:right-[-10px] md:top-1/2 md:-translate-y-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-white/95 md:border-t-[10px] md:border-t-transparent md:border-b-[10px] md:border-b-transparent md:border-l-[10px] md:border-l-white/95"></div>
+                                </Card>
+                            </div>
+                        </div>
                     </motion.div>
-                </motion.div>
                 )}
             </AnimatePresence>
-            </div>
         </>
         )}
 
