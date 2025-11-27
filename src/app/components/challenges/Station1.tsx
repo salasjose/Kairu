@@ -744,14 +744,14 @@ export default function Station1() {
 
   if (selectedChallenge) {
     const challengeKey = selectedChallenge as keyof typeof challenges;
-    // The final authority on completion is whether a prize has been claimed.
-    const isStationTrulyCompleted = hasClaimedPrize;
+    // A challenge is considered completed if it's in the progress hook OR if the prize for the station has been claimed.
+    const isChallengePersisted = !!stationCompletedChallenges[challengeKey]?.completed || hasClaimedPrize;
 
     if (selectedChallenge === "Fauna y Flora") {
       return <PhotoChallenge
             onBack={() => setSelectedChallenge(null)}
             onStationComplete={() => handleChallengeComplete("Fauna y Flora")}
-            isChallengeCompleted={isStationTrulyCompleted || !!stationCompletedChallenges[challengeKey]?.completed}
+            isChallengeCompleted={isChallengePersisted}
           />;
     }
   
@@ -759,7 +759,7 @@ export default function Station1() {
        return <HabitatChallenge
             onBack={() => setSelectedChallenge(null)}
             onStationComplete={() => handleChallengeComplete("Cuidado Animal")}
-            isChallengeCompleted={isStationTrulyCompleted || !!stationCompletedChallenges[challengeKey]?.completed}
+            isChallengeCompleted={isChallengePersisted}
           />;
     }
   }
@@ -778,9 +778,7 @@ export default function Station1() {
 
           <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
             {(Object.keys(challenges) as (keyof typeof challenges)[]).map((reto, index) => {
-              const isChallengeCompletedByHook = !!stationCompletedChallenges[reto]?.completed;
-              // True completion is defined by having claimed the prize for the station.
-              const isCompleted = hasClaimedPrize || isChallengeCompletedByHook;
+              const isChallengeCompleted = !!stationCompletedChallenges[reto]?.completed || hasClaimedPrize;
               
               return (
                 <button
@@ -820,7 +818,7 @@ export default function Station1() {
                         <p>{challenges[reto].description}</p>
                       </CardContent>
                     </div>
-                    {isCompleted && (
+                    {isChallengeCompleted && (
                       <div className="absolute top-3 right-3 z-30 bg-green-500 rounded-full p-2.5 shadow-lg">
                         <CheckCircle className="text-white h-6 w-6" />
                       </div>
