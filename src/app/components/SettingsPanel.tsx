@@ -39,14 +39,15 @@ export default function SettingsPanel({ playerState, setPlayerState, onFullReset
     }, []);
 
     const scenarios = useMemo(() => [
-        { name: "Terral", id: 'scenario-bosque-seco', imageUrl: PlaceHolderImages.find(p => p.id === 'scenario-bosque-seco')?.imageUrl },
-        { name: "Civika", id: 'scenario-ciudad', imageUrl: PlaceHolderImages.find(p => p.id === 'scenario-ciudad')?.imageUrl },
-        { name: "Mareva", id: 'scenario-mar-costero', imageUrl: PlaceHolderImages.find(p => p.id === 'scenario-mar-costero')?.imageUrl },
-        { name: "Manglia", id: 'scenario-manglares', imageUrl: PlaceHolderImages.find(p => p.id === 'scenario-manglares')?.imageUrl },
-    ].filter(s => s.imageUrl) as { name: string; id: string; imageUrl: string }[], []);
+        { name: "Terral", imageUrl: '/backgrounds/Bosque_Seco_Tropical.png' },
+        { name: "Civika", imageUrl: '/backgrounds/Ciudad_Sostenible.png' },
+        { name: "Mareva", imageUrl: '/backgrounds/Mar_Costero.png' },
+        { name: "Manglia", imageUrl: '/backgrounds/Manglares.png' },
+    ], []);
     
     const chosenScenarioDetails = useMemo(() => {
-        return scenarios.find(s => playerState.chosenScenario?.includes(s.id));
+        if (!playerState.chosenScenario) return null;
+        return scenarios.find(s => playerState.chosenScenario.includes(s.imageUrl));
     }, [playerState.chosenScenario, scenarios]);
 
     const handleAvatarChange = async (newAvatarUrl: string) => {
