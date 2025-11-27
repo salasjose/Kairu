@@ -853,7 +853,7 @@ export default function Station9() {
                           className="text-base text-primary font-medium"
                         />
                         <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 md:left-auto md:right-[-10px] md:top-1/2 md:-translate-y-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-white/95 md:border-t-[10px] md:border-t-transparent md:border-b-[10px] md:border-b-transparent md:border-l-[10px] md:border-l-white/95" />
-                      </div>
+                      </Card>
                     </div>
                   </div>
                 </motion.div>
