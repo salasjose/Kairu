@@ -38,6 +38,17 @@ export default function SettingsPanel({ playerState, setPlayerState, onFullReset
         })).sort((a, b) => a.id.localeCompare(b.id));
     }, []);
 
+    const scenarios = useMemo(() => [
+        { name: "Terral", id: 'scenario-bosque-seco', imageUrl: PlaceHolderImages.find(p => p.id === 'scenario-bosque-seco')?.imageUrl },
+        { name: "Civika", id: 'scenario-ciudad', imageUrl: PlaceHolderImages.find(p => p.id === 'scenario-ciudad')?.imageUrl },
+        { name: "Mareva", id: 'scenario-mar-costero', imageUrl: PlaceHolderImages.find(p => p.id === 'scenario-mar-costero')?.imageUrl },
+        { name: "Manglia", id: 'scenario-manglares', imageUrl: PlaceHolderImages.find(p => p.id === 'scenario-manglares')?.imageUrl },
+    ].filter(s => s.imageUrl) as { name: string; id: string; imageUrl: string }[], []);
+    
+    const chosenScenarioDetails = useMemo(() => {
+        return scenarios.find(s => playerState.chosenScenario?.includes(s.id));
+    }, [playerState.chosenScenario, scenarios]);
+
     const handleAvatarChange = async (newAvatarUrl: string) => {
         if (!playerState || !db || !playerState.id) {
             toast({ title: "Error", description: "No se pudo actualizar el avatar. Intenta más tarde.", variant: "destructive" });
@@ -92,38 +103,58 @@ export default function SettingsPanel({ playerState, setPlayerState, onFullReset
                 </AlertDialogContent>
             </AlertDialog>
 
-            <SheetContent>
+            <SheetContent className="flex flex-col">
                 <SheetHeader>
                     <SheetTitle>Configuración</SheetTitle>
                     <SheetDescription>Personaliza tu experiencia en Kairu.</SheetDescription>
                 </SheetHeader>
-                <div className="py-4">
-                    <h3 className="font-semibold mb-4">Cambiar Avatar</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                        {avatars.map(avatar => (
-                            <button
-                                key={avatar.id}
-                                onClick={() => handleAvatarChange(avatar.imageUrl)}
-                                className={cn(
-                                    "p-2 rounded-lg border-2 transition-all",
-                                    playerState.avatar === avatar.imageUrl
-                                        ? "border-primary bg-primary/10 shadow-lg scale-105"
-                                        : "border-border hover:bg-accent"
-                                )}
-                            >
-                                <div className="relative w-full aspect-square">
-                                    <Image
-                                        src={avatar.imageUrl}
-                                        alt={avatar.description}
-                                        fill
-                                        className="rounded-md object-contain"
-                                    />
-                                </div>
-                            </button>
-                        ))}
+                <div className="py-4 space-y-8 flex-grow overflow-y-auto">
+                    <div>
+                        <h3 className="font-semibold mb-4 text-lg">Cambiar Avatar</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            {avatars.map(avatar => (
+                                <button
+                                    key={avatar.id}
+                                    onClick={() => handleAvatarChange(avatar.imageUrl)}
+                                    className={cn(
+                                        "p-2 rounded-lg border-2 transition-all",
+                                        playerState.avatar === avatar.imageUrl
+                                            ? "border-primary bg-primary/10 shadow-lg scale-105"
+                                            : "border-border hover:bg-accent"
+                                    )}
+                                >
+                                    <div className="relative w-full aspect-square">
+                                        <Image
+                                            src={avatar.imageUrl}
+                                            alt={avatar.description}
+                                            fill
+                                            className="rounded-md object-contain"
+                                        />
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <h3 className="font-semibold mb-4 text-lg">Tu Lienzo</h3>
+                        {chosenScenarioDetails ? (
+                             <div className="rounded-lg border p-2 bg-card">
+                                 <div className="relative w-full aspect-video">
+                                     <Image
+                                         src={chosenScenarioDetails.imageUrl}
+                                         alt={`Lienzo seleccionado: ${chosenScenarioDetails.name}`}
+                                         fill
+                                         className="rounded-md object-cover"
+                                     />
+                                 </div>
+                                 <p className="font-bold text-center mt-2">{chosenScenarioDetails.name}</p>
+                             </div>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">No has seleccionado un lienzo todavía.</p>
+                        )}
                     </div>
                 </div>
-                <SheetFooter className="mt-auto">
+                <SheetFooter className="mt-auto pt-4 border-t">
                     <Button variant="destructive" className="w-full" onClick={() => setIsAlertOpen(true)}>
                         <Trash2 className="mr-2 h-4 w-4" />
                         Reiniciar Progreso del Juego
