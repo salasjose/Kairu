@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { toast } from '@/hooks/use-toast';
 import { useStationProgress } from '@/hooks/use-station-progress';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
@@ -21,7 +21,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import TypewriterText from '../auth/TypewriterText';
 import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { useChallengeProgress } from '@/hooks/use-challenge-progress';
 import { cn } from '@/lib/utils';
 import { usePrizeCart } from '@/hooks/use-prize-cart';
 import ResponsiveBackground from '../ResponsiveBackground';
@@ -232,8 +231,7 @@ export default function Station4() {
   const [selectedChallenge, setSelectedChallenge] =
     useState<ChallengeId | null>(null);
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
-  const { unlockStation } = useStationProgress();
-  const { completedChallenges, completeChallenge } = useChallengeProgress();
+  const { unlockStation, completedChallenges, completeChallenge } = useStationProgress();
   const { prizes } = usePrizeCart();
   const router = useRouter();
 
@@ -292,7 +290,7 @@ export default function Station4() {
 
   const renderContent = () => {
     if (selectedChallenge === 'quiz') {
-      const isQuizCompleted = !!stationProgress['quiz']?.completed;
+      const isQuizCompleted = !!stationProgress['quiz']?.completed || hasClaimedPrize;
       return (
         <div className="flex-grow flex items-center justify-center p-4">
           <WaterQuiz
@@ -305,7 +303,7 @@ export default function Station4() {
       );
     }
     if (selectedChallenge === 'post') {
-      const isPostCompleted = !!stationProgress['post']?.completed;
+      const isPostCompleted = !!stationProgress['post']?.completed || hasClaimedPrize;
       return (
         <div className="flex-grow flex items-center justify-center p-4">
           <PostChallenge
@@ -331,7 +329,7 @@ export default function Station4() {
             {(Object.keys(challenges) as ChallengeId[]).map((key) => {
               const challenge = challenges[key];
               const Icon = challenge.icon;
-              const isCompleted = stationProgress[key as ChallengeId]?.completed;
+              const isCompleted = stationProgress[key as ChallengeId]?.completed || hasClaimedPrize;
               return (
                 <button
                   key={key}

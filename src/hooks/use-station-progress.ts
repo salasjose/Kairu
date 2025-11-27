@@ -1,39 +1,108 @@
+
 "use client";
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useUser, useFirestore } from '@/firebase';
-import { doc, setDoc, getDoc, updateDoc, deleteField } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, deleteField, collection, query, deleteDoc } from 'firebase/firestore';
+import { useCollection } from '@/firebase/firestore/use-collection';
 
+// Type for individual challenge progress stored in Firestore
+export type ChallengeProgressDoc = {
+  stationId: number;
+  challengeId: string;
+  completed: boolean;
+  data?: Record<string, any>;
+  completedAt: Date;
+};
+
+// Type for the hook's return value
+export type ChallengeProgress = {
+  [stationId: number]: {
+    [challengeId: string]: {
+      completed: boolean;
+      data?: Record<string, any>;
+    };
+  };
+};
+
+/**
+ * Manages user progress for all station challenges by reading from and writing to Firestore.
+ */
 export function useStationProgress() {
   const { user } = useUser();
   const db = useFirestore();
 
+  // 1. Create a memoized query to fetch all progress documents for the current user.
+  const progressQuery = useMemo(() => {
+    if (!user || !db) return null;
+    return query(collection(db, `users/${user.uid}/stationProgress`));
+  }, [user, db]);
+
+  // 2. Use the useCollection hook to get real-time updates.
+  const { data: progressDocs, isLoading } = useCollection<ChallengeProgressDoc>(progressQuery);
+
+  // 3. Transform the raw Firestore documents into the nested ChallengeProgress object.
+  const completedChallenges: ChallengeProgress = useMemo(() => {
+    if (!progressDocs) return {};
+    
+    return progressDocs.reduce((acc: ChallengeProgress, doc) => {
+      if (!acc[doc.stationId]) {
+        acc[doc.stationId] = {};
+      }
+      acc[doc.stationId][doc.challengeId] = {
+        completed: doc.completed,
+        data: doc.data,
+      };
+      return acc;
+    }, {});
+  }, [progressDocs]);
+  
+  /**
+   * Unlocks a station by adding its ID to the user's unlockedStations array in Firestore.
+   */
   const unlockStation = useCallback(async (stationId: number) => {
     if (!user || !db) return;
     
     const playerDocRef = doc(db, 'users', user.uid);
-
     try {
       const docSnap = await getDoc(playerDocRef);
-      let currentStations: number[] = [1];
-
-      if (docSnap.exists() && docSnap.data().unlockedStations) {
-        currentStations = docSnap.data().unlockedStations;
-      }
-      
-      const newStations = new Set([...currentStations, stationId]);
-      const sortedStations = Array.from(newStations).sort((a, b) => a - b);
-
-      await setDoc(playerDocRef, { unlockedStations: sortedStations }, { merge: true });
-
+      const currentStations = docSnap.exists() && docSnap.data().unlockedStations ? docSnap.data().unlockedStations : [1];
+      const newStations = Array.from(new Set([...currentStations, stationId])).sort((a, b) => a - b);
+      await setDoc(playerDocRef, { unlockedStations: newStations }, { merge: true });
     } catch (error) {
       console.error("Failed to unlock station in Firestore", error);
     }
   }, [user, db]);
-  
-  const resetProgress = useCallback(async () => {
+
+  /**
+   * Marks a specific challenge as completed in Firestore.
+   */
+  const completeChallenge = useCallback(async (stationId: number, challengeId: string, data?: Record<string, any>) => {
     if (!user || !db) return;
     
+    const progressDocRef = doc(db, `users/${user.uid}/stationProgress`, `${stationId}-${challengeId}`);
+    const progressData: ChallengeProgressDoc = {
+      stationId,
+      challengeId,
+      completed: true,
+      data: data || {},
+      completedAt: new Date(),
+    };
+    
+    try {
+      await setDoc(progressDocRef, progressData, { merge: true });
+    } catch (error) {
+      console.error("Failed to complete challenge in Firestore", error);
+    }
+  }, [user, db]);
+
+  /**
+   * Resets all game progress for the user in Firestore.
+   */
+  const resetProgress = useCallback(async () => {
+    if (!user || !db) return;
+
+    // This part resets user profile fields, which is correct.
     const playerDocRef = doc(db, 'users', user.uid);
     try {
       const docSnap = await getDoc(playerDocRef);
@@ -42,7 +111,6 @@ export function useStationProgress() {
       const userData = docSnap.data();
       const fieldsToDelete: { [key: string]: any } = {};
       
-      // List of all fields related to game progress
       const gameFields = [
         'avatar', 'chosenScenario', 'placedPrizes', 'station9Locked',
         'station1FaunaPhotos', 'station1FloraPhotos', 'station1HabitatPhotos', 
@@ -52,26 +120,34 @@ export function useStationProgress() {
         'station7Businesses', 'station8Url'
       ];
       
-      // Dynamically create the object for updateDoc
-      // This ensures we only try to delete fields that actually exist in the document
       gameFields.forEach(field => {
         if (Object.prototype.hasOwnProperty.call(userData, field)) {
             fieldsToDelete[field] = deleteField();
         }
       });
-
-      // Always reset unlockedStations to the initial state, don't delete the field itself.
       fieldsToDelete.unlockedStations = [1];
-
-      // Perform the update operation
       await updateDoc(playerDocRef, fieldsToDelete);
+
+      // We also need to delete all documents in the stationProgress subcollection.
+      // This is a more complex operation and often best handled by a Cloud Function for large collections.
+      // For a client-side approach with a small number of docs, we can delete them one by one.
+      if (progressDocs) {
+        for (const pDoc of progressDocs) {
+          const docToDeleteRef = doc(db, `users/${user.uid}/stationProgress`, pDoc.id);
+          await deleteDoc(docToDeleteRef);
+        }
+      }
         
     } catch (error) {
         console.error("Failed to reset progress in Firestore", error);
     }
-  }, [user, db]);
+  }, [user, db, progressDocs]);
 
-  // unlockedStations will now be read directly from the playerState in GameClient.
-  // This hook is now primarily for writing/updating progress.
-  return { unlockStation, resetProgress };
+  return { 
+    completedChallenges, 
+    isLoadingProgress: isLoading,
+    unlockStation,
+    completeChallenge,
+    resetProgress 
+  };
 }

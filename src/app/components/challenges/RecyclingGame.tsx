@@ -5,7 +5,7 @@ import { ArrowLeft, CheckCircle, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import WasteClassificationGame from "./WasteClassificationGame";
-import { useChallengeProgress } from "@/hooks/use-challenge-progress";
+import { useStationProgress } from "@/hooks/use-station-progress";
 import { cn } from "@/lib/utils";
 
 const stationId = 3;
@@ -33,25 +33,20 @@ interface RecyclingGamesMenuProps {
 
 export default function RecyclingGamesMenu({ onBack }: RecyclingGamesMenuProps) {
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
-  const { completedChallenges, completeChallenge } = useChallengeProgress();
+  const { completedChallenges, completeChallenge } = useStationProgress();
   
   const stationProgress = completedChallenges[stationId] || {};
 
   const handleGameComplete = useCallback((gameId: string) => {
-    // This is a new local state that includes the just-completed game
-    const newProgress = {
-        ...stationProgress,
-        [gameId]: { completed: true }
-    };
-    
-    // Check if all games in the menu are now completed
-    const allGamesInMenuCompleted = games.every(g => newProgress[g.id]?.completed);
-
-    // Update the state for the specific sub-game
+    // Mark the specific sub-game as complete in Firestore
     completeChallenge(stationId, gameId);
     
-    // If all sub-games are done, also update the parent 'game' challenge
-    if (allGamesInMenuCompleted) {
+    // Determine if the other game is also complete
+    const otherGameId = games.find(g => g.id !== gameId)?.id;
+    const otherGameCompleted = otherGameId ? !!stationProgress[otherGameId]?.completed : false;
+
+    // If both sub-games are now complete, mark the parent 'game' challenge as complete
+    if (otherGameCompleted) {
         completeChallenge(stationId, 'game');
     }
 

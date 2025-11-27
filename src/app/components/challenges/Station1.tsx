@@ -12,14 +12,13 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import AddPhotoDialog from "./AddPhotoDialog";
-import { useChallengeProgress } from "@/hooks/use-challenge-progress";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import PrizeDialog from "../PrizeDialog";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore, useStorage } from "@/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { ref, uploadString, getDownloadURL, deleteObject } from "firebase/storage";
 import { usePrizeCart } from "@/hooks/use-prize-cart";
 import ResponsiveBackground from "../ResponsiveBackground";
@@ -676,7 +675,7 @@ const HabitatChallenge = ({
 export default function Station1() {
   const stationId = 1;
   const [selectedChallenge, setSelectedChallenge] = useState<string | null>(null);
-  const { completedChallenges, completeChallenge } = useChallengeProgress();
+  const { completedChallenges, completeChallenge, isLoadingProgress } = useStationProgress();
   const { unlockStation } = useStationProgress();
   const { prizes } = usePrizeCart();
   const router = useRouter();

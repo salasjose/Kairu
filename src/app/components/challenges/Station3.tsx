@@ -22,7 +22,6 @@ import PrizeDialog from '../PrizeDialog';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { motion, AnimatePresence } from 'framer-motion';
 import TypewriterText from '../auth/TypewriterText';
-import { useChallengeProgress } from '@/hooks/use-challenge-progress';
 import { usePrizeCart } from '@/hooks/use-prize-cart';
 import ResponsiveBackground from '../ResponsiveBackground';
 import ChallengeDetail from './ChallengeDetail';
@@ -69,7 +68,7 @@ export default function Station3() {
     useState<ChallengeId | null>(null);
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
   const { unlockStation } = useStationProgress();
-  const { completedChallenges, completeChallenge } = useChallengeProgress();
+  const { completedChallenges, completeChallenge } = useStationProgress();
   const { prizes } = usePrizeCart();
   const router = useRouter();
 

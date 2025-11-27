@@ -3,6 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@/firebase';
 
+// THIS HOOK IS DEPRECATED. It uses localStorage and has been replaced by
+// `useStationProgress` which uses Firestore for persistent, cross-device storage.
+// It is kept for now to avoid breaking components that haven't been migrated yet,
+// but it should not be used for new development.
+
 const CHALLENGE_PROGRESS_KEY_PREFIX = 'kairu-challenge-progress-';
 
 type ChallengeInfo = {
