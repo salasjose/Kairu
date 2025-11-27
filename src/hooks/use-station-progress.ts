@@ -3,7 +3,7 @@
 
 import { useCallback, useMemo } from 'react';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc, setDoc, getDoc, updateDoc, deleteField, collection, query, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, deleteField, collection, query, getDocs, writeBatch } from 'firebase/firestore';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { useDoc } from '@/firebase/firestore/use-doc';
 
@@ -135,17 +135,18 @@ export function useStationProgress() {
         });
 
       // 2. Delete all documents in the stationProgress subcollection.
-      if (progressDocs) {
-        for (const pDoc of progressDocs) {
-          const docToDeleteRef = doc(db, `users/${user.uid}/stationProgress`, pDoc.id);
-          await deleteDoc(docToDeleteRef);
-        }
-      }
+      const progressCollectionRef = collection(db, `users/${user.uid}/stationProgress`);
+      const progressSnapshot = await getDocs(progressCollectionRef);
+      const batch = writeBatch(db);
+      progressSnapshot.forEach((doc) => {
+          batch.delete(doc.ref);
+      });
+      await batch.commit();
         
     } catch (error) {
         console.error("Failed to reset progress in Firestore", error);
     }
-  }, [user, db, progressDocs]);
+  }, [user, db]);
 
   return { 
     completedChallenges, 
