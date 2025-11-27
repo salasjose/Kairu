@@ -253,7 +253,7 @@ const PhotoChallenge = ({
     if (!photoUrl) return;
 
     try {
-        if (storage) {
+        if (storage && photoUrl.includes('firebasestorage')) {
             const photoRef = ref(storage, photoUrl);
             await deleteObject(photoRef);
         }
@@ -280,8 +280,8 @@ const PhotoChallenge = ({
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
-          setFloraPhotos(data.station1FloraPhotos || Array(4).fill(null));
-          setFaunaPhotos(data.station1FaunaPhotos || Array(4).fill(null));
+          if (data.station1FloraPhotos) setFloraPhotos(data.station1FloraPhotos);
+          if (data.station1FaunaPhotos) setFaunaPhotos(data.station1FaunaPhotos);
         }
       } catch (error) {
         console.error("Error fetching photos from Firestore:", error);
@@ -515,11 +515,13 @@ const HabitatChallenge = ({
     if (isChallengeCompleted) return;
     
     const photoUrl = habitatPhotos[index];
-    if (!photoUrl || !storage) return;
+    if (!photoUrl) return;
 
     try {
-        const photoRef = ref(storage, photoUrl);
-        await deleteObject(photoRef);
+        if (storage && photoUrl.includes('firebasestorage')) {
+            const photoRef = ref(storage, photoUrl);
+            await deleteObject(photoRef);
+        }
     } catch (error) {
         console.warn(`Could not delete photo from storage: ${error}`);
     }
@@ -727,25 +729,29 @@ export default function Station1() {
   };
   
   const stationCompletedChallenges = completedChallenges[stationId] || {};
+  const hasClaimedPrize = prizes.some(p => p.stationId === stationId);
+  
   const areAllChallengesComplete = Object.keys(challenges).every(
     (ch) => stationCompletedChallenges[ch as keyof typeof challenges]?.completed
   );
 
   useEffect(() => {
-    if (areAllChallengesComplete && !prizes.some(p => p.stationId === stationId)) {
+    if (areAllChallengesComplete && !hasClaimedPrize) {
         setIsPrizeModalOpen(true);
     }
-  }, [areAllChallengesComplete, prizes, stationId]);
+  }, [areAllChallengesComplete, hasClaimedPrize]);
 
 
   if (selectedChallenge) {
     const challengeKey = selectedChallenge as keyof typeof challenges;
-    const isCompleted = !!stationCompletedChallenges[challengeKey]?.completed;
+    // The final authority on completion is whether a prize has been claimed.
+    const isStationTrulyCompleted = hasClaimedPrize;
+
     if (selectedChallenge === "Fauna y Flora") {
       return <PhotoChallenge
             onBack={() => setSelectedChallenge(null)}
             onStationComplete={() => handleChallengeComplete("Fauna y Flora")}
-            isChallengeCompleted={isCompleted}
+            isChallengeCompleted={isStationTrulyCompleted || !!stationCompletedChallenges[challengeKey]?.completed}
           />;
     }
   
@@ -753,12 +759,10 @@ export default function Station1() {
        return <HabitatChallenge
             onBack={() => setSelectedChallenge(null)}
             onStationComplete={() => handleChallengeComplete("Cuidado Animal")}
-            isChallengeCompleted={isCompleted}
+            isChallengeCompleted={isStationTrulyCompleted || !!stationCompletedChallenges[challengeKey]?.completed}
           />;
     }
   }
-
-  const hasClaimedPrize = prizes.some(p => p.stationId === stationId);
 
   return (
     <>
@@ -774,7 +778,9 @@ export default function Station1() {
 
           <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
             {(Object.keys(challenges) as (keyof typeof challenges)[]).map((reto, index) => {
-              const isCompleted = !!stationCompletedChallenges[reto]?.completed;
+              const isChallengeCompletedByHook = !!stationCompletedChallenges[reto]?.completed;
+              // True completion is defined by having claimed the prize for the station.
+              const isCompleted = hasClaimedPrize || isChallengeCompletedByHook;
               
               return (
                 <button
