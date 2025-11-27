@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import dynamic from 'next/dynamic';
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -17,9 +16,7 @@ import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore } from "@/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
-import { useChallengeProgress } from "@/hooks/use-challenge-progress";
 import { cn } from "@/lib/utils";
-import Logo from "../Logo";
 import { usePrizeCart } from "@/hooks/use-prize-cart";
 import ResponsiveBackground from "../ResponsiveBackground";
 
@@ -39,7 +36,7 @@ const challenges = {
 
 type ChallengeId = keyof typeof challenges;
 
-const LearnChallenge = ({ onBack, onComplete }: { onBack: () => void; onComplete: () => void; }) => {
+const LearnChallenge = ({ onBack, onComplete, isCompleted }: { onBack: () => void; onComplete: () => void; isCompleted: boolean }) => {
     const { user } = useUser();
     const db = useFirestore();
     const [url, setUrl] = useState("");
@@ -58,7 +55,7 @@ const LearnChallenge = ({ onBack, onComplete }: { onBack: () => void; onComplete
                 const videoId = newUrl.split("youtu.be/")[1].split("?")[0];
                 setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
             } else {
-                setVideoUrl(newUrl);
+                setVideoUrl(null);
             }
         } else {
             setVideoUrl(null);
@@ -88,6 +85,7 @@ const LearnChallenge = ({ onBack, onComplete }: { onBack: () => void; onComplete
     }, [user, db, handleUrlChange]);
 
     const handleSaveAndComplete = async () => {
+        if (isCompleted) return;
         if (!url.trim()) {
             toast({ title: "URL vacía", description: "Por favor, ingresa una URL válida.", variant: "destructive" });
             return;
@@ -151,11 +149,18 @@ const LearnChallenge = ({ onBack, onComplete }: { onBack: () => void; onComplete
                                 placeholder="https://youtube.com/tu-video"
                                 value={url}
                                 onChange={(e) => handleUrlChange(e.target.value)}
-                                disabled={isLoading}
+                                disabled={isLoading || isCompleted}
                             />
                         </div>
                         
-                        <Button onClick={handleSaveAndComplete} size="lg">Guardar y Completar</Button>
+                        {isCompleted ? (
+                            <Button size="lg" disabled>
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Reto Completado
+                            </Button>
+                        ) : (
+                            <Button onClick={handleSaveAndComplete} size="lg">Guardar y Completar</Button>
+                        )}
                     </CardContent>
                 </Card>
             </div>
@@ -168,8 +173,7 @@ export default function Station5() {
   const stationId = 5;
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeId | null>(null);
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
-  const { unlockStation } = useStationProgress();
-  const { completedChallenges, completeChallenge } = useChallengeProgress();
+  const { completedChallenges, completeChallenge, unlockedStations, isLoadingProgress } = useStationProgress();
   const { prizes } = usePrizeCart();
   const router = useRouter();
   
@@ -206,20 +210,25 @@ export default function Station5() {
   
    const handleClaimPrize = () => {
     setIsPrizeModalOpen(false);
-    unlockStation(stationId + 1);
+    completeChallenge(stationId, "station-completed"); // Mark station as fully completed
     router.push("/");
   };
 
   const stationProgress = completedChallenges[stationId] || {};
   const areAllChallengesComplete = Object.keys(challenges).every(id => stationProgress[id as ChallengeId]?.completed);
-  const hasClaimedPrize = prizes.some(p => p.stationId === stationId);
+  const hasClaimedPrize = unlockedStations.includes(stationId + 1);
   
   const renderContent = () => {
     if (selectedChallenge === "learn") {
-      return <LearnChallenge onBack={() => setSelectedChallenge(null)} onComplete={() => handleComplete("learn")} />;
+      const isCompleted = !!stationProgress['learn']?.completed || hasClaimedPrize;
+      return <LearnChallenge 
+                onBack={() => setSelectedChallenge(null)} 
+                onComplete={() => handleComplete("learn")} 
+                isCompleted={isCompleted}
+              />;
     }
     if (selectedChallenge === "wordsearch") {
-      const isCompleted = !!completedChallenges[stationId]?.['wordsearch'];
+      const isCompleted = !!stationProgress['wordsearch']?.completed || hasClaimedPrize;
       return <WordSearchGame 
                   gameId="station5" 
                   onComplete={() => handleComplete("wordsearch")} 
@@ -243,7 +252,7 @@ export default function Station5() {
             {(Object.keys(challenges) as ChallengeId[]).map((key) => {
                 const challenge = challenges[key];
                 const Icon = challenge.icon;
-                const isCompleted = stationProgress[key]?.completed;
+                const isCompleted = stationProgress[key]?.completed || hasClaimedPrize;
                 return (
                 <button
                     key={key}
