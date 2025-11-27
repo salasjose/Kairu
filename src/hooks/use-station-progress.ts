@@ -112,37 +112,38 @@ export function useStationProgress() {
   const resetProgress = useCallback(async () => {
     if (!user || !db) return;
 
-    // 1. Delete fields related to game progress from the user document.
-    const playerDocRef = doc(db, 'users', user.uid);
+    // 1. Delete all documents in the stationProgress subcollection.
+    const progressCollectionRef = collection(db, `users/${user.uid}/stationProgress`);
+    const batch = writeBatch(db);
     try {
-        await updateDoc(playerDocRef, {
-            unlockedStations: [1], // Reset stations
-            avatar: deleteField(),
-            chosenScenario: deleteField(),
-            placedPrizes: deleteField(),
-            station9Locked: deleteField(),
-            station1FaunaPhotos: deleteField(),
-            station1FloraPhotos: deleteField(),
-            station1HabitatPhotos: deleteField(),
-            station2Days: deleteField(),
-            station3UrlCrafts: deleteField(),
-            station3UrlSeparate: deleteField(),
-            station4Url: deleteField(),
-            station5Url: deleteField(),
-            station6VideoUrl: deleteField(),
-            station7Businesses: deleteField(),
-            station8Url: deleteField()
-        });
-
-      // 2. Delete all documents in the stationProgress subcollection.
-      const progressCollectionRef = collection(db, `users/${user.uid}/stationProgress`);
       const progressSnapshot = await getDocs(progressCollectionRef);
-      const batch = writeBatch(db);
       progressSnapshot.forEach((doc) => {
           batch.delete(doc.ref);
       });
       await batch.commit();
-        
+
+      // 2. After successfully deleting subcollections, update the main user document.
+      const playerDocRef = doc(db, 'users', user.uid);
+      await updateDoc(playerDocRef, {
+        unlockedStations: [1],
+        prizes: deleteField(),
+        avatar: deleteField(),
+        chosenScenario: deleteField(),
+        placedPrizes: deleteField(),
+        station9Locked: deleteField(),
+        station1FaunaPhotos: deleteField(),
+        station1FloraPhotos: deleteField(),
+        station1HabitatPhotos: deleteField(),
+        station2Days: deleteField(),
+        station3UrlCrafts: deleteField(),
+        station3UrlSeparate: deleteField(),
+        station4Url: deleteField(),
+        station5Url: deleteField(),
+        station6VideoUrl: deleteField(),
+        station7Businesses: deleteField(),
+        station8Url: deleteField()
+      });
+
     } catch (error) {
         console.error("Failed to reset progress in Firestore", error);
     }
