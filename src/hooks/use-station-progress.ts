@@ -5,6 +5,7 @@ import { useCallback, useMemo } from 'react';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, getDoc, updateDoc, deleteField, collection, query, deleteDoc } from 'firebase/firestore';
 import { useCollection } from '@/firebase/firestore/use-collection';
+import { useDoc } from '@/firebase/firestore/use-doc';
 
 // Type for individual challenge progress stored in Firestore
 export type ChallengeProgressDoc = {
@@ -153,8 +154,8 @@ export function useStationProgress() {
   return { 
     completedChallenges, 
     isLoadingProgress: userLoading || progressLoading || userDocLoading,
-    unlockStation,
     unlockedStations,
+    unlockStation,
     completeChallenge,
     resetProgress 
   };
