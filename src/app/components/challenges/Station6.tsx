@@ -11,7 +11,7 @@ import { ArrowLeft, Puzzle, CheckCircle, Lock, Link as LinkIcon } from 'lucide-r
 import PrizeDialog from '../PrizeDialog';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useUser, useFirestore } from '@/firebase';
-import { doc, setDoc, getDoc } from 'firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import TypewriterText from '../auth/TypewriterText';
 import CrosswordGame from './CrosswordGame';
