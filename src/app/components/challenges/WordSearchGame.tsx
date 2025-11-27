@@ -16,20 +16,19 @@ const grid = [
   ['O', 'F', 'A', 'U', 'N', 'A', 'X', 'B', 'C', 'U'],
   ['S', 'L', 'O', 'R', 'R', 'I', 'O', 'S', 'O', 'A'],
   ['K', 'O', 'S', 'Q', 'C', 'S', 'V', 'Q', 'M', 'S'],
-  ['Z', 'R', 'C', 'Q', 'M', 'U', 'Y', 'Z', 'P', 'U'],
-  ['J', 'A', 'U', 'E', 'L', 'O', 'L', 'F', 'O', 'E'],
-  ['B', 'O', 'S', 'Q', 'U', 'E', 'A', 'W', 'S', 'L'],
-  ['N', 'G', 'L', 'P', 'O', 'D', 'R', 'A', 'T', 'O'],
+  ['Z', 'R', 'C', 'Q', 'M', 'U', 'Y', 'Z', 'P', 'E'],
+  ['J', 'A', 'U', 'E', 'L', 'O', 'L', 'F', 'O', 'L'],
+  ['B', 'O', 'S', 'Q', 'U', 'E', 'A', 'W', 'S', 'O'],
+  ['N', 'G', 'L', 'P', 'O', 'D', 'R', 'A', 'T', 'S'],
   ['S', 'O', 'L', 'A', 'M', 'B', 'I', 'E', 'N', 'T'],
 ];
 
-// Pre-calculate word positions for instant solve
 const wordPositions: { [word: string]: [number, number][] } = {
     'RECICLAR': [[1,1],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[1,8]],
     'FAUNA': [[2,1],[2,2],[2,3],[2,4],[2,5]],
     'FLORA': [[3,1],[3,2],[3,3],[3,4],[3,5]],
     'AGUA': [[0,9],[1,9],[2,9],[3,9]],
-    'SUELO': [[7,8],[6,8],[5,8],[4,8],[3,8]],
+    'SUELO': [[8,8],[7,8],[6,8],[5,8],[4,8]],
     'BOSQUE': [[7,0],[7,1],[7,2],[7,3],[7,4],[7,5]],
     'SOL': [[9,0],[9,1],[9,2]],
     'COMPOST': [[2,8],[3,8],[4,8],[5,8],[6,8],[7,8],[8,8]],
@@ -55,7 +54,7 @@ const WordSearchGame = ({ onComplete, onBack, gameId, isCompleted }: { onComplet
 
   useEffect(() => {
     if (gameState !== 'playing' || timeLeft <= 0) {
-      if (timeLeft <= 0) {
+      if (timeLeft <= 0 && gameState === 'playing') {
         setGameState('lost');
         toast({ title: "¡Se acabó el tiempo!", variant: "destructive" });
       }

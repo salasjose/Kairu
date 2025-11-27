@@ -17,7 +17,6 @@ import { useUser, useFirestore } from "@/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { usePrizeCart } from "@/hooks/use-prize-cart";
 import ResponsiveBackground from "../ResponsiveBackground";
 
 
@@ -173,8 +172,7 @@ export default function Station5() {
   const stationId = 5;
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeId | null>(null);
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
-  const { completedChallenges, completeChallenge, unlockedStations, isLoadingProgress } = useStationProgress();
-  const { prizes } = usePrizeCart();
+  const { completedChallenges, completeChallenge, unlockStation, unlockedStations, isLoadingProgress } = useStationProgress();
   const router = useRouter();
   
   const [showYaraDialog, setShowYaraDialog] = useState(false);
@@ -198,9 +196,10 @@ export default function Station5() {
     };
   }, [scheduleYaraDialog]);
 
-
   const handleComplete = (challengeId: ChallengeId) => {
-    completeChallenge(stationId, challengeId);
+    if (!completedChallenges[stationId]?.[challengeId]?.completed) {
+        completeChallenge(stationId, challengeId);
+    }
     toast({
         title: `¡Reto '${challenges[challengeId].title}' completado!`,
         description: "Regresando al menú de la estación...",
@@ -210,7 +209,7 @@ export default function Station5() {
   
    const handleClaimPrize = () => {
     setIsPrizeModalOpen(false);
-    completeChallenge(stationId, "station-completed"); // Mark station as fully completed
+    unlockStation(stationId + 1);
     router.push("/");
   };
 
@@ -218,7 +217,17 @@ export default function Station5() {
   const areAllChallengesComplete = Object.keys(challenges).every(id => stationProgress[id as ChallengeId]?.completed);
   const hasClaimedPrize = unlockedStations.includes(stationId + 1);
   
+  useEffect(() => {
+      if (areAllChallengesComplete && !hasClaimedPrize) {
+          setIsPrizeModalOpen(true);
+      }
+  }, [areAllChallengesComplete, hasClaimedPrize]);
+
   const renderContent = () => {
+    if (isLoadingProgress) {
+      return <div className="flex items-center justify-center h-screen">Cargando estación...</div>;
+    }
+
     if (selectedChallenge === "learn") {
       const isCompleted = !!stationProgress['learn']?.completed || hasClaimedPrize;
       return <LearnChallenge 
