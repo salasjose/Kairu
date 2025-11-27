@@ -15,11 +15,13 @@ export default function CrosswordGame({
   onBack,
   onComplete,
   onLose,
+  isCompleted = false,
 }: {
   data: CrosswordData;
   onBack?: () => void;
   onComplete: () => void;
   onLose: () => void;
+  isCompleted?: boolean;
 }) {
   const grid = useMemo(() => data.grid.map(row => row.map(v => v === "#" ? "#" : v)), [data.grid]);
   const rows = grid.length;
@@ -27,70 +29,48 @@ export default function CrosswordGame({
   
   const clueNumbers = useMemo(() => {
     const numbers: { [key: string]: number } = {};
-    let clueCounter = 1;
-    const assignedNumbers: { [key: string]: boolean } = {};
-  
-    const acrossCluesByNumber: { [num: number]: boolean } = data.clues.across.reduce((acc, clue) => {
-      acc[clue.number] = true;
-      return acc;
-    }, {} as { [num: number]: boolean });
-  
-    const downCluesByNumber: { [num: number]: boolean } = data.clues.down.reduce((acc, clue) => {
-      acc[clue.number] = true;
-      return acc;
-    }, {} as { [num: number]: boolean });
-  
-    // Asignar números a las celdas
-    const starts = new Map<number, {r: number, c: number}>();
-    data.clues.across.forEach(c => starts.set(c.number, {r: -1, c: -1}));
-    data.clues.down.forEach(c => starts.set(c.number, {r: -1, c: -1}));
-
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        if (grid[r][c] === '#') continue;
-        const isAcrossStart = (c === 0 || grid[r][c - 1] === '#') && c + 1 < cols && grid[r][c + 1] !== '#';
-        const isDownStart = (r === 0 || grid[r - 1][c] === '#') && r + 1 < rows && grid[r + 1][c] !== '#';
-        if(isAcrossStart || isDownStart) {
-          // Find the number from the clues
-          const acrossClue = data.clues.across.find(clue => {
-            const word = clue.answer;
-            if(c + word.length > cols) return false;
-            let match = true;
-            for(let i = 0; i < word.length; i++) {
-              if(grid[r][c+i] !== word[i]) {
-                match = false;
-                break;
-              }
-            }
-            return match;
-          });
-          const downClue = data.clues.down.find(clue => {
-            const word = clue.answer;
-            if(r + word.length > rows) return false;
-            let match = true;
-            for(let i = 0; i < word.length; i++) {
-              if(grid[r+i][c] !== word[i]) {
-                match = false;
-                break;
-              }
-            }
-            return match;
-          });
-          if (isAcrossStart && acrossClue) {
-            starts.set(acrossClue.number, {r,c});
-          }
-          if (isDownStart && downClue) {
-             starts.set(downClue.number, {r,c});
-          }
-        }
-      }
-    }
     
-    starts.forEach((pos, num) => {
-        if (pos.r !== -1) {
-            numbers[`${pos.r},${pos.c}`] = num;
+    // Asignar números a las celdas basadas en las pistas
+    const assignNumbers = (clues: { number: number, answer: string }[], direction: 'across' | 'down') => {
+      clues.forEach(clue => {
+        let found = false;
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            let match = true;
+            if (direction === 'across') {
+              if (c + clue.answer.length > cols) continue;
+              // Check for blocker before
+              if (c > 0 && grid[r][c-1] !== '#') continue;
+              for (let i = 0; i < clue.answer.length; i++) {
+                if (grid[r][c + i].toUpperCase() !== clue.answer[i].toUpperCase()) {
+                  match = false;
+                  break;
+                }
+              }
+            } else { // 'down'
+              if (r + clue.answer.length > rows) continue;
+              // Check for blocker before
+              if (r > 0 && grid[r-1][c] !== '#') continue;
+              for (let i = 0; i < clue.answer.length; i++) {
+                if (grid[r + i][c].toUpperCase() !== clue.answer[i].toUpperCase()) {
+                  match = false;
+                  break;
+                }
+              }
+            }
+            if (match) {
+              numbers[`${r},${c}`] = clue.number;
+              found = true;
+              break;
+            }
+          }
+          if (found) break;
         }
-    });
+      });
+    };
+
+    assignNumbers(data.clues.across, 'across');
+    assignNumbers(data.clues.down, 'down');
 
     return numbers;
 
@@ -100,12 +80,19 @@ export default function CrosswordGame({
   const [selected, setSelected] = useState<{ r: number; c: number } | null>(null);
   const [dir, setDir] = useState<"across" | "down">("across");
   const [state, setState] = useState<string[][]>(() => grid.map(row => row.map(cell => (cell === "#" ? "#" : ""))));
-  const [showSolution, setShowSolution] = useState(false);
   const [lives, setLives] = useState(3);
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
-  const [gameState, setGameState] = useState<'playing' | 'won' | 'lost'>('playing');
+  const [gameState, setGameState] = useState<'playing' | 'won' | 'lost'>(isCompleted ? 'won' : 'playing');
 
   const refs = useRef<(HTMLInputElement | null)[][]>(Array.from({ length: rows }, () => Array(cols).fill(null)));
+  
+  useEffect(() => {
+    if (isCompleted) {
+        setState(grid);
+        setGameState('won');
+    }
+  }, [isCompleted, grid]);
+
 
   useEffect(() => {
     if (gameState !== 'playing') return;
@@ -120,19 +107,8 @@ export default function CrosswordGame({
   }, [timeLeft, gameState, onLose]);
 
 
-  useEffect(() => {
-    if (showSolution) {
-      setState(grid);
-    } else {
-        if (JSON.stringify(state) === JSON.stringify(grid)) {
-            resetGame();
-        }
-    }
-  }, [showSolution, grid]);
-
-
   const resetGame = () => {
-    setShowSolution(false);
+    if (isCompleted) return;
     setState(grid.map(r=>r.map(c=>c==="#"?"#":"")));
     setSelected(null);
     setLives(3);
@@ -250,16 +226,18 @@ export default function CrosswordGame({
                 <ArrowLeft className="mr-2 h-4 w-4" /> Volver
               </Button>
             )}
-            <div className="flex items-center gap-4">
-                 <div className="flex items-center gap-1 font-bold text-lg">
-                    <Heart className="h-5 w-5 text-red-500 fill-current" />
-                    <span>{lives}</span>
-                 </div>
-                 <div className="flex items-center gap-1 font-bold text-lg tabular-nums">
-                    <Timer className="h-5 w-5" />
-                    <span>{formatTime(timeLeft)}</span>
-                 </div>
-            </div>
+            {!isCompleted && (
+              <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1 font-bold text-lg">
+                      <Heart className="h-5 w-5 text-red-500 fill-current" />
+                      <span>{lives}</span>
+                  </div>
+                  <div className="flex items-center gap-1 font-bold text-lg tabular-nums">
+                      <Timer className="h-5 w-5" />
+                      <span>{formatTime(timeLeft)}</span>
+                  </div>
+              </div>
+            )}
         </div>
         <div
           className="grid gap-px md:gap-0.5 rounded-md p-1 md:p-2 bg-gray-900 w-full max-w-[500px] mx-auto"
@@ -274,11 +252,11 @@ export default function CrosswordGame({
               return (
                 <div
                   key={`${r}-${c}`}
-                  onClick={() => { if (!isBlock) { setSelected({ r, c }); refs.current[r][c]?.focus(); } }}
+                  onClick={() => { if (!isBlock && gameState === 'playing') { setSelected({ r, c }); refs.current[r][c]?.focus(); } }}
                   className={cn(
                     "relative aspect-square flex items-center justify-center border",
                     isBlock ? "bg-gray-800 border-gray-700" : "bg-white border-gray-300",
-                    isSel && !isBlock && "bg-yellow-200"
+                    isSel && !isBlock && !isCompleted && "bg-yellow-200"
                   )}
                 >
                   {clueNumber && (
@@ -297,7 +275,7 @@ export default function CrosswordGame({
                       onFocus={() => setSelected({r,c})}
                       className="h-full w-full text-center bg-transparent outline-none border-none text-sm sm:text-base md:text-xl font-bold uppercase"
                       aria-label={`Fila ${r + 1}, Columna ${c + 1}`}
-                      disabled={gameState !== 'playing'}
+                      disabled={gameState !== 'playing' || isCompleted}
                     />
                   )}
                 </div>
@@ -306,16 +284,24 @@ export default function CrosswordGame({
           )}
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2 md:gap-3">
-          <Button onClick={checkSolution} disabled={gameState !== 'playing'}><CheckCircle className="mr-2 h-4 w-4" />Comprobar</Button>
-          <Button variant="outline" onClick={() => setShowSolution(s => !s)} disabled={gameState !== 'playing'}>
-            <Eye className="mr-2 h-4 w-4" />
-            {showSolution ? "Ocultar" : "Ver Solución"}
-          </Button>
-          <Button variant="secondary" onClick={resetGame} disabled={gameState !== 'playing'}>
-            <RefreshCw className="mr-2 h-4 w-4" />Reiniciar
-          </Button>
-        </div>
+        {!isCompleted && (
+          <div className="mt-4 flex flex-wrap gap-2 md:gap-3">
+            <Button onClick={checkSolution} disabled={gameState !== 'playing'}>
+              <CheckCircle className="mr-2 h-4 w-4" />Comprobar
+            </Button>
+            <Button variant="secondary" onClick={resetGame} disabled={gameState !== 'playing'}>
+              <RefreshCw className="mr-2 h-4 w-4" />Reiniciar
+            </Button>
+          </div>
+        )}
+         {isCompleted && (
+             <div className="mt-4">
+                 <Button disabled size="lg">
+                    <CheckCircle className="mr-2"/>
+                    Reto Completado
+                 </Button>
+             </div>
+        )}
       </div>
 
       <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 w-full h-full lg:max-h-[75vh] lg:overflow-y-auto">

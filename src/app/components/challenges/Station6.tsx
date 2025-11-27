@@ -1,26 +1,23 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { toast } from '@/hooks/use-toast';
 import { useStationProgress } from '@/hooks/use-station-progress';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, ArrowLeft, Puzzle, CheckCircle, Lock, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, Puzzle, CheckCircle, Lock, Link as LinkIcon } from 'lucide-react';
 import PrizeDialog from '../PrizeDialog';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useUser, useFirestore } from '@/firebase';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import TypewriterText from '../auth/TypewriterText';
-import { useChallengeProgress } from '@/hooks/use-challenge-progress';
 import CrosswordGame from './CrosswordGame';
 import { REGIRA_CROSSWORD_DATA } from '@/lib/regira-crossword-data';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-import Logo from "../Logo";
 import { usePrizeCart } from '@/hooks/use-prize-cart';
 import ResponsiveBackground from '../ResponsiveBackground';
 
@@ -39,7 +36,7 @@ const challenges = {
 };
 type ChallengeId = keyof typeof challenges;
 
-const VideoChallenge = ({ onBack, onComplete }: { onBack: () => void; onComplete: () => void }) => {
+const VideoChallenge = ({ onBack, onComplete, isCompleted }: { onBack: () => void; onComplete: () => void; isCompleted: boolean; }) => {
   const { user } = useUser();
   const db = useFirestore();
   const [url, setUrl] = useState('');
@@ -90,6 +87,8 @@ const VideoChallenge = ({ onBack, onComplete }: { onBack: () => void; onComplete
   }, [user, db, handleUrlChange]);
 
   const handleCompleteClick = async () => {
+    if (isCompleted) return;
+
     if (!url.trim()) {
       toast({
         title: 'Reto Incompleto',
@@ -157,12 +156,19 @@ const VideoChallenge = ({ onBack, onComplete }: { onBack: () => void; onComplete
                  placeholder="Pega el enlace de tu video aquí"
                  value={url}
                  onChange={(e) => handleUrlChange(e.target.value)}
-                 disabled={isLoading}
+                 disabled={isLoading || isCompleted}
                />
             </div>
-            <Button onClick={handleCompleteClick} size="lg">
+            {isCompleted ? (
+              <Button size="lg" disabled>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Reto Completado
+              </Button>
+            ) : (
+              <Button onClick={handleCompleteClick} size="lg">
                 Completar Reto
-            </Button>
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -170,13 +176,14 @@ const VideoChallenge = ({ onBack, onComplete }: { onBack: () => void; onComplete
   );
 };
 
-const CrosswordChallenge = ({ onBack, onComplete, onLose }: { onBack: () => void; onComplete: () => void; onLose: () => void }) => {
+const CrosswordChallenge = ({ onBack, onComplete, onLose, isCompleted }: { onBack: () => void; onComplete: () => void; onLose: () => void; isCompleted: boolean; }) => {
     return (
         <CrosswordGame 
             data={REGIRA_CROSSWORD_DATA} 
             onComplete={onComplete} 
             onBack={onBack}
             onLose={onLose}
+            isCompleted={isCompleted}
         />
     );
 };
@@ -186,8 +193,7 @@ export default function Station6() {
   const stationId = 6;
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeId | null>(null);
   const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
-  const { unlockStation } = useStationProgress();
-  const { completedChallenges, completeChallenge } = useChallengeProgress();
+  const { unlockStation, completedChallenges, completeChallenge, unlockedStations } = useStationProgress();
   const { prizes } = usePrizeCart();
   const router = useRouter();
 
@@ -238,7 +244,9 @@ export default function Station6() {
   }, [scheduleYaraDialog]);
 
   const handleChallengeComplete = (challengeId: ChallengeId) => {
-    completeChallenge(stationId, challengeId);
+    if (!completedChallenges[stationId]?.[challengeId]?.completed) {
+      completeChallenge(stationId, challengeId);
+    }
     toast({
       title: `¡Reto '${challenges[challengeId].title}' superado!`,
       description: '¡Sigue así! Completa todos los retos para avanzar.',
@@ -267,7 +275,14 @@ export default function Station6() {
 
   const stationProgress = completedChallenges[stationId] || {};
   const areAllChallengesComplete = Object.keys(challenges).every(id => stationProgress[id as ChallengeId]?.completed);
-  const hasClaimedPrize = prizes.some(p => p.stationId === stationId);
+  const hasClaimedPrize = prizes.some(p => p.stationId === stationId) || unlockedStations.includes(stationId + 1);
+  
+  useEffect(() => {
+    if (areAllChallengesComplete && !hasClaimedPrize) {
+      setIsPrizeModalOpen(true);
+    }
+  }, [areAllChallengesComplete, hasClaimedPrize]);
+
 
   const formatLockoutTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -277,11 +292,15 @@ export default function Station6() {
   }
 
   const renderContent = () => {
+    const isVideoCompleted = !!stationProgress['video']?.completed || hasClaimedPrize;
+    const isCrosswordCompleted = !!stationProgress['crossword']?.completed || hasClaimedPrize;
+
     if (selectedChallenge === 'video') {
       return (
         <VideoChallenge
           onBack={() => setSelectedChallenge(null)}
           onComplete={() => handleChallengeComplete('video')}
+          isCompleted={isVideoCompleted}
         />
       );
     }
@@ -291,6 +310,7 @@ export default function Station6() {
           onBack={() => setSelectedChallenge(null)}
           onComplete={() => handleChallengeComplete('crossword')}
           onLose={handleCrosswordLose}
+          isCompleted={isCrosswordCompleted}
         />
       );
     }
@@ -310,7 +330,7 @@ export default function Station6() {
             {(Object.keys(challenges) as ChallengeId[]).map(key => {
               const challenge = challenges[key];
               const Icon = challenge.icon;
-              const isCompleted = stationProgress[key]?.completed;
+              const isCompleted = (key === 'video' ? isVideoCompleted : isCrosswordCompleted);
               const isLocked = key === 'crossword' && isClient && lockoutTime > 0;
 
               return (
@@ -339,7 +359,7 @@ export default function Station6() {
                           <CheckCircle className="text-white h-5 w-5" />
                         </div>
                       )}
-                      {isLocked && (
+                      {isLocked && !isCompleted && (
                           <div className="absolute top-2 right-2 bg-destructive rounded-full p-1.5 shadow-lg z-10">
                               <Lock className="text-white h-5 w-5" />
                           </div>
