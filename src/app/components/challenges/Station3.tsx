@@ -20,15 +20,12 @@ import { toast } from '@/hooks/use-toast';
 import RecyclingGame from './RecyclingGame';
 import PrizeDialog from '../PrizeDialog';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
 import TypewriterText from '../auth/TypewriterText';
-import { useUser, useFirestore } from '@/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useChallengeProgress } from '@/hooks/use-challenge-progress';
-import Logo from '../Logo';
 import { usePrizeCart } from '@/hooks/use-prize-cart';
 import ResponsiveBackground from '../ResponsiveBackground';
+import ChallengeDetail from './ChallengeDetail';
 
 const challenges = {
   game: {
@@ -43,6 +40,11 @@ const challenges = {
     description:
       'Separa los residuos sólidos en tu hogar, haz un video de cómo lo haces. ¡Estoy ansiosa por ver tu compromiso!',
     imageId: 'waste-separation',
+    dbField: 'station3UrlSeparate',
+    validation: {
+        hosts: ['youtube.com', 'youtu.be', 'tiktok.com'],
+        message: "Por favor, ingresa una URL de YouTube o TikTok."
+    },
     icon: Recycle,
   },
   'photos-crafts': {
@@ -50,222 +52,16 @@ const challenges = {
     description:
       'Crea nuevos productos a partir de residuos reciclados. Monta un post en Instagram, etiquétanos @fundaciontekara y @corpoguajira y comparte el enlace.',
     imageId: 'recycled-art',
+    dbField: 'station3UrlCrafts',
+    validation: {
+        hosts: ['instagram.com', 'facebook.com', 'x.com', 'twitter.com'],
+        message: "Por favor, ingresa una URL de Instagram, Facebook o X."
+    },
     icon: Sparkles,
   },
 };
 
 type ChallengeId = keyof typeof challenges;
-
-const ChallengeDetail = ({
-  title,
-  description,
-  onComplete,
-  onBack,
-  challengeId,
-  isCompleted,
-}: {
-  title: string;
-  description: string;
-  onComplete: () => void;
-  onBack: () => void;
-  challengeId: ChallengeId;
-  isCompleted: boolean;
-}) => {
-  const { user } = useUser();
-  const db = useFirestore();
-  const [url, setUrl] = useState('');
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-
-  const getDbFieldForChallenge = (id: ChallengeId) => {
-    switch (id) {
-      case 'video-separate':
-        return 'station3UrlSeparate';
-      case 'photos-crafts':
-        return 'station3UrlCrafts';
-      default:
-        return null;
-    }
-  };
-
-  const handleUrlChange = useCallback((newUrl: string) => {
-    setUrl(newUrl);
-    if (
-      newUrl.trim() &&
-      (newUrl.startsWith('http://') || newUrl.startsWith('https://'))
-    ) {
-      if (newUrl.includes('youtube.com/watch?v=')) {
-        const videoId = newUrl.split('v=')[1].split('&')[0];
-        setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
-      } else if (newUrl.includes('youtu.be/')) {
-        const videoId = newUrl.split('youtu.be/')[1].split('?')[0];
-        setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
-      } else if (newUrl.includes('tiktok.com/')) {
-         setVideoUrl(newUrl); // TikTok can often be embedded
-      } else {
-        setVideoUrl(newUrl);
-      }
-    } else {
-      setVideoUrl(null);
-    }
-  }, []);
-
-  useEffect(() => {
-    const fetchUrl = async () => {
-      const dbField = getDbFieldForChallenge(challengeId);
-      if (!user || !db || !dbField) return;
-
-      try {
-        const userDocRef = doc(db, 'users', user.uid);
-        const docSnap = await getDoc(userDocRef);
-        if (docSnap.exists() && docSnap.data()[dbField]) {
-          const savedUrl = docSnap.data()[dbField];
-          handleUrlChange(savedUrl);
-        }
-      } catch (error) {
-        console.error(`Error fetching ${dbField} from Firestore:`, error);
-      }
-    };
-    fetchUrl();
-  }, [challengeId, user, db, handleUrlChange]);
-
-  const validateUrl = (url: string, id: ChallengeId) => {
-      const validHosts: Record<string, string[]> = {
-          'video-separate': ['youtube.com', 'youtu.be', 'tiktok.com'],
-          'photos-crafts': ['instagram.com', 'facebook.com', 'x.com']
-      };
-
-      try {
-          const urlObject = new URL(url);
-          return validHosts[id]?.some(host => urlObject.hostname.includes(host));
-      } catch (error) {
-          return false;
-      }
-  }
-
-
-  const handleSaveAndComplete = async () => {
-    if (isCompleted) return;
-    
-    const dbField = getDbFieldForChallenge(challengeId);
-    if (!dbField) {
-      onComplete();
-      return;
-    }
-    
-    if (!url.trim() || !validateUrl(url, challengeId)) {
-      let errorMessage = "Por favor, ingresa una URL válida para este reto.";
-      if (challengeId === 'video-separate') errorMessage = "Por favor, ingresa una URL de YouTube o TikTok.";
-      if (challengeId === 'photos-crafts') errorMessage = "Por favor, ingresa una URL de Instagram, Facebook o X.";
-
-      toast({
-        title: 'URL Inválida',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!user || !db) {
-      toast({
-        title: 'Error',
-        description: 'No se puede guardar. Usuario no autenticado.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      const userDocRef = doc(db, 'users', user.uid);
-      await setDoc(userDocRef, { [dbField]: url }, { merge: true });
-      toast({
-        title: 'Guardado',
-        description: `Tu enlace para '${title}' ha sido guardado.`,
-      });
-      onComplete();
-    } catch (error) {
-      console.error(`Error saving ${dbField} to Firestore:`, error);
-      toast({
-        title: 'Error al guardar',
-        description: 'No se pudo guardar la URL en la nube.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const challengeInfo = challenges[challengeId];
-  const imageInfo = PlaceHolderImages.find(
-    (p) => p.id === challengeInfo.imageId
-  );
-
-  return (
-    <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-full">
-      <div className="w-full">
-        <Button variant="ghost" onClick={onBack} className="mb-4">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Volver a los retos
-        </Button>
-        <Card className="text-center w-full shadow-lg">
-          <CardContent className="p-6">
-            <h3 className="font-bold text-2xl text-primary font-headline mb-4">
-              {title}
-            </h3>
-            <div className="mx-auto mb-6 w-full max-w-sm h-auto aspect-video bg-black rounded-lg border-4 border-white shadow-md flex items-center justify-center">
-              {videoUrl && videoUrl.includes("youtube.com/embed") ? (
-                <iframe
-                  src={videoUrl}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="rounded-lg w-full h-full"
-                ></iframe>
-              ) : imageInfo ? (
-                <Image
-                  src={imageInfo.imageUrl}
-                  alt={imageInfo.description}
-                  width={400}
-                  height={225}
-                  className="rounded-lg object-cover w-full h-full"
-                />
-              ) : null}
-            </div>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              {description}
-            </p>
-
-            <div className="mb-6 flex gap-2 max-w-md mx-auto">
-              <LinkIcon className="h-10 text-muted-foreground" />
-              <Input
-                type="url"
-                placeholder="Pega el enlace de tu post aquí..."
-                value={url}
-                onChange={(e) => handleUrlChange(e.target.value)}
-                disabled={isCompleted}
-              />
-            </div>
-            
-            {isCompleted ? (
-              <Button size="lg" disabled>
-                <CheckCircle className="mr-2" />
-                Reto Completado
-              </Button>
-            ) : (
-              <Button onClick={handleSaveAndComplete} size="lg">
-                <CheckCircle className="mr-2" />
-                Guardar y Completar
-              </Button>
-            )}
-
-            {isCompleted && url && (
-                <div className="mt-4 text-sm">
-                    <p className='text-muted-foreground'>Enlace guardado:</p>
-                    <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">{url}</a>
-                </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-};
 
 export default function Station3() {
   const stationId = 3;
@@ -300,7 +96,7 @@ export default function Station3() {
   }, [scheduleYaraDialog]);
 
   const handleChallengeComplete = (challengeId: ChallengeId) => {
-    if (challengeId !== 'game') {
+    if (!completedChallenges[stationId]?.[challengeId]?.completed) {
       completeChallenge(stationId, challengeId);
     }
     setSelectedChallenge(null);
@@ -325,11 +121,20 @@ export default function Station3() {
     stationProgress['game-classify']?.completed &&
     stationProgress['game-drag-and-drop']?.completed
   );
+
   const areAllChallengesComplete = Object.keys(challenges).every((id) => {
     if (id === 'game') return isGameChallengeCompleted;
     return stationProgress[id as ChallengeId]?.completed;
   });
+
   const hasClaimedPrize = prizes.some((p) => p.stationId === stationId);
+  
+  useEffect(() => {
+    if(areAllChallengesComplete && !hasClaimedPrize) {
+      setIsPrizeModalOpen(true);
+    }
+  }, [areAllChallengesComplete, hasClaimedPrize]);
+
 
   const renderContent = () => {
     if (selectedChallenge === 'game') {
@@ -349,7 +154,9 @@ export default function Station3() {
           <ChallengeDetail
             title={challengeInfo.title}
             description={challengeInfo.description}
-            challengeId={selectedChallenge}
+            imageId={challengeInfo.imageId}
+            dbField={challengeInfo.dbField}
+            validation={challengeInfo.validation}
             onComplete={() => handleChallengeComplete(selectedChallenge)}
             onBack={() => setSelectedChallenge(null)}
             isCompleted={isCompleted}
