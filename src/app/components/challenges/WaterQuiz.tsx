@@ -184,12 +184,13 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge, isCom
 
   useEffect(() => {
     if (isAnswered || isBlocked || isCompleted) return;
+    let timer: NodeJS.Timeout;
     if (timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft(prev => prev - 1), 1000);
-      return () => clearTimeout(timer);
+      timer = setTimeout(() => setTimeLeft(prev => prev - 1), 1000);
     } else {
       handleAnswer(null); // Timeout counts as wrong answer
     }
+    return () => clearTimeout(timer);
   }, [timeLeft, isAnswered, isBlocked, isCompleted, handleAnswer]);
 
 
@@ -215,8 +216,8 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge, isCom
             <Card className="text-center w-full shadow-lg">
                 <CardContent className="p-8">
                     <PartyPopper className="w-16 h-16 text-yellow-500 mx-auto mb-4 animate-bounce" />
-                    <h3 className="font-bold text-2xl mb-2">¡Juego Completado!</h3>
-                    <p className="text-muted-foreground mb-4">¡Felicitaciones! Este fue tu resultado:</p>
+                    <h3 className="font-bold text-2xl mb-2">¡Reto Completado!</h3>
+                    <p className="text-muted-foreground mb-4">¡Felicitaciones! Ya superaste este reto. Tu resultado fue:</p>
                     <div className="text-lg space-y-1">
                         <p>Respuestas Correctas: <span className="font-bold text-green-500">{quizState.score.correct}</span></p>
                         <p>Respuestas Incorrectas: <span className="font-bold text-red-500">{quizState.score.incorrect}</span></p>
@@ -310,5 +311,3 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge, isCom
     </div>
   );
 }
-
-    
