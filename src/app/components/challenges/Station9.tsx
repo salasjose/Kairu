@@ -18,7 +18,6 @@ import { Trash2, Gift, X, Edit, Check, Download } from "lucide-react";
 import ResponsiveBackground from "../ResponsiveBackground";
 import html2canvas from "html2canvas";
 
-
 // ------------------------------------------------------------------
 // Tipos
 // ------------------------------------------------------------------
@@ -556,150 +555,136 @@ export default function Station9() {
           setSelectedPrizeId(null);
         }}
       >
-        
         {/* Fondo de escenario o selector de escenario */}
-        {chosenScenario && scenarioBackgrounds ? (
-           null
+        {!chosenScenario ? (
+            <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
         ) : (
-          <div className="absolute inset-0 z-0">
-             <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
-          </div>
-        )}
-
-        {/* Lienzo principal (zona que se descarga como imagen) */}
-        {chosenScenario && (
-          <div className="absolute inset-0 flex items-center justify-center z-20 p-0">
             <div
-              ref={canvasRef}
-              className="relative w-screen h-auto aspect-[16/9] bg-transparent rounded-none overflow-hidden shadow-xl"
+                ref={canvasRef}
+                className="absolute inset-0 w-full h-full"
             >
-              {/* Capa de fondo dentro del lienzo para asegurar visual consistente */}
-              {scenarioBackgrounds && (
-                <div className="absolute inset-0">
-                  <ResponsiveBackground
-                    desktopSrc={scenarioBackgrounds.desktopSrc}
-                    tabletSrc={scenarioBackgrounds.tabletSrc}
-                    mobileSrc={scenarioBackgrounds.mobileSrc}
-                  />
-                </div>
-              )}
+                {scenarioBackgrounds && (
+                    <ResponsiveBackground
+                        desktopSrc={scenarioBackgrounds.desktopSrc}
+                        tabletSrc={scenarioBackgrounds.tabletSrc}
+                        mobileSrc={scenarioBackgrounds.mobileSrc}
+                    />
+                )}
+                 {/* Insignias colocadas */}
+                <div className="absolute inset-0 z-10">
+                    {placedPrizes.map((prize) => {
+                    const isSelected = selectedPrizeId === prize.id;
+                    const isSpecialPrize =
+                        prize.imageUrl.includes("Molinos.png") ||
+                        prize.imageUrl.includes("Ciudad.png");
 
-              {/* Insignias colocadas */}
-              <div className="absolute inset-0">
-                {placedPrizes.map((prize) => {
-                  const isSelected = selectedPrizeId === prize.id;
-                  const isSpecialPrize =
-                    prize.imageUrl.includes("Molinos.png") ||
-                    prize.imageUrl.includes("Ciudad.png");
+                    return (
+                        <motion.div
+                        key={prize.id}
+                        drag={!isStationLocked && !isStationFinalized}
+                        dragMomentum={false}
+                        onDragStart={() => {
+                            if (!isStationLocked && !isStationFinalized) {
+                            setSelectedPrizeId(prize.id);
+                            }
+                        }}
+                        onDragEnd={async (e, info) => {
+                            if (isStationLocked || isStationFinalized) return;
+                            if (!canvasRef.current) return;
 
-                  return (
-                    <motion.div
-                      key={prize.id}
-                      drag={!isStationLocked && !isStationFinalized}
-                      dragMomentum={false}
-                      onDragStart={() => {
-                        if (!isStationLocked && !isStationFinalized) {
-                          setSelectedPrizeId(prize.id);
-                        }
-                      }}
-                      onDragEnd={async (e, info) => {
-                        if (isStationLocked || isStationFinalized) return;
-                        if (!canvasRef.current) return;
+                            const rect = canvasRef.current.getBoundingClientRect();
 
-                        const rect = canvasRef.current.getBoundingClientRect();
+                            // posición previa en px
+                            const prevX = (prize.x / 100) * rect.width + rect.left;
+                            const prevY = (prize.y / 100) * rect.height + rect.top;
 
-                        // posición previa en px
-                        const prevX = (prize.x / 100) * rect.width + rect.left;
-                        const prevY = (prize.y / 100) * rect.height + rect.top;
+                            // nueva posición sumando offset del drag
+                            let newX =
+                            ((prevX + info.offset.x - rect.left) / rect.width) * 100;
+                            let newY =
+                            ((prevY + info.offset.y - rect.top) / rect.height) * 100;
 
-                        // nueva posición sumando offset del drag
-                        let newX =
-                          ((prevX + info.offset.x - rect.left) / rect.width) * 100;
-                        let newY =
-                          ((prevY + info.offset.y - rect.top) / rect.height) * 100;
+                            newX = clamp(newX, 5, 95);
+                            newY = clamp(newY, 5, 95);
 
-                        newX = clamp(newX, 5, 95);
-                        newY = clamp(newY, 5, 95);
-
-                        const updated = placedPrizes.map((p) =>
-                          p.id === prize.id ? { ...p, x: newX, y: newY } : p
-                        );
-                        setPlacedPrizes(updated);
-                        await savePrizesToDb(updated);
-                      }}
-                      className="placed-prize-wrapper absolute cursor-grab active:cursor-grabbing"
-                      style={{
-                        left: `${prize.x}%`,
-                        top: `${prize.y}%`,
-                        // tamaño responsivo: mínimo 48px, máximo 96px aprox
-                        width: `calc(clamp(48px, 10vw, 96px) * ${prize.scale || 1})`,
-                        height: `calc(clamp(48px, 10vw, 96px) * ${prize.scale || 1})`,
-                        transform: "translate(-50%, -50%)",
-                        touchAction: "none",
-                      }}
-                      initial={false}
-                      animate={{
-                        boxShadow: isSelected
-                          ? "0px 0px 15px rgba(255,255,100,0.8)"
-                          : "0px 0px 0px rgba(0,0,0,0)",
-                      }}
-                      transition={{ duration: 0.15 }}
-                      onClick={(e) => {
-                        if (isStationLocked || isStationFinalized) return;
-                        e.stopPropagation();
-                        setSelectedPrizeId(prize.id);
-                      }}
-                    >
-                      <div className="w-full h-full relative">
-                        <Image
-                          src={prize.imageUrl}
-                          alt={prize.name}
-                          fill
-                          style={{ objectFit: "contain" }}
-                        />
-                      </div>
-
-                      {/* Panel de controles (escala + quitar del lienzo) */}
-                      {isSelected && !isStationLocked && !isStationFinalized && (
-                        <div
-                          className={`
-                            absolute 
-                            ${prize.y < 70 ? "top-full mt-2" : "bottom-full mb-2"} 
-                            left-1/2 -translate-x-1/2 
-                            w-44 bg-background/90 p-2 rounded-lg shadow-lg 
-                            flex items-center gap-2
-                          `}
-                          onPointerDown={(e) => e.stopPropagation()}
-                          onClick={(e) => e.stopPropagation()}
+                            const updated = placedPrizes.map((p) =>
+                            p.id === prize.id ? { ...p, x: newX, y: newY } : p
+                            );
+                            setPlacedPrizes(updated);
+                            await savePrizesToDb(updated);
+                        }}
+                        className="placed-prize-wrapper absolute cursor-grab active:cursor-grabbing"
+                        style={{
+                            left: `${prize.x}%`,
+                            top: `${prize.y}%`,
+                            // tamaño responsivo: mínimo 48px, máximo 96px aprox
+                            width: `calc(clamp(48px, 10vw, 96px) * ${prize.scale || 1})`,
+                            height: `calc(clamp(48px, 10vw, 96px) * ${prize.scale || 1})`,
+                            transform: "translate(-50%, -50%)",
+                            touchAction: "none",
+                        }}
+                        initial={false}
+                        animate={{
+                            boxShadow: isSelected
+                            ? "0px 0px 15px rgba(255,255,100,0.8)"
+                            : "0px 0px 0px rgba(0,0,0,0)",
+                        }}
+                        transition={{ duration: 0.15 }}
+                        onClick={(e) => {
+                            if (isStationLocked || isStationFinalized) return;
+                            e.stopPropagation();
+                            setSelectedPrizeId(prize.id);
+                        }}
                         >
-                          <Slider
-                            value={[prize.scale || 1]}
-                            min={0.5}
-                            max={isSpecialPrize ? 7 : 2.5}
-                            step={0.1}
-                            onValueChange={(value) =>
-                              handleScaleChange(prize.id, value)
-                            }
-                            onValueCommit={(value) =>
-                              handleScaleChangeCommit(prize.id, value)
-                            }
-                          />
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleRemovePrizeFromCanvas(prize.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                        <div className="w-full h-full relative">
+                            <Image
+                            src={prize.imageUrl}
+                            alt={prize.name}
+                            fill
+                            style={{ objectFit: "contain" }}
+                            />
                         </div>
-                      )}
-                    </motion.div>
-                  );
-                })}
-              </div>
+
+                        {/* Panel de controles (escala + quitar del lienzo) */}
+                        {isSelected && !isStationLocked && !isStationFinalized && (
+                            <div
+                            className={`
+                                absolute 
+                                ${prize.y < 70 ? "top-full mt-2" : "bottom-full mb-2"} 
+                                left-1/2 -translate-x-1/2 
+                                w-44 bg-background/90 p-2 rounded-lg shadow-lg 
+                                flex items-center gap-2
+                            `}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()}
+                            >
+                            <Slider
+                                value={[prize.scale || 1]}
+                                min={0.5}
+                                max={isSpecialPrize ? 7 : 2.5}
+                                step={0.1}
+                                onValueChange={(value) =>
+                                handleScaleChange(prize.id, value)
+                                }
+                                onValueCommit={(value) =>
+                                handleScaleChangeCommit(prize.id, value)
+                                }
+                            />
+                            <Button
+                                variant="destructive"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleRemovePrizeFromCanvas(prize.id)}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                            </div>
+                        )}
+                        </motion.div>
+                    );
+                    })}
+                </div>
             </div>
-          </div>
         )}
 
         {/* Sidebar de insignias y controles (solo si hay escenario) */}
