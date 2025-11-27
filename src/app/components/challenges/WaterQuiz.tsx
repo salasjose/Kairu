@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -27,7 +26,7 @@ const questions: Question[] = [
     { question: "¿Qué es la 'eutrofización'?", options: ["Un método de purificación de agua", "El enriquecimiento excesivo de nutrientes en un cuerpo de agua", "La evaporación del agua", "La congelación de un río"], answer: "El enriquecimiento excesivo de nutrientes en un cuerpo de agua", hint: "Causa un crecimiento masivo de algas." },
     { question: "La zona marino-costera es crucial porque...", options: ["Solo es para turismo", "Actúa como barrera contra tsunamis y tormentas", "Es donde viven los tiburones", "Es buena para tomar el sol"], answer: "Actúa como barrera contra tsunamis y tormentas", hint: "Manglares y arrecifes de coral son protectores naturales." },
     { question: "El ciclo del agua también es conocido como:", options: ["Ciclo de Krebs", "Ciclo hidrológico", "Ciclo de carbono", "Ciclo lunar"], answer: "Ciclo hidrológico", hint: "Implica evaporación, condensación y precipitación." },
-    { question: "¿Cuál de estos no es un método de conservación de agua en la agricultura?", options: ["Riego por goteo", "Cultivos resistentes a la sequía", "Riego por inundación", "Captación de agua de lluvia"], answer: "Riego por inundación", hint: "Es el método tradicional, pero a menudo el menos eficiente." },
+    { question: "¿Cuál de estos no es un método de conservación de agua en la agricultura?", options: ["Riego por inundación", "Cultivos resistentes a la sequía", "Riego por goteo", "Captación de agua de lluvia"], answer: "Riego por inundación", hint: "Es el método tradicional, pero a menudo el menos eficiente." },
 ];
 
 interface QuizState {
@@ -93,16 +92,9 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge, isCom
       if (savedState) {
         const parsed: QuizState = JSON.parse(savedState);
         setQuizState(parsed);
-        // If there's a lockout, immediately check it
-        if (parsed.lastLostTime && Date.now() - parsed.lastLostTime < LOCKOUT_DURATION_MS) {
-           // State is already locked, timer will start.
-        } else if (parsed.lastLostTime) {
-            // Lockout has expired, reset it
-            updateQuizState({ lives: parsed.lives, lastLostTime: null });
-        }
       }
     }
-  }, [storageKey, updateQuizState]);
+  }, [storageKey]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -136,21 +128,17 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge, isCom
     const finalCorrectCount = 10 - finalIncorrectCount;
 
     if (finalIncorrectCount >= 4) {
-        // Lose a life
         const newLives = quizState.lives - 1;
         toast({ title: "¡Ronda Perdida!", description: `Tuviste ${finalIncorrectCount} errores. ¡Has perdido una vida!`, variant: "destructive" });
         
         if (newLives <= 0) {
-            // Lost all lives, block game
             updateQuizState({ lives: 0, lastLostTime: Date.now(), completed: false, score: null });
         } else {
-            // Still have lives, reset for another round
             updateQuizState({ lives: newLives, lastLostTime: null, completed: false, score: null });
             startNewGame();
         }
 
     } else {
-        // Win the game
         toast({ title: "¡Quiz Terminado!", description: `¡Excelente trabajo! Tuviste ${finalCorrectCount} respuestas correctas.` });
         updateQuizState({ completed: true, score: { correct: finalCorrectCount, incorrect: finalIncorrectCount } });
         onComplete();
@@ -164,7 +152,6 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge, isCom
       setSelectedOption(null);
       setTimeLeft(60);
     } else {
-      // Last question answered, end the game
       handleEndGame();
     }
   }, [currentQuestionIndex, shuffledQuestions.length, handleEndGame]);
@@ -183,13 +170,17 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge, isCom
   }, [isAnswered, currentQuestion.answer, handleNextQuestion]);
 
   useEffect(() => {
-    if (isAnswered || isBlocked || isCompleted) return;
     let timer: NodeJS.Timeout;
+    if (isAnswered || isBlocked || isCompleted) return;
+
     if (timeLeft > 0) {
-      timer = setTimeout(() => setTimeLeft(prev => prev - 1), 1000);
-    } else {
-      handleAnswer(null); // Timeout counts as wrong answer
+      timer = setTimeout(() => {
+        setTimeLeft(prev => prev - 1);
+      }, 1000);
+    } else if (!isAnswered) {
+      handleAnswer(null); 
     }
+    
     return () => clearTimeout(timer);
   }, [timeLeft, isAnswered, isBlocked, isCompleted, handleAnswer]);
 
@@ -210,7 +201,7 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge, isCom
     }
   };
   
-  if (isCompleted && quizState.score) {
+  if (isCompleted) {
     return (
         <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-[500px]">
             <Card className="text-center w-full shadow-lg">
@@ -218,10 +209,14 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge, isCom
                     <PartyPopper className="w-16 h-16 text-yellow-500 mx-auto mb-4 animate-bounce" />
                     <h3 className="font-bold text-2xl mb-2">¡Reto Completado!</h3>
                     <p className="text-muted-foreground mb-4">¡Felicitaciones! Ya superaste este reto. Tu resultado fue:</p>
-                    <div className="text-lg space-y-1">
-                        <p>Respuestas Correctas: <span className="font-bold text-green-500">{quizState.score.correct}</span></p>
-                        <p>Respuestas Incorrectas: <span className="font-bold text-red-500">{quizState.score.incorrect}</span></p>
-                    </div>
+                    {quizState.score ? (
+                      <div className="text-lg space-y-1">
+                          <p>Respuestas Correctas: <span className="font-bold text-green-500">{quizState.score.correct}</span></p>
+                          <p>Respuestas Incorrectas: <span className="font-bold text-red-500">{quizState.score.incorrect}</span></p>
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">No se encontró un puntaje guardado.</p>
+                    )}
                     <div className="flex flex-col sm:flex-row justify-center gap-4 mt-6">
                         <Button variant="outline" onClick={onBack}>Volver a Estación</Button>
                         <Button onClick={onSwitchChallenge}>Ver otro Reto</Button>
