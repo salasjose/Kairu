@@ -57,12 +57,14 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge, isCom
   const [visibleOptions, setVisibleOptions] = useState<string[]>([]);
 
   const updateQuizState = useCallback((newState: Partial<QuizState>) => {
-    const updatedState = { ...quizState, ...newState };
-    setQuizState(updatedState);
-    if (storageKey) {
-      localStorage.setItem(storageKey, JSON.stringify(updatedState));
-    }
-  }, [quizState, storageKey]);
+    setQuizState(prevQuizState => {
+      const updatedState = { ...prevQuizState, ...newState };
+      if (storageKey) {
+        localStorage.setItem(storageKey, JSON.stringify(updatedState));
+      }
+      return updatedState;
+    });
+  }, [storageKey]);
   
   const startNewGame = useCallback(() => {
     setShuffledQuestions([...questions].sort(() => Math.random() - 0.5).slice(0, 10));
@@ -105,18 +107,33 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge, isCom
         setVisibleOptions(currentQuestion.options);
     }
   }, [currentQuestion]);
-
-  useEffect(() => {
-    if (isAnswered || isBlocked || isCompleted) return;
-    if (timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
+  
+  const handleGameEnd = useCallback((lost: boolean) => {
+    if (lost) {
+        const newLives = quizState.lives - 1;
+        updateQuizState({ lives: newLives, lastLostTime: Date.now() });
+        if (newLives <= 0) {
+            toast({ title: "¡Has perdido!", description: "Te has quedado sin vidas. Vuelve mañana o intenta el otro reto.", variant: "destructive" });
+            setIsBlocked(true);
+        } else {
+            toast({ title: "Incorrecto", description: `Te quedan ${newLives} vidas. ¡Inténtalo de nuevo!`, variant: "destructive" });
+            startNewGame();
+        }
     } else {
-      handleAnswer(null); // Timeout counts as wrong answer
+        // This case is when game ends without 6 correct answers
+        toast({ title: "¡Juego Terminado!", description: "No alcanzaste 6 respuestas correctas. ¡Inténtalo de nuevo!" });
+        startNewGame();
     }
-  }, [timeLeft, isAnswered, isBlocked, isCompleted]);
+  }, [quizState.lives, startNewGame, updateQuizState]);
 
-  const handleAnswer = (option: string | null) => {
+  const goToNextQuestion = useCallback(() => {
+    setCurrentQuestionIndex(prev => prev + 1);
+    setIsAnswered(false);
+    setSelectedOption(null);
+    setTimeLeft(60);
+  }, []);
+  
+  const handleAnswer = useCallback((option: string | null) => {
     if (isAnswered) return;
     setIsAnswered(true);
     const isCorrect = option === currentQuestion.answer;
@@ -139,32 +156,18 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge, isCom
             goToNextQuestion();
         }
     }, 2000);
-  };
+  }, [isAnswered, currentQuestion, score, onComplete, currentQuestionIndex, shuffledQuestions.length, handleGameEnd, goToNextQuestion]);
 
-  const handleGameEnd = (lost: boolean) => {
-    if (lost) {
-        const newLives = quizState.lives - 1;
-        updateQuizState({ lives: newLives, lastLostTime: Date.now() });
-        if (newLives <= 0) {
-            toast({ title: "¡Has perdido!", description: "Te has quedado sin vidas. Vuelve mañana o intenta el otro reto.", variant: "destructive" });
-            setIsBlocked(true);
-        } else {
-            toast({ title: "Incorrecto", description: `Te quedan ${newLives} vidas. ¡Inténtalo de nuevo!`, variant: "destructive" });
-            startNewGame();
-        }
+  useEffect(() => {
+    if (isAnswered || isBlocked || isCompleted) return;
+    if (timeLeft > 0) {
+      const timer = setTimeout(() => setTimeLeft(prevTime => prevTime - 1), 1000);
+      return () => clearTimeout(timer);
     } else {
-        // This case is when game ends without 6 correct answers
-        toast({ title: "¡Juego Terminado!", description: "No alcanzaste 6 respuestas correctas. ¡Inténtalo de nuevo!" });
-        startNewGame();
+      handleAnswer(null); // Timeout counts as wrong answer
     }
-  }
+  }, [timeLeft, isAnswered, isBlocked, isCompleted, handleAnswer]);
 
-  const goToNextQuestion = () => {
-    setCurrentQuestionIndex(prev => prev + 1);
-    setIsAnswered(false);
-    setSelectedOption(null);
-    setTimeLeft(60);
-  };
 
   const useFiftyFifty = () => {
     if (lifelines.fiftyFifty > 0 && !isAnswered) {
