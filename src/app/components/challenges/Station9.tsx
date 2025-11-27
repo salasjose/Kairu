@@ -142,7 +142,7 @@ export default function Station9() {
           const data = docSnap.data();
           setChosenScenario(data.chosenScenario || null);
           setPlacedPrizes(data.placedPrizes?.map((p: any) => ({ ...p, scale: p.scale || 1 })) || []);
-          const fullName = `${data.nombre || ''} ${data.apellido || ''}`.trim();
+          const fullName = `${data.usuario || data.nombre || ''}`.trim();
           setPlayerName(fullName || "Guardián");
           setIsStationLocked(data.station9Locked || false);
         }
@@ -234,9 +234,6 @@ export default function Station9() {
 
 
   const handleDeletePrize = (prizeId: string) => {
-    const prizeToRemove = placedPrizes.find(p => p.id === prizeId);
-    if (!prizeToRemove) return;
-    
     const newPlacedPrizes = placedPrizes.filter(p => p.id !== prizeId);
     setPlacedPrizes(newPlacedPrizes);
     savePrizesToDb(newPlacedPrizes);
@@ -526,3 +523,5 @@ export default function Station9() {
     </>
   );
 }
+
+    
