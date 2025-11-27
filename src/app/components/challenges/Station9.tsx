@@ -24,8 +24,8 @@ type PlacedPrize = {
   id: string;
   imageUrl: string;
   name: string;
-  x: number;
-  y: number;
+  x: number; // Percentage
+  y: number; // Percentage
   scale: number;
   stationId: number;
 };
@@ -191,20 +191,20 @@ export default function Station9() {
   }, [user, db]);
 
 
-  const handlePrizeDrop = async (prizeId: string, info: any) => {
+  const handlePrizeDrop = async (prizeId: string, info: PanInfo) => {
     if (!canvasRef.current) return;
 
     const canvasRect = canvasRef.current.getBoundingClientRect();
-    const x = info.point.x - canvasRect.left;
-    const y = info.point.y - canvasRect.top;
+    const xPercent = ((info.point.x - canvasRect.left) / canvasRect.width) * 100;
+    const yPercent = ((info.point.y - canvasRect.top) / canvasRect.height) * 100;
 
     const prizeData = collectedPrizes.find(p => p.id === prizeId);
     if (!prizeData) return;
     
     const newPlacedPrize: PlacedPrize = { 
         ...prizeData, 
-        x, 
-        y, 
+        x: xPercent, 
+        y: yPercent, 
         scale: 1,
     };
 
@@ -344,13 +344,13 @@ export default function Station9() {
                     }}
                     onDragEnd={(e, info) => {
                         if (!isStationLocked) {
-                            const canvasRect = canvasRef.current?.getBoundingClientRect();
+                           const canvasRect = canvasRef.current?.getBoundingClientRect();
                             if (!canvasRect) return;
-                            const newX = info.point.x - canvasRect.left;
-                            const newY = info.point.y - canvasRect.top;
+                            const xPercent = ((info.point.x - canvasRect.left) / canvasRect.width) * 100;
+                            const yPercent = ((info.point.y - canvasRect.top) / canvasRect.height) * 100;
 
                             const newPlacedPrizes = placedPrizes.map(p => 
-                                p.id === prize.id ? { ...p, x: newX, y: newY, scale: prize.scale } : p
+                                p.id === prize.id ? { ...p, x: xPercent, y: yPercent, scale: prize.scale } : p
                             );
                             setPlacedPrizes(newPlacedPrizes);
                             savePrizesToDb(newPlacedPrizes);
@@ -359,12 +359,17 @@ export default function Station9() {
                     dragListener={!isStationLocked}
                     className="placed-prize-wrapper absolute cursor-grab active:cursor-grabbing"
                     style={{ 
-                        x: prize.x, 
-                        y: prize.y,
+                        left: `${prize.x}%`,
+                        top: `${prize.y}%`,
                         width: '80px', 
                         height: '80px',
+                        transform: `translateX(-50%) translateY(-50%)`, // Center the item on the coordinates
                     }}
-                    initial={{ x: prize.x, y: prize.y, scale: prize.scale || 1 }}
+                    initial={{
+                        x: 0, // We use left/top for positioning, so reset motion's x/y
+                        y: 0,
+                        scale: prize.scale || 1
+                    }}
                     animate={{
                       scale: prize.scale || 1,
                       boxShadow: isSelected ? "0px 0px 15px rgba(255,255,100,0.8)" : "0px 0px 0px rgba(0,0,0,0)",
@@ -525,3 +530,5 @@ export default function Station9() {
     </>
   );
 }
+
+    
