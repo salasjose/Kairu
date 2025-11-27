@@ -11,6 +11,74 @@ import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, CheckCircle, Link as LinkIcon } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
+// --- Social Post Embed Logic ---
+type Platform = 'instagram' | 'facebook' | 'x' | 'youtube' | 'other';
+
+function getPlatformFromUrl(url: string): Platform {
+  if (!url) return 'other';
+  if (url.includes('instagram.com')) return 'instagram';
+  if (url.includes('facebook.com')) return 'facebook';
+  if (url.includes('x.com') || url.includes('twitter.com')) return 'x';
+  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+  return 'other';
+}
+
+function extractInstagramId(url: string): string {
+  try {
+    const urlObject = new URL(url);
+    const pathParts = urlObject.pathname.split('/').filter(Boolean);
+    const pIndex = pathParts.indexOf('p');
+    if (pIndex !== -1 && pathParts[pIndex + 1]) {
+      return pathParts[pIndex + 1];
+    }
+    return '';
+  } catch (e) {
+    return '';
+  }
+}
+
+function SocialPostEmbed({ platform, url }: { platform: Platform; url: string }) {
+  if (!url) return null;
+
+  switch (platform) {
+    case 'instagram':
+      const postId = extractInstagramId(url);
+      if (!postId) return <p className="text-destructive">URL de Instagram no válida.</p>;
+      return (
+        <iframe
+          src={`https://www.instagram.com/p/${postId}/embed`}
+          className="w-full max-w-[540px] h-[600px] border-none rounded-lg"
+          allowFullScreen
+        />
+      );
+
+    case 'facebook':
+      return (
+        <iframe
+          src={`https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&show_text=true&width=auto`}
+          className="w-full max-w-[500px] h-[680px] border-none overflow-hidden"
+          scrolling="no"
+          frameBorder={0}
+          allow="encrypted-media"
+        />
+      );
+
+    case 'x':
+      return (
+        <iframe
+          src={`https://twitframe.com/show?url=${encodeURIComponent(url)}`}
+          className="w-full max-w-[550px] h-[700px] border-none"
+          frameBorder={0}
+          scrolling="no"
+        />
+      );
+
+    default:
+      return null;
+  }
+}
+
+// --- Main Component ---
 interface ChallengeDetailProps {
   title: string;
   description: string;
@@ -38,30 +106,29 @@ export default function ChallengeDetail({
   const { user } = useUser();
   const db = useFirestore();
   const [url, setUrl] = useState('');
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   const imageInfo = PlaceHolderImages.find((p) => p.id === imageId);
+  const platform = getPlatformFromUrl(url);
 
-  const handleUrlChange = useCallback((newUrl: string) => {
-    setUrl(newUrl);
-    if (
-      newUrl.trim() &&
-      (newUrl.startsWith('http://') || newUrl.startsWith('https://'))
-    ) {
-      if (newUrl.includes('youtube.com/watch?v=')) {
-        const videoId = newUrl.split('v=')[1].split('&')[0];
-        setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
-      } else if (newUrl.includes('youtu.be/')) {
-        const videoId = newUrl.split('youtu.be/')[1].split('?')[0];
-        setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
-      } else {
-        setVideoUrl(newUrl);
+  const getYoutubeEmbedUrl = (videoUrl: string): string | null => {
+    if (!videoUrl) return null;
+    try {
+      const urlObject = new URL(videoUrl);
+      if (urlObject.hostname.includes('youtube.com')) {
+        const videoId = urlObject.searchParams.get('v');
+        if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+      } else if (urlObject.hostname.includes('youtu.be')) {
+        const videoId = urlObject.pathname.slice(1);
+        if (videoId) return `https://www.youtube.com/embed/${videoId}`;
       }
-    } else {
-      setVideoUrl(null);
+    } catch (e) {
+      return null;
     }
-  }, []);
+    return null;
+  };
 
+  const youtubeEmbedUrl = getYoutubeEmbedUrl(url);
+  
   useEffect(() => {
     const fetchUrl = async () => {
       if (!user || !db || !dbField) return;
@@ -71,14 +138,14 @@ export default function ChallengeDetail({
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists() && docSnap.data()[dbField]) {
           const savedUrl = docSnap.data()[dbField];
-          handleUrlChange(savedUrl);
+          setUrl(savedUrl);
         }
       } catch (error) {
         console.error(`Error fetching ${dbField} from Firestore:`, error);
       }
     };
     fetchUrl();
-  }, [dbField, user, db, handleUrlChange]);
+  }, [dbField, user, db]);
 
   const validateUrl = (urlToValidate: string) => {
     if (!validation) return true;
@@ -135,6 +202,36 @@ export default function ChallengeDetail({
       });
     }
   };
+  
+  const renderMedia = () => {
+    if (youtubeEmbedUrl) {
+      return (
+        <iframe
+          src={youtubeEmbedUrl}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="rounded-lg w-full h-full"
+        ></iframe>
+      );
+    }
+    
+    if (['instagram', 'facebook', 'x'].includes(platform)) {
+        return <SocialPostEmbed platform={platform} url={url} />;
+    }
+
+    if (imageInfo) {
+      return (
+        <Image
+          src={imageInfo.imageUrl}
+          alt={imageInfo.description}
+          width={400}
+          height={225}
+          className="rounded-lg object-cover w-full h-full"
+        />
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-full">
@@ -148,23 +245,8 @@ export default function ChallengeDetail({
             <h3 className="font-bold text-2xl text-primary font-headline mb-4">
               {title}
             </h3>
-            <div className="mx-auto mb-6 w-full max-w-sm h-auto aspect-video bg-black rounded-lg border-4 border-white shadow-md flex items-center justify-center">
-              {videoUrl && videoUrl.includes('youtube.com/embed') ? (
-                <iframe
-                  src={videoUrl}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="rounded-lg w-full h-full"
-                ></iframe>
-              ) : imageInfo ? (
-                <Image
-                  src={imageInfo.imageUrl}
-                  alt={imageInfo.description}
-                  width={400}
-                  height={225}
-                  className="rounded-lg object-cover w-full h-full"
-                />
-              ) : null}
+            <div className="mx-auto mb-6 w-full max-w-sm h-auto aspect-video bg-background/20 rounded-lg flex items-center justify-center">
+              {renderMedia()}
             </div>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               {description}
@@ -176,7 +258,7 @@ export default function ChallengeDetail({
                   type="url"
                   placeholder="Pega el enlace de tu post aquí..."
                   value={url}
-                  onChange={(e) => handleUrlChange(e.target.value)}
+                  onChange={(e) => setUrl(e.target.value)}
                   disabled={isCompleted}
                 />
               </div>
