@@ -40,11 +40,15 @@ export default function SettingsPanel({ playerState, setPlayerState, onFullReset
     }, []);
     
     const scenarios = useMemo(() => [
-        { name: "Terral", ...PlaceHolderImages.find(p => p.id === 'scenario-bosque-seco') },
-        { name: "Civika", ...PlaceHolderImages.find(p => p.id === 'scenario-ciudad') },
-        { name: "Mareva", ...PlaceHolderImages.find(p => p.id === 'scenario-mar-costero') },
-        { name: "Manglia", ...PlaceHolderImages.find(p => p.id === 'scenario-manglares') },
-    ].filter(s => s.imageUrl) as any[], []);
+        { name: "Terral", id: 'scenario-bosque-seco', imageUrl: PlaceHolderImages.find(p => p.id === 'scenario-bosque-seco')?.imageUrl, description: 'Escenario de bosque seco' },
+        { name: "Civika", id: 'scenario-ciudad', imageUrl: PlaceHolderImages.find(p => p.id === 'scenario-ciudad')?.imageUrl, description: 'Escenario de ciudad sostenible' },
+        { name: "Mareva", id: 'scenario-mar-costero', imageUrl: PlaceHolderImages.find(p => p.id === 'scenario-mar-costero')?.imageUrl, description: 'Escenario marino costero' },
+        { name: "Manglia", id: 'scenario-manglares', imageUrl: PlaceHolderImages.find(p => p.id === 'scenario-manglares')?.imageUrl, description: 'Escenario de manglares' },
+    ].filter(s => s.imageUrl), []);
+
+    const currentScenario = useMemo(() => {
+        return scenarios.find(s => s.imageUrl === playerState.chosenScenario);
+    }, [playerState.chosenScenario, scenarios]);
 
     const handleAvatarChange = async (newAvatarUrl: string) => {
         if (!playerState || !db || !playerState.id) {
@@ -64,26 +68,6 @@ export default function SettingsPanel({ playerState, setPlayerState, onFullReset
             toast({ title: "Error de Sincronización", description: "No se pudo guardar el avatar en la nube.", variant: "destructive" });
         }
     };
-
-    const handleScenarioChange = async (newScenarioUrl: string) => {
-        if (!playerState || !db || !playerState.id) {
-            toast({ title: "Error", description: "No se pudo cambiar el lienzo. Intenta más tarde.", variant: "destructive" });
-            return;
-        }
-
-        const updatedState = { ...playerState, chosenScenario: newScenarioUrl };
-        setPlayerState(updatedState);
-        toast({ title: "Lienzo Actualizado", description: "Tu nuevo escenario ha sido guardado." });
-        
-        try {
-            const playerDocRef = doc(db, 'users', playerState.id);
-            await updateDoc(playerDocRef, { chosenScenario: newScenarioUrl });
-        } catch (error) {
-            console.error("Failed to update scenario in Firestore:", error);
-            toast({ title: "Error de Sincronización", description: "No se pudo guardar el lienzo en la nube.", variant: "destructive" });
-        }
-    };
-
 
     const handleClearCacheAndReset = async () => {
         if (!playerState.id || !db) {
@@ -154,33 +138,22 @@ export default function SettingsPanel({ playerState, setPlayerState, onFullReset
                             </div>
                         </div>
 
-                        <div>
-                            <h3 className="font-semibold mb-4">Cambiar Lienzo</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                {scenarios.map(scenario => (
-                                    <button
-                                        key={scenario.id}
-                                        onClick={() => handleScenarioChange(scenario.imageUrl)}
-                                        className={cn(
-                                            "p-1 rounded-lg border-2 transition-all space-y-1",
-                                            playerState.chosenScenario === scenario.imageUrl
-                                                ? "border-primary bg-primary/10 shadow-lg scale-105"
-                                                : "border-border hover:bg-accent"
-                                        )}
-                                    >
-                                        <div className="relative w-full aspect-square">
-                                            <Image
-                                                src={scenario.imageUrl}
-                                                alt={scenario.description}
-                                                fill
-                                                className="rounded-md object-cover"
-                                            />
-                                        </div>
-                                        <p className="font-bold text-xs">{scenario.name}</p>
-                                    </button>
-                                ))}
+                        {currentScenario && (
+                            <div>
+                                <h3 className="font-semibold mb-4">Tu Lienzo</h3>
+                                <div className="p-1 rounded-lg border-2 border-primary bg-primary/10 space-y-1">
+                                    <div className="relative w-full aspect-video">
+                                        <Image
+                                            src={currentScenario.imageUrl!}
+                                            alt={currentScenario.description}
+                                            fill
+                                            className="rounded-md object-cover"
+                                        />
+                                    </div>
+                                    <p className="font-bold text-sm text-primary">{currentScenario.name}</p>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </ScrollArea>
                 <SheetFooter className="mt-auto pt-4 border-t">
