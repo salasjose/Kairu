@@ -55,7 +55,7 @@ const GameWonScreen = ({ onBack }: { onBack: () => void }) => {
 
 
 const GameWithImages = ({ onGameWin, onBack, gameState, updateGameState }: { onGameWin: () => void; onBack: () => void; gameState: GameState, updateGameState: (newState: Partial<GameState>) => void }) => {
-    const [wasteItems, setWasteItems] = useState(() => shuffle([...wasteItemsData]));
+    const [wasteItems, setWasteItems] = useState(() => shuffle([...wasteItemsData]).slice(0, 10));
     const [animations, setAnimations] = useState<Record<WasteCategory, string>>({ recycle: '', organic: '', trash: '' });
     const [timeLeft, setTimeLeft] = useState(180); // 3 minutes
     const [isTimeUp, setIsTimeUp] = useState(false);
