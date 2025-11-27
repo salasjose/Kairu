@@ -16,6 +16,8 @@ import TypewriterText from "../auth/TypewriterText";
 import { Slider } from "@/components/ui/slider";
 import { Trash2, Gift, X, Edit, Check, Download } from "lucide-react";
 import ResponsiveBackground from "../ResponsiveBackground";
+import html2canvas from "html2canvas";
+
 
 // ------------------------------------------------------------------
 // Tipos
@@ -430,7 +432,6 @@ export default function Station9() {
       );
 
       // Descargar como imagen
-      const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(canvasRef.current, {
         useCORS: true,
         backgroundColor: null,
@@ -501,6 +502,16 @@ export default function Station9() {
       });
     }
   };
+  
+  const handleTest = async () => {
+    if (!canvasRef.current) return;
+    const canvas = await html2canvas(canvasRef.current, { useCORS: true, backgroundColor: null });
+    const dataUrl = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = "test.png";
+    link.click();
+  };
 
   // ------------------------------------------------------------------
   // Derivados: insignias no colocadas y estado de completitud
@@ -545,20 +556,13 @@ export default function Station9() {
           setSelectedPrizeId(null);
         }}
       >
-        {/* Fondo de escenario o selector de escenario */}
-        {chosenScenario && scenarioBackgrounds ? (
-          <ResponsiveBackground
-            desktopSrc={scenarioBackgrounds.desktopSrc}
-            tabletSrc={scenarioBackgrounds.tabletSrc}
-            mobileSrc={scenarioBackgrounds.mobileSrc}
-          />
-        ) : (
+        
+        {/* Si no hay escenario, muestra el selector, si no, muestra el lienzo */}
+        {!chosenScenario ? (
           <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
-        )}
-
-        {/* Lienzo principal (zona que se descarga como imagen) */}
-        {chosenScenario && (
-          <div className="absolute inset-0 flex items-center justify-center z-20 px-2 md:px-4">
+        ) : (
+          // Contenedor principal para centrar el lienzo
+          <div className="absolute inset-0 flex items-center justify-center z-10 p-2 md:p-4">
             <div
               ref={canvasRef}
               className="
@@ -566,11 +570,11 @@ export default function Station9() {
                 w-full 
                 max-w-5xl 
                 aspect-[16/9] 
-                bg-black/40 
+                bg-transparent
                 rounded-xl 
                 overflow-hidden 
                 shadow-xl
-                max-h-[80vh]   /* asegura que no se salga de la pantalla en móvil */
+                max-h-[80vh]
               "
             >
               {/* Capa de fondo dentro del lienzo para asegurar visual consistente */}
@@ -765,6 +769,10 @@ export default function Station9() {
                     )}
                   </div>
 
+                   <button onClick={handleTest} className="p-2 bg-blue-500 text-white text-xs rounded-md w-full my-2">
+                      Probar captura
+                    </button>
+
                   {/* Botones de flujo (Confirmar / Modificar / Guardar completo / Descargar) */}
                   {allPrizesPlaced && !isStationFinalized && (
                     <>
@@ -772,8 +780,9 @@ export default function Station9() {
                         <Button
                           onClick={handleConfirmStation}
                           className="mt-4 w-full"
+                          size="sm"
                         >
-                          <Check className="mr-2 h-4 w-4" />
+                          <Check className="mr-1 h-4 w-4" />
                           Confirmar
                         </Button>
                       ) : (
@@ -781,17 +790,19 @@ export default function Station9() {
                           <Button
                             onClick={handleModifyStation}
                             className="mt-4 w-full"
+                            size="sm"
                           >
-                            <Edit className="mr-2 h-4 w-4" />
+                            <Edit className="mr-1 h-4 w-4" />
                             Modificar
                           </Button>
                           <Button
                             onClick={handleSaveAndDownload}
                             className="mt-2 w-full"
                             variant="secondary"
+                            size="sm"
                           >
-                            <Download className="mr-2 h-4 w-4" />
-                            Guardar completo
+                            <Download className="mr-1 h-4 w-4" />
+                            Guardar
                           </Button>
                         </>
                       )}
@@ -803,8 +814,9 @@ export default function Station9() {
                       onClick={handleSaveAndDownload}
                       className="mt-4 w-full"
                       variant="secondary"
+                      size="sm"
                     >
-                      <Download className="mr-2 h-4 w-4" />
+                      <Download className="mr-1 h-4 w-4" />
                       Descargar
                     </Button>
                   )}
@@ -814,6 +826,7 @@ export default function Station9() {
                       onClick={handleCompleteChallenge}
                       className="mt-2 w-full"
                       variant="outline"
+                      size="sm"
                     >
                       Completar
                     </Button>
