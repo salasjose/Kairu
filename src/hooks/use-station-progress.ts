@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, getDoc, updateDoc, deleteField, collection, query, deleteDoc } from 'firebase/firestore';
 import { useCollection } from '@/firebase/firestore/use-collection';
@@ -29,7 +29,7 @@ export type ChallengeProgress = {
  * Manages user progress for all station challenges by reading from and writing to Firestore.
  */
 export function useStationProgress() {
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
   const db = useFirestore();
 
   // 1. Create a memoized query to fetch all progress documents for the current user.
@@ -39,10 +39,10 @@ export function useStationProgress() {
   }, [user, db]);
 
   // 2. Use the useCollection hook to get real-time updates.
-  const { data: progressDocs, isLoading } = useCollection<ChallengeProgressDoc>(progressQuery);
+  const { data: progressDocs, isLoading: progressLoading } = useCollection<ChallengeProgressDoc>(progressQuery);
 
   // 3. Transform the raw Firestore documents into the nested ChallengeProgress object.
-  const completedChallenges: ChallengeProgress = useMemoFirebase(() => {
+  const completedChallenges: ChallengeProgress = useMemo(() => {
     if (!progressDocs) return {};
     
     return progressDocs.reduce((acc: ChallengeProgress, doc) => {
@@ -57,6 +57,15 @@ export function useStationProgress() {
     }, {});
   }, [progressDocs]);
   
+  const unlockedStationsQuery = useMemoFirebase(() => {
+      if (!user || !db) return null;
+      return doc(db, 'users', user.uid);
+  }, [user, db]);
+
+  const { data: userDoc, isLoading: userDocLoading } = useDoc(unlockedStationsQuery);
+  
+  const unlockedStations = useMemo(() => userDoc?.unlockedStations || [1], [userDoc]);
+
   /**
    * Unlocks a station by adding its ID to the user's unlockedStations array in Firestore.
    */
@@ -129,8 +138,6 @@ export function useStationProgress() {
       await updateDoc(playerDocRef, fieldsToDelete);
 
       // We also need to delete all documents in the stationProgress subcollection.
-      // This is a more complex operation and often best handled by a Cloud Function for large collections.
-      // For a client-side approach with a small number of docs, we can delete them one by one.
       if (progressDocs) {
         for (const pDoc of progressDocs) {
           const docToDeleteRef = doc(db, `users/${user.uid}/stationProgress`, pDoc.id);
@@ -145,8 +152,9 @@ export function useStationProgress() {
 
   return { 
     completedChallenges, 
-    isLoadingProgress: isLoading,
+    isLoadingProgress: userLoading || progressLoading || userDocLoading,
     unlockStation,
+    unlockedStations,
     completeChallenge,
     resetProgress 
   };

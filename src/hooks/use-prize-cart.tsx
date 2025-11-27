@@ -73,7 +73,11 @@ export function PrizeCartProvider({ children }: { children: ReactNode }) {
   const clearCart = useCallback(() => {
     if (storageKey) {
         setPrizes([]);
-        localStorage.removeItem(storageKey);
+        try {
+          localStorage.removeItem(storageKey);
+        } catch(e) {
+          console.error("Failed to clear cart from localStorage", e);
+        }
     }
   }, [storageKey]);
 

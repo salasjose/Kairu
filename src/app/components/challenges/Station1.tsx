@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
@@ -20,7 +19,6 @@ import TypewriterText from "../auth/TypewriterText";
 import { useUser, useFirestore, useStorage } from "@/firebase";
 import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { ref, uploadString, getDownloadURL, deleteObject } from "firebase/storage";
-import { usePrizeCart } from "@/hooks/use-prize-cart";
 import ResponsiveBackground from "../ResponsiveBackground";
 
 const yaraCharacterImage = PlaceHolderImages.find((p) => p.id === "char-yara-magnifying-glass");
@@ -675,9 +673,7 @@ const HabitatChallenge = ({
 export default function Station1() {
   const stationId = 1;
   const [selectedChallenge, setSelectedChallenge] = useState<string | null>(null);
-  const { completedChallenges, completeChallenge, isLoadingProgress } = useStationProgress();
-  const { unlockStation } = useStationProgress();
-  const { prizes } = usePrizeCart();
+  const { completedChallenges, completeChallenge, unlockStation, unlockedStations } = useStationProgress();
   const router = useRouter();
 
   const [showYaraDialog, setShowYaraDialog] = useState(false);
@@ -729,23 +725,22 @@ export default function Station1() {
   };
   
   const stationCompletedChallenges = completedChallenges[stationId] || {};
-  const hasClaimedPrize = prizes.some(p => p.stationId === stationId);
+  const hasCompletedStation = unlockedStations.includes(stationId + 1);
   
   const areAllChallengesComplete = Object.keys(challenges).every(
     (ch) => stationCompletedChallenges[ch as keyof typeof challenges]?.completed
   );
 
   useEffect(() => {
-    if (areAllChallengesComplete && !hasClaimedPrize) {
+    if (areAllChallengesComplete && !hasCompletedStation) {
         setIsPrizeModalOpen(true);
     }
-  }, [areAllChallengesComplete, hasClaimedPrize, prizes, stationId]);
+  }, [areAllChallengesComplete, hasCompletedStation]);
 
 
   if (selectedChallenge) {
     const challengeKey = selectedChallenge as keyof typeof challenges;
-    // A challenge is considered completed if it's in the progress hook OR if the prize for the station has been claimed.
-    const isChallengePersisted = !!stationCompletedChallenges[challengeKey]?.completed || hasClaimedPrize;
+    const isChallengePersisted = !!stationCompletedChallenges[challengeKey]?.completed || hasCompletedStation;
 
     if (selectedChallenge === "Fauna y Flora") {
       return <PhotoChallenge
@@ -778,7 +773,7 @@ export default function Station1() {
 
           <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
             {(Object.keys(challenges) as (keyof typeof challenges)[]).map((reto, index) => {
-              const isChallengeCompleted = !!stationCompletedChallenges[reto]?.completed || hasClaimedPrize;
+              const isChallengeCompleted = !!stationCompletedChallenges[reto]?.completed || hasCompletedStation;
               
               return (
                 <button
@@ -832,12 +827,12 @@ export default function Station1() {
           <div className="mt-4 flex flex-col items-center gap-2">
             <Button
               onClick={() => setIsPrizeModalOpen(true)}
-              disabled={!areAllChallengesComplete || hasClaimedPrize}
+              disabled={!areAllChallengesComplete || hasCompletedStation}
               size="lg"
             >
               Completar Estación y Reclamar Insignia
             </Button>
-            {areAllChallengesComplete && hasClaimedPrize ? (
+            {hasCompletedStation ? (
                <p className="text-sm text-muted-foreground bg-background/80 p-2 rounded-md">
                 Ya has reclamado la insignia de esta estación.
               </p>
