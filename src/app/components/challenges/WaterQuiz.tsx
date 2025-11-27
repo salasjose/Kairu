@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { AlertCircle, ArrowLeft, Lightbulb, Scale } from "lucide-react";
+import { AlertCircle, ArrowLeft, Lightbulb, Scale, PartyPopper } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { useUser } from "@/firebase";
@@ -33,6 +33,7 @@ interface WaterQuizProps {
   onComplete: () => void;
   onBack: () => void;
   onSwitchChallenge: () => void;
+  isCompleted: boolean;
 }
 
 interface QuizState {
@@ -40,7 +41,7 @@ interface QuizState {
   lastLostTime: number | null;
 }
 
-export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge }: WaterQuizProps) {
+export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge, isCompleted }: WaterQuizProps) {
   const { user } = useUser();
   const storageKey = user ? `kairu-water-quiz-progress-${user.uid}` : null;
   const [quizState, setQuizState] = useState<QuizState>({ lives: 3, lastLostTime: null });
@@ -74,6 +75,7 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge }: Wat
   }, []);
 
   useEffect(() => {
+    if (isCompleted) return;
     if (storageKey) {
       const savedState = localStorage.getItem(storageKey);
       if (savedState) {
@@ -93,7 +95,8 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge }: Wat
       setQuizState({ lives: 3, lastLostTime: null });
     }
     startNewGame();
-  }, [storageKey]);
+  }, [storageKey, isCompleted, updateQuizState, startNewGame]);
+
 
   const currentQuestion = useMemo(() => shuffledQuestions[currentQuestionIndex], [shuffledQuestions, currentQuestionIndex]);
 
@@ -104,14 +107,14 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge }: Wat
   }, [currentQuestion]);
 
   useEffect(() => {
-    if (isAnswered || isBlocked) return;
+    if (isAnswered || isBlocked || isCompleted) return;
     if (timeLeft > 0) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
     } else {
       handleAnswer(null); // Timeout counts as wrong answer
     }
-  }, [timeLeft, isAnswered, isBlocked]);
+  }, [timeLeft, isAnswered, isBlocked, isCompleted]);
 
   const handleAnswer = (option: string | null) => {
     if (isAnswered) return;
@@ -179,6 +182,24 @@ export default function WaterQuiz({ onComplete, onBack, onSwitchChallenge }: Wat
     }
   };
   
+  if (isCompleted) {
+    return (
+        <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-[500px]">
+            <Card className="text-center w-full shadow-lg">
+                <CardContent className="p-8">
+                    <PartyPopper className="w-16 h-16 text-yellow-500 mx-auto mb-4 animate-bounce" />
+                    <h3 className="font-bold text-2xl mb-2">¡Reto Completado!</h3>
+                    <p className="text-muted-foreground mb-6">¡Felicitaciones! Ya has superado el quiz del agua.</p>
+                    <div className="flex flex-col sm:flex-row justify-center gap-4">
+                        <Button variant="outline" onClick={onBack}>Volver a Estación</Button>
+                        <Button onClick={onSwitchChallenge}>Ver otro Reto</Button>
+                      </div>
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
+
   if (isBlocked) {
       return (
           <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center min-h-[500px]">
