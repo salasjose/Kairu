@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Trash2 } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import type { PlayerState } from './GameClient';
 
 interface SettingsPanelProps {
@@ -37,6 +38,13 @@ export default function SettingsPanel({ playerState, setPlayerState, onFullReset
             description: p.description
         })).sort((a, b) => a.id.localeCompare(b.id));
     }, []);
+    
+    const scenarios = useMemo(() => [
+        { name: "Terral", ...PlaceHolderImages.find(p => p.id === 'scenario-bosque-seco') },
+        { name: "Civika", ...PlaceHolderImages.find(p => p.id === 'scenario-ciudad') },
+        { name: "Mareva", ...PlaceHolderImages.find(p => p.id === 'scenario-mar-costero') },
+        { name: "Manglia", ...PlaceHolderImages.find(p => p.id === 'scenario-manglares') },
+    ].filter(s => s.imageUrl) as any[], []);
 
     const handleAvatarChange = async (newAvatarUrl: string) => {
         if (!playerState || !db || !playerState.id) {
@@ -56,6 +64,26 @@ export default function SettingsPanel({ playerState, setPlayerState, onFullReset
             toast({ title: "Error de Sincronización", description: "No se pudo guardar el avatar en la nube.", variant: "destructive" });
         }
     };
+
+    const handleScenarioChange = async (newScenarioUrl: string) => {
+        if (!playerState || !db || !playerState.id) {
+            toast({ title: "Error", description: "No se pudo cambiar el lienzo. Intenta más tarde.", variant: "destructive" });
+            return;
+        }
+
+        const updatedState = { ...playerState, chosenScenario: newScenarioUrl };
+        setPlayerState(updatedState);
+        toast({ title: "Lienzo Actualizado", description: "Tu nuevo escenario ha sido guardado." });
+        
+        try {
+            const playerDocRef = doc(db, 'users', playerState.id);
+            await updateDoc(playerDocRef, { chosenScenario: newScenarioUrl });
+        } catch (error) {
+            console.error("Failed to update scenario in Firestore:", error);
+            toast({ title: "Error de Sincronización", description: "No se pudo guardar el lienzo en la nube.", variant: "destructive" });
+        }
+    };
+
 
     const handleClearCacheAndReset = async () => {
         if (!playerState.id || !db) {
@@ -92,38 +120,70 @@ export default function SettingsPanel({ playerState, setPlayerState, onFullReset
                 </AlertDialogContent>
             </AlertDialog>
 
-            <SheetContent>
+            <SheetContent className='flex flex-col'>
                 <SheetHeader>
                     <SheetTitle>Configuración</SheetTitle>
                     <SheetDescription>Personaliza tu experiencia en Kairu.</SheetDescription>
                 </SheetHeader>
-                <div className="py-4">
-                    <h3 className="font-semibold mb-4">Cambiar Avatar</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                        {avatars.map(avatar => (
-                            <button
-                                key={avatar.id}
-                                onClick={() => handleAvatarChange(avatar.imageUrl)}
-                                className={cn(
-                                    "p-2 rounded-lg border-2 transition-all",
-                                    playerState.avatar === avatar.imageUrl
-                                        ? "border-primary bg-primary/10 shadow-lg scale-105"
-                                        : "border-border hover:bg-accent"
-                                )}
-                            >
-                                <div className="relative w-full aspect-square">
-                                    <Image
-                                        src={avatar.imageUrl}
-                                        alt={avatar.description}
-                                        fill
-                                        className="rounded-md object-contain"
-                                    />
-                                </div>
-                            </button>
-                        ))}
+                <ScrollArea className="flex-grow">
+                    <div className="py-4 space-y-8 pr-4">
+                        <div>
+                            <h3 className="font-semibold mb-4">Cambiar Avatar</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                {avatars.map(avatar => (
+                                    <button
+                                        key={avatar.id}
+                                        onClick={() => handleAvatarChange(avatar.imageUrl)}
+                                        className={cn(
+                                            "p-2 rounded-lg border-2 transition-all",
+                                            playerState.avatar === avatar.imageUrl
+                                                ? "border-primary bg-primary/10 shadow-lg scale-105"
+                                                : "border-border hover:bg-accent"
+                                        )}
+                                    >
+                                        <div className="relative w-full aspect-square">
+                                            <Image
+                                                src={avatar.imageUrl}
+                                                alt={avatar.description}
+                                                fill
+                                                className="rounded-md object-contain"
+                                            />
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 className="font-semibold mb-4">Cambiar Lienzo</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                {scenarios.map(scenario => (
+                                    <button
+                                        key={scenario.id}
+                                        onClick={() => handleScenarioChange(scenario.imageUrl)}
+                                        className={cn(
+                                            "p-1 rounded-lg border-2 transition-all space-y-1",
+                                            playerState.chosenScenario === scenario.imageUrl
+                                                ? "border-primary bg-primary/10 shadow-lg scale-105"
+                                                : "border-border hover:bg-accent"
+                                        )}
+                                    >
+                                        <div className="relative w-full aspect-square">
+                                            <Image
+                                                src={scenario.imageUrl}
+                                                alt={scenario.description}
+                                                fill
+                                                className="rounded-md object-cover"
+                                            />
+                                        </div>
+                                        <p className="font-bold text-xs">{scenario.name}</p>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <SheetFooter className="mt-auto">
+                </ScrollArea>
+                <SheetFooter className="mt-auto pt-4 border-t">
                     <Button variant="destructive" className="w-full" onClick={() => setIsAlertOpen(true)}>
                         <Trash2 className="mr-2 h-4 w-4" />
                         Reiniciar Progreso del Juego
