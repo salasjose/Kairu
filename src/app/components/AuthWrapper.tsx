@@ -2,7 +2,7 @@
 'use client';
 
 import { useUser } from '@/firebase';
-import GameClient from './GameClient';
+import GameClientLoader from './GameClientLoader';
 import OnboardingFlow from './auth/OnboardingFlow';
 import Logo from './Logo';
 
@@ -22,7 +22,7 @@ export default function AuthWrapper() {
 
   // 2. If there is a user, show the game. GameClient will handle its own logic.
   if (user) {
-    return <GameClient />;
+    return <GameClientLoader />;
   }
 
   // 3. If there's no user, show the sign-in/sign-up flow.
