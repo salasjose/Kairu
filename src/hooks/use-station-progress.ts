@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useCallback, useMemo } from 'react';
-import { useUser, useFirestore } from '@/firebase';
+import { useCallback } from 'react';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, getDoc, updateDoc, deleteField, collection, query, deleteDoc } from 'firebase/firestore';
 import { useCollection } from '@/firebase/firestore/use-collection';
 
@@ -33,7 +33,7 @@ export function useStationProgress() {
   const db = useFirestore();
 
   // 1. Create a memoized query to fetch all progress documents for the current user.
-  const progressQuery = useMemo(() => {
+  const progressQuery = useMemoFirebase(() => {
     if (!user || !db) return null;
     return query(collection(db, `users/${user.uid}/stationProgress`));
   }, [user, db]);
@@ -42,7 +42,7 @@ export function useStationProgress() {
   const { data: progressDocs, isLoading } = useCollection<ChallengeProgressDoc>(progressQuery);
 
   // 3. Transform the raw Firestore documents into the nested ChallengeProgress object.
-  const completedChallenges: ChallengeProgress = useMemo(() => {
+  const completedChallenges: ChallengeProgress = useMemoFirebase(() => {
     if (!progressDocs) return {};
     
     return progressDocs.reduce((acc: ChallengeProgress, doc) => {

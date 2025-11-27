@@ -41,6 +41,8 @@ export * from './client-provider';
 
 // Export hooks
 export * from './hooks';
+export * from './use-memo-firebase';
+
 
 // Export utility functions and classes
 export * from './errors';
