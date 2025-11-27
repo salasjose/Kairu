@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -297,6 +298,7 @@ export default function Station9() {
   };
 
   const handleScaleChange = (prizeId: string, newScale: number[]) => {
+    if (isStationConfirmed) return;
     const updated = placedPrizes.map((p) =>
       p.id === prizeId ? { ...p, scale: newScale[0] } : p
     );
@@ -304,6 +306,7 @@ export default function Station9() {
   };
 
   const handleScaleChangeCommit = async (prizeId: string, newScale: number[]) => {
+    if (isStationConfirmed) return;
     const updated = placedPrizes.map((p) =>
       p.id === prizeId ? { ...p, scale: newScale[0] } : p
     );
@@ -430,7 +433,7 @@ export default function Station9() {
   return (
     <>
       <div
-        className="relative w-screen min-h-screen bg-background overflow-hidden"
+        className="relative w-screen min-h-screen bg-background overflow-x-hidden"
         onClick={(e) => {
           if (!(e.target as HTMLElement).closest(".placed-prize-wrapper")) {
             setSelectedPrizeId(null);
@@ -441,111 +444,116 @@ export default function Station9() {
           <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
         ) : (
           <>
-            <div
-              ref={canvasRef}
-              className="absolute inset-0 w-full h-full"
-            >
-              {scenarioBackgrounds && (
-                <ResponsiveBackground
-                  desktopSrc={scenarioBackgrounds.desktopSrc}
-                  tabletSrc={scenarioBackgrounds.tabletSrc}
-                  mobileSrc={scenarioBackgrounds.mobileSrc}
-                />
-              )}
-              <div className="absolute inset-0 z-10">
-                {placedPrizes.map((prize) => {
-                  const isSelected = selectedPrizeId === prize.id;
-                   const isSpecialPrize =
-                        prize.imageUrl.includes("Molinos.png") ||
-                        prize.imageUrl.includes("Ciudad.png");
+             <div className="absolute inset-0 flex items-center justify-center">
+              <div
+                ref={canvasRef}
+                className="relative w-full h-full"
+              >
+                {scenarioBackgrounds && (
+                  <ResponsiveBackground
+                    desktopSrc={scenarioBackgrounds.desktopSrc}
+                    tabletSrc={scenarioBackgrounds.tabletSrc}
+                    mobileSrc={scenarioBackgrounds.mobileSrc}
+                  />
+                )}
+                <div className="absolute inset-0 z-10">
+                  {placedPrizes.map((prize) => {
+                    const isSelected = selectedPrizeId === prize.id;
+                    const isSpecialPrize =
+                          prize.imageUrl.includes("Molinos.png") ||
+                          prize.imageUrl.includes("Ciudad.png");
 
-                  return (
-                    <motion.div
-                      key={prize.id}
-                      drag={!isStationConfirmed}
-                      dragMomentum={false}
-                      onDragStart={() => {
-                        if (!isStationConfirmed) {
+                    return (
+                      <motion.div
+                        key={prize.id}
+                        drag={!isStationConfirmed}
+                        dragMomentum={false}
+                        onDragStart={() => {
+                          if (!isStationConfirmed) {
+                            setSelectedPrizeId(prize.id);
+                          }
+                        }}
+                        onDragEnd={async (e, info) => {
+                          if (isStationConfirmed || !canvasRef.current) return;
+
+                          const rect = canvasRef.current.getBoundingClientRect();
+                          const prizeElement = e.target as HTMLDivElement;
+                          
+                          // More accurate drag calculation
+                          const prevX = (prize.x / 100) * rect.width;
+                          const prevY = (prize.y / 100) * rect.height;
+                          
+                          let newXPercent = ((prevX + info.offset.x) / rect.width) * 100;
+                          let newYPercent = ((prevY + info.offset.y) / rect.height) * 100;
+
+                          newXPercent = clamp(newXPercent, 5, 95);
+                          newYPercent = clamp(newYPercent, 5, 95);
+
+                          const updated = placedPrizes.map((p) =>
+                            p.id === prize.id ? { ...p, x: newXPercent, y: newYPercent } : p
+                          );
+                          setPlacedPrizes(updated);
+                          await savePrizesToDb(updated);
+                        }}
+                        className="placed-prize-wrapper absolute cursor-grab active:cursor-grabbing"
+                        style={{
+                          left: `${prize.x}%`,
+                          top: `${prize.y}%`,
+                          width: `calc(clamp(48px, 10vw, 96px) * ${prize.scale || 1})`,
+                          height: `calc(clamp(48px, 10vw, 96px) * ${prize.scale || 1})`,
+                          transform: "translate(-50%, -50%)",
+                          touchAction: "none",
+                        }}
+                        initial={false}
+                        animate={{
+                          boxShadow: isSelected
+                            ? "0px 0px 15px rgba(255,255,100,0.8)"
+                            : "0px 0px 0px rgba(0,0,0,0)",
+                        }}
+                        transition={{ duration: 0.15 }}
+                        onClick={(e) => {
+                          if (isStationConfirmed) return;
+                          e.stopPropagation();
                           setSelectedPrizeId(prize.id);
-                        }
-                      }}
-                      onDragEnd={async (e, info) => {
-                        if (isStationConfirmed || !canvasRef.current) return;
-
-                        const rect = canvasRef.current.getBoundingClientRect();
-                        const prizeElement = e.target as HTMLDivElement;
-                        const prizeRect = prizeElement.getBoundingClientRect();
-                        
-                        let newX = ((info.point.x - rect.left) / rect.width) * 100;
-                        let newY = ((info.point.y - rect.top) / rect.height) * 100;
-
-                        newX = clamp(newX, (prizeRect.width/2 / rect.width)*100, 100 - (prizeRect.width/2 / rect.width)*100);
-                        newY = clamp(newY, (prizeRect.height/2 / rect.height)*100, 100 - (prizeRect.height/2 / rect.height)*100);
-
-                        const updated = placedPrizes.map((p) =>
-                          p.id === prize.id ? { ...p, x: newX, y: newY } : p
-                        );
-                        setPlacedPrizes(updated);
-                        await savePrizesToDb(updated);
-                      }}
-                      className="placed-prize-wrapper absolute cursor-grab active:cursor-grabbing"
-                      style={{
-                        left: `${prize.x}%`,
-                        top: `${prize.y}%`,
-                        width: `calc(clamp(48px, 10vw, 96px) * ${prize.scale || 1})`,
-                        height: `calc(clamp(48px, 10vw, 96px) * ${prize.scale || 1})`,
-                        transform: "translate(-50%, -50%)",
-                        touchAction: "none",
-                      }}
-                      initial={false}
-                      animate={{
-                        boxShadow: isSelected
-                          ? "0px 0px 15px rgba(255,255,100,0.8)"
-                          : "0px 0px 0px rgba(0,0,0,0)",
-                      }}
-                      transition={{ duration: 0.15 }}
-                      onClick={(e) => {
-                        if (isStationConfirmed) return;
-                        e.stopPropagation();
-                        setSelectedPrizeId(prize.id);
-                      }}
-                    >
-                      <div className="w-full h-full relative">
-                        <Image
-                          src={prize.imageUrl}
-                          alt={prize.name}
-                          fill
-                          style={{ objectFit: "contain" }}
-                        />
-                      </div>
-
-                      {isSelected && !isStationConfirmed && (
-                        <div
-                          className={`absolute ${prize.y < 70 ? "top-full mt-2" : "bottom-full mb-2"} left-1/2 -translate-x-1/2 w-44 bg-background/90 p-2 rounded-lg shadow-lg flex items-center gap-2`}
-                          onPointerDown={(e) => e.stopPropagation()}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Slider
-                            value={[prize.scale || 1]}
-                            min={0.5}
-                            max={isSpecialPrize ? 7 : 2.5}
-                            step={0.1}
-                            onValueChange={(value) => handleScaleChange(prize.id, value)}
-                            onValueCommit={(value) => handleScaleChangeCommit(prize.id, value)}
+                        }}
+                      >
+                        <div className="w-full h-full relative">
+                          <Image
+                            src={prize.imageUrl}
+                            alt={prize.name}
+                            fill
+                            style={{ objectFit: "contain" }}
                           />
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleDeletePrize(prize.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
                         </div>
-                      )}
-                    </motion.div>
-                  );
-                })}
+
+                        {isSelected && !isStationConfirmed && (
+                          <div
+                            className={`absolute ${prize.y < 70 ? "top-full mt-2" : "bottom-full mb-2"} left-1/2 -translate-x-1/2 w-44 bg-background/90 p-2 rounded-lg shadow-lg flex items-center gap-2`}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Slider
+                              value={[prize.scale || 1]}
+                              min={0.5}
+                              max={isSpecialPrize ? 7 : 2.5}
+                              step={0.1}
+                              onValueChange={(value) => handleScaleChange(prize.id, value)}
+                              onValueCommit={(value) => handleScaleChangeCommit(prize.id, value)}
+                            />
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleDeletePrize(prize.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
@@ -605,17 +613,25 @@ export default function Station9() {
                               <Check className="mr-2 h-4 w-4" />
                               Confirmar
                           </Button>
-
                           <Button
-                              onClick={handleSaveAndDownload}
-                              className="w-full"
-                              variant="secondary"
-                              disabled={!isStationConfirmed}
+                            onClick={handleSaveAndDownload}
+                            className="w-full"
+                            variant="secondary"
+                            disabled={!isStationConfirmed}
                           >
-                              <Download className="mr-2 h-4 w-4" />
-                              Descargar
+                            <Download className="mr-2 h-4 w-4" />
+                            Guardar y Descargar
                           </Button>
                       </div>
+                  )}
+                  {isStationFinalized && (
+                     <Button
+                        onClick={() => setIsCompletionDialogOpen(true)}
+                        className="mt-2 w-full"
+                        variant="secondary"
+                      >
+                       Finalizar Aventura
+                      </Button>
                   )}
                 </motion.div>
               )}
