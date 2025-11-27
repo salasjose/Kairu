@@ -30,7 +30,7 @@ export default function PrizeDialog({ open, stationId, onClaim }: PrizeDialogPro
   const { addPrize } = usePrizeCart();
   const station = stations.find(s => s.id === stationId);
 
-  const handleClaim = () => {
+  const handleClaim = async () => {
     if (selectedPrize === null) {
       toast({
         title: "Elige un premio",
@@ -40,14 +40,13 @@ export default function PrizeDialog({ open, stationId, onClaim }: PrizeDialogPro
       return;
     }
     
-    addPrize(selectedPrize);
+    await addPrize(selectedPrize);
     
     toast({
         title: `¡Felicidades!`,
         description: `Has ganado la insignia: ${selectedPrize?.name}.`
     });
 
-    // This was the missing critical step.
     onClaim();
   }
 

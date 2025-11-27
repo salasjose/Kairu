@@ -1,85 +1,60 @@
+
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import type { Prize } from '@/lib/data';
-import { useUser } from '@/firebase';
-
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { useDoc } from '@/firebase/firestore/use-doc';
 
 interface PrizeCartContextType {
   prizes: Prize[];
-  addPrize: (prize: Prize) => void;
-  clearCart: () => void;
+  addPrize: (prize: Prize) => Promise<void>;
+  clearCart: () => Promise<void>;
 }
 
 const PrizeCartContext = createContext<PrizeCartContextType | undefined>(undefined);
 
 export function PrizeCartProvider({ children }: { children: ReactNode }) {
-  const [prizes, setPrizes] = useState<Prize[]>([]);
   const { user } = useUser();
-  const storageKey = user ? `kairu-prize-cart-v2-${user.uid}` : null;
+  const db = useFirestore();
 
-  useEffect(() => {
-    if (storageKey) {
-      try {
-        const savedPrizes = localStorage.getItem(storageKey);
-        if (savedPrizes) {
-          const parsedPrizes = JSON.parse(savedPrizes) as Prize[];
-          if (Array.isArray(parsedPrizes)) {
-            setPrizes(parsedPrizes);
-          }
-        } else {
-            setPrizes([]); // Reset if no data for this user
+  const userDocRef = useMemoFirebase(() => {
+    if (!user || !db) return null;
+    return doc(db, 'users', user.uid);
+  }, [user, db]);
+
+  const { data: userDoc } = useDoc<{prizes: Prize[]}>(userDocRef);
+
+  const prizes = userDoc?.prizes || [];
+
+  const addPrize = useCallback(async (newPrize: Prize) => {
+    if (!userDocRef) return;
+
+    try {
+        const docSnap = await getDoc(userDocRef);
+        const currentPrizes = docSnap.exists() && docSnap.data().prizes ? docSnap.data().prizes : [];
+        
+        const prizeExists = currentPrizes.some((p: Prize) => p.stationId === newPrize.stationId);
+
+        if (!prizeExists) {
+            const newPrizes = [...currentPrizes, newPrize];
+            await setDoc(userDocRef, { prizes: newPrizes }, { merge: true });
         }
-      } catch (error) {
-        console.error("Failed to load prize cart from localStorage", error);
-        setPrizes([]);
-      }
-    } else {
-        // If no user, cart should be empty
-        setPrizes([]);
+    } catch (error) {
+        console.error("Failed to add prize to Firestore", error);
     }
-  }, [storageKey]);
-
-  const saveToLocalStorage = useCallback((items: Prize[]) => {
-      if (storageKey) {
-          try {
-            localStorage.setItem(storageKey, JSON.stringify(items));
-          } catch (error) {
-              console.error("Failed to save prize cart to localStorage", error);
-          }
-      }
-  }, [storageKey]);
-
-  const addPrize = useCallback((newPrize: Prize) => {
-    if (!storageKey) return;
-    
-    setPrizes(prevPrizes => {
-      // Check if a prize for this station already exists.
-      const prizeExists = prevPrizes.some(p => p.stationId === newPrize.stationId);
-
-      // If it already exists, do nothing and return the current state.
-      if (prizeExists) {
-        return prevPrizes;
-      }
-
-      // Otherwise, add the new prize.
-      const newPrizes = [...prevPrizes, newPrize];
-      saveToLocalStorage(newPrizes);
-      return newPrizes;
-    });
-  }, [storageKey, saveToLocalStorage]);
+  }, [userDocRef]);
 
 
-  const clearCart = useCallback(() => {
-    if (storageKey) {
-        setPrizes([]);
-        try {
-          localStorage.removeItem(storageKey);
-        } catch(e) {
-          console.error("Failed to clear cart from localStorage", e);
-        }
+  const clearCart = useCallback(async () => {
+    if (!userDocRef) return;
+    try {
+        await setDoc(userDocRef, { prizes: [] }, { merge: true });
+    } catch(e) {
+        console.error("Failed to clear cart in Firestore", e);
     }
-  }, [storageKey]);
+  }, [userDocRef]);
 
   const value = { prizes, addPrize, clearCart };
 
