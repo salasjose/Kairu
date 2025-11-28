@@ -15,7 +15,7 @@ import GameHeader from './GameHeader';
 import BackgroundImage from './BackgroundImage';
 import { toast } from '@/hooks/use-toast';
 
-export interface PlayerState {
+export interface PlayerState extends Partial<z.infer<typeof SignUpFormSchema>> {
   id: string;
   name: string;
   avatar: string;
@@ -48,6 +48,12 @@ export default function GameClient() {
             avatar: data.avatar || "",
             chosenScenario: data.chosenScenario || null,
             unlockedStations: data.unlockedStations || [1],
+            // Preserve all other user profile data
+            apellido: data.apellido,
+            usuario: data.usuario,
+            email: data.email,
+            telefono: data.telefono,
+            edad: data.edad,
         };
         
         setPlayerState(currentState => {
@@ -117,10 +123,9 @@ export default function GameClient() {
       const docSnap = await getDoc(playerDocRef);
       const existingData = docSnap.exists() ? docSnap.data() : {};
       
-      // This is the new data from the onboarding flow (avatar, scenario choice).
       const { signupData, ...onboardingData } = data;
   
-      // Start with existing data, which preserves name, email, etc., especially on re-onboarding.
+      // Start with existing data (which has name, email, etc.)
       const finalData: Record<string, any> = { ...existingData };
 
       // If it's a fresh sign-up, signupData will exist. Add all its fields.
@@ -134,22 +139,13 @@ export default function GameClient() {
         ...onboardingData,
         unlockedStations: [1],
       });
-
-      // Ensure 'name' for the player state is consistent
-      finalData.name = finalData.nombre || finalData.usuario || "Jugador";
   
       // Save the merged data back to Firestore.
+      // { merge: true } is crucial to avoid overwriting existing fields like 'nombre', 'email', etc.
       await setDoc(playerDocRef, finalData, { merge: true });
       
-      // Update local state immediately to reflect changes and exit onboarding
-      setPlayerState({
-          id: user.uid,
-          name: finalData.name,
-          avatar: finalData.avatar,
-          chosenScenario: finalData.chosenScenario,
-          unlockedStations: finalData.unlockedStations,
-      });
-
+      // We don't need to manually update playerState here,
+      // as the onSnapshot listener from fetchInitialPlayerState will trigger and do it for us.
       setIsNewUser(false);
   
     } catch (error) {

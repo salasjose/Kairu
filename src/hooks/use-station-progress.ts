@@ -149,9 +149,9 @@ export function useStationProgress() {
       }
     }
     
-    // Update the main user document to remove ONLY game-specific fields.
-    // User registration data (nombre, email, etc.) is PRESERVED.
-    const playerDocRef = doc(db, 'users', user.uid);
+    // This object defines ONLY the fields related to game progress that should be reset.
+    // User profile fields like 'nombre', 'apellido', 'email', 'usuario', etc., are NOT included
+    // and will therefore be preserved during the update.
     const fieldsToReset = {
       unlockedStations: [1],
       avatar: deleteField(),
@@ -172,7 +172,8 @@ export function useStationProgress() {
       station9Confirmed: deleteField(),
       station9Finalized: deleteField()
     };
-
+    
+    const playerDocRef = doc(db, 'users', user.uid);
     updateDoc(playerDocRef, fieldsToReset).catch(error => {
         errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: playerDocRef.path,
