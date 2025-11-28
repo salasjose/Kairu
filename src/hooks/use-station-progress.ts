@@ -82,16 +82,17 @@ export function useStationProgress() {
       const newStations = Array.from(new Set([...currentStations, stationId])).sort((a, b) => a - b);
       
       const dataToSet = { unlockedStations: newStations };
-      setDoc(playerDocRef, dataToSet, { merge: true }).catch(error => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-          path: playerDocRef.path,
-          operation: 'update',
-          requestResourceData: dataToSet
-        }));
-      });
+      await setDoc(playerDocRef, dataToSet, { merge: true });
 
-    } catch (error) {
+    } catch (error: any) {
        console.error("Failed to read user document before unlocking station", error);
+       if (error.code === 'permission-denied') {
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: playerDocRef.path,
+            operation: 'update',
+            requestResourceData: { unlockedStations: '...' }
+          }));
+       }
     }
   }, [user, db]);
 
@@ -134,7 +135,10 @@ export function useStationProgress() {
       progressSnapshot.forEach((doc) => {
           batch.delete(doc.ref);
       });
-      await batch.commit().catch(error => {
+      await batch.commit();
+    } catch (error: any) {
+      console.error("Failed to delete stationProgress subcollection:", error);
+      if (error.code === 'permission-denied') {
         errorEmitter.emit(
           'permission-error',
           new FirestorePermissionError({
@@ -142,13 +146,14 @@ export function useStationProgress() {
             operation: 'delete',
           })
         );
-      });
-    } catch (error) {
-      console.error("Failed to delete stationProgress subcollection:", error);
+      }
     }
     
     // Update the main user document to remove game-specific fields
     const playerDocRef = doc(db, 'users', user.uid);
+    // This object now ONLY contains fields related to game progress.
+    // User registration data like 'nombre', 'usuario', 'email', etc., are NOT included
+    // and therefore will NOT be deleted.
     const fieldsToReset = {
       unlockedStations: [1],
       prizes: deleteField(),
