@@ -28,10 +28,16 @@ export default function GameHeader({ playerState, setPlayerState, onFullReset }:
   
   const handleLogout = async () => {
     if (!auth) return;
-    await signOut(auth);
-    setPlayerState(null);
+    
+    // Primero, limpiar los datos del usuario mientras la sesión está activa.
     await clearCart();
-    await resetProgress();
+    await resetProgress(); // Esto ya no debería causar error de permisos.
+    
+    // Luego, limpiar el estado local.
+    setPlayerState(null);
+    
+    // Finalmente, cerrar la sesión de Firebase.
+    await signOut(auth);
   }
 
   return (
