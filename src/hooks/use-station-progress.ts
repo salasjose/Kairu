@@ -112,7 +112,6 @@ export function useStationProgress() {
   const resetProgress = useCallback(async () => {
     if (!user || !db) return;
 
-    // 1. Delete all documents in the stationProgress subcollection.
     const progressCollectionRef = collection(db, `users/${user.uid}/stationProgress`);
     const batch = writeBatch(db);
     try {
@@ -122,7 +121,6 @@ export function useStationProgress() {
       });
       await batch.commit();
 
-      // 2. After successfully deleting subcollections, update the main user document.
       const playerDocRef = doc(db, 'users', user.uid);
       await updateDoc(playerDocRef, {
         unlockedStations: [1],
@@ -130,7 +128,6 @@ export function useStationProgress() {
         avatar: deleteField(),
         chosenScenario: deleteField(),
         placedPrizes: deleteField(),
-        station9Locked: deleteField(),
         station1FaunaPhotos: deleteField(),
         station1FloraPhotos: deleteField(),
         station1HabitatPhotos: deleteField(),
@@ -141,7 +138,9 @@ export function useStationProgress() {
         station5Url: deleteField(),
         station6VideoUrl: deleteField(),
         station7Businesses: deleteField(),
-        station8Url: deleteField()
+        station8Url: deleteField(),
+        station9Confirmed: deleteField(),
+        station9Finalized: deleteField()
       });
 
     } catch (error) {

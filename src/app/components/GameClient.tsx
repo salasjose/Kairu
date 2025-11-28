@@ -104,21 +104,23 @@ export default function GameClient() {
   const handleOnboardingComplete = async (data: { name: string; avatar: string; chosenScenario: string; signupData?: z.infer<typeof SignUpFormSchema>}) => {
     if (!user || !db) return;
 
-    const newState: Partial<PlayerState> & Partial<z.infer<typeof SignUpFormSchema>> = {
+    const { signupData, ...restOfData } = data;
+    const existingData = playerState ? { unlockedStations: playerState.unlockedStations } : {};
+
+    const finalData = {
+      ...(signupData ? signupData : {}),
       id: user.uid,
-      nombre: data.name, // Asegurarse de que el nombre se guarda.
-      avatar: data.avatar,
-      chosenScenario: data.chosenScenario,
+      ...restOfData,
+      nombre: data.name, 
+      ...existingData,
       unlockedStations: [1],
-      ...(data.signupData ? data.signupData : {}),
     };
+    
+    if (playerState && !signupData) {
+        delete (finalData as any).signupData;
+    }
 
     try {
-        const finalData = { ...newState };
-        if (playerState && !data.signupData) {
-            delete (finalData as any).signupData;
-        }
-
         await setDoc(doc(db, 'users', user.uid), finalData, { merge: true });
         setIsNewUser(false);
     } catch (error) {
