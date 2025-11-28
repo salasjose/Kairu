@@ -149,16 +149,14 @@ export function useStationProgress() {
       }
     }
     
-    // Update the main user document to remove game-specific fields
+    // Update the main user document to remove ONLY game-specific fields.
+    // User registration data (nombre, email, etc.) is PRESERVED.
     const playerDocRef = doc(db, 'users', user.uid);
-    // This object now ONLY contains fields related to game progress.
-    // User registration data like 'nombre', 'usuario', 'email', etc., are NOT included
-    // and therefore will NOT be deleted.
     const fieldsToReset = {
       unlockedStations: [1],
-      prizes: deleteField(),
       avatar: deleteField(),
       chosenScenario: deleteField(),
+      prizes: deleteField(),
       placedPrizes: deleteField(),
       station1FaunaPhotos: deleteField(),
       station1FloraPhotos: deleteField(),

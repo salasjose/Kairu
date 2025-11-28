@@ -26,7 +26,6 @@ type LoginData = z.infer<typeof LoginFormSchema>;
 
 interface OnboardingFlowProps {
     onComplete: (data: {
-        name: string;
         avatar: string;
         chosenScenario: string;
         signupData?: SignUpData;
@@ -168,44 +167,29 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
     };
 
     const handleScenarioConfirm = () => {
-        // Case 1: New user signing up
-        if (formName && selectedAvatar && selectedScenario && signupData) {
-            onComplete({
-                name: formName,
-                avatar: selectedAvatar,
-                chosenScenario: selectedScenario,
-                signupData: signupData,
-            });
-        // Case 2: Existing user re-onboarding after reset
-        } else if (auth?.currentUser && selectedAvatar && selectedScenario) {
-             onComplete({
-                name: auth.currentUser.displayName || "Jugador",
-                avatar: selectedAvatar,
-                chosenScenario: selectedScenario,
-                // No signupData here, as it's not a new registration
-            });
-        }
-        else if (!selectedAvatar) {
+        if (!selectedAvatar) {
             setStep('avatar');
-             toast({
+            toast({
                 title: "Falta un paso",
                 description: "Por favor, selecciona un avatar para continuar.",
                 variant: "destructive"
             });
-        } else if (!selectedScenario) {
-             toast({
+            return;
+        }
+        if (!selectedScenario) {
+            toast({
                 title: "Falta un paso",
                 description: "Por favor, selecciona un escenario para continuar.",
                 variant: "destructive"
             });
+            return;
         }
-         else {
-            toast({
-                title: "Error",
-                description: "Faltan datos para completar el registro.",
-                variant: "destructive"
-            });
-        }
+
+        onComplete({
+            avatar: selectedAvatar,
+            chosenScenario: selectedScenario,
+            signupData: signupData || undefined,
+        });
     };
     
     const renderStep = () => {

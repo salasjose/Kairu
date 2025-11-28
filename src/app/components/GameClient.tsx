@@ -13,6 +13,7 @@ import type { z } from 'zod';
 import type { SignUpFormSchema } from './auth/SignUpForm';
 import GameHeader from './GameHeader';
 import BackgroundImage from './BackgroundImage';
+import { toast } from '@/hooks/use-toast';
 
 export interface PlayerState {
   id: string;
@@ -102,36 +103,53 @@ export default function GameClient() {
     setIsNewUser(true); 
   };
 
-  const handleOnboardingComplete = async (data: { name: string; avatar: string; chosenScenario: string; signupData?: z.infer<typeof SignUpFormSchema>}) => {
+  const handleOnboardingComplete = async (data: {
+    avatar: string;
+    chosenScenario: string;
+    signupData?: z.infer<typeof SignUpFormSchema>;
+  }) => {
     if (!user || !db) return;
   
     const playerDocRef = doc(db, 'users', user.uid);
   
     try {
-      // Fetch the current document to preserve existing user data (like name, email, etc.)
+      // Fetch the current document to preserve existing user data
       const docSnap = await getDoc(playerDocRef);
       const existingData = docSnap.exists() ? docSnap.data() : {};
       
       // This is the new data from the onboarding flow (avatar, scenario choice).
       const { signupData, ...onboardingData } = data;
   
-      // If it's a fresh sign-up, signupData will exist. Otherwise, it won't.
-      // Merge existing data, signup data (if any), and the new onboarding selections.
-      const finalData = {
-        ...existingData,         // Preserve name, email, etc.
-        ...(signupData || {}),    // Add new registration fields if they exist
-        id: user.uid,
-        ...onboardingData,         // Overwrite/add avatar and chosenScenario
-        unlockedStations: [1],   // Always reset station progress on re-onboarding
-      };
-      
-      // Ensure name is correctly set from the form data during initial signup
-      if (signupData?.nombre) {
-        finalData.nombre = signupData.nombre;
+      // Start with existing data, which preserves name, email, etc., especially on re-onboarding.
+      const finalData: Record<string, any> = { ...existingData };
+
+      // If it's a fresh sign-up, signupData will exist. Add all its fields.
+      if (signupData) {
+        Object.assign(finalData, signupData);
       }
+
+      // Always overwrite/add avatar, chosenScenario, and reset station progress.
+      Object.assign(finalData, {
+        id: user.uid,
+        ...onboardingData,
+        unlockedStations: [1],
+      });
+
+      // Ensure 'name' for the player state is consistent
+      finalData.name = finalData.nombre || finalData.usuario || "Jugador";
   
       // Save the merged data back to Firestore.
       await setDoc(playerDocRef, finalData, { merge: true });
+      
+      // Update local state immediately to reflect changes and exit onboarding
+      setPlayerState({
+          id: user.uid,
+          name: finalData.name,
+          avatar: finalData.avatar,
+          chosenScenario: finalData.chosenScenario,
+          unlockedStations: finalData.unlockedStations,
+      });
+
       setIsNewUser(false);
   
     } catch (error) {
