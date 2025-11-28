@@ -1,7 +1,7 @@
 
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
 import { stations } from '@/lib/data';
 import StationNode from '@/app/components/StationNode';
 import CompletionDialog from '@/app/components/CompletionDialog';
@@ -43,7 +43,7 @@ export default function GameClient() {
         
         const newState: PlayerState = {
             id: user.uid,
-            name: data.usuario || data.nombre || "Jugador",
+            name: data.nombre || data.usuario || "Jugador",
             avatar: data.avatar || "",
             chosenScenario: data.chosenScenario || null,
             unlockedStations: data.unlockedStations || [1],
@@ -97,34 +97,50 @@ export default function GameClient() {
   }, [user, fetchInitialPlayerState]);
   
   const handleResetOnboarding = () => {
-    setPlayerState(null);
-    setIsNewUser(true);
+    // This function is called after a full progress reset.
+    // We set isNewUser to true to trigger the OnboardingFlow for re-customization (avatar/scenario).
+    setIsNewUser(true); 
   };
 
   const handleOnboardingComplete = async (data: { name: string; avatar: string; chosenScenario: string; signupData?: z.infer<typeof SignUpFormSchema>}) => {
     if (!user || !db) return;
-
-    const { signupData, ...restOfData } = data;
-    const existingData = playerState ? { unlockedStations: playerState.unlockedStations } : {};
-
-    const finalData = {
-      ...(signupData ? signupData : {}),
-      id: user.uid,
-      ...restOfData,
-      nombre: data.name, 
-      ...existingData,
-      unlockedStations: [1],
-    };
-    
-    if (playerState && !signupData) {
-        delete (finalData as any).signupData;
-    }
-
+  
+    const playerDocRef = doc(db, 'users', user.uid);
+  
     try {
-        await setDoc(doc(db, 'users', user.uid), finalData, { merge: true });
-        setIsNewUser(false);
+      // Fetch the current document to preserve existing user data (like name, email, etc.)
+      const docSnap = await getDoc(playerDocRef);
+      const existingData = docSnap.exists() ? docSnap.data() : {};
+      
+      // This is the new data from the onboarding flow (avatar, scenario choice).
+      const { signupData, ...onboardingData } = data;
+  
+      // If it's a fresh sign-up, signupData will exist. Otherwise, it won't.
+      // Merge existing data, signup data (if any), and the new onboarding selections.
+      const finalData = {
+        ...existingData,         // Preserve name, email, etc.
+        ...(signupData || {}),    // Add new registration fields if they exist
+        id: user.uid,
+        ...onboardingData,         // Overwrite/add avatar and chosenScenario
+        unlockedStations: [1],   // Always reset station progress on re-onboarding
+      };
+      
+      // Ensure name is correctly set from the form data during initial signup
+      if (signupData?.nombre) {
+        finalData.nombre = signupData.nombre;
+      }
+  
+      // Save the merged data back to Firestore.
+      await setDoc(playerDocRef, finalData, { merge: true });
+      setIsNewUser(false);
+  
     } catch (error) {
-        console.error("Failed to save player data:", error);
+      console.error("Failed to save player data:", error);
+      toast({
+          title: "Error al guardar",
+          description: "No se pudo guardar tu progreso de bienvenida. Inténtalo de nuevo.",
+          variant: "destructive"
+      });
     }
   };
 
