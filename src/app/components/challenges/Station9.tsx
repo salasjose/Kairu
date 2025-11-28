@@ -14,7 +14,7 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card } from "@/components/ui/card";
 import TypewriterText from "../auth/TypewriterText";
 import { Slider } from "@/components/ui/slider";
-import { Trash2, Gift, X, Check, Download } from "lucide-react";
+import { Trash2, Gift, X, Check } from "lucide-react";
 import ResponsiveBackground from "../ResponsiveBackground";
 import html2canvas from "html2canvas";
 
@@ -137,7 +137,7 @@ export default function Station9() {
   const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
   const [isYaraMessageVisible, setIsYaraMessageVisible] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  
+
   const [isStationConfirmed, setIsStationConfirmed] = useState(false);
   const [isStationFinalized, setIsStationFinalized] = useState(false);
 
@@ -182,6 +182,10 @@ export default function Station9() {
     return null;
   }, [chosenScenario]);
 
+  // ------------------------------------------------------------------
+  // Carga de datos de usuario
+  // ------------------------------------------------------------------
+
   useEffect(() => {
     const fetchPlayerData = async () => {
       if (!user || !db) {
@@ -200,10 +204,13 @@ export default function Station9() {
               scale: p.scale || 1,
             }))
           );
-          const fullName = data.usuario || `${data.nombre || ""} ${data.apellido || ""}`.trim();
+          const fullName =
+            data.usuario || `${data.nombre || ""} ${data.apellido || ""}`.trim();
           setPlayerName(fullName || "Guardián");
-          setIsStationConfirmed(data.station9Confirmed || false);
-          setIsStationFinalized(data.station9Finalized || false);
+          const confirmed = data.station9Confirmed || false;
+          const finalized = data.station9Finalized || false;
+          setIsStationConfirmed(confirmed || finalized); // si está finalizada, también bloqueamos edición
+          setIsStationFinalized(finalized);
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -213,6 +220,10 @@ export default function Station9() {
     };
     fetchPlayerData();
   }, [user, db]);
+
+  // ------------------------------------------------------------------
+  // Mensaje de Yara programado
+  // ------------------------------------------------------------------
 
   const scheduleYaraDialog = useCallback(() => {
     if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
@@ -236,6 +247,10 @@ export default function Station9() {
     };
   }, [isLoading, scheduleYaraDialog]);
 
+  // ------------------------------------------------------------------
+  // Guardar insignias en Firestore
+  // ------------------------------------------------------------------
+
   const savePrizesToDb = useCallback(
     async (prizesToSave: PlacedPrize[]) => {
       if (!user || !db) return;
@@ -258,6 +273,10 @@ export default function Station9() {
     [user, db]
   );
 
+  // ------------------------------------------------------------------
+  // Colocar insignia desde el sidebar al lienzo
+  // ------------------------------------------------------------------
+
   const handlePrizeDrop = async (prizeId: string, info: PanInfo) => {
     if (isStationConfirmed || !canvasRef.current) return;
 
@@ -268,12 +287,11 @@ export default function Station9() {
     let x = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
     let y = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
 
+    // margen básico para que no "desaparezcan" en los bordes
     x = clamp(x, 5, 95);
     y = clamp(y, 5, 95);
 
-    const prizeData = collectedPrizes.find(
-      (p) => p.id === prizeId
-    );
+    const prizeData = collectedPrizes.find((p) => p.id === prizeId);
     if (!prizeData) return;
 
     const newPlacedPrize: PlacedPrize = {
@@ -292,22 +310,32 @@ export default function Station9() {
     await savePrizesToDb(newPlacedPrizes);
   };
 
+  // ------------------------------------------------------------------
+  // Escala de insignias (hasta 500%)
+  // ------------------------------------------------------------------
+
   const handleScaleChange = (prizeId: string, newScale: number[]) => {
     if (isStationConfirmed) return;
+    const scale = clamp(newScale[0], 0.5, 5); // 50% a 500%
     const updated = placedPrizes.map((p) =>
-      p.id === prizeId ? { ...p, scale: newScale[0] } : p
+      p.id === prizeId ? { ...p, scale } : p
     );
     setPlacedPrizes(updated);
   };
 
   const handleScaleChangeCommit = async (prizeId: string, newScale: number[]) => {
     if (isStationConfirmed) return;
+    const scale = clamp(newScale[0], 0.5, 5);
     const updated = placedPrizes.map((p) =>
-      p.id === prizeId ? { ...p, scale: newScale[0] } : p
+      p.id === prizeId ? { ...p, scale } : p
     );
     setPlacedPrizes(updated);
     await savePrizesToDb(updated);
   };
+
+  // ------------------------------------------------------------------
+  // Eliminar insignia
+  // ------------------------------------------------------------------
 
   const handleDeletePrize = async (prizeId: string) => {
     if (isStationConfirmed) return;
@@ -317,35 +345,44 @@ export default function Station9() {
     setSelectedPrizeId(null);
   };
 
-  const handleConfirmStation = async () => {
-    if (!user || !db || !allPrizesPlaced) return;
-    setIsStationConfirmed(true);
-    try {
-      const userDocRef = doc(db, "users", user.uid);
-      await setDoc(userDocRef, { station9Confirmed: true }, { merge: true });
+  // ------------------------------------------------------------------
+  // Completar estación (confirmar + descargar + finalizar)
+  // ------------------------------------------------------------------
+
+  const handleCompleteStation = async () => {
+    if (!user || !db || !canvasRef.current) return;
+    if (isStationFinalized) return;
+
+    // todas las insignias colocadas
+    const unplaced = collectedPrizes.filter(
+      (p) => !placedPrizes.some((pp) => pp.id === p.id)
+    );
+    if (collectedPrizes.length === 0 || unplaced.length > 0) {
       toast({
-        title: "Estación Confirmada",
-        description: "¡Tu diseño ha sido guardado! Ahora puedes descargarlo.",
-      });
-    } catch (e) {
-      console.error("Error confirming station", e);
-      setIsStationConfirmed(false);
-      toast({
-        title: "Error",
-        description: "No se pudo confirmar la estación.",
+        title: "Insignias incompletas",
+        description: "Debes colocar todas las insignias antes de completar la estación.",
         variant: "destructive",
       });
+      return;
     }
-  };
 
-  const handleSaveAndDownload = async () => {
-    if (!user || !db || !canvasRef.current || !isStationConfirmed) return;
-    setIsStationFinalized(true);
-    
+    setIsStationConfirmed(true);
     setSelectedPrizeId(null);
-    await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
+      const userDocRef = doc(db, "users", user.uid);
+
+      // Guardar confirmación
+      await setDoc(
+        userDocRef,
+        { station9Confirmed: true },
+        { merge: true }
+      );
+
+      // Pequeña pausa para que se oculten sliders/controles antes de la captura
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Captura del lienzo
       const canvas = await html2canvas(canvasRef.current, {
         useCORS: true,
         backgroundColor: null,
@@ -358,29 +395,38 @@ export default function Station9() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
-      const userDocRef = doc(db, "users", user.uid);
-      await setDoc(userDocRef, { station9Finalized: true }, { merge: true });
+
+      // Marcar estación finalizada
+      await setDoc(
+        userDocRef,
+        { station9Finalized: true },
+        { merge: true }
+      );
+      setIsStationFinalized(true);
 
       toast({
-        title: "¡Estación Finalizada!",
+        title: "¡Estación completada!",
         description: "Tu creación ha sido descargada. ¡Felicitaciones por completar la aventura!",
       });
 
       setTimeout(() => {
         setIsCompletionDialogOpen(true);
       }, 1000);
-
     } catch (e) {
-      console.error("Error saving and downloading station", e);
+      console.error("Error completing station", e);
+      setIsStationConfirmed(false);
       setIsStationFinalized(false);
       toast({
         title: "Error",
-        description: "Ocurrió un problema al guardar o descargar la estación.",
+        description: "Ocurrió un problema al completar o descargar la estación.",
         variant: "destructive",
       });
     }
   };
+
+  // ------------------------------------------------------------------
+  // Guardar lienzo elegido
+  // ------------------------------------------------------------------
 
   const handleScenarioSelect = async (scenarioUrl: string) => {
     if (!user || !db) return;
@@ -402,6 +448,10 @@ export default function Station9() {
     }
   };
 
+  // ------------------------------------------------------------------
+  // Pruebas auxiliares
+  // ------------------------------------------------------------------
+
   const unplacedPrizes = useMemo(
     () =>
       collectedPrizes.filter(
@@ -410,7 +460,12 @@ export default function Station9() {
     [collectedPrizes, placedPrizes]
   );
 
-  const allPrizesPlaced = collectedPrizes.length > 0 && unplacedPrizes.length === 0;
+  const allPrizesPlaced =
+    collectedPrizes.length > 0 && unplacedPrizes.length === 0;
+
+  // ------------------------------------------------------------------
+  // Loading
+  // ------------------------------------------------------------------
 
   if (isLoading) {
     return (
@@ -421,6 +476,10 @@ export default function Station9() {
   }
 
   const yaraMessage = `${playerName}, ¡Ya eres un Guardián de la Naturaleza! Ahora es tiempo de armar tu Estación. Moverás tus Insignias por todo tu lienzo; para ello, debes arrastrarlas desde la barra lateral.`;
+
+  // ------------------------------------------------------------------
+  // Render
+  // ------------------------------------------------------------------
 
   return (
     <div
@@ -435,6 +494,7 @@ export default function Station9() {
         <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
       ) : (
         <>
+          {/* LIENZO RESPONSIVO */}
           <div
             ref={canvasRef}
             className="absolute inset-0 w-full h-full"
@@ -446,12 +506,11 @@ export default function Station9() {
                 mobileSrc={scenarioBackgrounds.mobileSrc}
               />
             )}
+
+            {/* INSIGNIAS COLOCADAS */}
             <div className="absolute inset-0 z-10">
               {placedPrizes.map((prize) => {
                 const isSelected = selectedPrizeId === prize.id;
-                const isSpecialPrize =
-                      prize.imageUrl.includes("Molinos.png") ||
-                      prize.imageUrl.includes("Ciudad.png");
 
                 return (
                   <motion.div
@@ -467,19 +526,37 @@ export default function Station9() {
                       if (isStationConfirmed || !canvasRef.current) return;
 
                       const rect = canvasRef.current.getBoundingClientRect();
-                      const prizeElement = e.target as HTMLDivElement;
-                      
+                      const element = e.currentTarget as HTMLDivElement;
+
                       const prevX = (prize.x / 100) * rect.width;
                       const prevY = (prize.y / 100) * rect.height;
-                      
-                      let newXPercent = ((prevX + info.offset.x) / rect.width) * 100;
-                      let newYPercent = ((prevY + info.offset.y) / rect.height) * 100;
 
-                      newXPercent = clamp(newXPercent, 5, 95);
-                      newYPercent = clamp(newYPercent, 5, 95);
+                      let newXPercent =
+                        ((prevX + info.offset.x) / rect.width) * 100;
+                      let newYPercent =
+                        ((prevY + info.offset.y) / rect.height) * 100;
+
+                      // Clampeo usando el tamaño real de la insignia (para que no se salga del lienzo)
+                      const elWidthPx = element.offsetWidth || 0;
+                      const elHeightPx = element.offsetHeight || 0;
+
+                      const widthPercent = rect.width
+                        ? (elWidthPx / rect.width) * 100
+                        : 0;
+                      const heightPercent = rect.height
+                        ? (elHeightPx / rect.height) * 100
+                        : 0;
+
+                      const halfW = widthPercent / 2;
+                      const halfH = heightPercent / 2;
+
+                      newXPercent = clamp(newXPercent, halfW, 100 - halfW);
+                      newYPercent = clamp(newYPercent, halfH, 100 - halfH);
 
                       const updated = placedPrizes.map((p) =>
-                        p.id === prize.id ? { ...p, x: newXPercent, y: newYPercent } : p
+                        p.id === prize.id
+                          ? { ...p, x: newXPercent, y: newYPercent }
+                          : p
                       );
                       setPlacedPrizes(updated);
                       await savePrizesToDb(updated);
@@ -515,19 +592,26 @@ export default function Station9() {
                       />
                     </div>
 
+                    {/* CONTROLES DE ESCALA Y ELIMINAR */}
                     {isSelected && !isStationConfirmed && (
                       <div
-                        className={`absolute ${prize.y < 70 ? "top-full mt-2" : "bottom-full mb-2"} left-1/2 -translate-x-1/2 w-44 bg-background/90 p-2 rounded-lg shadow-lg flex items-center gap-2`}
+                        className={`absolute ${
+                          prize.y < 70 ? "top-full mt-2" : "bottom-full mb-2"
+                        } left-1/2 -translate-x-1/2 w-44 bg-background/90 p-2 rounded-lg shadow-lg flex items-center gap-2`}
                         onPointerDown={(e) => e.stopPropagation()}
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Slider
                           value={[prize.scale || 1]}
                           min={0.5}
-                          max={isSpecialPrize ? 7 : 2.5}
+                          max={5} // HASTA 500%
                           step={0.1}
-                          onValueChange={(value) => handleScaleChange(prize.id, value)}
-                          onValueCommit={(value) => handleScaleChangeCommit(prize.id, value)}
+                          onValueChange={(value) =>
+                            handleScaleChange(prize.id, value)
+                          }
+                          onValueCommit={(value) =>
+                            handleScaleChangeCommit(prize.id, value)
+                          }
                         />
                         <Button
                           variant="destructive"
@@ -545,6 +629,7 @@ export default function Station9() {
             </div>
           </div>
 
+          {/* BOTÓN PARA ABRIR/CERRAR SIDEBAR */}
           <Button
             variant="outline"
             size="icon"
@@ -553,17 +638,28 @@ export default function Station9() {
           >
             <AnimatePresence initial={false}>
               {isSidebarOpen ? (
-                <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
+                <motion.div
+                  key="close"
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: -90, opacity: 0 }}
+                >
                   <X />
                 </motion.div>
               ) : (
-                <motion.div key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
+                <motion.div
+                  key="open"
+                  initial={{ rotate: 90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                >
                   <Gift />
                 </motion.div>
               )}
             </AnimatePresence>
           </Button>
 
+          {/* SIDEBAR DE INSIGNIAS */}
           <AnimatePresence>
             {isSidebarOpen && (
               <motion.div
@@ -581,7 +677,9 @@ export default function Station9() {
                     <DraggablePrize
                       key={prize.id}
                       prize={prize}
-                      onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
+                      onDragEnd={(event, info) =>
+                        handlePrizeDrop(prize.id, info)
+                      }
                     />
                   ))}
                   {unplacedPrizes.length === 0 && (
@@ -590,41 +688,35 @@ export default function Station9() {
                     </p>
                   )}
                 </div>
-                
-                {allPrizesPlaced && !isStationFinalized && (
-                    <div className="w-full mt-auto space-y-2">
-                        <Button
-                            onClick={handleConfirmStation}
-                            className="w-full"
-                            disabled={isStationConfirmed}
-                        >
-                            <Check className="mr-2 h-4 w-4" />
-                            Confirmar
-                        </Button>
-                        <Button
-                          onClick={handleSaveAndDownload}
-                          className="w-full"
-                          variant="secondary"
-                          disabled={!isStationConfirmed}
-                        >
-                          <Download className="mr-2 h-4 w-4" />
-                          Guardar y Descargar
-                        </Button>
-                    </div>
-                )}
-                {isStationFinalized && (
-                   <Button
-                      onClick={() => setIsCompletionDialogOpen(true)}
-                      className="mt-2 w-full"
-                      variant="secondary"
+
+                {/* BOTONES DE ACCIÓN */}
+                {!isStationFinalized && allPrizesPlaced && (
+                  <div className="w-full mt-auto space-y-2">
+                    <Button
+                      onClick={handleCompleteStation}
+                      className="w-full"
+                      disabled={isStationFinalized}
                     >
-                     Finalizar Aventura
+                      <Check className="mr-2 h-4 w-4" />
+                      Completar estación
                     </Button>
+                  </div>
+                )}
+
+                {isStationFinalized && (
+                  <Button
+                    onClick={() => setIsCompletionDialogOpen(true)}
+                    className="mt-2 w-full"
+                    variant="secondary"
+                  >
+                    Finalizar Aventura
+                  </Button>
                 )}
               </motion.div>
             )}
           </AnimatePresence>
 
+          {/* DIÁLOGO YARA */}
           <AnimatePresence>
             {isYaraMessageVisible && yaraCharImage && (
               <motion.div
