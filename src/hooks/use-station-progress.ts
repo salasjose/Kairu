@@ -6,6 +6,8 @@ import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, getDoc, updateDoc, deleteField, collection, query, getDocs, writeBatch } from 'firebase/firestore';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { useDoc } from '@/firebase/firestore/use-doc';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 // Type for individual challenge progress stored in Firestore
 export type ChallengeProgressDoc = {
@@ -78,9 +80,18 @@ export function useStationProgress() {
       const docSnap = await getDoc(playerDocRef);
       const currentStations = docSnap.exists() && docSnap.data().unlockedStations ? docSnap.data().unlockedStations : [1];
       const newStations = Array.from(new Set([...currentStations, stationId])).sort((a, b) => a - b);
-      await setDoc(playerDocRef, { unlockedStations: newStations }, { merge: true });
+      
+      const dataToSet = { unlockedStations: newStations };
+      setDoc(playerDocRef, dataToSet, { merge: true }).catch(error => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: playerDocRef.path,
+          operation: 'update',
+          requestResourceData: dataToSet
+        }));
+      });
+
     } catch (error) {
-      console.error("Failed to unlock station in Firestore", error);
+       console.error("Failed to read user document before unlocking station", error);
     }
   }, [user, db]);
 
@@ -99,11 +110,14 @@ export function useStationProgress() {
       completedAt: new Date(),
     };
     
-    try {
-      await setDoc(progressDocRef, progressData, { merge: true });
-    } catch (error) {
-      console.error("Failed to complete challenge in Firestore", error);
-    }
+    setDoc(progressDocRef, progressData, { merge: true }).catch(error => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: progressDocRef.path,
+        operation: 'write',
+        requestResourceData: progressData
+      }));
+    });
+
   }, [user, db]);
 
   /**
@@ -119,10 +133,16 @@ export function useStationProgress() {
       progressSnapshot.forEach((doc) => {
           batch.delete(doc.ref);
       });
-      await batch.commit();
+      await batch.commit().catch(error => {
+         // This might fail if rules prevent deletion. Emitting a generic delete error.
+         errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: progressCollectionRef.path,
+            operation: 'delete',
+          }));
+      });
 
       const playerDocRef = doc(db, 'users', user.uid);
-      await updateDoc(playerDocRef, {
+      const fieldsToUpdate = {
         unlockedStations: [1],
         prizes: deleteField(),
         avatar: deleteField(),
@@ -141,6 +161,14 @@ export function useStationProgress() {
         station8Url: deleteField(),
         station9Confirmed: deleteField(),
         station9Finalized: deleteField()
+      };
+
+      updateDoc(playerDocRef, fieldsToUpdate).catch(error => {
+         errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: playerDocRef.path,
+            operation: 'update',
+            requestResourceData: { note: "Resetting user progress fields." }
+          }));
       });
 
     } catch (error) {
