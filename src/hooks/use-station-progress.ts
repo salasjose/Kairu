@@ -126,54 +126,58 @@ export function useStationProgress() {
   const resetProgress = useCallback(async () => {
     if (!user || !db) return;
 
+    // Delete all documents in the stationProgress subcollection
     const progressCollectionRef = collection(db, `users/${user.uid}/stationProgress`);
-    const batch = writeBatch(db);
     try {
       const progressSnapshot = await getDocs(progressCollectionRef);
+      const batch = writeBatch(db);
       progressSnapshot.forEach((doc) => {
           batch.delete(doc.ref);
       });
       await batch.commit().catch(error => {
-         // This might fail if rules prevent deletion. Emitting a generic delete error.
-         errorEmitter.emit('permission-error', new FirestorePermissionError({
+        errorEmitter.emit(
+          'permission-error',
+          new FirestorePermissionError({
             path: progressCollectionRef.path,
             operation: 'delete',
-          }));
+          })
+        );
       });
-
-      const playerDocRef = doc(db, 'users', user.uid);
-      const fieldsToUpdate = {
-        unlockedStations: [1],
-        prizes: deleteField(),
-        avatar: deleteField(),
-        chosenScenario: deleteField(),
-        placedPrizes: deleteField(),
-        station1FaunaPhotos: deleteField(),
-        station1FloraPhotos: deleteField(),
-        station1HabitatPhotos: deleteField(),
-        station2Days: deleteField(),
-        station3UrlCrafts: deleteField(),
-        station3UrlSeparate: deleteField(),
-        station4Url: deleteField(),
-        station5Url: deleteField(),
-        station6VideoUrl: deleteField(),
-        station7Businesses: deleteField(),
-        station8Url: deleteField(),
-        station9Confirmed: deleteField(),
-        station9Finalized: deleteField()
-      };
-
-      updateDoc(playerDocRef, fieldsToUpdate).catch(error => {
-         errorEmitter.emit('permission-error', new FirestorePermissionError({
-            path: playerDocRef.path,
-            operation: 'update',
-            requestResourceData: { note: "Resetting user progress fields." }
-          }));
-      });
-
     } catch (error) {
-        console.error("Failed to reset progress in Firestore", error);
+      console.error("Failed to delete stationProgress subcollection:", error);
     }
+    
+    // Update the main user document to remove game-specific fields
+    const playerDocRef = doc(db, 'users', user.uid);
+    const fieldsToReset = {
+      unlockedStations: [1],
+      prizes: deleteField(),
+      avatar: deleteField(),
+      chosenScenario: deleteField(),
+      placedPrizes: deleteField(),
+      station1FaunaPhotos: deleteField(),
+      station1FloraPhotos: deleteField(),
+      station1HabitatPhotos: deleteField(),
+      station2Days: deleteField(),
+      station3UrlCrafts: deleteField(),
+      station3UrlSeparate: deleteField(),
+      station4Url: deleteField(),
+      station5Url: deleteField(),
+      station6VideoUrl: deleteField(),
+      station7Businesses: deleteField(),
+      station8Url: deleteField(),
+      station9Confirmed: deleteField(),
+      station9Finalized: deleteField()
+    };
+
+    updateDoc(playerDocRef, fieldsToReset).catch(error => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: playerDocRef.path,
+        operation: 'update',
+        requestResourceData: { note: "Resetting user game progress fields." }
+        }));
+    });
+
   }, [user, db]);
 
   return { 
