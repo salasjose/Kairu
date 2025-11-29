@@ -186,7 +186,6 @@ export default function GameClient() {
       const derivedName: string =
         (finalData.nombre && String(finalData.nombre).trim()) ||
         (finalData.usuario && String(finalData.usuario).trim()) ||
-        (finalData.name && String(finalData.name).trim()) ||
         'Jugador';
         
       finalData.name = derivedName;
