@@ -18,12 +18,12 @@ import { toast } from '@/hooks/use-toast';
 
 export interface PlayerState {
   id: string;
-  name: string;
+  name: string; // Este es el `displayName`
   avatar: string;
   unlockedStations: number[];
   chosenScenario: string | null;
 
-  // Campos de registro (opcionalmente en el estado para usarlos en el header u otros sitios)
+  // Campos de registro
   nombre?: string;
   apellido?: string;
   usuario?: string;
@@ -46,6 +46,8 @@ export default function GameClient() {
 
     setIsFetchingPlayer(true);
     const playerDocRef = doc(db, 'users', user.uid);
+    
+    // onSnapshot escucha cambios en tiempo real
     const unsubscribe = onSnapshot(
       playerDocRef,
       (docSnap) => {
@@ -53,11 +55,9 @@ export default function GameClient() {
         if (docSnap.exists()) {
           const data = docSnap.data() as any;
 
-          // Construimos el nombre a mostrar desde los datos reales almacenados
           const displayName: string =
             (data.nombre && String(data.nombre).trim()) ||
             (data.usuario && String(data.usuario).trim()) ||
-            (data.name && String(data.name).trim()) ||
             'Jugador';
 
           const newState: PlayerState = {
@@ -66,8 +66,7 @@ export default function GameClient() {
             avatar: data.avatar || '',
             chosenScenario: data.chosenScenario || null,
             unlockedStations: data.unlockedStations || [1],
-
-            // Campos de registro (si existen en Firestore)
+            // Copiamos todos los campos del perfil
             nombre: data.nombre,
             apellido: data.apellido,
             usuario: data.usuario,
@@ -77,13 +76,14 @@ export default function GameClient() {
           };
 
           setPlayerState((currentState) => {
+            // Evita re-renders innecesarios si el estado no ha cambiado
             if (JSON.stringify(currentState) === JSON.stringify(newState)) {
               return currentState;
             }
             return newState;
           });
 
-          // Si falta avatar o escenario, lo tratamos como "nuevo" para completar Onboarding visual
+          // Si falta avatar o escenario, lo tratamos como "nuevo" para completar Onboarding
           if (!newState.avatar || !newState.chosenScenario) {
             setIsNewUser(true);
           } else {
@@ -91,24 +91,24 @@ export default function GameClient() {
           }
 
           const allStationsComplete = stations
-            .filter(s => s.id !== 9) // Excluir la estación 9 del chequeo de completitud
+            .filter(s => s.id !== 9)
             .every((s) => newState.unlockedStations?.includes(s.id));
-
 
           if (allStationsComplete) {
             setIsCompletionDialogOpen(true);
           } else {
             setIsCompletionDialogOpen(false);
           }
+
         } else {
-          // No existe documento en Firestore -> mostrar flujo de Onboarding
+          // El documento no existe, es un usuario nuevo que necesita completar el registro.
           setIsNewUser(true);
         }
       },
       (error) => {
         console.error('Error fetching player state:', error);
         setIsFetchingPlayer(false);
-        setIsNewUser(true);
+        setIsNewUser(true); // Si hay un error, mostramos el onboarding
       }
     );
 
@@ -122,6 +122,7 @@ export default function GameClient() {
         if (unsub) unsub();
       };
     } else {
+      // Si no hay usuario, reseteamos todo el estado local.
       setPlayerState(null);
       setIsNewUser(true);
       setIsFetchingPlayer(false);
@@ -134,8 +135,8 @@ export default function GameClient() {
   };
 
   const handleOnboardingComplete = async (data: {
-    avatar: string;
-    chosenScenario: string;
+    avatar?: string;
+    chosenScenario?: string;
     signupData?: z.infer<typeof SignUpFormSchema>;
   }) => {
     if (!user || !db) return;
@@ -143,58 +144,44 @@ export default function GameClient() {
     const playerDocRef = doc(db, 'users', user.uid);
   
     try {
-      // Tomamos los datos existentes para NO perder nada
-      const docSnap = await getDoc(playerDocRef);
-      const existingData = docSnap.exists() ? docSnap.data() : {};
-      
-      const { signupData, ...onboardingData } = data;
+      const finalData: Record<string, any> = {};
 
-      // Partimos de lo que ya hay en Firestore
-      const finalData: Record<string, any> = { ...existingData };
-
-      // 1. Incorporar datos de registro (si vienen del SignUpForm)
-      if (signupData) {
-        // Mapea todos los campos del formulario de registro
+      // Caso 1: Es un registro nuevo. Se guardan todos los datos del formulario.
+      if (data.signupData) {
         Object.assign(finalData, {
-          nombre: signupData.nombre,
-          apellido: signupData.apellido,
-          usuario: signupData.usuario,
-          email: signupData.email,
-          clave: signupData.clave, // Asegúrate de guardar la clave si es necesario
-          telefono: signupData.telefono,
-          edad: signupData.edad,
+          id: user.uid,
+          ...data.signupData,
+          unlockedStations: [1], // Estado inicial del juego
         });
       }
-
-      // Si no existe email en el doc y el usuario autenticado tiene email, lo rellenamos
-      if (!finalData.email && user.email) {
-        finalData.email = user.email;
+      
+      // Caso 2: Es un usuario existente que está completando el flujo (eligiendo avatar/lienzo).
+      // O un nuevo usuario que acaba de registrarse y ahora está eligiendo avatar/lienzo.
+      if (data.avatar && data.chosenScenario) {
+        Object.assign(finalData, {
+          avatar: data.avatar,
+          chosenScenario: data.chosenScenario,
+        });
+      }
+      
+      // Si no tenemos un nombre derivado de los datos de registro, usamos el del usuario de Auth
+      if (!finalData.nombre && !finalData.usuario) {
+          const derivedName: string =
+            (playerState?.nombre && String(playerState.nombre).trim()) ||
+            (playerState?.usuario && String(playerState.usuario).trim()) ||
+            'Jugador';
+          finalData.name = derivedName;
+      } else {
+          finalData.name = finalData.nombre || finalData.usuario;
       }
 
-      // 2. Incorporar siempre los datos del juego (avatar, escenario, estaciones)
-      Object.assign(finalData, {
-        id: user.uid,
-        ...onboardingData, // avatar, chosenScenario
-        unlockedStations:
-          Array.isArray(existingData?.unlockedStations) &&
-          existingData.unlockedStations.length > 0
-            ? existingData.unlockedStations
-            : [1],
-      });
-      
-      // 3. Definir `name` solo si tenemos algo real
-      const derivedName: string =
-        (finalData.nombre && String(finalData.nombre).trim()) ||
-        (finalData.usuario && String(finalData.usuario).trim()) ||
-        'Jugador';
-        
-      finalData.name = derivedName;
 
       // Guardar en Firestore, fusionando con lo que ya exista.
+      // Esto es clave para no borrar datos si se llama a la función en diferentes momentos.
       await setDoc(playerDocRef, finalData, { merge: true });
       
       // La actualización del estado se gestionará automáticamente por el `onSnapshot`
-      // al detectar el cambio en la base de datos, no es necesario llamar a `setPlayerState` aquí.
+      // al detectar el cambio en la base de datos.
       
       setIsNewUser(false);
   
@@ -219,6 +206,7 @@ export default function GameClient() {
     );
   }
   
+  // Si es un nuevo usuario (sin avatar/lienzo o sin documento), mostramos el Onboarding.
   if (isNewUser) {
     return (
       <OnboardingFlow
@@ -228,6 +216,7 @@ export default function GameClient() {
     );
   }
   
+  // Si después de todo no hay estado de jugador, mostramos una carga final.
   if (!playerState) {
     return (
       <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background/80 backdrop-blur-sm">
@@ -237,6 +226,7 @@ export default function GameClient() {
     );
   }
 
+  // Posiciones de las estaciones en el mapa
   const stationPositions = [
     { top: '65%', left: '12%' },
     { top: '60%', left: '32%' },
@@ -317,5 +307,3 @@ export default function GameClient() {
     </BackgroundImage>
   );
 }
-
-    
