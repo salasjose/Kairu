@@ -68,14 +68,12 @@ function ResponsiveBackground() {
 export default function OnboardingFlow({ onComplete, onLoginSuccess }: OnboardingFlowProps) {
     const auth = useAuth();
     const [step, setStep] = useState<Step>('welcome');
-    // Este estado ahora SOLO guarda el nombre para el mensaje de Yara.
     const [formName, setFormName] = useState<string>('');
     const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
     const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     
     useEffect(() => {
-        // Si ya hay un usuario logueado, saltar directamente a la selección de avatar.
         if (auth?.currentUser && (step === 'welcome' || step === 'signup' || step === 'login')) {
             setFormName(auth.currentUser.displayName || '');
             setStep('avatar');
@@ -92,11 +90,11 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
     }, []);
 
     const scenarios = useMemo(() => [
-        { name: "Terral", ...PlaceHolderImages.find(p => p.id === 'scenario-bosque-seco') },
-        { name: "Civika", ...PlaceHolderImages.find(p => p.id === 'scenario-ciudad') },
-        { name: "Mareva", ...PlaceHolderImages.find(p => p.id === 'scenario-mar-costero') },
-        { name: "Manglia", ...PlaceHolderImages.find(p => p.id === 'scenario-manglares') },
-    ].filter(Boolean) as any[], []);
+        { name: "Terral", ...(PlaceHolderImages.find(p => p.id === 'scenario-bosque-seco') || {}) },
+        { name: "Civika", ...(PlaceHolderImages.find(p => p.id === 'scenario-ciudad') || {}) },
+        { name: "Mareva", ...(PlaceHolderImages.find(p => p.id === 'scenario-mar-costero') || {}) },
+        { name: "Manglia", ...(PlaceHolderImages.find(p => p.id === 'scenario-manglares') || {}) },
+    ].filter((s) => s.imageUrl) as any[], []);
 
 
     const handleSignUpSubmit = async (data: SignUpData) => {
@@ -106,17 +104,11 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         }
         setIsLoading(true);
         try {
-            // Crea el usuario en Firebase Auth
             await signUp(auth, data.email, data.clave);
-            
-            // **CAMBIO CRÍTICO**: Llama a onComplete INMEDIATAMENTE con los datos del formulario.
-            // Esto guarda los datos de registro en Firestore tan pronto como se crea la cuenta.
             onComplete({ signupData: data });
 
-            // Guarda el nombre para el mensaje de bienvenida de Yara
             setFormName(data.nombre);
             
-            // Avanza al siguiente paso
             setStep('avatar');
         } catch (error: any) {
              if (error.code === 'auth/email-already-in-use') {
@@ -150,7 +142,6 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         setIsLoading(true);
         try {
             await login(auth, data.email, data.clave);
-            // `onLoginSuccess` refrescará los datos del juego desde Firestore.
             onLoginSuccess();
         } catch (error: any) {
             let message = "No se pudo iniciar sesión. Inténtalo de nuevo.";
@@ -176,7 +167,6 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         setSelectedScenario(scenarioUrl);
     };
 
-    // Esta función ahora SOLO guarda el avatar y el lienzo.
     const handleFinalStepConfirm = () => {
         if (!selectedAvatar) {
             setStep('avatar');
@@ -196,8 +186,6 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
             return;
         }
 
-        // Llama a onComplete solo con los datos del juego (avatar y lienzo).
-        // Los datos de registro ya se guardaron.
         onComplete({
             avatar: selectedAvatar,
             chosenScenario: selectedScenario,

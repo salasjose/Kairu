@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
 import { stations } from '@/lib/data';
 import StationNode from '@/app/components/StationNode';
@@ -47,7 +47,6 @@ export default function GameClient() {
     setIsFetchingPlayer(true);
     const playerDocRef = doc(db, 'users', user.uid);
     
-    // onSnapshot escucha cambios en tiempo real
     const unsubscribe = onSnapshot(
       playerDocRef,
       (docSnap) => {
@@ -76,14 +75,12 @@ export default function GameClient() {
           };
 
           setPlayerState((currentState) => {
-            // Evita re-renders innecesarios si el estado no ha cambiado
             if (JSON.stringify(currentState) === JSON.stringify(newState)) {
               return currentState;
             }
             return newState;
           });
 
-          // Si falta avatar o escenario, lo tratamos como "nuevo" para completar Onboarding
           if (!newState.avatar || !newState.chosenScenario) {
             setIsNewUser(true);
           } else {
@@ -101,14 +98,13 @@ export default function GameClient() {
           }
 
         } else {
-          // El documento no existe, es un usuario nuevo que necesita completar el registro.
           setIsNewUser(true);
         }
       },
       (error) => {
         console.error('Error fetching player state:', error);
         setIsFetchingPlayer(false);
-        setIsNewUser(true); // Si hay un error, mostramos el onboarding
+        setIsNewUser(true);
       }
     );
 
@@ -122,7 +118,6 @@ export default function GameClient() {
         if (unsub) unsub();
       };
     } else {
-      // Si no hay usuario, reseteamos todo el estado local.
       setPlayerState(null);
       setIsNewUser(true);
       setIsFetchingPlayer(false);
@@ -130,7 +125,6 @@ export default function GameClient() {
   }, [user, fetchInitialPlayerState]);
   
   const handleResetOnboarding = () => {
-    // Después de un reset de progreso, se vuelve a mostrar el Onboarding
     setIsNewUser(true);
   };
 
@@ -146,17 +140,14 @@ export default function GameClient() {
     try {
       const finalData: Record<string, any> = {};
 
-      // Caso 1: Es un registro nuevo. Se guardan todos los datos del formulario.
       if (data.signupData) {
         Object.assign(finalData, {
           id: user.uid,
           ...data.signupData,
-          unlockedStations: [1], // Estado inicial del juego
+          unlockedStations: [1],
         });
       }
       
-      // Caso 2: Es un usuario existente que está completando el flujo (eligiendo avatar/lienzo).
-      // O un nuevo usuario que acaba de registrarse y ahora está eligiendo avatar/lienzo.
       if (data.avatar && data.chosenScenario) {
         Object.assign(finalData, {
           avatar: data.avatar,
@@ -164,24 +155,7 @@ export default function GameClient() {
         });
       }
       
-      // Si no tenemos un nombre derivado de los datos de registro, usamos el del usuario de Auth
-      if (!finalData.nombre && !finalData.usuario) {
-          const derivedName: string =
-            (playerState?.nombre && String(playerState.nombre).trim()) ||
-            (playerState?.usuario && String(playerState.usuario).trim()) ||
-            'Jugador';
-          finalData.name = derivedName;
-      } else {
-          finalData.name = finalData.nombre || finalData.usuario;
-      }
-
-
-      // Guardar en Firestore, fusionando con lo que ya exista.
-      // Esto es clave para no borrar datos si se llama a la función en diferentes momentos.
       await setDoc(playerDocRef, finalData, { merge: true });
-      
-      // La actualización del estado se gestionará automáticamente por el `onSnapshot`
-      // al detectar el cambio en la base de datos.
       
       setIsNewUser(false);
   
@@ -206,7 +180,6 @@ export default function GameClient() {
     );
   }
   
-  // Si es un nuevo usuario (sin avatar/lienzo o sin documento), mostramos el Onboarding.
   if (isNewUser) {
     return (
       <OnboardingFlow
@@ -216,7 +189,6 @@ export default function GameClient() {
     );
   }
   
-  // Si después de todo no hay estado de jugador, mostramos una carga final.
   if (!playerState) {
     return (
       <main className="flex flex-col items-center justify-center p-4 min-h-screen w-full bg-background/80 backdrop-blur-sm">
@@ -226,7 +198,6 @@ export default function GameClient() {
     );
   }
 
-  // Posiciones de las estaciones en el mapa
   const stationPositions = [
     { top: '65%', left: '12%' },
     { top: '60%', left: '32%' },
