@@ -1,9 +1,11 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { updateProfile } from 'firebase/auth';
+
 
 import SignUpForm from './SignUpForm';
 import LoginForm from './LoginForm';
@@ -104,14 +106,40 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
         }
         setIsLoading(true);
         try {
-            await signUp(auth, data.email, data.clave);
-            onComplete({ signupData: data });
+            // 1. Create user in Firebase Auth
+            const userCredential = await signUp(auth, data.email, data.clave);
+            const user = userCredential.user;
 
+            // 2. Save additional data to Firestore
+            const db = getFirestore(); // Import from firebase/firestore
+            await setDoc(doc(db, "users", user.uid), {
+                id: user.uid,
+                nombre: data.nombre,
+                apellido: data.apellido,
+                usuario: data.usuario,
+                email: data.email,
+                telefono: data.telefono,
+                edad: data.edad,
+                createdAt: new Date(),
+                unlockedStations: [1]
+            });
+    
+            // 3. Update displayName in Firebase Auth (optional but good practice)
+            await updateProfile(user, {
+                displayName: data.nombre
+            });
+    
+            onComplete({ signupData: data });
             setFormName(data.nombre);
-            
             setStep('avatar');
+            
+            toast({
+                title: "¡Cuenta creada!",
+                description: "Tu cuenta se ha creado exitosamente.",
+            });
+
         } catch (error: any) {
-             if (error.code === 'auth/email-already-in-use') {
+            if (error.code === 'auth/email-already-in-use') {
                 toast({
                     title: "El correo ya está en uso",
                     description: "Parece que ya tienes una cuenta. Por favor, inicia sesión.",
@@ -125,7 +153,7 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
             } else {
                 toast({
                     title: "Error de Registro",
-                    description: "No se pudo crear la cuenta. Inténtalo de nuevo.",
+                    description: error.message || "No se pudo crear la cuenta. Inténtalo de nuevo.",
                     variant: "destructive"
                 });
             }
@@ -133,7 +161,7 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
             setIsLoading(false);
         }
     };
-
+    
     const handleLoginSubmit = async (data: LoginData) => {
         if (!auth) {
              toast({ title: "Error", description: "Servicio de autenticación no disponible.", variant: "destructive" });
