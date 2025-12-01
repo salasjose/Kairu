@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Image from "next/image";
@@ -14,7 +14,7 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card } from "@/components/ui/card";
 import TypewriterText from "../auth/TypewriterText";
 import { Slider } from "@/components/ui/slider";
-import { Trash2, Gift, X, Check } from "lucide-react";
+import { Trash2, Gift, X, Check, Download } from "lucide-react";
 import ResponsiveBackground from "../ResponsiveBackground";
 import html2canvas from "html2canvas";
 
@@ -129,6 +129,7 @@ const ScenarioPicker = ({
 export default function Station9() {
   const [chosenScenario, setChosenScenario] = useState<string | null>(null);
   const [playerName, setPlayerName] = useState<string>("");
+
   const [isLoading, setIsLoading] = useState(true);
 
   const [placedPrizes, setPlacedPrizes] = useState<PlacedPrize[]>([]);
@@ -138,6 +139,9 @@ export default function Station9() {
   const [isYaraMessageVisible, setIsYaraMessageVisible] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
+  // NUEVA LÓGICA:
+  // isStationConfirmed = estación guardada (bloquea mover/escalar)
+  // isStationFinalized  = imagen descargada (estación finalizada)
   const [isStationConfirmed, setIsStationConfirmed] = useState(false);
   const [isStationFinalized, setIsStationFinalized] = useState(false);
 
@@ -197,19 +201,25 @@ export default function Station9() {
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
+
           setChosenScenario(data.chosenScenario || null);
+
           setPlacedPrizes(
             (data.placedPrizes || []).map((p: any) => ({
               ...p,
               scale: p.scale || 1,
             }))
           );
+
           const fullName =
             data.usuario || `${data.nombre || ""} ${data.apellido || ""}`.trim();
           setPlayerName(fullName || "Guardián");
+
+          // Compatibilidad con campos previos
           const confirmed = data.station9Confirmed || false;
           const finalized = data.station9Finalized || false;
-          setIsStationConfirmed(confirmed || finalized); // si está finalizada, también bloqueamos edición
+
+          setIsStationConfirmed(confirmed || finalized);
           setIsStationFinalized(finalized);
         }
       } catch (error) {
@@ -248,7 +258,7 @@ export default function Station9() {
   }, [isLoading, scheduleYaraDialog]);
 
   // ------------------------------------------------------------------
-  // Guardar insignias en Firestore
+  // Guardar insignias en Firestore (posición + escala)
   // ------------------------------------------------------------------
 
   const savePrizesToDb = useCallback(
@@ -278,6 +288,7 @@ export default function Station9() {
   // ------------------------------------------------------------------
 
   const handlePrizeDrop = async (prizeId: string, info: PanInfo) => {
+    // Si la estación ya está guardada, no permite agregar nuevas insignias
     if (isStationConfirmed || !canvasRef.current) return;
 
     const canvasRect = canvasRef.current.getBoundingClientRect();
@@ -287,7 +298,7 @@ export default function Station9() {
     let x = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
     let y = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
 
-    // margen básico para que no "desaparezcan" en los bordes
+    // margen básico para que no se salgan de los bordes
     x = clamp(x, 5, 95);
     y = clamp(y, 5, 95);
 
@@ -315,7 +326,8 @@ export default function Station9() {
   // ------------------------------------------------------------------
 
   const handleScaleChange = (prizeId: string, newScale: number[]) => {
-    if (isStationConfirmed) return;
+    if (isStationConfirmed) return; // no permite cambiar tamaño si ya está guardada
+
     const scale = clamp(newScale[0], 0.5, 5); // 50% a 500%
     const updated = placedPrizes.map((p) =>
       p.id === prizeId ? { ...p, scale } : p
@@ -325,6 +337,7 @@ export default function Station9() {
 
   const handleScaleChangeCommit = async (prizeId: string, newScale: number[]) => {
     if (isStationConfirmed) return;
+
     const scale = clamp(newScale[0], 0.5, 5);
     const updated = placedPrizes.map((p) =>
       p.id === prizeId ? { ...p, scale } : p
@@ -338,7 +351,8 @@ export default function Station9() {
   // ------------------------------------------------------------------
 
   const handleDeletePrize = async (prizeId: string) => {
-    if (isStationConfirmed) return;
+    if (isStationConfirmed) return; // bloquea eliminar si ya está guardada
+
     const newPlacedPrizes = placedPrizes.filter((p) => p.id !== prizeId);
     setPlacedPrizes(newPlacedPrizes);
     await savePrizesToDb(newPlacedPrizes);
@@ -346,43 +360,74 @@ export default function Station9() {
   };
 
   // ------------------------------------------------------------------
-  // Completar estación (confirmar + descargar + finalizar)
+  // GUARDAR ESTACIÓN (bloquear movimiento y escala)
   // ------------------------------------------------------------------
 
-  const handleCompleteStation = async () => {
-    if (!user || !db || !canvasRef.current) return;
-    if (isStationFinalized) return;
+  const handleSaveStation = async () => {
+    if (!user || !db) return;
+    if (isStationConfirmed) return;
 
-    // todas las insignias colocadas
+    // Validar que todas las insignias del sidebar estén colocadas
     const unplaced = collectedPrizes.filter(
       (p) => !placedPrizes.some((pp) => pp.id === p.id)
     );
     if (collectedPrizes.length === 0 || unplaced.length > 0) {
       toast({
         title: "Insignias incompletas",
-        description: "Debes colocar todas las insignias antes de completar la estación.",
+        description: "Debes colocar todas las insignias antes de guardar la estación.",
         variant: "destructive",
       });
       return;
     }
 
-    setIsStationConfirmed(true);
-    setSelectedPrizeId(null);
-
     try {
       const userDocRef = doc(db, "users", user.uid);
-
-      // Guardar confirmación
       await setDoc(
         userDocRef,
         { station9Confirmed: true },
         { merge: true }
       );
 
-      // Pequeña pausa para que se oculten sliders/controles antes de la captura
+      setIsStationConfirmed(true); // a partir de aquí se bloquea mover/escala
+      setSelectedPrizeId(null);
+
+      toast({
+        title: "Estación guardada",
+        description: "Tus insignias han sido bloqueadas y la estación quedó lista para descargar.",
+      });
+    } catch (e) {
+      console.error("Error saving station", e);
+      toast({
+        title: "Error",
+        description: "Ocurrió un problema al guardar la estación.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // ------------------------------------------------------------------
+  // DESCARGAR IMAGEN (habilitado solo después de guardar estación)
+  // ------------------------------------------------------------------
+
+  const handleDownloadImage = async () => {
+    if (!user || !db || !canvasRef.current) return;
+
+    // Solo permite descargar si la estación fue guardada
+    if (!isStationConfirmed) {
+      toast({
+        title: "Primero guarda tu estación",
+        description: "Debes pulsar 'Guardar estación' antes de descargar la imagen.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+
+      // Pausa pequeña para asegurar que no haya sliders/controles visibles
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // Captura del lienzo
       const canvas = await html2canvas(canvasRef.current, {
         useCORS: true,
         backgroundColor: null,
@@ -396,7 +441,6 @@ export default function Station9() {
       link.click();
       document.body.removeChild(link);
 
-      // Marcar estación finalizada
       await setDoc(
         userDocRef,
         { station9Finalized: true },
@@ -405,20 +449,18 @@ export default function Station9() {
       setIsStationFinalized(true);
 
       toast({
-        title: "¡Estación completada!",
-        description: "Tu creación ha sido descargada. ¡Felicitaciones por completar la aventura!",
+        title: "Imagen descargada",
+        description: "Tu estación fue descargada correctamente.",
       });
 
       setTimeout(() => {
         setIsCompletionDialogOpen(true);
       }, 1000);
     } catch (e) {
-      console.error("Error completing station", e);
-      setIsStationConfirmed(false);
-      setIsStationFinalized(false);
+      console.error("Error downloading image", e);
       toast({
         title: "Error",
-        description: "Ocurrió un problema al completar o descargar la estación.",
+        description: "Ocurrió un problema al descargar la estación.",
         variant: "destructive",
       });
     }
@@ -435,7 +477,7 @@ export default function Station9() {
       await setDoc(userDocRef, { chosenScenario: scenarioUrl }, { merge: true });
       setChosenScenario(scenarioUrl);
       toast({
-        title: "Lienzo Guardado",
+        title: "Lienzo guardado",
         description: "Tu estación ahora tiene un fondo.",
       });
     } catch (error) {
@@ -536,7 +578,7 @@ export default function Station9() {
                       let newYPercent =
                         ((prevY + info.offset.y) / rect.height) * 100;
 
-                      // Clampeo usando el tamaño real de la insignia (para que no se salga del lienzo)
+                      // Clampeo usando el tamaño real de la insignia
                       const elWidthPx = element.offsetWidth || 0;
                       const elHeightPx = element.offsetHeight || 0;
 
@@ -690,18 +732,26 @@ export default function Station9() {
                 </div>
 
                 {/* BOTONES DE ACCIÓN */}
-                {!isStationFinalized && allPrizesPlaced && (
-                  <div className="w-full mt-auto space-y-2">
-                    <Button
-                      onClick={handleCompleteStation}
-                      className="w-full"
-                      disabled={isStationFinalized}
-                    >
-                      <Check className="mr-2 h-4 w-4" />
-                      Completar estación
-                    </Button>
-                  </div>
-                )}
+                <div className="w-full mt-auto space-y-2">
+                  <Button
+                    onClick={handleSaveStation}
+                    className="w-full"
+                    disabled={!allPrizesPlaced || isStationConfirmed}
+                  >
+                    <Check className="mr-2 h-4 w-4" />
+                    Guardar estación
+                  </Button>
+
+                  <Button
+                    onClick={handleDownloadImage}
+                    className="w-full"
+                    disabled={!isStationConfirmed}
+                    variant={isStationFinalized ? "secondary" : "default"}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Descargar imagen
+                  </Button>
+                </div>
 
                 {isStationFinalized && (
                   <Button
