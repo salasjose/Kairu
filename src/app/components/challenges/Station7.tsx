@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -150,6 +151,11 @@ const AddBusinessDialog = ({
     setImage(dataUrl);
     setIsCameraOpen(false);
   };
+  
+  const resetDialog = () => {
+    setName('');
+    setImage(null);
+  }
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -169,18 +175,24 @@ const AddBusinessDialog = ({
       return;
     }
     onSave({ name, imageUrl: image });
+    resetDialog();
   };
 
-  const resetAndClose = () => {
-    setName('');
-    setImage(null);
+  const handleClose = () => {
+    resetDialog();
     onClose();
   };
+  
+  const handleTakePhoto = () => {
+    onClose(); 
+    setIsCameraOpen(true);
+  }
+
 
   return (
     <>
       {isCameraOpen && <CameraView onCapture={handleCapture} onCancel={() => setIsCameraOpen(false)} />}
-      <Dialog open={open && !isCameraOpen} onOpenChange={resetAndClose}>
+      <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Añadir Negocio Verde</DialogTitle>
@@ -202,7 +214,7 @@ const AddBusinessDialog = ({
               <Button
                 variant="outline"
                 className="h-20"
-                onClick={() => setIsCameraOpen(true)}
+                onClick={handleTakePhoto}
               >
                 <Camera className="mr-2" />
                 Tomar Foto
@@ -224,7 +236,7 @@ const AddBusinessDialog = ({
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="ghost" onClick={resetAndClose} disabled={isLoading}>
+              <Button variant="ghost" onClick={handleClose} disabled={isLoading}>
                 Cancelar
               </Button>
             </DialogClose>
