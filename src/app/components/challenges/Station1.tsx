@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Camera, CheckCircle, Video, X } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle, Video, X, SwitchCamera } from "lucide-react";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import ChallengeContainer from "../ChallengeContainer";
@@ -54,8 +54,14 @@ const CameraView = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
+
+  const toggleCamera = () => {
+    setFacingMode(prev => prev === "environment" ? "user" : "environment");
+  };
 
   useEffect(() => {
+    let stream: MediaStream | null = null;
     const getCameraPermission = async () => {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         console.error("Camera API is not supported by this browser.");
@@ -68,7 +74,7 @@ const CameraView = ({
         return;
       }
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
         setHasCameraPermission(true);
 
         if (videoRef.current) {
@@ -88,12 +94,11 @@ const CameraView = ({
     getCameraPermission();
 
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
+      if (stream) {
         stream.getTracks().forEach((track) => track.stop());
       }
     };
-  }, []);
+  }, [facingMode]);
 
   const handleCapture = () => {
     if (videoRef.current) {
@@ -126,18 +131,19 @@ const CameraView = ({
         )}
       </div>
       <div className="flex items-center justify-center gap-4 mt-4">
-        <Button onClick={onCancel} variant="outline" size="lg" className="rounded-full">
-          <X className="h-6 w-6 mr-2" />
-          Cancelar
+        <Button onClick={onCancel} variant="outline" size="icon" className="rounded-full h-16 w-16">
+          <X className="h-8 w-8" />
         </Button>
         <Button
           onClick={handleCapture}
           size="lg"
           disabled={!hasCameraPermission}
-          className="rounded-full"
+          className="rounded-full h-20 w-20"
         >
-          <Camera className="h-6 w-6 mr-2" />
-          Tomar Foto
+          <Camera className="h-10 w-10" />
+        </Button>
+         <Button onClick={toggleCamera} variant="outline" size="icon" className="rounded-full h-16 w-16" disabled={!hasCameraPermission}>
+            <SwitchCamera className="h-8 w-8" />
         </Button>
       </div>
     </div>
@@ -289,7 +295,6 @@ const PhotoChallenge = ({
   }, [user, db]);
 
   const handleCapture = async (dataUrl: string) => {
-    setIsAddPhotoDialogOpen(false);
     setIsCameraOpen(false);
 
     if (!user || !storage) {
@@ -353,10 +358,12 @@ const PhotoChallenge = ({
 
 
   const handleUploadClick = () => {
+    setIsAddPhotoDialogOpen(false);
     fileInputRef.current?.click();
   };
 
   const handleTakeNewPhotoClick = () => {
+    setIsAddPhotoDialogOpen(false);
     setIsCameraOpen(true);
   };
 
@@ -531,7 +538,6 @@ const HabitatChallenge = ({
   };
   
   const handleCapture = async (dataUrl: string) => {
-    setIsAddPhotoDialogOpen(false);
     setIsCameraOpen(false);
 
     if (!user || !storage) {
@@ -592,10 +598,12 @@ const HabitatChallenge = ({
   };
 
   const handleUploadClick = () => {
+    setIsAddPhotoDialogOpen(false);
     fileInputRef.current?.click();
   };
 
   const handleTakeNewPhotoClick = () => {
+    setIsAddPhotoDialogOpen(false);
     setIsCameraOpen(true);
   };
 

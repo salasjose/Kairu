@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Camera, Store, Trash2 } from 'lucide-react';
+import { Camera, Store, Trash2, SwitchCamera, X, Video } from 'lucide-react';
 import PrizeDialog from '../PrizeDialog';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,7 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useUser, useFirestore, useStorage } from '@/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
@@ -37,6 +38,89 @@ type Business = {
   imageUrl: string;
 };
 
+const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void; onCancel: () => void; }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
+
+  const toggleCamera = () => {
+    setFacingMode(prev => prev === "environment" ? "user" : "environment");
+  };
+
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    const getCameraPermission = async () => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setHasCameraPermission(false);
+        return;
+      }
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
+        setHasCameraPermission(true);
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (error) {
+        console.error("Error accessing camera:", error);
+        setHasCameraPermission(false);
+      }
+    };
+
+    getCameraPermission();
+
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [facingMode]);
+
+  const handleCapture = () => {
+    if (videoRef.current) {
+        const canvas = document.createElement('canvas');
+        canvas.width = videoRef.current.videoWidth;
+        canvas.height = videoRef.current.videoHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+            onCapture(canvas.toDataURL('image/jpeg'));
+        }
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4">
+      <div className="relative w-full max-w-lg aspect-[4/3] bg-black rounded-lg overflow-hidden">
+        <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
+        {hasCameraPermission === false && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black">
+                <Alert variant="destructive" className="max-w-sm">
+                  <Video className="h-4 w-4" />
+                  <AlertTitle>Acceso a la Cámara Requerido</AlertTitle>
+                  <AlertDescription>
+                    Por favor, habilita los permisos de la cámara.
+                  </AlertDescription>
+                </Alert>
+            </div>
+        )}
+      </div>
+      <div className="flex items-center justify-center gap-4 mt-4">
+        <Button onClick={onCancel} variant="outline" size="icon" className="rounded-full h-16 w-16">
+            <X className="h-8 w-8"/>
+        </Button>
+        <Button onClick={handleCapture} size="lg" disabled={!hasCameraPermission} className="rounded-full h-20 w-20">
+          <Camera className="h-10 w-10" />
+        </Button>
+        <Button onClick={toggleCamera} variant="outline" size="icon" className="rounded-full h-16 w-16" disabled={!hasCameraPermission}>
+            <SwitchCamera className="h-8 w-8" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+
 const AddBusinessDialog = ({
   open,
   onClose,
@@ -50,6 +134,7 @@ const AddBusinessDialog = ({
 }) => {
   const [name, setName] = useState('');
   const [image, setImage] = useState<string | null>(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,6 +144,11 @@ const AddBusinessDialog = ({
       reader.onload = (e) => setImage(e.target?.result as string);
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleCapture = (dataUrl: string) => {
+    setImage(dataUrl);
+    setIsCameraOpen(false);
   };
 
   const handleSave = () => {
@@ -73,7 +163,7 @@ const AddBusinessDialog = ({
     if (!image) {
       toast({
         title: 'Falta la imagen',
-        description: 'Por favor, carga una imagen para el negocio.',
+        description: 'Por favor, carga o toma una imagen para el negocio.',
         variant: 'destructive',
       });
       return;
@@ -88,50 +178,63 @@ const AddBusinessDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={resetAndClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Añadir Negocio Verde</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <Input
-            placeholder="Nombre del negocio"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept="image/*"
-            className="hidden"
-          />
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Camera className="mr-2" />
-            {image ? 'Cambiar Imagen' : 'Cargar Imagen'}
-          </Button>
-          {image && (
-            <div className="relative w-full h-32 rounded-md overflow-hidden border">
-              <Image src={image} alt="Vista previa" fill style={{ objectFit: 'cover' }} />
+    <>
+      {isCameraOpen && <CameraView onCapture={handleCapture} onCancel={() => setIsCameraOpen(false)} />}
+      <Dialog open={open && !isCameraOpen} onOpenChange={resetAndClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Añadir Negocio Verde</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Input
+              placeholder="Nombre del negocio"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="image/*"
+              className="hidden"
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                variant="outline"
+                className="h-20"
+                onClick={() => setIsCameraOpen(true)}
+              >
+                <Camera className="mr-2" />
+                Tomar Foto
+              </Button>
+              <Button
+                variant="outline"
+                className="h-20"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Store className="mr-2" />
+                Cargar Imagen
+              </Button>
             </div>
-          )}
-        </div>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="ghost" onClick={resetAndClose} disabled={isLoading}>
-              Cancelar
+            {image && (
+              <div className="relative w-full h-32 rounded-md overflow-hidden border">
+                <Image src={image} alt="Vista previa" fill style={{ objectFit: 'cover' }} />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="ghost" onClick={resetAndClose} disabled={isLoading}>
+                Cancelar
+              </Button>
+            </DialogClose>
+            <Button onClick={handleSave} disabled={isLoading || !image || !name}>
+              {isLoading ? 'Guardando...' : 'Guardar Negocio'}
             </Button>
-          </DialogClose>
-          <Button onClick={handleSave} disabled={isLoading}>
-            {isLoading ? 'Guardando...' : 'Guardar Negocio'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

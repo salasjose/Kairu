@@ -7,7 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, CheckCircle, Lock, Camera, X, Video, Heart, Timer } from "lucide-react";
+import { ArrowLeft, CheckCircle, Lock, Camera, X, Video, Heart, Timer, SwitchCamera } from "lucide-react";
 import PrizeDialog from "../PrizeDialog";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -42,8 +42,14 @@ const initialDays: DayState[] = Array(7)
 const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void; onCancel: () => void; }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
+
+  const toggleCamera = () => {
+    setFacingMode(prev => prev === "environment" ? "user" : "environment");
+  };
 
   useEffect(() => {
+    let stream: MediaStream | null = null;
     const getCameraPermission = async () => {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         console.error("Camera API is not supported by this browser.");
@@ -56,7 +62,7 @@ const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void;
         return;
       }
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
         setHasCameraPermission(true);
 
         if (videoRef.current) {
@@ -76,12 +82,11 @@ const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void;
     getCameraPermission();
 
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
+      if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, []);
+  }, [facingMode]);
 
   const handleCapture = () => {
     if (videoRef.current) {
@@ -114,13 +119,14 @@ const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void;
         )}
       </div>
       <div className="flex items-center justify-center gap-4 mt-4">
-        <Button onClick={onCancel} variant="outline" size="lg" className="rounded-full">
-            <X className="h-6 w-6 mr-2"/>
-            Cancelar
+        <Button onClick={onCancel} variant="outline" size="icon" className="rounded-full h-16 w-16">
+            <X className="h-8 w-8"/>
         </Button>
-        <Button onClick={handleCapture} size="lg" disabled={!hasCameraPermission} className="rounded-full">
-          <Camera className="h-6 w-6 mr-2" />
-          Tomar Foto
+        <Button onClick={handleCapture} size="lg" disabled={!hasCameraPermission} className="rounded-full h-20 w-20">
+          <Camera className="h-10 w-10" />
+        </Button>
+        <Button onClick={toggleCamera} variant="outline" size="icon" className="rounded-full h-16 w-16" disabled={!hasCameraPermission}>
+            <SwitchCamera className="h-8 w-8" />
         </Button>
       </div>
     </div>
@@ -161,7 +167,6 @@ const PhotoUploadChallenge = ({
   );
 
   const handlePhotoTaken = async (dataUrl: string) => {
-    setIsAddPhotoDialogOpen(false);
     setIsCameraOpen(false);
 
     if (!user || !storage) {
