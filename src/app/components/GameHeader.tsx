@@ -29,14 +29,11 @@ export default function GameHeader({ playerState, setPlayerState, onFullReset }:
   const handleLogout = async () => {
     if (!auth) return;
     
-    // Primero, limpiar los datos del usuario mientras la sesión está activa.
+    await resetProgress();
     await clearCart();
-    await resetProgress(); // Esto ya no debería causar error de permisos.
     
-    // Luego, limpiar el estado local.
     setPlayerState(null);
     
-    // Finalmente, cerrar la sesión de Firebase.
     await signOut(auth);
   }
 
@@ -73,7 +70,8 @@ export default function GameHeader({ playerState, setPlayerState, onFullReset }:
         </div>
         
         {/* Mobile Menu */}
-        <div className="sm:hidden">
+        <div className="sm:hidden flex items-center gap-2">
+          <PrizeCart />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" className="rounded-full bg-white/90 shadow-md h-10 w-10">
@@ -90,12 +88,6 @@ export default function GameHeader({ playerState, setPlayerState, onFullReset }:
                 </SheetTrigger>
                 <SettingsPanel playerState={playerState} setPlayerState={setPlayerState} onFullReset={onFullReset} />
               </Sheet>
-              <DropdownMenuItem asChild>
-                <div className="flex items-center gap-2">
-                  <PrizeCart />
-                  <span className="-ml-1">Recompensas</span>
-                </div>
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Salir</span>
