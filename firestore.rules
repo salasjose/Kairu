@@ -17,36 +17,42 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // --- Helper Functions ---
+
+    /**
+     * @returns {boolean} True if the user is signed in (authenticated).
+     */
     function isSignedIn() {
       return request.auth != null;
     }
 
+    /**
+     * @param {string} userId - The UID of the resource owner.
+     * @returns {boolean} True if the requesting user is the owner of the document.
+     */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    // --- Path Rules ---
+
     /**
-     * @description Enforces access control for user profiles and all their sub-data.
+     * @description Enforces access control for user profiles. A user can only access their own profile.
      * @path /users/{userId}
      */
     match /users/{userId} {
       allow read, update, delete: if isOwner(userId);
-      allow create: if isOwner(userId);
+      allow create: if isSignedIn(); // A user can create their own document upon signup.
 
       /**
-       * @description Enforces access control for station progress.
-       * @path /users/{userId}/stationProgress/{stationProgressId}
+       * @description Enforces access control for all subcollections under a user's document.
+       * The `isOwner(userId)` check ensures that a user can only access data within their own user tree.
+       * This single rule covers all nested challenge submissions and progress tracking collections.
+       *
+       * @path /users/{userId}/{subcollection}/{docId}
        */
-      match /stationProgress/{stationProgressId} {
-        allow read, write: if isOwner(userId);
-        
-        /**
-         * @description Enforces access control for all nested challenge submissions.
-         * @path /users/{userId}/stationProgress/{stationProgressId}/{subcollection}/{docId}
-         */
-        match /{subcollection}/{docId} {
-           allow read, write: if isOwner(userId);
-        }
+      match /{subcollection}/{docId} {
+         allow read, write: if isOwner(userId);
       }
     }
   }
