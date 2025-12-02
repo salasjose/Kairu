@@ -27,9 +27,9 @@ type PlacedPrize = {
   id: string;
   imageUrl: string;
   name: string;
-  x: number;      // porcentaje 0–100 relativo al ancho del lienzo
-  y: number;      // porcentaje 0–100 relativo al alto del lienzo
-  scale: number;  // tamaño relativo
+  x: number;
+  y: number;
+  scale: number;
   stationId: number;
 };
 
@@ -58,7 +58,7 @@ const DraggablePrize = ({
       dragMomentum={false}
       onDragEnd={onDragEnd}
       className="w-full h-full aspect-square bg-white/20 rounded-md p-1 cursor-grab active:cursor-grabbing"
-      style={{ touchAction: "none" }} // mejora drag en móviles
+      style={{ touchAction: "none" }}
     >
       <div className="relative w-full h-full">
         <Image
@@ -310,7 +310,7 @@ export default function Station9() {
     let x = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
     let y = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
 
-    x = clamp(x, 2, 98); // Margen pequeño
+    x = clamp(x, 2, 98);
     y = clamp(y, 2, 98);
 
     const prizeData = collectedPrizes.find((p) => p.id === prizeId);
@@ -434,7 +434,9 @@ export default function Station9() {
     try {
       const userDocRef = doc(db, "users", user.uid);
 
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Ocultar controles antes de capturar
+      setSelectedPrizeId(null);
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
       const canvas = await html2canvas(canvasRef.current, {
         useCORS: true,
@@ -499,7 +501,7 @@ export default function Station9() {
   };
 
   // ------------------------------------------------------------------
-  // Pruebas auxiliares
+  // Auxiliares
   // ------------------------------------------------------------------
 
   const unplacedPrizes = useMemo(
@@ -547,7 +549,7 @@ export default function Station9() {
           {/* LIENZO RESPONSIVO */}
           <div
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full md:pb-0 pb-40"
+            className="absolute top-0 left-0 right-0 md:bottom-0 bottom-40 w-full h-full"
           >
             {scenarioBackgrounds && (
               <ResponsiveBackground
@@ -573,27 +575,37 @@ export default function Station9() {
                       }
                     }}
                     onDragEnd={async (event, info) => {
-                        if (isStationConfirmed || !canvasRef.current) return;
-                        
-                        const rect = canvasRef.current.getBoundingClientRect();
-                        const newX = clamp(info.point.x - rect.left, 0, rect.width);
-                        const newY = clamp(info.point.y - rect.top, 0, rect.height);
-                        
-                        const newXPercent = (newX / rect.width) * 100;
-                        const newYPercent = (newY / rect.height) * 100;
+                      if (isStationConfirmed || !canvasRef.current) return;
+                      
+                      const rect = canvasRef.current.getBoundingClientRect();
+                      
+                      // Posición previa en píxeles
+                      const prevXPx = (prize.x / 100) * rect.width;
+                      const prevYPx = (prize.y / 100) * rect.height;
+                      
+                      // Nueva posición = posición previa + offset del drag
+                      const newXPx = prevXPx + info.offset.x;
+                      const newYPx = prevYPx + info.offset.y;
+                      
+                      // Convertir a porcentaje y clampear
+                      let newXPercent = (newXPx / rect.width) * 100;
+                      let newYPercent = (newYPx / rect.height) * 100;
+                      
+                      newXPercent = clamp(newXPercent, 2, 98);
+                      newYPercent = clamp(newYPercent, 2, 98);
 
-                        const updated = placedPrizes.map((p) =>
-                            p.id === prize.id ? { ...p, x: newXPercent, y: newYPercent } : p
-                        );
-                        setPlacedPrizes(updated);
-                        await savePrizesToDb(updated);
+                      const updated = placedPrizes.map((p) =>
+                        p.id === prize.id ? { ...p, x: newXPercent, y: newYPercent } : p
+                      );
+                      setPlacedPrizes(updated);
+                      await savePrizesToDb(updated);
                     }}
                     className="placed-prize-wrapper absolute cursor-grab active:cursor-grabbing"
                     style={{
                       left: `${prize.x}%`,
                       top: `${prize.y}%`,
-                      width: `calc(64px * ${prize.scale || 1})`,
-                      height: `calc(64px * ${prize.scale || 1})`,
+                      width: `${64 * (prize.scale || 1)}px`,
+                      height: `${64 * (prize.scale || 1)}px`,
                       transform: "translate(-50%, -50%)",
                       touchAction: "none",
                     }}
@@ -610,12 +622,13 @@ export default function Station9() {
                       setSelectedPrizeId(prize.id);
                     }}
                   >
-                    <div className="w-full h-full relative">
+                    <div className="w-full h-full relative pointer-events-none">
                       <Image
                         src={prize.imageUrl}
                         alt={prize.name}
                         fill
                         style={{ objectFit: "contain" }}
+                        draggable={false}
                       />
                     </div>
 
@@ -624,19 +637,19 @@ export default function Station9() {
                       <div
                         className={`
                           fixed md:absolute z-50
-                          md:${prize.y < 50 ? "top-full mt-2" : "bottom-full mb-2"}
-                          md:left-1/2 md:-translate-x-1/2
-                          bottom-44 left-1/2 -translate-x-1/2 md:bottom-auto md:left-auto
-                          w-36 max-w-[90vw]
+                          ${isMobile 
+                            ? "bottom-44 left-1/2 -translate-x-1/2" 
+                            : prize.y < 50 
+                              ? "top-full mt-2 left-1/2 -translate-x-1/2" 
+                              : "bottom-full mb-2 left-1/2 -translate-x-1/2"
+                          }
+                          w-40 max-w-[90vw]
                           bg-background/95 p-2 rounded-lg shadow-xl 
                           flex items-center gap-2
                         `}
-                        style={{
-                          // Evitar que se salga de los bordes
-                          maxWidth: "calc(100vw - 2rem)",
-                        }}
                         onPointerDown={(e) => e.stopPropagation()}
                         onClick={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
                       >
                         <Slider
                           value={[prize.scale || 1]}
@@ -649,11 +662,12 @@ export default function Station9() {
                           onValueCommit={(value) =>
                             handleScaleChangeCommit(prize.id, value)
                           }
+                          className="flex-1"
                         />
                         <Button
                           variant="destructive"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-8 w-8 shrink-0"
                           onClick={() => handleDeletePrize(prize.id)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -673,13 +687,14 @@ export default function Station9() {
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="absolute top-4 right-4 z-40 bg-white/80"
           >
-            <AnimatePresence initial={false}>
+            <AnimatePresence mode="wait" initial={false}>
               {isSidebarOpen ? (
                 <motion.div
                   key="close"
                   initial={{ rotate: -90, opacity: 0 }}
                   animate={{ rotate: 0, opacity: 1 }}
                   exit={{ rotate: -90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
                 >
                   <X />
                 </motion.div>
@@ -689,6 +704,7 @@ export default function Station9() {
                   initial={{ rotate: 90, opacity: 0 }}
                   animate={{ rotate: 0, opacity: 1 }}
                   exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
                 >
                   <Gift />
                 </motion.div>
@@ -708,33 +724,34 @@ export default function Station9() {
                 exit={isMobile ? { y: "100%" } : { x: "100%" }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
               >
-                <h3 className="text-white font-bold text-sm mb-2 text-center md:mt-12 hidden md:block">
+                <h3 className="text-white font-bold text-sm mb-2 text-center md:mt-2 hidden md:block">
                   Insignias
                 </h3>
+                
                 {/* Scroll horizontal en móvil, vertical en desktop */}
-                <div className="flex-grow w-full h-full overflow-y-auto md:overflow-y-auto overflow-x-hidden md:overflow-x-hidden">
-                    <div className="flex flex-row md:flex-col gap-2 p-1 h-full">
-                        {unplacedPrizes.map((prize) => (
-                          <div className="w-20 h-20 md:w-full md:h-auto shrink-0" key={prize.id}>
-                            <DraggablePrize
-                              prize={prize}
-                              onDragEnd={(event, info) =>
-                                handlePrizeDrop(prize.id, info)
-                              }
-                            />
-                          </div>
-                        ))}
-                        {unplacedPrizes.length === 0 && (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <p className="text-white/70 text-xs text-center">
-                              ¡Todas las insignias colocadas!
-                            </p>
-                          </div>
-                        )}
-                    </div>
+                <div className="flex-grow w-full overflow-x-auto md:overflow-x-hidden md:overflow-y-auto">
+                  <div className="flex flex-row md:flex-col gap-2 p-1 h-full md:h-auto">
+                    {unplacedPrizes.map((prize) => (
+                      <div className="w-20 h-20 md:w-full md:aspect-square shrink-0" key={prize.id}>
+                        <DraggablePrize
+                          prize={prize}
+                          onDragEnd={(event, info) =>
+                            handlePrizeDrop(prize.id, info)
+                          }
+                        />
+                      </div>
+                    ))}
+                    {unplacedPrizes.length === 0 && (
+                      <div className="w-full h-full flex items-center justify-center px-4">
+                        <p className="text-white/70 text-xs text-center">
+                          ¡Todas colocadas!
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* BOTONES DE ACCIÓN (Horizontal en móvil) */}
+                {/* BOTONES DE ACCIÓN */}
                 <div className="w-full mt-auto flex flex-row md:flex-col gap-2 p-1">
                   <Button
                     onClick={handleSaveStation}
@@ -742,8 +759,8 @@ export default function Station9() {
                     disabled={!allPrizesPlaced || isStationConfirmed}
                     size="sm"
                   >
-                    <Check className="h-3 w-3 md:h-4 md:w-4" />
-                    <span className="ml-1">Guardar</span>
+                    <Check className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
+                    <span className="hidden md:inline">Guardar</span>
                   </Button>
                   <Button
                     onClick={handleDownloadImage}
@@ -752,24 +769,24 @@ export default function Station9() {
                     variant={isStationFinalized ? "secondary" : "default"}
                     size="sm"
                   >
-                    <Download className="h-3 w-3 md:h-4 md:w-4" />
-                    <span className="ml-1">Descargar</span>
+                    <Download className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
+                    <span className="hidden md:inline">Descargar</span>
                   </Button>
                 </div>
-                 {isStationFinalized && (
+                
+                {isStationFinalized && (
                   <Button
                     onClick={() => setIsCompletionDialogOpen(true)}
-                    className="mt-2 w-full hidden md:flex"
+                    className="mt-2 w-full text-xs"
                     variant="secondary"
                     size="sm"
                   >
-                    Finalizar Aventura
+                    Finalizar
                   </Button>
                 )}
               </motion.div>
             )}
           </AnimatePresence>
-
 
           {/* DIÁLOGO YARA */}
           <AnimatePresence>
@@ -818,3 +835,4 @@ export default function Station9() {
     </div>
   );
 }
+    
