@@ -56,7 +56,7 @@ const DraggablePrize = ({
       drag
       dragMomentum={false}
       onDragEnd={onDragEnd}
-      className="w-full aspect-square bg-white/20 rounded-md p-1 cursor-grab active:cursor-grabbing"
+      className="w-full h-full aspect-square bg-white/20 rounded-md p-1 cursor-grab active:cursor-grabbing"
       style={{ touchAction: "none" }} // mejora drag en móviles
     >
       <div className="relative w-full h-full">
@@ -139,9 +139,6 @@ export default function Station9() {
   const [isYaraMessageVisible, setIsYaraMessageVisible] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  // NUEVA LÓGICA:
-  // isStationConfirmed = estación guardada (bloquea mover/escalar)
-  // isStationFinalized  = imagen descargada (estación finalizada)
   const [isStationConfirmed, setIsStationConfirmed] = useState(false);
   const [isStationFinalized, setIsStationFinalized] = useState(false);
 
@@ -215,7 +212,6 @@ export default function Station9() {
             data.usuario || `${data.nombre || ""} ${data.apellido || ""}`.trim();
           setPlayerName(fullName || "Guardián");
 
-          // Compatibilidad con campos previos
           const confirmed = data.station9Confirmed || false;
           const finalized = data.station9Finalized || false;
 
@@ -288,7 +284,6 @@ export default function Station9() {
   // ------------------------------------------------------------------
 
   const handlePrizeDrop = async (prizeId: string, info: PanInfo) => {
-    // Si la estación ya está guardada, no permite agregar nuevas insignias
     if (isStationConfirmed || !canvasRef.current) return;
 
     const canvasRect = canvasRef.current.getBoundingClientRect();
@@ -298,9 +293,8 @@ export default function Station9() {
     let x = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
     let y = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
 
-    // margen básico para que no se salgan de los bordes
-    x = clamp(x, 5, 95);
-    y = clamp(y, 5, 95);
+    x = clamp(x, 0, 100);
+    y = clamp(y, 0, 100);
 
     const prizeData = collectedPrizes.find((p) => p.id === prizeId);
     if (!prizeData) return;
@@ -326,9 +320,9 @@ export default function Station9() {
   // ------------------------------------------------------------------
 
   const handleScaleChange = (prizeId: string, newScale: number[]) => {
-    if (isStationConfirmed) return; // no permite cambiar tamaño si ya está guardada
+    if (isStationConfirmed) return;
 
-    const scale = clamp(newScale[0], 0.5, 5); // 50% a 500%
+    const scale = clamp(newScale[0], 0.5, 5);
     const updated = placedPrizes.map((p) =>
       p.id === prizeId ? { ...p, scale } : p
     );
@@ -351,7 +345,7 @@ export default function Station9() {
   // ------------------------------------------------------------------
 
   const handleDeletePrize = async (prizeId: string) => {
-    if (isStationConfirmed) return; // bloquea eliminar si ya está guardada
+    if (isStationConfirmed) return;
 
     const newPlacedPrizes = placedPrizes.filter((p) => p.id !== prizeId);
     setPlacedPrizes(newPlacedPrizes);
@@ -367,7 +361,6 @@ export default function Station9() {
     if (!user || !db) return;
     if (isStationConfirmed) return;
 
-    // Validar que todas las insignias del sidebar estén colocadas
     const unplaced = collectedPrizes.filter(
       (p) => !placedPrizes.some((pp) => pp.id === p.id)
     );
@@ -388,7 +381,7 @@ export default function Station9() {
         { merge: true }
       );
 
-      setIsStationConfirmed(true); // a partir de aquí se bloquea mover/escala
+      setIsStationConfirmed(true);
       setSelectedPrizeId(null);
 
       toast({
@@ -412,7 +405,6 @@ export default function Station9() {
   const handleDownloadImage = async () => {
     if (!user || !db || !canvasRef.current) return;
 
-    // Solo permite descargar si la estación fue guardada
     if (!isStationConfirmed) {
       toast({
         title: "Primero guarda tu estación",
@@ -425,7 +417,6 @@ export default function Station9() {
     try {
       const userDocRef = doc(db, "users", user.uid);
 
-      // Pausa pequeña para asegurar que no haya sliders/controles visibles
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       const canvas = await html2canvas(canvasRef.current, {
@@ -573,28 +564,12 @@ export default function Station9() {
                       const prevX = (prize.x / 100) * rect.width;
                       const prevY = (prize.y / 100) * rect.height;
 
-                      let newXPercent =
-                        ((prevX + info.offset.x) / rect.width) * 100;
-                      let newYPercent =
-                        ((prevY + info.offset.y) / rect.height) * 100;
+                      let newXPercent = ((prevX + info.offset.x) / rect.width) * 100;
+                      let newYPercent = ((prevY + info.offset.y) / rect.height) * 100;
 
-                      // Clampeo usando el tamaño real de la insignia
-                      const elWidthPx = element.offsetWidth || 0;
-                      const elHeightPx = element.offsetHeight || 0;
-
-                      const widthPercent = rect.width
-                        ? (elWidthPx / rect.width) * 100
-                        : 0;
-                      const heightPercent = rect.height
-                        ? (elHeightPx / rect.height) * 100
-                        : 0;
-
-                      const halfW = widthPercent / 2;
-                      const halfH = heightPercent / 2;
-
-                      newXPercent = clamp(newXPercent, halfW, 100 - halfW);
-                      newYPercent = clamp(newYPercent, halfH, 100 - halfH);
-
+                      newXPercent = clamp(newXPercent, 0, 100);
+                      newYPercent = clamp(newYPercent, 0, 100);
+                      
                       const updated = placedPrizes.map((p) =>
                         p.id === prize.id
                           ? { ...p, x: newXPercent, y: newYPercent }
@@ -639,14 +614,14 @@ export default function Station9() {
                       <div
                         className={`absolute ${
                           prize.y < 70 ? "top-full mt-2" : "bottom-full mb-2"
-                        } left-1/2 -translate-x-1/2 w-44 bg-background/90 p-2 rounded-lg shadow-lg flex items-center gap-2`}
+                        } left-1/2 -translate-x-1/2 w-40 bg-background/90 p-2 rounded-lg shadow-lg flex items-center gap-2`}
                         onPointerDown={(e) => e.stopPropagation()}
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Slider
                           value={[prize.scale || 1]}
                           min={0.5}
-                          max={5} // HASTA 500%
+                          max={5}
                           step={0.1}
                           onValueChange={(value) =>
                             handleScaleChange(prize.id, value)
@@ -700,64 +675,81 @@ export default function Station9() {
               )}
             </AnimatePresence>
           </Button>
-
-          {/* SIDEBAR DE INSIGNIAS */}
+          
+          {/* SIDEBAR/BOTTOM BAR DE INSIGNIAS */}
           <AnimatePresence>
             {isSidebarOpen && (
               <motion.div
-                className="absolute top-0 right-0 h-full w-24 md:w-32 bg-black/60 backdrop-blur-sm p-2 z-30 flex flex-col items-center"
-                initial={{ x: "100%" }}
-                animate={{ x: 0 }}
-                exit={{ x: "100%" }}
+                className="absolute z-30 bg-black/60 backdrop-blur-sm p-2 flex flex-col items-center
+                           md:top-0 md:right-0 md:h-full md:w-32 
+                           bottom-0 left-0 right-0 h-40 md:h-full md:w-32"
+                initial={{ y: "100%", x: 0 }} // Inicia desde abajo en móvil
+                animate={{ y: 0, x: 0 }}
+                exit={{ y: "100%", x: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                // Animate to side on desktop
+                variants={{
+                    initial: { x: "100%", y:0 },
+                    animate: { x: 0, y: 0 },
+                    exit: { x: "100%", y: 0 }
+                }}
+                // Apply desktop variants using a media query hook or CSS
+                custom={window.innerWidth >= 768 ? 1 : 0}
               >
-                <h3 className="text-white font-bold text-sm mt-12 mb-2 text-center">
+                <h3 className="text-white font-bold text-sm mt-2 mb-2 text-center md:mt-12">
                   Insignias
                 </h3>
-                <div className="flex-grow overflow-y-auto space-y-2 w-full">
-                  {unplacedPrizes.map((prize) => (
-                    <DraggablePrize
-                      key={prize.id}
-                      prize={prize}
-                      onDragEnd={(event, info) =>
-                        handlePrizeDrop(prize.id, info)
-                      }
-                    />
-                  ))}
-                  {unplacedPrizes.length === 0 && (
-                    <p className="text-white/70 text-xs text-center pt-4">
-                      ¡Todas las insignias colocadas!
-                    </p>
-                  )}
+                {/* Scroll horizontal en móvil, vertical en desktop */}
+                <div className="flex-grow w-full overflow-x-auto md:overflow-y-auto">
+                    <div className="flex flex-row md:flex-col gap-2 p-1 h-full">
+                        {unplacedPrizes.map((prize) => (
+                          <div className="w-20 h-20 md:w-full md:h-auto shrink-0" key={prize.id}>
+                            <DraggablePrize
+                              prize={prize}
+                              onDragEnd={(event, info) =>
+                                handlePrizeDrop(prize.id, info)
+                              }
+                            />
+                          </div>
+                        ))}
+                        {unplacedPrizes.length === 0 && (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <p className="text-white/70 text-xs text-center">
+                              ¡Todas las insignias colocadas!
+                            </p>
+                          </div>
+                        )}
+                    </div>
                 </div>
 
-                {/* BOTONES DE ACCIÓN */}
-                <div className="w-full mt-auto space-y-2">
+                {/* BOTONES DE ACCIÓN (Horizontal en móvil) */}
+                <div className="w-full mt-auto space-y-2 md:space-y-2 flex flex-row md:flex-col gap-2">
                   <Button
                     onClick={handleSaveStation}
                     className="w-full"
                     disabled={!allPrizesPlaced || isStationConfirmed}
+                    size="sm"
                   >
-                    <Check className="mr-2 h-4 w-4" />
-                    Guardar estación
+                    <Check className="mr-1 h-4 w-4" />
+                    Guardar
                   </Button>
-
                   <Button
                     onClick={handleDownloadImage}
                     className="w-full"
                     disabled={!isStationConfirmed}
                     variant={isStationFinalized ? "secondary" : "default"}
+                    size="sm"
                   >
-                    <Download className="mr-2 h-4 w-4" />
-                    Descargar imagen
+                    <Download className="mr-1 h-4 w-4" />
+                    Descargar
                   </Button>
                 </div>
-
-                {isStationFinalized && (
+                 {isStationFinalized && (
                   <Button
                     onClick={() => setIsCompletionDialogOpen(true)}
                     className="mt-2 w-full"
                     variant="secondary"
+                    size="sm"
                   >
                     Finalizar Aventura
                   </Button>
@@ -765,6 +757,7 @@ export default function Station9() {
               </motion.div>
             )}
           </AnimatePresence>
+
 
           {/* DIÁLOGO YARA */}
           <AnimatePresence>
