@@ -40,6 +40,15 @@ type PlacedPrize = {
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
+// Algunas insignias pueden escalarse más (ej: elementos grandes del escenario)
+const isSpecialPrize = (imageUrl: string) => {
+  return (
+    imageUrl.includes("Molinos.png") ||
+    imageUrl.includes("Ciudad.png")
+  );
+};
+
+
 // ------------------------------------------------------------------
 // Componente: DraggablePrize (INSIGNIAS EN EL SIDEBAR)
 // ------------------------------------------------------------------
@@ -339,23 +348,36 @@ export default function Station9() {
   const handleScaleChange = (prizeId: string, newScale: number[]) => {
     if (isStationConfirmed) return;
 
-    const scale = clamp(newScale[0], 0.5, 5);
+    const prize = placedPrizes.find((p) => p.id === prizeId);
+    if (!prize) return;
+
+    const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
+    const scale = clamp(newScale[0], 0.5, maxScale);
+
     const updated = placedPrizes.map((p) =>
       p.id === prizeId ? { ...p, scale } : p
     );
+
     setPlacedPrizes(updated);
   };
 
   const handleScaleChangeCommit = async (prizeId: string, newScale: number[]) => {
     if (isStationConfirmed) return;
 
-    const scale = clamp(newScale[0], 0.5, 5);
+    const prize = placedPrizes.find((p) => p.id === prizeId);
+    if (!prize) return;
+
+    const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
+    const scale = clamp(newScale[0], 0.5, maxScale);
+
     const updated = placedPrizes.map((p) =>
       p.id === prizeId ? { ...p, scale } : p
     );
+
     setPlacedPrizes(updated);
     await savePrizesToDb(updated);
   };
+
 
   // ------------------------------------------------------------------
   // Eliminar insignia
@@ -563,6 +585,7 @@ export default function Station9() {
             <div className="absolute inset-0 z-10">
               {placedPrizes.map((prize) => {
                 const isSelected = selectedPrizeId === prize.id;
+                const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
 
                 return (
                   <motion.div
@@ -673,7 +696,7 @@ export default function Station9() {
                         <Slider
                           value={[prize.scale || 1]}
                           min={0.5}
-                          max={5}
+                          max={maxScale}
                           step={0.1}
                           onValueChange={(value) =>
                             handleScaleChange(prize.id, value)
