@@ -604,7 +604,7 @@ export default function Station9() {
                       setPlacedPrizes(updated);
                       await savePrizesToDb(updated);
                     }}
-                    className="placed-prize-wrapper absolute cursor-grab active:cursor-grabbing"
+                    className="placed-prize-wrapper absolute"
                     style={{
                       left: `${prize.x}%`,
                       top: `${prize.y}%`,
@@ -612,6 +612,7 @@ export default function Station9() {
                       height: `calc(64px * ${prize.scale || 1})`,
                       transform: "translate(-50%, -50%)",
                       touchAction: "none",
+                      cursor: isStationConfirmed ? "default" : "grab",
                     }}
                     initial={false}
                     animate={{
