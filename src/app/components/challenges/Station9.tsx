@@ -583,12 +583,15 @@ export default function Station9() {
                       
                       const rect = canvasRef.current.getBoundingClientRect();
                       
+                      // Posición previa en píxeles
                       const prevXPx = (prize.x / 100) * rect.width;
                       const prevYPx = (prize.y / 100) * rect.height;
                       
+                      // Nueva posición = posición previa + offset del drag
                       const newXPx = prevXPx + info.offset.x;
                       const newYPx = prevYPx + info.offset.y;
                       
+                      // Convertir a porcentaje y clampear
                       let newXPercent = (newXPx / rect.width) * 100;
                       let newYPercent = (newYPx / rect.height) * 100;
                       
@@ -601,7 +604,7 @@ export default function Station9() {
                       setPlacedPrizes(updated);
                       await savePrizesToDb(updated);
                     }}
-                    className="placed-prize-wrapper absolute"
+                    className="placed-prize-wrapper absolute cursor-grab active:cursor-grabbing"
                     style={{
                       left: `${prize.x}%`,
                       top: `${prize.y}%`,
@@ -609,7 +612,6 @@ export default function Station9() {
                       height: `calc(64px * ${prize.scale || 1})`,
                       transform: "translate(-50%, -50%)",
                       touchAction: "none",
-                      cursor: isStationConfirmed ? "default" : "grab",
                     }}
                     initial={false}
                     animate={{
@@ -625,6 +627,7 @@ export default function Station9() {
                     }}
                     onPointerDown={(e) => {
                       if (isStationConfirmed) return;
+                      // Permitir que el drag funcione
                       e.stopPropagation();
                     }}
                   >
@@ -653,10 +656,18 @@ export default function Station9() {
                           bg-background/95 p-2 rounded-lg shadow-xl 
                           flex items-center gap-2
                         `}
-                        onPointerDown={(e) => { e.stopPropagation(); }}
-                        onClick={(e) => { e.stopPropagation(); }}
-                        onTouchStart={(e) => { e.stopPropagation(); }}
-                        onMouseDown={(e) => { e.stopPropagation(); }}
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onTouchStart={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                        }}
                       >
                         <Slider
                           value={[prize.scale || 1]}
