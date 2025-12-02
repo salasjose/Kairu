@@ -569,6 +569,8 @@ export default function Station9() {
                     key={prize.id}
                     drag={!isStationConfirmed}
                     dragMomentum={false}
+                    dragElastic={0}
+                    dragConstraints={canvasRef}
                     onDragStart={() => {
                       if (!isStationConfirmed) {
                         setSelectedPrizeId(prize.id);
@@ -579,15 +581,12 @@ export default function Station9() {
                       
                       const rect = canvasRef.current.getBoundingClientRect();
                       
-                      // Posición previa en píxeles
                       const prevXPx = (prize.x / 100) * rect.width;
                       const prevYPx = (prize.y / 100) * rect.height;
                       
-                      // Nueva posición = posición previa + offset del drag
                       const newXPx = prevXPx + info.offset.x;
                       const newYPx = prevYPx + info.offset.y;
                       
-                      // Convertir a porcentaje y clampear
                       let newXPercent = (newXPx / rect.width) * 100;
                       let newYPercent = (newYPx / rect.height) * 100;
                       
@@ -604,8 +603,8 @@ export default function Station9() {
                     style={{
                       left: `${prize.x}%`,
                       top: `${prize.y}%`,
-                      width: `${64 * (prize.scale || 1)}px`,
-                      height: `${64 * (prize.scale || 1)}px`,
+                      width: `calc(64px * ${prize.scale || 1})`,
+                      height: `calc(64px * ${prize.scale || 1})`,
                       transform: "translate(-50%, -50%)",
                       touchAction: "none",
                     }}
@@ -835,4 +834,5 @@ export default function Station9() {
     </div>
   );
 }
+
     
