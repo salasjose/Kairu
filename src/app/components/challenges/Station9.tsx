@@ -625,11 +625,9 @@ export default function Station9() {
                     }}
                     onPointerDown={(e) => {
                       if (isStationConfirmed) return;
-                      // Permitir que el drag funcione
                       e.stopPropagation();
                     }}
                   >
-                    {/* IMAGEN - SIN pointer-events: none */}
                     <div className="w-full h-full relative select-none">
                       <Image
                         src={prize.imageUrl}
@@ -698,7 +696,6 @@ export default function Station9() {
                 );
               })}
             </div>
-
           </div>
 
           {/* BOTÓN PARA ABRIR/CERRAR SIDEBAR */}
