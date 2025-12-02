@@ -17,216 +17,37 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
     /**
-     * @description Enforces access control for user profiles.
+     * @description Enforces access control for user profiles and all their sub-data.
      * @path /users/{userId}
-     * @allow (create) User with matching ID can create their profile.
-     * @allow (get, update, delete) User with matching ID can read, update, and delete their profile.
-     * @deny (create, get, update, delete) Any other user cannot access this profile.
-     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
+      allow read, update, delete: if isOwner(userId);
       allow create: if isOwner(userId);
-      allow get: if isOwner(userId);
-      allow list: if false;
-      allow update: if isOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
 
-    /**
-     * @description Enforces access control for station progress.
-     * @path /users/{userId}/stationProgress/{stationProgressId}
-     * @allow (create, get, list, update, delete) User with matching ID can manage their station progress.
-     * @deny (create, get, list, update, delete) Any other user cannot access this station progress.
-     * @principle Enforces document ownership for all operations.
-     */
-    match /users/{userId}/stationProgress/{stationProgressId} {
-       function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
+      /**
+       * @description Enforces access control for station progress.
+       * @path /users/{userId}/stationProgress/{stationProgressId}
+       */
+      match /stationProgress/{stationProgressId} {
+        allow read, write: if isOwner(userId);
+        
+        /**
+         * @description Enforces access control for all nested challenge submissions.
+         * @path /users/{userId}/stationProgress/{stationProgressId}/{subcollection}/{docId}
+         */
+        match /{subcollection}/{docId} {
+           allow read, write: if isOwner(userId);
+        }
       }
-
-      allow read, write: if isOwner(userId);
-    }
-
-     /**
-      * @description Enforces access control for biodiversity challenge submissions.
-      * @path /users/{userId}/stationProgress/{stationProgressId}/biodiversityChallengeSubmissions/{biodiversityChallengeSubmissionId}
-      * @allow (create) User with matching ID can create a biodiversity challenge submission.
-      * @allow (get, list, update, delete) User with matching ID can read, update, and delete their biodiversity challenge submission.
-      * @deny (create, get, list, update, delete) Any other user cannot access this biodiversity challenge submission.
-      * @principle Enforces document ownership for all operations.
-      */
-    match /users/{userId}/stationProgress/{stationProgressId}/biodiversityChallengeSubmissions/{biodiversityChallengeSubmissionId} {
-       function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow create: if isOwner(userId);
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Enforces access control for habitat creation submissions.
-     * @path /users/{userId}/stationProgress/{stationProgressId}/habitatCreationSubmissions/{habitatCreationSubmissionId}
-     * @allow (create) User with matching ID can create a habitat creation submission.
-     * @allow (get, list, update, delete) User with matching ID can read, update, and delete their habitat creation submission.
-     * @deny (create, get, list, update, delete) Any other user cannot access this habitat creation submission.
-     * @principle Enforces document ownership for all operations.
-     */
-    match /users/{userId}/stationProgress/{stationProgressId}/habitatCreationSubmissions/{habitatCreationSubmissionId} {
-       function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow create: if isOwner(userId);
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Enforces access control for sustainability practices.
-     * @path /users/{userId}/stationProgress/{stationProgressId}/sustainabilityPractices/{sustainabilityPracticeId}
-     * @allow (create) User with matching ID can create a sustainability practice.
-     * @allow (get, list, update, delete) User with matching ID can read, update, and delete their sustainability practice.
-     * @deny (create, get, list, update, delete) Any other user cannot access this sustainability practice.
-     * @principle Enforces document ownership for all operations.
-     */
-    match /users/{userId}/stationProgress/{stationProgressId}/sustainabilityPractices/{sustainabilityPracticeId} {
-       function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow create: if isOwner(userId);
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Enforces access control for content submissions.
-     * @path /users/{userId}/stationProgress/{stationProgressId}/contentSubmissions/{contentSubmissionId}
-     * @allow (create) User with matching ID can create a content submission.
-     * @allow (get, list, update, delete) User with matching ID can read, update, and delete their content submission.
-     * @deny (create, get, list, update, delete) Any other user cannot access this content submission.
-     * @principle Enforces document ownership for all operations.
-     */
-    match /users/{userId}/stationProgress/{stationProgressId}/contentSubmissions/{contentSubmissionId} {
-       function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow create: if isOwner(userId);
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Enforces access control for quiz results.
-     * @path /users/{userId}/stationProgress/{stationProgressId}/quizResults/{quizResultId}
-     * @allow (create) User with matching ID can create a quiz result.
-     * @allow (get, list, update, delete) User with matching ID can read, update, and delete their quiz result.
-     * @deny (create, get, list, update, delete) Any other user cannot access this quiz result.
-     * @principle Enforces document ownership for all operations.
-     */
-    match /users/{userId}/stationProgress/{stationProgressId}/quizResults/{quizResultId} {
-       function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow create: if isOwner(userId);
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Enforces access control for crossword puzzles.
-     * @path /users/{userId}/stationProgress/{stationProgressId}/crosswordPuzzles/{crosswordPuzzleId}
-     * @allow (create) User with matching ID can create a crossword puzzle.
-     * @allow (get, list, update, delete) User with matching ID can read, update, and delete their crossword puzzle.
-     * @deny (create, get, list, update, delete) Any other user cannot access this crossword puzzle.
-     * @principle Enforces document ownership for all operations.
-     */
-    match /users/{userId}/stationProgress/{stationProgressId}/crosswordPuzzles/{crosswordPuzzleId} {
-       function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow create: if isOwner(userId);
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
     }
   }
 }
-    
