@@ -572,19 +572,16 @@ export default function Station9() {
                         setSelectedPrizeId(prize.id);
                       }
                     }}
-                    onDragEnd={async (e, info) => {
+                    onDragEnd={async (event, info) => {
                       if (isStationConfirmed || !canvasRef.current) return;
 
                       const rect = canvasRef.current.getBoundingClientRect();
                       
-                      const prevX = (prize.x / 100) * rect.width;
-                      const prevY = (prize.y / 100) * rect.height;
-
-                      let newXPercent = ((prevX + info.offset.x) / rect.width) * 100;
-                      let newYPercent = ((prevY + info.offset.y) / rect.height) * 100;
-
-                      newXPercent = clamp(newXPercent, 0, 100);
-                      newYPercent = clamp(newYPercent, 0, 100);
+                      const x = clamp(info.point.x - rect.left, 0, rect.width);
+                      const y = clamp(info.point.y - rect.top, 0, rect.height);
+                      
+                      const newXPercent = (x / rect.width) * 100;
+                      const newYPercent = (y / rect.height) * 100;
                       
                       const updated = placedPrizes.map((p) =>
                         p.id === prize.id
@@ -598,8 +595,8 @@ export default function Station9() {
                     style={{
                       left: `${prize.x}%`,
                       top: `${prize.y}%`,
-                      width: `calc(clamp(48px, 10vw, 96px) * ${prize.scale || 1})`,
-                      height: `calc(clamp(48px, 10vw, 96px) * ${prize.scale || 1})`,
+                      width: `calc(64px * ${prize.scale || 1})`,
+                      height: `calc(64px * ${prize.scale || 1})`,
                       transform: "translate(-50%, -50%)",
                       touchAction: "none",
                     }}
