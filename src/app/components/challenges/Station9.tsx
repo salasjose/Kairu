@@ -434,6 +434,36 @@ export default function Station9() {
     }
   };
 
+  const handleUnlockStation = async () => {
+    if (!user || !db) return;
+
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      await setDoc(
+        userDocRef,
+        { station9Confirmed: false, station9Finalized: false },
+        { merge: true }
+      );
+
+      setIsStationConfirmed(false);
+      setIsStationFinalized(false);
+      setSelectedPrizeId(null);
+
+      toast({
+        title: "Estación desbloqueada",
+        description: "Ahora puedes mover y escalar nuevamente tus insignias.",
+      });
+    } catch (e) {
+      console.error("Error unlocking station", e);
+      toast({
+        title: "Error",
+        description: "No se pudo desbloquear la estación.",
+        variant: "destructive",
+      });
+    }
+  };
+
+
   // ------------------------------------------------------------------
   // DESCARGAR IMAGEN (habilitado solo después de guardar estación)
   // ------------------------------------------------------------------
@@ -813,6 +843,16 @@ export default function Station9() {
                   >
                     <Download className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
                     <span className="hidden md:inline">Descargar</span>
+                  </Button>
+
+                  {/* Botón de debug / admin para desbloquear */}
+                  <Button
+                    onClick={handleUnlockStation}
+                    className="flex-1 md:w-full text-xs md:text-sm"
+                    variant="outline"
+                    size="sm"
+                  >
+                    Desbloquear
                   </Button>
                 </div>
                 
