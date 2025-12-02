@@ -573,23 +573,20 @@ export default function Station9() {
                       }
                     }}
                     onDragEnd={async (event, info) => {
-                      if (isStationConfirmed || !canvasRef.current) return;
+                        if (isStationConfirmed || !canvasRef.current) return;
+                        
+                        const rect = canvasRef.current.getBoundingClientRect();
+                        const newX = clamp(info.point.x - rect.left, 0, rect.width);
+                        const newY = clamp(info.point.y - rect.top, 0, rect.height);
+                        
+                        const newXPercent = (newX / rect.width) * 100;
+                        const newYPercent = (newY / rect.height) * 100;
 
-                      const rect = canvasRef.current.getBoundingClientRect();
-                      
-                      const x = clamp(info.point.x - rect.left, 0, rect.width);
-                      const y = clamp(info.point.y - rect.top, 0, rect.height);
-                      
-                      const newXPercent = (x / rect.width) * 100;
-                      const newYPercent = (y / rect.height) * 100;
-                      
-                      const updated = placedPrizes.map((p) =>
-                        p.id === prize.id
-                          ? { ...p, x: newXPercent, y: newYPercent }
-                          : p
-                      );
-                      setPlacedPrizes(updated);
-                      await savePrizesToDb(updated);
+                        const updated = placedPrizes.map((p) =>
+                            p.id === prize.id ? { ...p, x: newXPercent, y: newYPercent } : p
+                        );
+                        setPlacedPrizes(updated);
+                        await savePrizesToDb(updated);
                     }}
                     className="placed-prize-wrapper absolute cursor-grab active:cursor-grabbing"
                     style={{
