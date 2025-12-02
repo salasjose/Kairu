@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -572,35 +571,37 @@ export default function Station9() {
                     dragMomentum={false}
                     dragElastic={0}
                     dragConstraints={canvasRef}
-                    onDragStart={() => {
+                    whileDrag={{ scale: 1.05, zIndex: 50 }}
+                    onDragStart={(event) => {
                       if (!isStationConfirmed) {
+                        event.stopPropagation();
                         setSelectedPrizeId(prize.id);
                       }
                     }}
                     onDragEnd={async (event, info) => {
-                        if (isStationConfirmed || !canvasRef.current) return;
-                        
-                        const rect = canvasRef.current.getBoundingClientRect();
-                        
-                        const prevXPx = (prize.x / 100) * rect.width;
-                        const prevYPx = (prize.y / 100) * rect.height;
-                        
-                        const newXPx = prevXPx + info.offset.x;
-                        const newYPx = prevYPx + info.offset.y;
-                        
-                        let newXPercent = (newXPx / rect.width) * 100;
-                        let newYPercent = (newYPx / rect.height) * 100;
-                        
-                        newXPercent = clamp(newXPercent, 2, 98);
-                        newYPercent = clamp(newYPercent, 2, 98);
-  
-                        const updated = placedPrizes.map((p) =>
-                          p.id === prize.id ? { ...p, x: newXPercent, y: newYPercent } : p
-                        );
-                        setPlacedPrizes(updated);
-                        await savePrizesToDb(updated);
-                      }}
-                    className="placed-prize-wrapper absolute cursor-grab active:cursor-grabbing"
+                      if (isStationConfirmed || !canvasRef.current) return;
+                      
+                      const rect = canvasRef.current.getBoundingClientRect();
+                      
+                      const prevXPx = (prize.x / 100) * rect.width;
+                      const prevYPx = (prize.y / 100) * rect.height;
+                      
+                      const newXPx = prevXPx + info.offset.x;
+                      const newYPx = prevYPx + info.offset.y;
+                      
+                      let newXPercent = (newXPx / rect.width) * 100;
+                      let newYPercent = (newYPx / rect.height) * 100;
+                      
+                      newXPercent = clamp(newXPercent, 2, 98);
+                      newYPercent = clamp(newYPercent, 2, 98);
+
+                      const updated = placedPrizes.map((p) =>
+                        p.id === prize.id ? { ...p, x: newXPercent, y: newYPercent } : p
+                      );
+                      setPlacedPrizes(updated);
+                      await savePrizesToDb(updated);
+                    }}
+                    className="placed-prize-wrapper absolute"
                     style={{
                       left: `${prize.x}%`,
                       top: `${prize.y}%`,
@@ -608,6 +609,7 @@ export default function Station9() {
                       height: `calc(64px * ${prize.scale || 1})`,
                       transform: "translate(-50%, -50%)",
                       touchAction: "none",
+                      cursor: isStationConfirmed ? "default" : "grab",
                     }}
                     initial={false}
                     animate={{
@@ -621,8 +623,12 @@ export default function Station9() {
                       e.stopPropagation();
                       setSelectedPrizeId(prize.id);
                     }}
+                    onPointerDown={(e) => {
+                      if (isStationConfirmed) return;
+                      e.stopPropagation();
+                    }}
                   >
-                    <div className="w-full h-full relative">
+                    <div className="w-full h-full relative select-none">
                       <Image
                         src={prize.imageUrl}
                         alt={prize.name}
@@ -647,9 +653,10 @@ export default function Station9() {
                           bg-background/95 p-2 rounded-lg shadow-xl 
                           flex items-center gap-2
                         `}
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) => e.stopPropagation()}
-                        onTouchStart={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => { e.stopPropagation(); }}
+                        onClick={(e) => { e.stopPropagation(); }}
+                        onTouchStart={(e) => { e.stopPropagation(); }}
+                        onMouseDown={(e) => { e.stopPropagation(); }}
                       >
                         <Slider
                           value={[prize.scale || 1]}
@@ -668,7 +675,10 @@ export default function Station9() {
                           variant="destructive"
                           size="icon"
                           className="h-8 w-8 shrink-0"
-                          onClick={() => handleDeletePrize(prize.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeletePrize(prize.id);
+                          }}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
