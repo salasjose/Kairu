@@ -44,7 +44,7 @@ const isSpecialPrize = (imageUrl: string) => {
   return (
     imageUrl.includes("Molinos.png") ||
     imageUrl.includes("Ciudad.png")
-    // agrega más patrones si lo necesitas
+    // aquí puedes agregar más patrones si lo necesitas
   );
 };
 
