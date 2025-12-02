@@ -549,7 +549,7 @@ export default function Station9() {
           {/* LIENZO RESPONSIVO */}
           <div
             ref={canvasRef}
-            className="absolute top-0 left-0 right-0 md:bottom-0 bottom-40 w-full h-full"
+            className="absolute top-0 left-0 right-0 md:bottom-0 bottom-40 w-full"
           >
             {scenarioBackgrounds && (
               <ResponsiveBackground
@@ -571,8 +571,10 @@ export default function Station9() {
                     dragMomentum={false}
                     dragElastic={0}
                     dragConstraints={canvasRef}
-                    onDragStart={() => {
+                    whileDrag={{ scale: 1.05, zIndex: 50 }}
+                    onDragStart={(event) => {
                       if (!isStationConfirmed) {
+                        event.stopPropagation();
                         setSelectedPrizeId(prize.id);
                       }
                     }}
@@ -599,7 +601,7 @@ export default function Station9() {
                       setPlacedPrizes(updated);
                       await savePrizesToDb(updated);
                     }}
-                    className="placed-prize-wrapper absolute cursor-grab active:cursor-grabbing"
+                    className="placed-prize-wrapper absolute"
                     style={{
                       left: `${prize.x}%`,
                       top: `${prize.y}%`,
@@ -607,6 +609,7 @@ export default function Station9() {
                       height: `calc(64px * ${prize.scale || 1})`,
                       transform: "translate(-50%, -50%)",
                       touchAction: "none",
+                      cursor: isStationConfirmed ? "default" : "grab",
                     }}
                     initial={false}
                     animate={{
@@ -620,8 +623,14 @@ export default function Station9() {
                       e.stopPropagation();
                       setSelectedPrizeId(prize.id);
                     }}
+                    onPointerDown={(e) => {
+                      if (isStationConfirmed) return;
+                      // Permitir que el drag funcione
+                      e.stopPropagation();
+                    }}
                   >
-                    <div className="w-full h-full relative pointer-events-none">
+                    {/* IMAGEN - SIN pointer-events: none */}
+                    <div className="w-full h-full relative select-none">
                       <Image
                         src={prize.imageUrl}
                         alt={prize.name}
@@ -646,9 +655,18 @@ export default function Station9() {
                           bg-background/95 p-2 rounded-lg shadow-xl 
                           flex items-center gap-2
                         `}
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) => e.stopPropagation()}
-                        onTouchStart={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onTouchStart={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                        }}
                       >
                         <Slider
                           value={[prize.scale || 1]}
@@ -667,7 +685,10 @@ export default function Station9() {
                           variant="destructive"
                           size="icon"
                           className="h-8 w-8 shrink-0"
-                          onClick={() => handleDeletePrize(prize.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeletePrize(prize.id);
+                          }}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -677,6 +698,7 @@ export default function Station9() {
                 );
               })}
             </div>
+
           </div>
 
           {/* BOTÓN PARA ABRIR/CERRAR SIDEBAR */}
@@ -834,5 +856,3 @@ export default function Station9() {
     </div>
   );
 }
-
-    
