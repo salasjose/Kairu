@@ -27,8 +27,8 @@ type PlacedPrize = {
   id: string;
   imageUrl: string;
   name: string;
-  x: number;
-  y: number;
+  x: number; // porcentaje
+  y: number; // porcentaje
   scale: number;
   stationId: number;
 };
@@ -40,14 +40,14 @@ type PlacedPrize = {
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
-// Algunas insignias pueden escalarse más (ej: elementos grandes del escenario)
+// Algunas insignias pueden escalarse más (ej: íconos grandes del escenario)
 const isSpecialPrize = (imageUrl: string) => {
   return (
     imageUrl.includes("Molinos.png") ||
     imageUrl.includes("Ciudad.png")
+    // aquí puedes agregar más patrones si lo necesitas
   );
 };
-
 
 // ------------------------------------------------------------------
 // Componente: DraggablePrize (INSIGNIAS EN EL SIDEBAR)
@@ -342,7 +342,7 @@ export default function Station9() {
   };
 
   // ------------------------------------------------------------------
-  // Escala de insignias (hasta 500%)
+  // Escala de insignias (hasta 500% o 700% si es especial)
   // ------------------------------------------------------------------
 
   const handleScaleChange = (prizeId: string, newScale: number[]) => {
@@ -357,7 +357,6 @@ export default function Station9() {
     const updated = placedPrizes.map((p) =>
       p.id === prizeId ? { ...p, scale } : p
     );
-
     setPlacedPrizes(updated);
   };
 
@@ -373,11 +372,9 @@ export default function Station9() {
     const updated = placedPrizes.map((p) =>
       p.id === prizeId ? { ...p, scale } : p
     );
-
     setPlacedPrizes(updated);
     await savePrizesToDb(updated);
   };
-
 
   // ------------------------------------------------------------------
   // Eliminar insignia
@@ -651,7 +648,6 @@ export default function Station9() {
                     }}
                     onPointerDown={(e) => {
                       if (isStationConfirmed) return;
-                      // Permitir que el drag funcione
                       e.stopPropagation();
                     }}
                   >
@@ -670,10 +666,11 @@ export default function Station9() {
                       <div
                         className={`
                           fixed md:absolute z-50
-                          ${isMobile 
-                            ? "bottom-44 left-1/2 -translate-x-1/2" 
-                            : prize.y < 50 
-                              ? "top-full mt-2 left-1/2 -translate-x-1/2" 
+                          ${
+                            isMobile
+                              ? "bottom-44 left-1/2 -translate-x-1/2"
+                              : prize.y < 50
+                              ? "top-full mt-2 left-1/2 -translate-x-1/2"
                               : "bottom-full mb-2 left-1/2 -translate-x-1/2"
                           }
                           w-40 max-w-[90vw]
