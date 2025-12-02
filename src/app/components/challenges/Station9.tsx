@@ -26,8 +26,8 @@ type PlacedPrize = {
   id: string;
   imageUrl: string;
   name: string;
-  x: number; // porcentaje
-  y: number; // porcentaje
+  x: number; // porcentaje 0-100 del ancho del lienzo
+  y: number; // porcentaje 0-100 del alto del lienzo
   scale: number;
   stationId: number;
 };
@@ -44,7 +44,7 @@ const isSpecialPrize = (imageUrl: string) => {
   return (
     imageUrl.includes("Molinos.png") ||
     imageUrl.includes("Ciudad.png")
-    // aquí puedes agregar más patrones si lo necesitas
+    // agrega más patrones si lo necesitas
   );
 };
 
@@ -57,7 +57,10 @@ const DraggablePrize = ({
   onDragEnd,
 }: {
   prize: Prize;
-  onDragEnd: (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => void;
+  onDragEnd: (
+    event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) => void;
 }) => {
   return (
     <motion.div
@@ -92,10 +95,22 @@ const ScenarioPicker = ({
   const scenarios = useMemo(
     () =>
       [
-        { name: "Terral", ...PlaceHolderImages.find((p) => p.id === "scenario-bosque-seco") },
-        { name: "Civika", ...PlaceHolderImages.find((p) => p.id === "scenario-ciudad") },
-        { name: "Mareva", ...PlaceHolderImages.find((p) => p.id === "scenario-mar-costero") },
-        { name: "Manglia", ...PlaceHolderImages.find((p) => p.id === "scenario-manglares") },
+        {
+          name: "Terral",
+          ...PlaceHolderImages.find((p) => p.id === "scenario-bosque-seco"),
+        },
+        {
+          name: "Civika",
+          ...PlaceHolderImages.find((p) => p.id === "scenario-ciudad"),
+        },
+        {
+          name: "Mareva",
+          ...PlaceHolderImages.find((p) => p.id === "scenario-mar-costero"),
+        },
+        {
+          name: "Manglia",
+          ...PlaceHolderImages.find((p) => p.id === "scenario-manglares"),
+        },
       ].filter((s) => s.imageUrl) as any[],
     []
   );
@@ -105,8 +120,8 @@ const ScenarioPicker = ({
       <Card className="p-8 max-w-4xl">
         <h2 className="text-2xl font-bold text-primary mb-4">Elige tu Lienzo</h2>
         <p className="text-muted-foreground mb-6">
-          Parece que no tienes un lienzo asignado. Por favor, selecciona uno para continuar
-          y crear tu estación.
+          Parece que no tienes un lienzo asignado. Por favor, selecciona uno
+          para continuar y crear tu estación.
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {scenarios.map((scenario) => (
@@ -156,19 +171,24 @@ export default function Station9() {
   const { prizes: collectedPrizes } = usePrizeCart();
 
   const canvasRef = useRef<HTMLDivElement | null>(null);
-  const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara-final");
+  const yaraCharImage = PlaceHolderImages.find(
+    (p) => p.id === "char-yara-final"
+  );
   const yaraTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMobile = useIsMobile();
-  
+
   const scenarioImageUrl = useMemo(() => {
     if (!chosenScenario) return null;
-    if (chosenScenario.includes("Bosque_Seco_Tropical")) return "/backgrounds/Terral1366_X_768.png";
-    if (chosenScenario.includes("Ciudad_Sostenible")) return "/backgrounds/Civika1366_X_768.png";
-    if (chosenScenario.includes("Mar_Costero")) return "/backgrounds/Mareva1366_X_768.png";
-    if (chosenScenario.includes("Manglares")) return "/backgrounds/Manglia1366_X_768.png";
+    if (chosenScenario.includes("Bosque_Seco_Tropical"))
+      return "/backgrounds/Terral1366_X_768.png";
+    if (chosenScenario.includes("Ciudad_Sostenible"))
+      return "/backgrounds/Civika1366_X_768.png";
+    if (chosenScenario.includes("Mar_Costero"))
+      return "/backgrounds/Mareva1366_X_768.png";
+    if (chosenScenario.includes("Manglares"))
+      return "/backgrounds/Manglia1366_X_768.png";
     return null;
   }, [chosenScenario]);
-
 
   // ------------------------------------------------------------------
   // Carga de datos de usuario
@@ -318,7 +338,7 @@ export default function Station9() {
   };
 
   // ------------------------------------------------------------------
-  // Escala de insignias (hasta 500% o 700% si es especial)
+  // Escala de insignias
   // ------------------------------------------------------------------
 
   const handleScaleChange = (prizeId: string, newScale: number[]) => {
@@ -336,7 +356,10 @@ export default function Station9() {
     setPlacedPrizes(updated);
   };
 
-  const handleScaleChangeCommit = async (prizeId: string, newScale: number[]) => {
+  const handleScaleChangeCommit = async (
+    prizeId: string,
+    newScale: number[]
+  ) => {
     if (isStationConfirmed) return;
 
     const prize = placedPrizes.find((p) => p.id === prizeId);
@@ -366,7 +389,7 @@ export default function Station9() {
   };
 
   // ------------------------------------------------------------------
-  // GUARDAR ESTACIÓN (bloquear movimiento y escala)
+  // GUARDAR / DESBLOQUEAR ESTACIÓN
   // ------------------------------------------------------------------
 
   const handleSaveStation = async () => {
@@ -379,7 +402,8 @@ export default function Station9() {
     if (collectedPrizes.length === 0 || unplaced.length > 0) {
       toast({
         title: "Insignias incompletas",
-        description: "Debes colocar todas las insignias antes de guardar la estación.",
+        description:
+          "Debes colocar todas las insignias antes de guardar la estación.",
         variant: "destructive",
       });
       return;
@@ -398,7 +422,8 @@ export default function Station9() {
 
       toast({
         title: "Estación guardada",
-        description: "Tus insignias han sido bloqueadas y la estación quedó lista para descargar.",
+        description:
+          "Tus insignias han sido bloqueadas y la estación quedó lista para descargar.",
       });
     } catch (e) {
       console.error("Error saving station", e);
@@ -427,7 +452,8 @@ export default function Station9() {
 
       toast({
         title: "Estación desbloqueada",
-        description: "Ahora puedes mover y escalar nuevamente tus insignias.",
+        description:
+          "Ahora puedes mover y escalar nuevamente tus insignias.",
       });
     } catch (e) {
       console.error("Error unlocking station", e);
@@ -439,9 +465,8 @@ export default function Station9() {
     }
   };
 
-
   // ------------------------------------------------------------------
-  // DESCARGAR IMAGEN (habilitado solo después de guardar estación)
+  // DESCARGAR IMAGEN
   // ------------------------------------------------------------------
 
   const handleDownloadImage = async () => {
@@ -450,7 +475,8 @@ export default function Station9() {
     if (!isStationConfirmed) {
       toast({
         title: "Primero guarda tu estación",
-        description: "Debes pulsar 'Guardar estación' antes de descargar la imagen.",
+        description:
+          "Debes pulsar 'Guardar estación' antes de descargar la imagen.",
         variant: "destructive",
       });
       return;
@@ -459,7 +485,6 @@ export default function Station9() {
     try {
       const userDocRef = doc(db, "users", user.uid);
 
-      // Ocultar controles antes de capturar
       setSelectedPrizeId(null);
       await new Promise((resolve) => setTimeout(resolve, 200));
 
@@ -571,161 +596,161 @@ export default function Station9() {
         <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
       ) : (
         <>
-          {/* LIENZO CON ASPECT-RATIO FIJO */}
-          <div className="absolute top-0 left-0 right-0 md:bottom-0 bottom-40 w-full flex items-center justify-center p-4">
-            <div
-                ref={canvasRef}
-                className="relative w-full max-w-7xl aspect-video shadow-2xl overflow-hidden"
-            >
-                {scenarioImageUrl && (
-                    <Image
-                        src={scenarioImageUrl}
-                        alt="Fondo del lienzo"
-                        fill
-                        className="object-cover"
-                        priority
-                    />
-                )}
+          {/* LIENZO A PANTALLA COMPLETA */}
+          <div
+            ref={canvasRef}
+            className="absolute inset-0 z-10 overflow-hidden"
+          >
+            {scenarioImageUrl && (
+              <Image
+                src={scenarioImageUrl}
+                alt="Fondo del lienzo"
+                fill
+                className="object-cover"
+                priority
+              />
+            )}
 
-                {/* INSIGNIAS COLOCADAS */}
-                <div className="absolute inset-0 z-10">
-                {placedPrizes.map((prize) => {
-                    const isSelected = selectedPrizeId === prize.id;
-                    const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
+            {/* INSIGNIAS COLOCADAS */}
+            <div className="absolute inset-0 z-10">
+              {placedPrizes.map((prize) => {
+                const isSelected = selectedPrizeId === prize.id;
+                const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
 
-                    return (
-                    <motion.div
-                        key={prize.id}
-                        drag={!isStationConfirmed}
-                        dragMomentum={false}
-                        dragElastic={0}
-                        dragConstraints={canvasRef}
-                        whileDrag={{ scale: 1.05, zIndex: 50 }}
-                        onDragStart={(event) => {
-                        if (!isStationConfirmed) {
-                            event.stopPropagation();
-                            setSelectedPrizeId(prize.id);
-                        }
-                        }}
-                        onDragEnd={async (event, info) => {
-                        if (isStationConfirmed || !canvasRef.current) return;
-                        
-                        const rect = canvasRef.current.getBoundingClientRect();
-                        
-                        const prevXPx = (prize.x / 100) * rect.width;
-                        const prevYPx = (prize.y / 100) * rect.height;
-                        
-                        const newXPx = prevXPx + info.offset.x;
-                        const newYPx = prevYPx + info.offset.y;
-                        
-                        let newXPercent = (newXPx / rect.width) * 100;
-                        let newYPercent = (newYPx / rect.height) * 100;
-                        
-                        newXPercent = clamp(newXPercent, 2, 98);
-                        newYPercent = clamp(newYPercent, 2, 98);
-
-                        const updated = placedPrizes.map((p) =>
-                            p.id === prize.id ? { ...p, x: newXPercent, y: newYPercent } : p
-                        );
-                        setPlacedPrizes(updated);
-                        await savePrizesToDb(updated);
-                        }}
-                        className="placed-prize-wrapper absolute"
-                        style={{
-                        left: `${prize.x}%`,
-                        top: `${prize.y}%`,
-                        width: `calc(64px * ${prize.scale || 1})`,
-                        height: `calc(64px * ${prize.scale || 1})`,
-                        transform: "translate(-50%, -50%)",
-                        touchAction: "none",
-                        cursor: isStationConfirmed ? "default" : "grab",
-                        }}
-                        initial={false}
-                        animate={{
-                        boxShadow: isSelected
-                            ? "0px 0px 15px rgba(255,255,100,0.8)"
-                            : "0px 0px 0px rgba(0,0,0,0)",
-                        }}
-                        transition={{ duration: 0.15 }}
-                        onClick={(e) => {
-                        if (isStationConfirmed) return;
-                        e.stopPropagation();
+                return (
+                  <motion.div
+                    key={prize.id}
+                    drag={!isStationConfirmed}
+                    dragMomentum={false}
+                    dragElastic={0}
+                    dragConstraints={canvasRef}
+                    whileDrag={{ scale: 1.05, zIndex: 50 }}
+                    onDragStart={(event) => {
+                      if (!isStationConfirmed) {
+                        event.stopPropagation();
                         setSelectedPrizeId(prize.id);
-                        }}
-                        onPointerDown={(e) => {
-                        if (isStationConfirmed) return;
-                        e.stopPropagation();
-                        }}
-                    >
-                        <div className="w-full h-full relative select-none">
-                        <Image
-                            src={prize.imageUrl}
-                            alt={prize.name}
-                            fill
-                            style={{ objectFit: "contain" }}
-                            draggable={false}
-                        />
-                        </div>
+                      }
+                    }}
+                    onDragEnd={async (event, info) => {
+                      if (isStationConfirmed || !canvasRef.current) return;
 
-                        {/* CONTROLES DE ESCALA Y ELIMINAR */}
-                        {isSelected && !isStationConfirmed && (
-                        <div
-                            className={`
-                            fixed md:absolute z-50
-                            ${
-                                isMobile
-                                ? "bottom-44 left-1/2 -translate-x-1/2"
-                                : prize.y < 50
-                                ? "top-full mt-2 left-1/2 -translate-x-1/2"
-                                : "bottom-full mb-2 left-1/2 -translate-x-1/2"
-                            }
-                            w-40 max-w-[90vw]
-                            bg-background/95 p-2 rounded-lg shadow-xl 
-                            flex items-center gap-2
-                            `}
-                            onPointerDown={(e) => {
+                      const rect = canvasRef.current.getBoundingClientRect();
+
+                      const prevXPx = (prize.x / 100) * rect.width;
+                      const prevYPx = (prize.y / 100) * rect.height;
+
+                      const newXPx = prevXPx + info.offset.x;
+                      const newYPx = prevYPx + info.offset.y;
+
+                      let newXPercent = (newXPx / rect.width) * 100;
+                      let newYPercent = (newYPx / rect.height) * 100;
+
+                      newXPercent = clamp(newXPercent, 2, 98);
+                      newYPercent = clamp(newYPercent, 2, 98);
+
+                      const updated = placedPrizes.map((p) =>
+                        p.id === prize.id
+                          ? { ...p, x: newXPercent, y: newYPercent }
+                          : p
+                      );
+                      setPlacedPrizes(updated);
+                      await savePrizesToDb(updated);
+                    }}
+                    className="placed-prize-wrapper absolute"
+                    style={{
+                      left: `${prize.x}%`,
+                      top: `${prize.y}%`,
+                      width: `calc(64px * ${prize.scale || 1})`,
+                      height: `calc(64px * ${prize.scale || 1})`,
+                      transform: "translate(-50%, -50%)",
+                      touchAction: "none",
+                      cursor: isStationConfirmed ? "default" : "grab",
+                    }}
+                    initial={false}
+                    animate={{
+                      boxShadow: isSelected
+                        ? "0px 0px 15px rgba(255,255,100,0.8)"
+                        : "0px 0px 0px rgba(0,0,0,0)",
+                    }}
+                    transition={{ duration: 0.15 }}
+                    onClick={(e) => {
+                      if (isStationConfirmed) return;
+                      e.stopPropagation();
+                      setSelectedPrizeId(prize.id);
+                    }}
+                    onPointerDown={(e) => {
+                      if (isStationConfirmed) return;
+                      e.stopPropagation();
+                    }}
+                  >
+                    <div className="w-full h-full relative select-none">
+                      <Image
+                        src={prize.imageUrl}
+                        alt={prize.name}
+                        fill
+                        style={{ objectFit: "contain" }}
+                        draggable={false}
+                      />
+                    </div>
+
+                    {/* CONTROLES DE ESCALA Y ELIMINAR */}
+                    {isSelected && !isStationConfirmed && (
+                      <div
+                        className={`
+                          fixed md:absolute z-50
+                          ${
+                            isMobile
+                              ? "bottom-44 left-1/2 -translate-x-1/2"
+                              : prize.y < 50
+                              ? "top-full mt-2 left-1/2 -translate-x-1/2"
+                              : "bottom-full mb-2 left-1/2 -translate-x-1/2"
+                          }
+                          w-40 max-w-[90vw]
+                          bg-background/95 p-2 rounded-lg shadow-xl 
+                          flex items-center gap-2
+                        `}
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onTouchStart={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                        }}
+                      >
+                        <Slider
+                          value={[prize.scale || 1]}
+                          min={0.5}
+                          max={maxScale}
+                          step={0.1}
+                          onValueChange={(value) =>
+                            handleScaleChange(prize.id, value)
+                          }
+                          onValueCommit={(value) =>
+                            handleScaleChangeCommit(prize.id, value)
+                          }
+                          className="flex-1"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          onClick={(e) => {
                             e.stopPropagation();
-                            }}
-                            onClick={(e) => {
-                            e.stopPropagation();
-                            }}
-                            onTouchStart={(e) => {
-                            e.stopPropagation();
-                            }}
-                            onMouseDown={(e) => {
-                            e.stopPropagation();
-                            }}
+                            handleDeletePrize(prize.id);
+                          }}
                         >
-                            <Slider
-                            value={[prize.scale || 1]}
-                            min={0.5}
-                            max={maxScale}
-                            step={0.1}
-                            onValueChange={(value) =>
-                                handleScaleChange(prize.id, value)
-                            }
-                            onValueCommit={(value) =>
-                                handleScaleChangeCommit(prize.id, value)
-                            }
-                            className="flex-1"
-                            />
-                            <Button
-                            variant="destructive"
-                            size="icon"
-                            className="h-8 w-8 shrink-0"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeletePrize(prize.id);
-                            }}
-                            >
-                            <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </div>
-                        )}
-                    </motion.div>
-                    );
-                })}
-                </div>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
 
@@ -760,7 +785,7 @@ export default function Station9() {
               )}
             </AnimatePresence>
           </Button>
-          
+
           {/* SIDEBAR/BOTTOM BAR DE INSIGNIAS */}
           <AnimatePresence>
             {isSidebarOpen && (
@@ -776,12 +801,15 @@ export default function Station9() {
                 <h3 className="text-white font-bold text-sm mb-2 text-center md:mt-2 hidden md:block">
                   Insignias
                 </h3>
-                
+
                 {/* Scroll horizontal en móvil, vertical en desktop */}
                 <div className="flex-grow w-full overflow-x-auto md:overflow-x-hidden md:overflow-y-auto">
                   <div className="flex flex-row md:flex-col gap-2 p-1 h-full md:h-auto">
                     {unplacedPrizes.map((prize) => (
-                      <div className="w-20 h-20 md:w-full md:aspect-square shrink-0" key={prize.id}>
+                      <div
+                        className="w-20 h-20 md:w-full md:aspect-square shrink-0"
+                        key={prize.id}
+                      >
                         <DraggablePrize
                           prize={prize}
                           onDragEnd={(event, info) =>
@@ -832,7 +860,7 @@ export default function Station9() {
                     Desbloquear
                   </Button>
                 </div>
-                
+
                 {isStationFinalized && (
                   <Button
                     onClick={() => setIsCompletionDialogOpen(true)}
@@ -894,5 +922,3 @@ export default function Station9() {
     </div>
   );
 }
-
-    
