@@ -17,6 +17,7 @@ import { Slider } from "@/components/ui/slider";
 import { Trash2, Gift, X, Check, Download } from "lucide-react";
 import ResponsiveBackground from "../ResponsiveBackground";
 import html2canvas from "html2canvas";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // ------------------------------------------------------------------
 // Tipos
@@ -149,6 +150,7 @@ export default function Station9() {
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara-final");
   const yaraTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMobile = useIsMobile();
 
   const scenarioBackgrounds = useMemo(() => {
     if (!chosenScenario) return null;
@@ -290,11 +292,26 @@ export default function Station9() {
     const pointerX = info.point.x;
     const pointerY = info.point.y;
 
+    // Verificar que el drop esté dentro del canvas
+    if (
+      pointerX < canvasRect.left ||
+      pointerX > canvasRect.right ||
+      pointerY < canvasRect.top ||
+      pointerY > canvasRect.bottom
+    ) {
+      toast({
+        title: "Fuera del lienzo",
+        description: "Arrastra la insignia dentro del área del lienzo.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     let x = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
     let y = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
 
-    x = clamp(x, 0, 100);
-    y = clamp(y, 0, 100);
+    x = clamp(x, 2, 98); // Margen pequeño
+    y = clamp(y, 2, 98);
 
     const prizeData = collectedPrizes.find((p) => p.id === prizeId);
     if (!prizeData) return;
@@ -530,7 +547,7 @@ export default function Station9() {
           {/* LIENZO RESPONSIVO */}
           <div
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full"
+            className="absolute inset-0 w-full h-full md:pb-0 pb-40"
           >
             {scenarioBackgrounds && (
               <ResponsiveBackground
@@ -559,8 +576,7 @@ export default function Station9() {
                       if (isStationConfirmed || !canvasRef.current) return;
 
                       const rect = canvasRef.current.getBoundingClientRect();
-                      const element = e.currentTarget as HTMLDivElement;
-
+                      
                       const prevX = (prize.x / 100) * rect.width;
                       const prevY = (prize.y / 100) * rect.height;
 
@@ -612,9 +628,19 @@ export default function Station9() {
                     {/* CONTROLES DE ESCALA Y ELIMINAR */}
                     {isSelected && !isStationConfirmed && (
                       <div
-                        className={`absolute ${
-                          prize.y < 70 ? "top-full mt-2" : "bottom-full mb-2"
-                        } left-1/2 -translate-x-1/2 w-40 bg-background/90 p-2 rounded-lg shadow-lg flex items-center gap-2`}
+                        className={`
+                          fixed md:absolute z-50
+                          md:${prize.y < 50 ? "top-full mt-2" : "bottom-full mb-2"}
+                          md:left-1/2 md:-translate-x-1/2
+                          bottom-44 left-1/2 -translate-x-1/2 md:bottom-auto md:left-auto
+                          w-36 max-w-[90vw]
+                          bg-background/95 p-2 rounded-lg shadow-xl 
+                          flex items-center gap-2
+                        `}
+                        style={{
+                          // Evitar que se salga de los bordes
+                          maxWidth: "calc(100vw - 2rem)",
+                        }}
                         onPointerDown={(e) => e.stopPropagation()}
                         onClick={(e) => e.stopPropagation()}
                       >
@@ -680,27 +706,19 @@ export default function Station9() {
           <AnimatePresence>
             {isSidebarOpen && (
               <motion.div
-                className="absolute z-30 bg-black/60 backdrop-blur-sm p-2 flex flex-col items-center
-                           md:top-0 md:right-0 md:h-full md:w-32 
-                           bottom-0 left-0 right-0 h-40 md:h-full md:w-32"
-                initial={{ y: "100%", x: 0 }} // Inicia desde abajo en móvil
-                animate={{ y: 0, x: 0 }}
-                exit={{ y: "100%", x: 0 }}
+                className="absolute z-30 bg-black/60 backdrop-blur-sm p-2 flex items-center
+                          md:top-0 md:right-0 md:h-full md:w-32 md:flex-col
+                          bottom-0 left-0 right-0 h-40 flex-row"
+                initial={isMobile ? { y: "100%" } : { x: "100%" }}
+                animate={isMobile ? { y: 0 } : { x: 0 }}
+                exit={isMobile ? { y: "100%" } : { x: "100%" }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                // Animate to side on desktop
-                variants={{
-                    initial: { x: "100%", y:0 },
-                    animate: { x: 0, y: 0 },
-                    exit: { x: "100%", y: 0 }
-                }}
-                // Apply desktop variants using a media query hook or CSS
-                custom={window.innerWidth >= 768 ? 1 : 0}
               >
-                <h3 className="text-white font-bold text-sm mt-2 mb-2 text-center md:mt-12">
+                <h3 className="text-white font-bold text-sm mb-2 text-center md:mt-12 hidden md:block">
                   Insignias
                 </h3>
                 {/* Scroll horizontal en móvil, vertical en desktop */}
-                <div className="flex-grow w-full overflow-x-auto md:overflow-y-auto">
+                <div className="flex-grow w-full h-full overflow-y-auto md:overflow-y-auto overflow-x-hidden md:overflow-x-hidden">
                     <div className="flex flex-row md:flex-col gap-2 p-1 h-full">
                         {unplacedPrizes.map((prize) => (
                           <div className="w-20 h-20 md:w-full md:h-auto shrink-0" key={prize.id}>
@@ -723,31 +741,31 @@ export default function Station9() {
                 </div>
 
                 {/* BOTONES DE ACCIÓN (Horizontal en móvil) */}
-                <div className="w-full mt-auto space-y-2 md:space-y-2 flex flex-row md:flex-col gap-2">
+                <div className="w-full mt-auto flex flex-row md:flex-col gap-2 p-1">
                   <Button
                     onClick={handleSaveStation}
-                    className="w-full"
+                    className="flex-1 md:w-full text-xs md:text-sm"
                     disabled={!allPrizesPlaced || isStationConfirmed}
                     size="sm"
                   >
-                    <Check className="mr-1 h-4 w-4" />
-                    Guardar
+                    <Check className="h-3 w-3 md:h-4 md:w-4" />
+                    <span className="ml-1">Guardar</span>
                   </Button>
                   <Button
                     onClick={handleDownloadImage}
-                    className="w-full"
+                    className="flex-1 md:w-full text-xs md:text-sm"
                     disabled={!isStationConfirmed}
                     variant={isStationFinalized ? "secondary" : "default"}
                     size="sm"
                   >
-                    <Download className="mr-1 h-4 w-4" />
-                    Descargar
+                    <Download className="h-3 w-3 md:h-4 md:w-4" />
+                    <span className="ml-1">Descargar</span>
                   </Button>
                 </div>
                  {isStationFinalized && (
                   <Button
                     onClick={() => setIsCompletionDialogOpen(true)}
-                    className="mt-2 w-full"
+                    className="mt-2 w-full hidden md:flex"
                     variant="secondary"
                     size="sm"
                   >
