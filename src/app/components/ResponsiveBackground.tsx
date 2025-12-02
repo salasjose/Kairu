@@ -22,7 +22,7 @@ export default function ResponsiveBackground({
   children,
 }: ResponsiveBackgroundProps) {
   return (
-    <div className="relative w-screen h-screen flex flex-col items-center justify-center overflow-hidden bg-black">
+    <div className="relative w-full h-full flex flex-col items-center justify-center overflow-hidden bg-black">
       {/* Background Image Layer */}
       <div className="absolute inset-0 z-0">
         <picture className="pointer-events-none select-none block h-full w-full">
@@ -52,3 +52,5 @@ export default function ResponsiveBackground({
     </div>
   );
 }
+
+    

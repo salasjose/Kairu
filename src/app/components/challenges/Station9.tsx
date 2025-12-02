@@ -15,7 +15,6 @@ import { Card } from "@/components/ui/card";
 import TypewriterText from "../auth/TypewriterText";
 import { Slider } from "@/components/ui/slider";
 import { Trash2, Gift, X, Check, Download } from "lucide-react";
-import ResponsiveBackground from "../ResponsiveBackground";
 import html2canvas from "html2canvas";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -160,39 +159,16 @@ export default function Station9() {
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara-final");
   const yaraTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMobile = useIsMobile();
-
-  const scenarioBackgrounds = useMemo(() => {
+  
+  const scenarioImageUrl = useMemo(() => {
     if (!chosenScenario) return null;
-    if (chosenScenario.includes("Bosque_Seco_Tropical")) {
-      return {
-        desktopSrc: "/backgrounds/Terral1366_X_768.png",
-        tabletSrc: "/backgrounds/Terral1024_X_768.png",
-        mobileSrc: "/backgrounds/Terral1075_X_1944.png",
-      };
-    }
-    if (chosenScenario.includes("Ciudad_Sostenible")) {
-      return {
-        desktopSrc: "/backgrounds/Civika1366_X_768.png",
-        tabletSrc: "/backgrounds/Civika1024_X_768.png",
-        mobileSrc: "/backgrounds/Civika1075_X_1944.png",
-      };
-    }
-    if (chosenScenario.includes("Mar_Costero")) {
-      return {
-        desktopSrc: "/backgrounds/Mareva1366_X_768.png",
-        tabletSrc: "/backgrounds/Mareva1024_X_768.png",
-        mobileSrc: "/backgrounds/Mareva1075_X_1944.png",
-      };
-    }
-    if (chosenScenario.includes("Manglares")) {
-      return {
-        desktopSrc: "/backgrounds/Manglia1366_X_768.png",
-        tabletSrc: "/backgrounds/Manglia1024_X_768.png",
-        mobileSrc: "/backgrounds/Manglia1075_X_1944.png",
-      };
-    }
+    if (chosenScenario.includes("Bosque_Seco_Tropical")) return "/backgrounds/Terral1366_X_768.png";
+    if (chosenScenario.includes("Ciudad_Sostenible")) return "/backgrounds/Civika1366_X_768.png";
+    if (chosenScenario.includes("Mar_Costero")) return "/backgrounds/Mareva1366_X_768.png";
+    if (chosenScenario.includes("Manglares")) return "/backgrounds/Manglia1366_X_768.png";
     return null;
   }, [chosenScenario]);
+
 
   // ------------------------------------------------------------------
   // Carga de datos de usuario
@@ -595,160 +571,161 @@ export default function Station9() {
         <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
       ) : (
         <>
-          {/* LIENZO RESPONSIVO */}
-          <div
-            ref={canvasRef}
-            className="absolute top-0 left-0 right-0 md:bottom-0 bottom-40 w-full"
-          >
-            {scenarioBackgrounds && (
-              <ResponsiveBackground
-                desktopSrc={scenarioBackgrounds.desktopSrc}
-                tabletSrc={scenarioBackgrounds.tabletSrc}
-                mobileSrc={scenarioBackgrounds.mobileSrc}
-              />
-            )}
-
-            {/* INSIGNIAS COLOCADAS */}
-            <div className="absolute inset-0 z-10">
-              {placedPrizes.map((prize) => {
-                const isSelected = selectedPrizeId === prize.id;
-                const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
-
-                return (
-                  <motion.div
-                    key={prize.id}
-                    drag={!isStationConfirmed}
-                    dragMomentum={false}
-                    dragElastic={0}
-                    dragConstraints={canvasRef}
-                    whileDrag={{ scale: 1.05, zIndex: 50 }}
-                    onDragStart={(event) => {
-                      if (!isStationConfirmed) {
-                        event.stopPropagation();
-                        setSelectedPrizeId(prize.id);
-                      }
-                    }}
-                    onDragEnd={async (event, info) => {
-                      if (isStationConfirmed || !canvasRef.current) return;
-                      
-                      const rect = canvasRef.current.getBoundingClientRect();
-                      
-                      // Posición previa en píxeles
-                      const prevXPx = (prize.x / 100) * rect.width;
-                      const prevYPx = (prize.y / 100) * rect.height;
-                      
-                      // Nueva posición = posición previa + offset del drag
-                      const newXPx = prevXPx + info.offset.x;
-                      const newYPx = prevYPx + info.offset.y;
-                      
-                      // Convertir a porcentaje y clampear
-                      let newXPercent = (newXPx / rect.width) * 100;
-                      let newYPercent = (newYPx / rect.height) * 100;
-                      
-                      newXPercent = clamp(newXPercent, 2, 98);
-                      newYPercent = clamp(newYPercent, 2, 98);
-
-                      const updated = placedPrizes.map((p) =>
-                        p.id === prize.id ? { ...p, x: newXPercent, y: newYPercent } : p
-                      );
-                      setPlacedPrizes(updated);
-                      await savePrizesToDb(updated);
-                    }}
-                    className="placed-prize-wrapper absolute"
-                    style={{
-                      left: `${prize.x}%`,
-                      top: `${prize.y}%`,
-                      width: `calc(64px * ${prize.scale || 1})`,
-                      height: `calc(64px * ${prize.scale || 1})`,
-                      transform: "translate(-50%, -50%)",
-                      touchAction: "none",
-                      cursor: isStationConfirmed ? "default" : "grab",
-                    }}
-                    initial={false}
-                    animate={{
-                      boxShadow: isSelected
-                        ? "0px 0px 15px rgba(255,255,100,0.8)"
-                        : "0px 0px 0px rgba(0,0,0,0)",
-                    }}
-                    transition={{ duration: 0.15 }}
-                    onClick={(e) => {
-                      if (isStationConfirmed) return;
-                      e.stopPropagation();
-                      setSelectedPrizeId(prize.id);
-                    }}
-                    onPointerDown={(e) => {
-                      if (isStationConfirmed) return;
-                      e.stopPropagation();
-                    }}
-                  >
-                    <div className="w-full h-full relative select-none">
-                      <Image
-                        src={prize.imageUrl}
-                        alt={prize.name}
+          {/* LIENZO CON ASPECT-RATIO FIJO */}
+          <div className="absolute top-0 left-0 right-0 md:bottom-0 bottom-40 w-full flex items-center justify-center p-4">
+            <div
+                ref={canvasRef}
+                className="relative w-full max-w-7xl aspect-video shadow-2xl overflow-hidden"
+            >
+                {scenarioImageUrl && (
+                    <Image
+                        src={scenarioImageUrl}
+                        alt="Fondo del lienzo"
                         fill
-                        style={{ objectFit: "contain" }}
-                        draggable={false}
-                      />
-                    </div>
+                        className="object-cover"
+                        priority
+                    />
+                )}
 
-                    {/* CONTROLES DE ESCALA Y ELIMINAR */}
-                    {isSelected && !isStationConfirmed && (
-                      <div
-                        className={`
-                          fixed md:absolute z-50
-                          ${
-                            isMobile
-                              ? "bottom-44 left-1/2 -translate-x-1/2"
-                              : prize.y < 50
-                              ? "top-full mt-2 left-1/2 -translate-x-1/2"
-                              : "bottom-full mb-2 left-1/2 -translate-x-1/2"
-                          }
-                          w-40 max-w-[90vw]
-                          bg-background/95 p-2 rounded-lg shadow-xl 
-                          flex items-center gap-2
-                        `}
-                        onPointerDown={(e) => {
-                          e.stopPropagation();
+                {/* INSIGNIAS COLOCADAS */}
+                <div className="absolute inset-0 z-10">
+                {placedPrizes.map((prize) => {
+                    const isSelected = selectedPrizeId === prize.id;
+                    const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
+
+                    return (
+                    <motion.div
+                        key={prize.id}
+                        drag={!isStationConfirmed}
+                        dragMomentum={false}
+                        dragElastic={0}
+                        dragConstraints={canvasRef}
+                        whileDrag={{ scale: 1.05, zIndex: 50 }}
+                        onDragStart={(event) => {
+                        if (!isStationConfirmed) {
+                            event.stopPropagation();
+                            setSelectedPrizeId(prize.id);
+                        }
                         }}
+                        onDragEnd={async (event, info) => {
+                        if (isStationConfirmed || !canvasRef.current) return;
+                        
+                        const rect = canvasRef.current.getBoundingClientRect();
+                        
+                        const prevXPx = (prize.x / 100) * rect.width;
+                        const prevYPx = (prize.y / 100) * rect.height;
+                        
+                        const newXPx = prevXPx + info.offset.x;
+                        const newYPx = prevYPx + info.offset.y;
+                        
+                        let newXPercent = (newXPx / rect.width) * 100;
+                        let newYPercent = (newYPx / rect.height) * 100;
+                        
+                        newXPercent = clamp(newXPercent, 2, 98);
+                        newYPercent = clamp(newYPercent, 2, 98);
+
+                        const updated = placedPrizes.map((p) =>
+                            p.id === prize.id ? { ...p, x: newXPercent, y: newYPercent } : p
+                        );
+                        setPlacedPrizes(updated);
+                        await savePrizesToDb(updated);
+                        }}
+                        className="placed-prize-wrapper absolute"
+                        style={{
+                        left: `${prize.x}%`,
+                        top: `${prize.y}%`,
+                        width: `calc(64px * ${prize.scale || 1})`,
+                        height: `calc(64px * ${prize.scale || 1})`,
+                        transform: "translate(-50%, -50%)",
+                        touchAction: "none",
+                        cursor: isStationConfirmed ? "default" : "grab",
+                        }}
+                        initial={false}
+                        animate={{
+                        boxShadow: isSelected
+                            ? "0px 0px 15px rgba(255,255,100,0.8)"
+                            : "0px 0px 0px rgba(0,0,0,0)",
+                        }}
+                        transition={{ duration: 0.15 }}
                         onClick={(e) => {
-                          e.stopPropagation();
+                        if (isStationConfirmed) return;
+                        e.stopPropagation();
+                        setSelectedPrizeId(prize.id);
                         }}
-                        onTouchStart={(e) => {
-                          e.stopPropagation();
+                        onPointerDown={(e) => {
+                        if (isStationConfirmed) return;
+                        e.stopPropagation();
                         }}
-                        onMouseDown={(e) => {
-                          e.stopPropagation();
-                        }}
-                      >
-                        <Slider
-                          value={[prize.scale || 1]}
-                          min={0.5}
-                          max={maxScale}
-                          step={0.1}
-                          onValueChange={(value) =>
-                            handleScaleChange(prize.id, value)
-                          }
-                          onValueCommit={(value) =>
-                            handleScaleChangeCommit(prize.id, value)
-                          }
-                          className="flex-1"
+                    >
+                        <div className="w-full h-full relative select-none">
+                        <Image
+                            src={prize.imageUrl}
+                            alt={prize.name}
+                            fill
+                            style={{ objectFit: "contain" }}
+                            draggable={false}
                         />
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          className="h-8 w-8 shrink-0"
-                          onClick={(e) => {
+                        </div>
+
+                        {/* CONTROLES DE ESCALA Y ELIMINAR */}
+                        {isSelected && !isStationConfirmed && (
+                        <div
+                            className={`
+                            fixed md:absolute z-50
+                            ${
+                                isMobile
+                                ? "bottom-44 left-1/2 -translate-x-1/2"
+                                : prize.y < 50
+                                ? "top-full mt-2 left-1/2 -translate-x-1/2"
+                                : "bottom-full mb-2 left-1/2 -translate-x-1/2"
+                            }
+                            w-40 max-w-[90vw]
+                            bg-background/95 p-2 rounded-lg shadow-xl 
+                            flex items-center gap-2
+                            `}
+                            onPointerDown={(e) => {
                             e.stopPropagation();
-                            handleDeletePrize(prize.id);
-                          }}
+                            }}
+                            onClick={(e) => {
+                            e.stopPropagation();
+                            }}
+                            onTouchStart={(e) => {
+                            e.stopPropagation();
+                            }}
+                            onMouseDown={(e) => {
+                            e.stopPropagation();
+                            }}
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </motion.div>
-                );
-              })}
+                            <Slider
+                            value={[prize.scale || 1]}
+                            min={0.5}
+                            max={maxScale}
+                            step={0.1}
+                            onValueChange={(value) =>
+                                handleScaleChange(prize.id, value)
+                            }
+                            onValueCommit={(value) =>
+                                handleScaleChangeCommit(prize.id, value)
+                            }
+                            className="flex-1"
+                            />
+                            <Button
+                            variant="destructive"
+                            size="icon"
+                            className="h-8 w-8 shrink-0"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeletePrize(prize.id);
+                            }}
+                            >
+                            <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        )}
+                    </motion.div>
+                    );
+                })}
+                </div>
             </div>
           </div>
 
@@ -917,3 +894,5 @@ export default function Station9() {
     </div>
   );
 }
+
+    
