@@ -44,7 +44,7 @@ const isSpecialPrize = (imageUrl: string) => {
   return (
     imageUrl.includes("Molinos.png") ||
     imageUrl.includes("Ciudad.png")
-    // aquí puedes agregar más patrones si lo necesitas
+    // agrega más patrones si lo necesitas
   );
 };
 
@@ -632,7 +632,6 @@ export default function Station9() {
                     drag={!isStationConfirmed}
                     dragMomentum={false}
                     dragElastic={0}
-                    whileDrag={{ scale: 1.05, zIndex: 50 }}
                     onDragStart={(event) => {
                       if (!isStationConfirmed) {
                         event.stopPropagation();
