@@ -291,60 +291,60 @@ export default function Station9() {
   // ------------------------------------------------------------------
 
   const handlePrizeDrop = async (
-    prizeId: string,
-    event: MouseEvent | TouchEvent | PointerEvent,
-    info: PanInfo
-  ) => {
-    if (isStationConfirmed || !canvasRef.current) return;
+  prizeId: string,
+  event: MouseEvent | TouchEvent | PointerEvent,
+  info: PanInfo
+) => {
+  if (isStationConfirmed || !canvasRef.current) return;
 
-    const canvasRect = canvasRef.current.getBoundingClientRect();
+  const canvasRect = canvasRef.current.getBoundingClientRect();
 
-    // 👉 Centro visual de la insignia que se está soltando
-    const target = event.target as HTMLElement;
-    const prizeRect = target.getBoundingClientRect();
-    const centerX = prizeRect.left + prizeRect.width / 2;
-    const centerY = prizeRect.top + prizeRect.height / 2;
+  // 👉 Centro visual de la insignia que se está soltando
+  const target = event.target as HTMLElement;
+  const prizeRect = target.getBoundingClientRect();
+  const centerX = prizeRect.left + prizeRect.width / 2;
+  const centerY = prizeRect.top + prizeRect.height / 2;
 
-    // Verificar que el centro esté dentro del canvas
-    if (
-      centerX < canvasRect.left ||
-      centerX > canvasRect.right ||
-      centerY < canvasRect.top ||
-      centerY > canvasRect.bottom
-    ) {
-      toast({
-        title: "Fuera del lienzo",
-        description: "Arrastra la insignia dentro del área del lienzo.",
-        variant: "destructive",
-      });
-      return;
-    }
+  // Verificar que el centro esté dentro del canvas
+  if (
+    centerX < canvasRect.left ||
+    centerX > canvasRect.right ||
+    centerY < canvasRect.top ||
+    centerY > canvasRect.bottom
+  ) {
+    toast({
+      title: "Fuera del lienzo",
+      description: "Arrastra la insignia dentro del área del lienzo.",
+      variant: "destructive",
+    });
+    return;
+  }
 
-    // Convertir el centro a porcentaje del lienzo
-    let x = ((centerX - canvasRect.left) / canvasRect.width) * 100;
-    let y = ((centerY - canvasRect.top) / canvasRect.height) * 100;
+  // Convertir el centro a porcentaje del lienzo
+  let x = ((centerX - canvasRect.left) / canvasRect.width) * 100;
+  let y = ((centerY - canvasRect.top) / canvasRect.height) * 100;
 
-    x = clamp(x, 2, 98);
-    y = clamp(y, 2, 98);
+  x = clamp(x, 2, 98);
+  y = clamp(y, 2, 98);
 
-    const prizeData = collectedPrizes.find((p) => p.id === prizeId);
-    if (!prizeData) return;
+  const prizeData = collectedPrizes.find((p) => p.id === prizeId);
+  if (!prizeData) return;
 
-    const newPlacedPrize: PlacedPrize = {
-      ...prizeData,
-      x,
-      y,
-      scale: 1,
-    };
-
-    const newPlacedPrizes = [
-      ...placedPrizes.filter((p) => p.id !== prizeId),
-      newPlacedPrize,
-    ];
-
-    setPlacedPrizes(newPlacedPrizes);
-    await savePrizesToDb(newPlacedPrizes);
+  const newPlacedPrize: PlacedPrize = {
+    ...prizeData,
+    x,
+    y,
+    scale: 1,
   };
+
+  const newPlacedPrizes = [
+    ...placedPrizes.filter((p) => p.id !== prizeId),
+    newPlacedPrize,
+  ];
+
+  setPlacedPrizes(newPlacedPrizes);
+  await savePrizesToDb(newPlacedPrizes);
+};
 
   // ------------------------------------------------------------------
   // Escala de insignias
@@ -929,4 +929,3 @@ export default function Station9() {
     </div>
   );
 }
-```
