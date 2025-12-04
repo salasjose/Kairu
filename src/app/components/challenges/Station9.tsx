@@ -290,19 +290,27 @@ export default function Station9() {
   // Colocar insignia desde el sidebar al lienzo
   // ------------------------------------------------------------------
 
-  const handlePrizeDrop = async (prizeId: string, info: PanInfo) => {
+  const handlePrizeDrop = async (
+    prizeId: string,
+    event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) => {
     if (isStationConfirmed || !canvasRef.current) return;
 
     const canvasRect = canvasRef.current.getBoundingClientRect();
-    const pointerX = info.point.x;
-    const pointerY = info.point.y;
 
-    // Verificar que el drop esté dentro del canvas
+    // 👉 Centro visual de la insignia que se está soltando
+    const target = event.target as HTMLElement;
+    const prizeRect = target.getBoundingClientRect();
+    const centerX = prizeRect.left + prizeRect.width / 2;
+    const centerY = prizeRect.top + prizeRect.height / 2;
+
+    // Verificar que el centro esté dentro del canvas
     if (
-      pointerX < canvasRect.left ||
-      pointerX > canvasRect.right ||
-      pointerY < canvasRect.top ||
-      pointerY > canvasRect.bottom
+      centerX < canvasRect.left ||
+      centerX > canvasRect.right ||
+      centerY < canvasRect.top ||
+      centerY > canvasRect.bottom
     ) {
       toast({
         title: "Fuera del lienzo",
@@ -312,8 +320,9 @@ export default function Station9() {
       return;
     }
 
-    let x = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
-    let y = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
+    // Convertir el centro a porcentaje del lienzo
+    let x = ((centerX - canvasRect.left) / canvasRect.width) * 100;
+    let y = ((centerY - canvasRect.top) / canvasRect.height) * 100;
 
     x = clamp(x, 2, 98);
     y = clamp(y, 2, 98);
@@ -623,7 +632,6 @@ export default function Station9() {
                     drag={!isStationConfirmed}
                     dragMomentum={false}
                     dragElastic={0}
-                    dragConstraints={canvasRef}
                     whileDrag={{ scale: 1.05, zIndex: 50 }}
                     onDragStart={(event) => {
                       if (!isStationConfirmed) {
@@ -813,7 +821,7 @@ export default function Station9() {
                         <DraggablePrize
                           prize={prize}
                           onDragEnd={(event, info) =>
-                            handlePrizeDrop(prize.id, info)
+                            handlePrizeDrop(prize.id, event, info)
                           }
                         />
                       </div>
@@ -922,3 +930,4 @@ export default function Station9() {
     </div>
   );
 }
+```
