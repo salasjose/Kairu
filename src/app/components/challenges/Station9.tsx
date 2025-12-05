@@ -75,6 +75,7 @@ const getPointerFromEvent = (
   };
 };
 
+
 // ------------------------------------------------------------------
 // Componente: DraggablePrize (INSIGNIAS EN EL SIDEBAR)
 // ------------------------------------------------------------------
@@ -326,10 +327,8 @@ export default function Station9() {
   
     const canvasRect = canvasRef.current.getBoundingClientRect();
   
-    // 👉 Usamos SIEMPRE la posición real del puntero
     const { x: pointerX, y: pointerY } = getPointerFromEvent(event, info);
   
-    // Verificar que el puntero esté dentro del canvas
     if (
       pointerX < canvasRect.left ||
       pointerX > canvasRect.right ||
@@ -344,7 +343,6 @@ export default function Station9() {
       return;
     }
   
-    // Convertimos la posición del puntero a porcentaje del lienzo
     let x = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
     let y = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
   
@@ -359,7 +357,6 @@ export default function Station9() {
       x,
       y,
       scale: 1,
-      // si tu tipo requiere stationId y no lo usas, pon un valor fijo o hazlo opcional
       stationId: prizeData.stationId ?? 9,
     };
   
