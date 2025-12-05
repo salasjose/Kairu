@@ -48,6 +48,33 @@ const isSpecialPrize = (imageUrl: string) => {
   );
 };
 
+const getPointerFromEvent = (
+  event: MouseEvent | TouchEvent | PointerEvent,
+  info: PanInfo
+) => {
+  // Touch (móvil)
+  if ("touches" in event && event.touches.length > 0) {
+    return {
+      x: event.touches[0].clientX,
+      y: event.touches[0].clientY,
+    };
+  }
+
+  // Mouse / Pointer
+  if ("clientX" in event && typeof event.clientX === "number") {
+    return {
+      x: event.clientX,
+      y: event.clientY,
+    };
+  }
+
+  // Fallback: info.point de Framer Motion
+  return {
+    x: info.point.x,
+    y: info.point.y,
+  };
+};
+
 // ------------------------------------------------------------------
 // Componente: DraggablePrize (INSIGNIAS EN EL SIDEBAR)
 // ------------------------------------------------------------------
@@ -299,24 +326,15 @@ export default function Station9() {
   
     const canvasRect = canvasRef.current.getBoundingClientRect();
   
-    // 👉 Obtenemos el elemento real que se está arrastrando
-    const rawTarget = event.target as HTMLElement;
-    const prizeEl =
-      rawTarget.closest(".draggable-prize") as HTMLElement | null;
+    // 👉 Usamos la posición real del puntero (dedo / mouse)
+    const { x: pointerX, y: pointerY } = getPointerFromEvent(event, info);
   
-    const rectToUse = prizeEl ?? rawTarget;
-    const prizeRect = rectToUse.getBoundingClientRect();
-  
-    // Centro visual de la insignia en pantalla
-    const centerX = prizeRect.left + prizeRect.width / 2;
-    const centerY = prizeRect.top + prizeRect.height / 2;
-  
-    // Verificar que el centro esté dentro del canvas
+    // Verificamos si el puntero está dentro del lienzo
     if (
-      centerX < canvasRect.left ||
-      centerX > canvasRect.right ||
-      centerY < canvasRect.top ||
-      centerY > canvasRect.bottom
+      pointerX < canvasRect.left ||
+      pointerX > canvasRect.right ||
+      pointerY < canvasRect.top ||
+      pointerY > canvasRect.bottom
     ) {
       toast({
         title: "Fuera del lienzo",
@@ -326,10 +344,11 @@ export default function Station9() {
       return;
     }
   
-    // Convertir el centro a porcentaje del lienzo
-    let x = ((centerX - canvasRect.left) / canvasRect.width) * 100;
-    let y = ((centerY - canvasRect.top) / canvasRect.height) * 100;
+    // Convertimos la posición del puntero a % del lienzo
+    let x = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
+    let y = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
   
+    // Limitamos para que no se salga
     x = clamp(x, 2, 98);
     y = clamp(y, 2, 98);
   
@@ -352,6 +371,7 @@ export default function Station9() {
     setPlacedPrizes(newPlacedPrizes);
     await savePrizesToDb(newPlacedPrizes);
   };
+  
 
   // ------------------------------------------------------------------
   // Escala de insignias
@@ -650,19 +670,10 @@ export default function Station9() {
                       if (isStationConfirmed || !canvasRef.current) return;
                     
                       const rect = canvasRef.current.getBoundingClientRect();
+                      const { x: pointerX, y: pointerY } = getPointerFromEvent(event, info);
                     
-                      // Obtenemos el wrapper real de la insignia
-                      const rawTarget = event.target as HTMLElement;
-                      const prizeEl =
-                        rawTarget.closest(".placed-prize-wrapper") as HTMLElement | null;
-                      const rectToUse = prizeEl ?? rawTarget;
-                      const prizeRect = rectToUse.getBoundingClientRect();
-                    
-                      const centerX = prizeRect.left + prizeRect.width / 2;
-                      const centerY = prizeRect.top + prizeRect.height / 2;
-                    
-                      let newXPercent = ((centerX - rect.left) / rect.width) * 100;
-                      let newYPercent = ((centerY - rect.top) / rect.height) * 100;
+                      let newXPercent = ((pointerX - rect.left) / rect.width) * 100;
+                      let newYPercent = ((pointerY - rect.top) / rect.height) * 100;
                     
                       newXPercent = clamp(newXPercent, 2, 98);
                       newYPercent = clamp(newYPercent, 2, 98);
