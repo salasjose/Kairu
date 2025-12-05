@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -68,7 +69,7 @@ const DraggablePrize = ({
       drag
       dragMomentum={false}
       onDragEnd={onDragEnd}
-      className="w-full h-full aspect-square bg-transparent rounded-md p-1 cursor-grab active:cursor-grabbing"
+      className="w-full h-full aspect-square bg-white/20 rounded-md p-1 cursor-grab active:cursor-grabbing"
       style={{ touchAction: "none" }}
     >
       <div className="relative w-full h-full">
@@ -632,6 +633,7 @@ export default function Station9() {
                     drag={!isStationConfirmed}
                     dragMomentum={false}
                     dragElastic={0}
+                    whileDrag={{ scale: 1.05, zIndex: 50 }}
                     onDragStart={(event) => {
                       if (!isStationConfirmed) {
                         event.stopPropagation();
