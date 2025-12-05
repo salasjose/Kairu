@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -47,6 +46,33 @@ const isSpecialPrize = (imageUrl: string) => {
     imageUrl.includes("Ciudad.png")
     // agrega más patrones si lo necesitas
   );
+};
+
+const getPointerFromEvent = (
+  event: MouseEvent | TouchEvent | PointerEvent,
+  info: PanInfo
+) => {
+  // Touch (móvil)
+  if ("touches" in event && event.touches.length > 0) {
+    return {
+      x: event.touches[0].clientX,
+      y: event.touches[0].clientY,
+    };
+  }
+
+  // PointerEvent con clientX/clientY
+  if ("clientX" in event && typeof event.clientX === "number") {
+    return {
+      x: event.clientX,
+      y: event.clientY,
+    };
+  }
+
+  // Fallback: info.point de Framer Motion
+  return {
+    x: info.point.x,
+    y: info.point.y,
+  };
 };
 
 // ------------------------------------------------------------------
@@ -297,21 +323,18 @@ export default function Station9() {
     info: PanInfo
   ) => {
     if (isStationConfirmed || !canvasRef.current) return;
-
+  
     const canvasRect = canvasRef.current.getBoundingClientRect();
-
-    // 👉 Centro visual de la insignia que se está soltando
-    const target = event.target as HTMLElement;
-    const prizeRect = target.getBoundingClientRect();
-    const centerX = prizeRect.left + prizeRect.width / 2;
-    const centerY = prizeRect.top + prizeRect.height / 2;
-
-    // Verificar que el centro esté dentro del canvas
+  
+    // 👉 Usamos SIEMPRE la posición real del puntero
+    const { x: pointerX, y: pointerY } = getPointerFromEvent(event, info);
+  
+    // Verificar que el puntero esté dentro del canvas
     if (
-      centerX < canvasRect.left ||
-      centerX > canvasRect.right ||
-      centerY < canvasRect.top ||
-      centerY > canvasRect.bottom
+      pointerX < canvasRect.left ||
+      pointerX > canvasRect.right ||
+      pointerY < canvasRect.top ||
+      pointerY > canvasRect.bottom
     ) {
       toast({
         title: "Fuera del lienzo",
@@ -320,29 +343,31 @@ export default function Station9() {
       });
       return;
     }
-
-    // Convertir el centro a porcentaje del lienzo
-    let x = ((centerX - canvasRect.left) / canvasRect.width) * 100;
-    let y = ((centerY - canvasRect.top) / canvasRect.height) * 100;
-
+  
+    // Convertimos la posición del puntero a porcentaje del lienzo
+    let x = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
+    let y = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
+  
     x = clamp(x, 2, 98);
     y = clamp(y, 2, 98);
-
+  
     const prizeData = collectedPrizes.find((p) => p.id === prizeId);
     if (!prizeData) return;
-
+  
     const newPlacedPrize: PlacedPrize = {
       ...prizeData,
       x,
       y,
       scale: 1,
+      // si tu tipo requiere stationId y no lo usas, pon un valor fijo o hazlo opcional
+      stationId: prizeData.stationId ?? 9,
     };
-
+  
     const newPlacedPrizes = [
       ...placedPrizes.filter((p) => p.id !== prizeId),
       newPlacedPrize,
     ];
-
+  
     setPlacedPrizes(newPlacedPrizes);
     await savePrizesToDb(newPlacedPrizes);
   };
@@ -641,30 +666,25 @@ export default function Station9() {
                       }
                     }}
                     onDragEnd={async (event, info) => {
-                      if (isStationConfirmed || !canvasRef.current) return;
-
-                      const rect = canvasRef.current.getBoundingClientRect();
-
-                      const prevXPx = (prize.x / 100) * rect.width;
-                      const prevYPx = (prize.y / 100) * rect.height;
-
-                      const newXPx = prevXPx + info.offset.x;
-                      const newYPx = prevYPx + info.offset.y;
-
-                      let newXPercent = (newXPx / rect.width) * 100;
-                      let newYPercent = (newYPx / rect.height) * 100;
-
-                      newXPercent = clamp(newXPercent, 2, 98);
-                      newYPercent = clamp(newYPercent, 2, 98);
-
-                      const updated = placedPrizes.map((p) =>
-                        p.id === prize.id
-                          ? { ...p, x: newXPercent, y: newYPercent }
-                          : p
-                      );
-                      setPlacedPrizes(updated);
-                      await savePrizesToDb(updated);
-                    }}
+                        if (isStationConfirmed || !canvasRef.current) return;
+                      
+                        const rect = canvasRef.current.getBoundingClientRect();
+                        const { x: pointerX, y: pointerY } = getPointerFromEvent(event, info);
+                      
+                        let newXPercent = ((pointerX - rect.left) / rect.width) * 100;
+                        let newYPercent = ((pointerY - rect.top) / rect.height) * 100;
+                      
+                        newXPercent = clamp(newXPercent, 2, 98);
+                        newYPercent = clamp(newYPercent, 2, 98);
+                      
+                        const updated = placedPrizes.map((p) =>
+                          p.id === prize.id
+                            ? { ...p, x: newXPercent, y: newYPercent }
+                            : p
+                        );
+                        setPlacedPrizes(updated);
+                        await savePrizesToDb(updated);
+                      }}
                     className="placed-prize-wrapper absolute"
                     style={{
                       left: `${prize.x}%`,
