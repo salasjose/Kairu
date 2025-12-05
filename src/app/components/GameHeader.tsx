@@ -29,11 +29,8 @@ export default function GameHeader({ playerState, setPlayerState, onFullReset }:
   const handleLogout = async () => {
     if (!auth) return;
     
-    await resetProgress();
-    await clearCart();
-    
-    setPlayerState(null);
-    
+    // No necesitamos resetear el progreso aquí, solo desloguear.
+    // La UI reaccionará al cambio de usuario.
     await signOut(auth);
   }
 

@@ -1,15 +1,16 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { doc, setDoc } from 'firebase/firestore';
 import { stations } from '@/lib/data';
 import StationNode from '@/app/components/StationNode';
 import CompletionDialog from '@/app/components/CompletionDialog';
 import Logo from '@/app/components/Logo';
 import OnboardingFlow from './auth/OnboardingFlow';
 import { AnimatePresence } from 'framer-motion';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { useDoc } from '@/firebase/firestore/use-doc';
 import type { z } from 'zod';
 import type { SignUpFormSchema } from './auth/SignUpForm';
 import GameHeader from './GameHeader';
@@ -18,7 +19,7 @@ import { toast } from '@/hooks/use-toast';
 
 export interface PlayerState {
   id: string;
-  name: string; // Este es el `displayName`
+  name: string;
   avatar: string;
   unlockedStations: number[];
   chosenScenario: string | null;
@@ -35,99 +36,72 @@ export interface PlayerState {
 export default function GameClient() {
   const { user } = useUser();
   const db = useFirestore();
-
-  const [playerState, setPlayerState] = useState<PlayerState | null>(null);
   const [isNewUser, setIsNewUser] = useState(false);
-  const [isFetchingPlayer, setIsFetchingPlayer] = useState(true);
   const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
   
-  const fetchInitialPlayerState = useCallback(() => {
-    if (!user || !db) return;
-
-    setIsFetchingPlayer(true);
-    const playerDocRef = doc(db, 'users', user.uid);
-    
-    const unsubscribe = onSnapshot(
-      playerDocRef,
-      (docSnap) => {
-        setIsFetchingPlayer(false);
-        if (docSnap.exists()) {
-          const data = docSnap.data() as any;
-
-          const displayName: string =
-            (data.nombre && String(data.nombre).trim()) ||
-            (data.usuario && String(data.usuario).trim()) ||
-            'Jugador';
-
-          const newState: PlayerState = {
-            id: user.uid,
-            name: displayName,
-            avatar: data.avatar || '',
-            chosenScenario: data.chosenScenario || null,
-            unlockedStations: data.unlockedStations || [1],
-            // Copiamos todos los campos del perfil
-            nombre: data.nombre,
-            apellido: data.apellido,
-            usuario: data.usuario,
-            email: data.email,
-            telefono: data.telefono,
-            edad: data.edad,
-          };
-
-          setPlayerState((currentState) => {
-            if (JSON.stringify(currentState) === JSON.stringify(newState)) {
-              return currentState;
-            }
-            return newState;
-          });
-
-          if (!newState.avatar || !newState.chosenScenario) {
-            setIsNewUser(true);
-          } else {
-            setIsNewUser(false);
-          }
-
-          const allStationsComplete = stations
-            .filter(s => s.id !== 9)
-            .every((s) => newState.unlockedStations?.includes(s.id));
-
-          if (allStationsComplete) {
-            setIsCompletionDialogOpen(true);
-          } else {
-            setIsCompletionDialogOpen(false);
-          }
-
-        } else {
-          setIsNewUser(true);
-        }
-      },
-      (error) => {
-        console.error('Error fetching player state:', error);
-        setIsFetchingPlayer(false);
-        setIsNewUser(true);
-      }
-    );
-
-    return unsubscribe;
+  // Hook `useDoc` para obtener y escuchar los datos del jugador de forma reactiva.
+  const playerDocRef = useMemoFirebase(() => {
+    if (!user || !db) return null;
+    return doc(db, 'users', user.uid);
   }, [user, db]);
 
-  useEffect(() => {
-    if (user) {
-      const unsub = fetchInitialPlayerState();
-      return () => {
-        if (unsub) unsub();
-      };
-    } else {
-      setPlayerState(null);
-      setIsNewUser(true);
-      setIsFetchingPlayer(false);
-    }
-  }, [user, fetchInitialPlayerState]);
+  const { data: userDoc, isLoading: isFetchingPlayer } = useDoc(playerDocRef);
+
+  // Derivamos el estado del jugador (`playerState`) a partir de los datos del documento.
+  const playerState: PlayerState | null = useMemo(() => {
+    if (!userDoc || !user) return null;
+    
+    const data = userDoc as any;
+    const displayName: string =
+      (data.nombre && String(data.nombre).trim()) ||
+      (data.usuario && String(data.usuario).trim()) ||
+      'Jugador';
+      
+    return {
+      id: user.uid,
+      name: displayName,
+      avatar: data.avatar || '',
+      chosenScenario: data.chosenScenario || null,
+      unlockedStations: data.unlockedStations || [1],
+      nombre: data.nombre,
+      apellido: data.apellido,
+      usuario: data.usuario,
+      email: data.email,
+      telefono: data.telefono,
+      edad: data.edad,
+    };
+  }, [userDoc, user]);
   
+  // Efecto para determinar si el usuario es nuevo o si el juego está completo.
+  useEffect(() => {
+    if (isFetchingPlayer || !user) return;
+
+    if (!userDoc) {
+      // Si el documento no existe en Firestore, es un nuevo usuario.
+      setIsNewUser(true);
+    } else {
+      // Si existe, verificamos si ha completado los pasos de onboarding.
+      const hasOnboarded = userDoc.avatar && userDoc.chosenScenario;
+      setIsNewUser(!hasOnboarded);
+
+      // Verificamos si todas las estaciones (excepto la 9) están completadas.
+      const allStationsComplete = stations
+        .filter(s => s.id !== 9)
+        .every((s) => userDoc.unlockedStations?.includes(s.id));
+
+      if (allStationsComplete) {
+        setIsCompletionDialogOpen(true);
+      } else {
+        setIsCompletionDialogOpen(false);
+      }
+    }
+  }, [userDoc, isFetchingPlayer, user]);
+
   const handleResetOnboarding = () => {
     setIsNewUser(true);
   };
-
+  
+  // Función para completar el proceso de bienvenida y guardar los datos.
   const handleOnboardingComplete = async (data: {
     avatar?: string;
     chosenScenario?: string;
@@ -155,6 +129,7 @@ export default function GameClient() {
         });
       }
       
+      // Guardamos los datos en Firestore, `useDoc` se encargará de actualizar el estado.
       await setDoc(playerDocRef, finalData, { merge: true });
       
       setIsNewUser(false);
@@ -184,7 +159,7 @@ export default function GameClient() {
     return (
       <OnboardingFlow
         onComplete={handleOnboardingComplete}
-        onLoginSuccess={fetchInitialPlayerState}
+        onLoginSuccess={() => {}} // No necesita acción, el hook `useDoc` se encarga.
       />
     );
   }
@@ -226,7 +201,7 @@ export default function GameClient() {
     <BackgroundImage>
       <GameHeader
         playerState={playerState}
-        setPlayerState={setPlayerState}
+        setPlayerState={() => {}} // No es necesario que el header cambie el estado
         onFullReset={handleResetOnboarding}
       />
 
