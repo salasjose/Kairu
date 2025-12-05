@@ -48,34 +48,6 @@ const isSpecialPrize = (imageUrl: string) => {
   );
 };
 
-const getPointerFromEvent = (
-  event: MouseEvent | TouchEvent | PointerEvent,
-  info: PanInfo
-) => {
-  // Touch (móvil)
-  if ("touches" in event && event.touches.length > 0) {
-    return {
-      x: event.touches[0].clientX,
-      y: event.touches[0].clientY,
-    };
-  }
-
-  // PointerEvent con clientX/clientY
-  if ("clientX" in event && typeof event.clientX === "number") {
-    return {
-      x: event.clientX,
-      y: event.clientY,
-    };
-  }
-
-  // Fallback: info.point de Framer Motion
-  return {
-    x: info.point.x,
-    y: info.point.y,
-  };
-};
-
-
 // ------------------------------------------------------------------
 // Componente: DraggablePrize (INSIGNIAS EN EL SIDEBAR)
 // ------------------------------------------------------------------
@@ -324,21 +296,21 @@ export default function Station9() {
     info: PanInfo
   ) => {
     if (isStationConfirmed || !canvasRef.current) return;
-
+  
     const canvasRect = canvasRef.current.getBoundingClientRect();
-
+  
     // 👉 Obtenemos el elemento real que se está arrastrando
     const rawTarget = event.target as HTMLElement;
     const prizeEl =
       rawTarget.closest(".draggable-prize") as HTMLElement | null;
-
+  
     const rectToUse = prizeEl ?? rawTarget;
     const prizeRect = rectToUse.getBoundingClientRect();
-
+  
     // Centro visual de la insignia en pantalla
     const centerX = prizeRect.left + prizeRect.width / 2;
     const centerY = prizeRect.top + prizeRect.height / 2;
-
+  
     // Verificar que el centro esté dentro del canvas
     if (
       centerX < canvasRect.left ||
@@ -353,30 +325,30 @@ export default function Station9() {
       });
       return;
     }
-
+  
     // Convertir el centro a porcentaje del lienzo
     let x = ((centerX - canvasRect.left) / canvasRect.width) * 100;
     let y = ((centerY - canvasRect.top) / canvasRect.height) * 100;
-
+  
     x = clamp(x, 2, 98);
     y = clamp(y, 2, 98);
-
+  
     const prizeData = collectedPrizes.find((p) => p.id === prizeId);
     if (!prizeData) return;
-
+  
     const newPlacedPrize: PlacedPrize = {
       ...prizeData,
       x,
       y,
       scale: 1,
-      stationId: (prizeData as any).stationId ?? 9, // o el valor que uses
+      stationId: (prizeData as any).stationId ?? 9,
     };
-
+  
     const newPlacedPrizes = [
       ...placedPrizes.filter((p) => p.id !== prizeId),
       newPlacedPrize,
     ];
-
+  
     setPlacedPrizes(newPlacedPrizes);
     await savePrizesToDb(newPlacedPrizes);
   };
@@ -675,34 +647,34 @@ export default function Station9() {
                       }
                     }}
                     onDragEnd={async (event, info) => {
-                        if (isStationConfirmed || !canvasRef.current) return;
-
-                        const rect = canvasRef.current.getBoundingClientRect();
-                      
-                        // Obtenemos el wrapper real de la insignia
-                        const rawTarget = event.target as HTMLElement;
-                        const prizeEl =
-                          rawTarget.closest(".placed-prize-wrapper") as HTMLElement | null;
-                        const rectToUse = prizeEl ?? rawTarget;
-                        const prizeRect = rectToUse.getBoundingClientRect();
-
-                        const centerX = prizeRect.left + prizeRect.width / 2;
-                        const centerY = prizeRect.top + prizeRect.height / 2;
-
-                        let newXPercent = ((centerX - rect.left) / rect.width) * 100;
-                        let newYPercent = ((centerY - rect.top) / rect.height) * 100;
-                      
-                        newXPercent = clamp(newXPercent, 2, 98);
-                        newYPercent = clamp(newYPercent, 2, 98);
-                      
-                        const updated = placedPrizes.map((p) =>
-                          p.id === prize.id
-                            ? { ...p, x: newXPercent, y: newYPercent }
-                            : p
-                        );
-                        setPlacedPrizes(updated);
-                        await savePrizesToDb(updated);
-                      }}
+                      if (isStationConfirmed || !canvasRef.current) return;
+                    
+                      const rect = canvasRef.current.getBoundingClientRect();
+                    
+                      // Obtenemos el wrapper real de la insignia
+                      const rawTarget = event.target as HTMLElement;
+                      const prizeEl =
+                        rawTarget.closest(".placed-prize-wrapper") as HTMLElement | null;
+                      const rectToUse = prizeEl ?? rawTarget;
+                      const prizeRect = rectToUse.getBoundingClientRect();
+                    
+                      const centerX = prizeRect.left + prizeRect.width / 2;
+                      const centerY = prizeRect.top + prizeRect.height / 2;
+                    
+                      let newXPercent = ((centerX - rect.left) / rect.width) * 100;
+                      let newYPercent = ((centerY - rect.top) / rect.height) * 100;
+                    
+                      newXPercent = clamp(newXPercent, 2, 98);
+                      newYPercent = clamp(newYPercent, 2, 98);
+                    
+                      const updated = placedPrizes.map((p) =>
+                        p.id === prize.id
+                          ? { ...p, x: newXPercent, y: newYPercent }
+                          : p
+                      );
+                      setPlacedPrizes(updated);
+                      await savePrizesToDb(updated);
+                    }}
                     className="placed-prize-wrapper absolute"
                     style={{
                       left: `${prize.x}%`,
