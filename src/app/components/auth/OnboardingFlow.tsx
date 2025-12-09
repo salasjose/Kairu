@@ -296,7 +296,7 @@ export default function OnboardingFlow({ onComplete, onLoginSuccess }: Onboardin
                         </div>
                         
                         <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="mt-8">
-                            <Button onClick={handleFinalStepConfirm} size="lg">
+                            <Button onClick={handleFinalStepConfirm} size="lg" disabled={!selectedScenario}>
                                 Confirmar y Empezar Aventura
                             </Button>
                         </motion.div>

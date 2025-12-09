@@ -42,6 +42,14 @@ export default function AnimatedWelcome({ onLoginClick, onCreateUserClick }: Ani
             <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mt-4 text-3d"></h1>
         </motion.div>
 
+        <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, transition: { delay: 0.5, duration: 0.5 } }}
+            className="text-lg md:text-xl text-white mt-4 max-w-md"
+        >
+            Donde la naturaleza se convierte en misión.
+        </motion.p>
+
         <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1, transition: { delay: 1.0, duration: 0.5 } }}
