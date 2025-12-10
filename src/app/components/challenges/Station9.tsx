@@ -1,4 +1,5 @@
-"use client";
+// Código corregido para posicionamiento responsivo de insignias
+"use client"; 
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Image from "next/image";
@@ -690,11 +691,12 @@ export default function Station9() {
                     style={{
                       left: `${prize.x}%`,
                       top: `${prize.y}%`,
-                      width: `calc(64px * ${prize.scale || 1})`,
-                      height: `calc(64px * ${prize.scale || 1})`,
+                      width: `calc(min(8vw, 8vh) * ${prize.scale || 1})`,
+                      height: `calc(min(8vw, 8vh) * ${prize.scale || 1})`,
                       transform: "translate(-50%, -50%)",
                       touchAction: "none",
                       cursor: isStationConfirmed ? "default" : "grab",
+                      aspectRatio: "1 / 1",
                     }}
                     initial={false}
                     animate={{
