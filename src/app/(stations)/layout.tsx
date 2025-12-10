@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -12,7 +13,7 @@ export default function StationLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col h-screen">
       <header className="sticky top-0 bg-background/80 backdrop-blur-sm border-b z-30">
         <nav className="container flex items-center justify-between h-16 px-4">
           <Link href="/" className="flex items-center gap-2">
@@ -29,7 +30,7 @@ export default function StationLayout({
           </div>
         </nav>
       </header>
-      <main className="flex-grow flex flex-col">
+      <main className="flex-grow flex flex-col h-full">
         {children}
       </main>
     </div>
