@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -236,11 +237,11 @@ const PhotoUploadChallenge = ({
       />
 
       <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center h-full">
-        <Button variant="ghost" onClick={onBack} className="mb-4 self-start">
+        <Button variant="ghost" onClick={onBack} className="mb-4 self-start text-white hover:bg-white/20 hover:text-white">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Volver a los retos
         </Button>
-        <Card className="text-center w-full">
+        <Card className="text-center w-full bg-card/80 backdrop-blur-sm">
           <CardContent className="p-6">
             <h3 className="font-bold text-2xl text-primary font-headline mb-4">
               Reto del Día {day}
@@ -431,8 +432,9 @@ export default function Station2() {
 
   if (!isClient) {
      return (
-       <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden">
-          Cargando estación...
+       <div className="w-full flex-grow flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background">
+          <Logo className="h-24 animate-pulse" />
+          <p className="text-primary/70 mt-4">Cargando Estación...</p>
        </div>
      );
   }
@@ -485,11 +487,7 @@ export default function Station2() {
     };
 
     return (
-        <ResponsiveBackground
-            desktopSrc="/backgrounds/Impactrack1366_X_768.png"
-            tabletSrc="/backgrounds/Impactrack1024_X_768.png"
-            mobileSrc="/backgrounds/Impactrack1075_X_1944.png"
-        >
+        <>
             <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
                 <div className="bg-white/90 backdrop-blur-sm text-primary font-kalam py-3 px-10 rounded-lg shadow-lg -rotate-3 mb-8">
                     <h1 className="text-4xl md:text-5xl">ImpacTrack</h1>
@@ -505,12 +503,16 @@ export default function Station2() {
                     <p className="text-sm text-muted-foreground mt-4">MECÁNICA: Cada vez que subas tu foto, pasadas 2 minutos se activará el siguiente candado para continuar.</p>
                 </div>
             </div>
-       </ResponsiveBackground>
+       </>
     );
   };
 
   return (
-    <>
+    <ResponsiveBackground
+      desktopSrc="/backgrounds/Impactrack1366_X_768.png"
+      tabletSrc="/backgrounds/Impactrack1024_X_768.png"
+      mobileSrc="/backgrounds/Impactrack1075_X_1944.png"
+    >
       {renderContent()}
       {/* Yara Character and Dialog */}
       {!selectedDay && (
@@ -555,6 +557,6 @@ export default function Station2() {
         stationId={stationId}
         onClaim={handleClaimPrize}
       />
-    </>
+    </ResponsiveBackground>
   );
 }
