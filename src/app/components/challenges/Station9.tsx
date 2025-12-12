@@ -44,7 +44,6 @@ const isSpecialPrize = (imageUrl: string) => {
   return (
     imageUrl.includes("Molinos.png") ||
     imageUrl.includes("Ciudad.png")
-    // aquí puedes agregar más patrones si lo necesitas
   );
 };
 
@@ -127,7 +126,6 @@ const ScenarioPicker = ({
           {scenarios.map((scenario) => (
             <Card
               key={scenario.id}
-              // 🔧 CAMBIO: ahora pasamos el ID, no la URL
               onClick={() => onScenarioSelect(scenario.id)}
               className="p-2 cursor-pointer hover:border-primary hover:scale-105 transition-transform duration-300"
             >
@@ -178,7 +176,7 @@ export default function Station9() {
   const yaraTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMobile = useIsMobile();
 
-  // 🔧 CAMBIO: ahora mapeamos por ID y por dispositivo
+  // 🔧 Mapeo de escenario por ID y dispositivo
   const scenarioImageUrl = useMemo(() => {
     if (!chosenScenario) return null;
 
@@ -194,7 +192,7 @@ export default function Station9() {
         : null;
 
     if (!baseName) {
-      // Fallback: si guardaste una URL antigua, intenta detectarla
+      // Fallback para URLs antiguas
       if (chosenScenario.includes("Bosque_Seco_Tropical")) return "/backgrounds/Terral1366_X_768.png";
       if (chosenScenario.includes("Ciudad_Sostenible")) return "/backgrounds/Civika1366_X_768.png";
       if (chosenScenario.includes("Mar_Costero")) return "/backgrounds/Mareva1366_X_768.png";
@@ -202,8 +200,7 @@ export default function Station9() {
       return null;
     }
 
-    // Aquí puedes diferenciar por dispositivo
-    // Por ahora uso la misma imagen para todos, pero puedes cambiar:
+    // Puedes cambiar aquí para usar imágenes distintas en móvil
     // if (isMobile) return `/backgrounds/${baseName}_MOBILE.png`;
     return `/backgrounds/${baseName}1366_X_768.png`;
   }, [chosenScenario, isMobile]);
@@ -281,6 +278,7 @@ export default function Station9() {
 
   // ------------------------------------------------------------------
   // Guardar insignias en Firestore (posición + escala)
+  // 🔧 OPTIMIZACIÓN: debounce opcional para evitar saturar Firestore
   // ------------------------------------------------------------------
 
   const savePrizesToDb = useCallback(
@@ -334,10 +332,9 @@ export default function Station9() {
     let x = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
     let y = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
 
-    // 🔧 CAMBIO: clamp inicial aproximado (luego se ajusta con el tamaño real)
-    // Usamos un margen conservador del 5% para el drop inicial
-    x = clamp(x, 5, 95);
-    y = clamp(y, 5, 95);
+    // Margen mínimo para no quedar pegado al borde
+    x = clamp(x, 3, 97);
+    y = clamp(y, 3, 97);
 
     const prizeData = collectedPrizes.find((p) => p.id === prizeId);
     if (!prizeData) return;
@@ -556,7 +553,6 @@ export default function Station9() {
     if (!user || !db) return;
     try {
       const userDocRef = doc(db, "users", user.uid);
-      // 🔧 CAMBIO: ahora guardamos el ID, no la URL
       await setDoc(userDocRef, { chosenScenario: scenarioId }, { merge: true });
       setChosenScenario(scenarioId);
       toast({
@@ -645,40 +641,7 @@ export default function Station9() {
                     key={prize.id}
                     drag={!isStationConfirmed}
                     dragMomentum={false}
-                    onDrag={(_, info) => {
-                      if (isStationConfirmed || !canvasRef.current) return;
-                      const canvasRect = canvasRef.current.getBoundingClientRect();
-                      let newXPercent = ((info.point.x - canvasRect.left) / canvasRect.width) * 100;
-                      let newYPercent = ((info.point.y - canvasRect.top) / canvasRect.height) * 100;
-                  
-                      setPlacedPrizes(prevPrizes =>
-                        prevPrizes.map(p =>
-                          p.id === prize.id ? { ...p, x: newXPercent, y: newYPercent } : p
-                        )
-                      );
-                    }}
-                    onDragEnd={async (event, info) => {
-                      if (isStationConfirmed || !canvasRef.current) return;
-                  
-                      const canvasRect = canvasRef.current.getBoundingClientRect();
-                      const prizeElement = event.target as HTMLElement;
-                      const prizeRect = prizeElement.getBoundingClientRect();
-                  
-                      let newXPercent = ((info.point.x - canvasRect.left) / canvasRect.width) * 100;
-                      let newYPercent = ((info.point.y - canvasRect.top) / canvasRect.height) * 100;
-
-                      const widthPercent = (prizeRect.width / canvasRect.width) * 100;
-                      const heightPercent = (prizeRect.height / canvasRect.height) * 100;
-                  
-                      newXPercent = clamp(newXPercent, (widthPercent / 2), 100 - (widthPercent / 2));
-                      newYPercent = clamp(newYPercent, (heightPercent / 2), 100 - (heightPercent / 2));
-                  
-                      const updatedPrizes = placedPrizes.map(p =>
-                        p.id === prize.id ? { ...p, x: newXPercent, y: newYPercent } : p
-                      );
-                      setPlacedPrizes(updatedPrizes);
-                      await savePrizesToDb(updatedPrizes);
-                    }}
+                    dragElastic={0}
                     whileDrag={{ scale: 1.05, zIndex: 50 }}
                     onDragStart={(event) => {
                       if (!isStationConfirmed) {
@@ -686,11 +649,40 @@ export default function Station9() {
                         setSelectedPrizeId(prize.id);
                       }
                     }}
+                    onDragEnd={async (event, info) => {
+                      if (isStationConfirmed || !canvasRef.current) return;
+
+                      const rect = canvasRef.current.getBoundingClientRect();
+
+                      // 🔧 Partimos de la posición anterior en píxeles
+                      const prevXPx = (prize.x / 100) * rect.width;
+                      const prevYPx = (prize.y / 100) * rect.height;
+
+                      const newXPx = prevXPx + info.offset.x;
+                      const newYPx = prevYPx + info.offset.y;
+
+                      let newXPercent = (newXPx / rect.width) * 100;
+                      let newYPercent = (newYPx / rect.height) * 100;
+
+                      // 🔧 Margen mínimo para que no se salga
+                      const margin = 3;
+                      newXPercent = clamp(newXPercent, margin, 100 - margin);
+                      newYPercent = clamp(newYPercent, margin, 100 - margin);
+
+                      const updated = placedPrizes.map((p) =>
+                        p.id === prize.id
+                          ? { ...p, x: newXPercent, y: newYPercent }
+                          : p
+                      );
+                      setPlacedPrizes(updated);
+                      
+                      // 🔧 OPCIONAL: comentar esta línea si quieres guardar solo al final
+                      await savePrizesToDb(updated);
+                    }}
                     className="placed-prize-wrapper absolute"
                     style={{
                       left: `${prize.x}%`,
                       top: `${prize.y}%`,
-                      // 🔧 CAMBIO: tamaño responsivo y cuadrado
                       width: `calc(min(8vw, 8vh) * ${prize.scale || 1})`,
                       height: `calc(min(8vw, 8vh) * ${prize.scale || 1})`,
                       transform: "translate(-50%, -50%)",

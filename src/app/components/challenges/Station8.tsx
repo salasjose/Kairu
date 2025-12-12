@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -5,20 +6,27 @@ import dynamic from 'next/dynamic';
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Lightbulb, Link as LinkIcon, CheckCircle } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Camera, Lightbulb, Link as LinkIcon, CheckCircle, X, SwitchCamera, Video } from "lucide-react";
 import PrizeDialog from "../PrizeDialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import TypewriterText from "../auth/TypewriterText";
-import { useUser, useFirestore } from "@/firebase";
+import { useUser, useFirestore, useStorage } from "@/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { useStationProgress } from "@/hooks/use-station-progress";
 import { useRouter } from "next/navigation";
-import Logo from "../Logo";
 import { usePrizeCart } from "@/hooks/use-prize-cart";
 import ResponsiveBackground from "../ResponsiveBackground";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import AddPhotoDialog from "./AddPhotoDialog";
 
 const challenges = {
   learn: {
@@ -31,32 +39,123 @@ const challenges = {
 
 type ChallengeId = keyof typeof challenges;
 
+const fileToDataUrl = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
+const CameraView = ({ onCapture, onCancel }: { onCapture: (url: string) => void; onCancel: () => void; }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
+
+  const toggleCamera = () => {
+    setFacingMode(prev => prev === "environment" ? "user" : "environment");
+  };
+
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    const getCameraPermission = async () => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setHasCameraPermission(false);
+        return;
+      }
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
+        setHasCameraPermission(true);
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (error) {
+        console.error("Error accessing camera:", error);
+        setHasCameraPermission(false);
+      }
+    };
+
+    getCameraPermission();
+
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [facingMode]);
+
+  const handleCapture = () => {
+    if (videoRef.current) {
+        const canvas = document.createElement('canvas');
+        canvas.width = videoRef.current.videoWidth;
+        canvas.height = videoRef.current.videoHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+            onCapture(canvas.toDataURL('image/jpeg'));
+        }
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4">
+      <div className="relative w-full max-w-lg aspect-[4/3] bg-black rounded-lg overflow-hidden">
+        <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
+        {hasCameraPermission === false && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black">
+                <Alert variant="destructive" className="max-w-sm">
+                  <Video className="h-4 w-4" />
+                  <AlertTitle>Acceso a la Cámara Requerido</AlertTitle>
+                  <AlertDescription>
+                    Por favor, habilita los permisos de la cámara.
+                  </AlertDescription>
+                </Alert>
+            </div>
+        )}
+      </div>
+      <div className="flex items-center justify-center gap-4 mt-4">
+        <Button onClick={onCancel} variant="outline" size="icon" className="rounded-full h-16 w-16">
+            <X className="h-8 w-8"/>
+        </Button>
+        <Button onClick={handleCapture} size="lg" disabled={!hasCameraPermission} className="rounded-full h-20 w-20">
+          <Camera className="h-10 w-10" />
+        </Button>
+        <Button onClick={toggleCamera} variant="outline" size="icon" className="rounded-full h-16 w-16" disabled={!hasCameraPermission}>
+            <SwitchCamera className="h-8 w-8" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+
 const ChallengeScreen = ({ challengeId, onBack, onComplete, isCompleted }: { challengeId: ChallengeId, onBack: () => void, onComplete: () => void, isCompleted: boolean }) => {
     const challenge = challenges[challengeId];
     const imageInfo = PlaceHolderImages.find(p => p.id === challenge.imageId);
     const { user } = useUser();
     const db = useFirestore();
+    const storage = useStorage();
 
     const [url, setUrl] = useState("");
-    const [videoUrl, setVideoUrl] = useState<string | null>(null);
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isCameraOpen, setIsCameraOpen] = useState(false);
+    const [isAddPhotoDialogOpen, setIsAddPhotoDialogOpen] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleUrlChange = useCallback((newUrl: string) => {
-        setUrl(newUrl);
-        if (newUrl.trim() && (newUrl.startsWith("http://") || newUrl.startsWith("https://"))) {
-            if (newUrl.includes("youtube.com/watch?v=")) {
-                const videoId = newUrl.split("v=")[1].split("&")[0];
-                setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
-            } else if (newUrl.includes("youtu.be/")) {
-                const videoId = newUrl.split("youtu.be/")[1].split("?")[0];
-                setVideoUrl(`https://www.youtube.com/embed/${videoId}`);
-            } else {
-                setVideoUrl(null); // No es un video de youtube, no se puede embeber.
-            }
-        } else {
-            setVideoUrl(null);
+    const videoUrl = useMemo(() => {
+        if (url.includes("youtube.com/watch?v=")) {
+            const videoId = url.split("v=")[1].split("&")[0];
+            return `https://www.youtube.com/embed/${videoId}`;
         }
-    }, []);
+        if (url.includes("youtu.be/")) {
+            const videoId = url.split("youtu.be/")[1].split("?")[0];
+            return `https://www.youtube.com/embed/${videoId}`;
+        }
+        return null;
+    }, [url]);
 
     useEffect(() => {
         const fetchUrl = async () => {
@@ -69,7 +168,10 @@ const ChallengeScreen = ({ challengeId, onBack, onComplete, isCompleted }: { cha
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists() && docSnap.data().station8Url) {
                     const savedUrl = docSnap.data().station8Url;
-                    handleUrlChange(savedUrl);
+                    setUrl(savedUrl);
+                    if (!savedUrl.includes('youtube') && !savedUrl.includes('youtu.be')) {
+                        setImageUrl(savedUrl);
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching URL from Firestore:", error);
@@ -78,85 +180,134 @@ const ChallengeScreen = ({ challengeId, onBack, onComplete, isCompleted }: { cha
             }
         };
         fetchUrl();
-    }, [user, db, handleUrlChange]);
+    }, [user, db]);
 
     const handleSaveAndComplete = async () => {
         if (isCompleted) return;
 
         if (!url.trim()) {
-            toast({ title: "URL vacía", description: "Por favor, ingresa una URL válida.", variant: "destructive" });
+            toast({ title: "URL o foto requerida", description: "Por favor, añade una foto o ingresa una URL válida.", variant: "destructive" });
             return;
         }
         if (user && db) {
             try {
                 const docRef = doc(db, 'users', user.uid);
                 await setDoc(docRef, { station8Url: url }, { merge: true });
-                toast({ title: "¡Guardado!", description: "La URL de tu video ha sido guardada." });
+                toast({ title: "¡Guardado!", description: "Tu progreso ha sido guardado." });
                 onComplete();
             } catch (error) {
                 console.error("Error saving URL to Firestore:", error);
-                toast({ title: "Error al Guardar", description: "No se pudo guardar la URL.", variant: "destructive" });
+                toast({ title: "Error al Guardar", description: "No se pudo guardar tu progreso.", variant: "destructive" });
             }
         } else {
             toast({ title: "Usuario no encontrado", description: "Debes iniciar sesión para guardar tu progreso.", variant: "destructive" });
         }
     };
+    
+    const handlePhotoUpload = async (dataUrl: string) => {
+        if (!user || !storage) {
+            toast({ title: "Error de autenticación", description: "Debes iniciar sesión para subir una foto.", variant: "destructive" });
+            return;
+        }
+        
+        try {
+            const storagePath = `users/${user.uid}/station8/${Date.now()}.jpg`;
+            const storageRef = ref(storage, storagePath);
+            await uploadString(storageRef, dataUrl, "data_url");
+            const downloadUrl = await getDownloadURL(storageRef);
+
+            setImageUrl(downloadUrl);
+            setUrl(downloadUrl); // Also set the main URL to the image URL
+            
+            toast({ title: "¡Foto subida!", description: "Tu foto se ha guardado correctamente." });
+
+        } catch(error) {
+            console.error("Error al subir foto:", error);
+            toast({ title: "Error al subir", description: "No se pudo subir la foto.", variant: "destructive" });
+        }
+    };
+
+    const handleCapture = async (dataUrl: string) => {
+        setIsCameraOpen(false);
+        await handlePhotoUpload(dataUrl);
+    };
+
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const dataUrl = await fileToDataUrl(file);
+            await handlePhotoUpload(dataUrl);
+        }
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
+    const handleUploadClick = () => {
+        setIsAddPhotoDialogOpen(false);
+        fileInputRef.current?.click();
+    };
+
+    const handleTakePhotoClick = () => {
+        setIsAddPhotoDialogOpen(false);
+        setIsCameraOpen(true);
+    };
+
+    const mediaContent = () => {
+        if (isLoading) return <p className="text-white">Cargando...</p>;
+        if (videoUrl) return <iframe src={videoUrl} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen className="rounded-lg w-full h-full"></iframe>;
+        if (imageUrl) return <Image src={imageUrl} alt="Imagen subida" layout="fill" className="rounded-lg object-cover" />;
+        if (imageInfo) return <Image src={imageInfo.imageUrl} alt={imageInfo.description} width={400} height={300} className="rounded-lg object-cover w-full h-full opacity-50" data-ai-hint={imageInfo.imageHint} />;
+        return null;
+    };
+
 
     return (
-        <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center flex-grow">
-            <div className="w-full">
-                <Button variant="ghost" onClick={onBack} className="mb-4">
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Volver
-                </Button>
-                <Card className="w-full shadow-lg">
-                    <CardHeader>
-                        <CardTitle className="text-center">{challenge.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4 text-center">
-                        <div className="mx-auto mb-6 w-full max-w-sm h-auto aspect-video bg-black rounded-lg border-4 border-white shadow-md flex items-center justify-center">
-                          {isLoading ? (
-                            <p className="text-white">Cargando...</p>
-                          ) : videoUrl ? (
-                             <iframe
-                                src={videoUrl}
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                className="rounded-lg w-full h-full"
-                              ></iframe>
-                          ) : (
-                            imageInfo && <Image 
-                                src={imageInfo.imageUrl} 
-                                alt={imageInfo.description} 
-                                width={400} 
-                                height={300} 
-                                className="rounded-lg object-cover w-full h-full opacity-50"
-                                data-ai-hint={imageInfo.imageHint}
-                            />
-                          )}
-                        </div>
-                        <p className="text-muted-foreground">{challenge.description}</p>
-                        <div className="flex gap-2 max-w-md mx-auto">
-                            <LinkIcon className="h-10 text-muted-foreground" />
-                            <Input
-                                type="url"
-                                placeholder="https://youtube.com/tu-video"
-                                value={url}
-                                onChange={(e) => handleUrlChange(e.target.value)}
-                                disabled={isLoading || isCompleted}
-                            />
-                        </div>
-                        {isCompleted ? (
-                             <Button size="lg" disabled>
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Reto Completado
-                             </Button>
-                        ) : (
-                            <Button onClick={handleSaveAndComplete} size="lg">Guardar y Completar</Button>
-                        )}
-                    </CardContent>
-                </Card>
+        <>
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+            {isCameraOpen && <CameraView onCapture={handleCapture} onCancel={() => setIsCameraOpen(false)} />}
+            <AddPhotoDialog open={isAddPhotoDialogOpen} onClose={() => setIsAddPhotoDialogOpen(false)} onTakePhoto={handleTakePhotoClick} onUpload={handleUploadClick} />
+            <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center justify-center flex-grow">
+                <div className="w-full">
+                    <Button variant="ghost" onClick={onBack} className="mb-4">
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Volver
+                    </Button>
+                    <Card className="w-full shadow-lg">
+                        <CardHeader>
+                            <CardTitle className="text-center">{challenge.title}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4 text-center">
+                            <div className="mx-auto mb-6 w-full max-w-sm h-auto aspect-video bg-black rounded-lg border-4 border-white shadow-md flex items-center justify-center relative">
+                                {mediaContent()}
+                            </div>
+                            <p className="text-muted-foreground">{challenge.description}</p>
+                            <div className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
+                                <Input
+                                    type="url"
+                                    placeholder="O pega un enlace de video aquí"
+                                    value={url}
+                                    onChange={(e) => {
+                                        setUrl(e.target.value);
+                                        setImageUrl(null);
+                                    }}
+                                    disabled={isLoading || isCompleted}
+                                />
+                                <Button variant="outline" onClick={() => setIsAddPhotoDialogOpen(true)} disabled={isLoading || isCompleted}>
+                                    <Camera className="mr-2 h-4 w-4" />
+                                    Añadir Foto
+                                </Button>
+                            </div>
+                            {isCompleted ? (
+                                <Button size="lg" disabled>
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    Reto Completado
+                                </Button>
+                            ) : (
+                                <Button onClick={handleSaveAndComplete} size="lg">Guardar y Completar</Button>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
-        </div>
+        </>
     );
 };
 
@@ -192,7 +343,6 @@ export default function Station8() {
 
 
   const handleComplete = (challengeId: ChallengeId) => {
-    // Only unlock and show prize if it's not already claimed
     if (!hasClaimedPrize) {
         unlockStation(stationId + 1);
         toast({
@@ -319,3 +469,5 @@ export default function Station8() {
     </>
   );
 }
+
+    
