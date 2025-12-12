@@ -48,10 +48,6 @@ const isSpecialPrize = (imageUrl: string) => {
   );
 };
 
-// Tamaño base aproximado de la insignia en % del lienzo,
-// coherente con min(8vw, 8vh) que usamos abajo.
-const BASE_SIZE_PERCENT = 10;
-
 // ------------------------------------------------------------------
 // Componente: DraggablePrize (INSIGNIAS EN EL SIDEBAR)
 // ------------------------------------------------------------------
@@ -94,7 +90,7 @@ const DraggablePrize = ({
 const ScenarioPicker = ({
   onScenarioSelect,
 }: {
-  onScenarioSelect: (url: string) => void;
+  onScenarioSelect: (scenarioId: string) => void;
 }) => {
   const scenarios = useMemo(
     () =>
@@ -131,7 +127,8 @@ const ScenarioPicker = ({
           {scenarios.map((scenario) => (
             <Card
               key={scenario.id}
-              onClick={() => onScenarioSelect(scenario.imageUrl)}
+              // 🔧 CAMBIO: ahora pasamos el ID, no la URL
+              onClick={() => onScenarioSelect(scenario.id)}
               className="p-2 cursor-pointer hover:border-primary hover:scale-105 transition-transform duration-300"
             >
               <Image
@@ -181,18 +178,35 @@ export default function Station9() {
   const yaraTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMobile = useIsMobile();
 
+  // 🔧 CAMBIO: ahora mapeamos por ID y por dispositivo
   const scenarioImageUrl = useMemo(() => {
     if (!chosenScenario) return null;
-    if (chosenScenario.includes("Bosque_Seco_Tropical"))
-      return "/backgrounds/Terral1366_X_768.png";
-    if (chosenScenario.includes("Ciudad_Sostenible"))
-      return "/backgrounds/Civika1366_X_768.png";
-    if (chosenScenario.includes("Mar_Costero"))
-      return "/backgrounds/Mareva1366_X_768.png";
-    if (chosenScenario.includes("Manglares"))
-      return "/backgrounds/Manglia1366_X_768.png";
-    return null;
-  }, [chosenScenario]);
+
+    const baseName =
+      chosenScenario === "scenario-bosque-seco"
+        ? "Terral"
+        : chosenScenario === "scenario-ciudad"
+        ? "Civika"
+        : chosenScenario === "scenario-mar-costero"
+        ? "Mareva"
+        : chosenScenario === "scenario-manglares"
+        ? "Manglia"
+        : null;
+
+    if (!baseName) {
+      // Fallback: si guardaste una URL antigua, intenta detectarla
+      if (chosenScenario.includes("Bosque_Seco_Tropical")) return "/backgrounds/Terral1366_X_768.png";
+      if (chosenScenario.includes("Ciudad_Sostenible")) return "/backgrounds/Civika1366_X_768.png";
+      if (chosenScenario.includes("Mar_Costero")) return "/backgrounds/Mareva1366_X_768.png";
+      if (chosenScenario.includes("Manglares")) return "/backgrounds/Manglia1366_X_768.png";
+      return null;
+    }
+
+    // Aquí puedes diferenciar por dispositivo
+    // Por ahora uso la misma imagen para todos, pero puedes cambiar:
+    // if (isMobile) return `/backgrounds/${baseName}_MOBILE.png`;
+    return `/backgrounds/${baseName}1366_X_768.png`;
+  }, [chosenScenario, isMobile]);
 
   // ------------------------------------------------------------------
   // Carga de datos de usuario
@@ -320,9 +334,10 @@ export default function Station9() {
     let x = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
     let y = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
 
-    const halfSize = (BASE_SIZE_PERCENT * 1) / 2; // escala inicial = 1
-    x = clamp(x, halfSize, 100 - halfSize);
-    y = clamp(y, halfSize, 100 - halfSize);
+    // 🔧 CAMBIO: clamp inicial aproximado (luego se ajusta con el tamaño real)
+    // Usamos un margen conservador del 5% para el drop inicial
+    x = clamp(x, 5, 95);
+    y = clamp(y, 5, 95);
 
     const prizeData = collectedPrizes.find((p) => p.id === prizeId);
     if (!prizeData) return;
@@ -343,44 +358,6 @@ export default function Station9() {
     setPlacedPrizes(newPlacedPrizes);
     await savePrizesToDb(newPlacedPrizes);
   };
-  
-    // ------------------------------------------------------------------
-    // Mover insignia DENTRO del lienzo
-    // ------------------------------------------------------------------
-
-    const handlePrizeDrag = (prizeId: string, info: PanInfo) => {
-        if (isStationConfirmed || !canvasRef.current) return;
-        
-        const canvasRect = canvasRef.current.getBoundingClientRect();
-        
-        const pointerX = info.point.x;
-        const pointerY = info.point.y;
-
-        let newXPercent = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
-        let newYPercent = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
-
-        const currentPrize = placedPrizes.find(p => p.id === prizeId);
-        const scale = currentPrize?.scale || 1;
-        const halfSize = (BASE_SIZE_PERCENT * scale) / 2;
-
-        newXPercent = clamp(newXPercent, halfSize, 100 - halfSize);
-        newYPercent = clamp(newYPercent, halfSize, 100 - halfSize);
-
-        const updatedPrizes = placedPrizes.map(p => 
-            p.id === prizeId ? { ...p, x: newXPercent, y: newYPercent } : p
-        );
-        
-        setPlacedPrizes(updatedPrizes);
-    };
-
-    const handlePrizeDragEnd = async (prizeId: string) => {
-        if (isStationConfirmed) return;
-        const prizeToSave = placedPrizes.find(p => p.id === prizeId);
-        if (prizeToSave) {
-            await savePrizesToDb(placedPrizes);
-        }
-    };
-
 
   // ------------------------------------------------------------------
   // Escala de insignias
@@ -575,12 +552,13 @@ export default function Station9() {
   // Guardar lienzo elegido
   // ------------------------------------------------------------------
 
-  const handleScenarioSelect = async (scenarioUrl: string) => {
+  const handleScenarioSelect = async (scenarioId: string) => {
     if (!user || !db) return;
     try {
       const userDocRef = doc(db, "users", user.uid);
-      await setDoc(userDocRef, { chosenScenario: scenarioUrl }, { merge: true });
-      setChosenScenario(scenarioUrl);
+      // 🔧 CAMBIO: ahora guardamos el ID, no la URL
+      await setDoc(userDocRef, { chosenScenario: scenarioId }, { merge: true });
+      setChosenScenario(scenarioId);
       toast({
         title: "Lienzo guardado",
         description: "Tu estación ahora tiene un fondo.",
@@ -667,7 +645,40 @@ export default function Station9() {
                     key={prize.id}
                     drag={!isStationConfirmed}
                     dragMomentum={false}
-                    dragElastic={0}
+                    onDrag={(_, info) => {
+                      if (isStationConfirmed || !canvasRef.current) return;
+                      const canvasRect = canvasRef.current.getBoundingClientRect();
+                      let newXPercent = ((info.point.x - canvasRect.left) / canvasRect.width) * 100;
+                      let newYPercent = ((info.point.y - canvasRect.top) / canvasRect.height) * 100;
+                  
+                      setPlacedPrizes(prevPrizes =>
+                        prevPrizes.map(p =>
+                          p.id === prize.id ? { ...p, x: newXPercent, y: newYPercent } : p
+                        )
+                      );
+                    }}
+                    onDragEnd={async (event, info) => {
+                      if (isStationConfirmed || !canvasRef.current) return;
+                  
+                      const canvasRect = canvasRef.current.getBoundingClientRect();
+                      const prizeElement = event.target as HTMLElement;
+                      const prizeRect = prizeElement.getBoundingClientRect();
+                  
+                      let newXPercent = ((info.point.x - canvasRect.left) / canvasRect.width) * 100;
+                      let newYPercent = ((info.point.y - canvasRect.top) / canvasRect.height) * 100;
+
+                      const widthPercent = (prizeRect.width / canvasRect.width) * 100;
+                      const heightPercent = (prizeRect.height / canvasRect.height) * 100;
+                  
+                      newXPercent = clamp(newXPercent, (widthPercent / 2), 100 - (widthPercent / 2));
+                      newYPercent = clamp(newYPercent, (heightPercent / 2), 100 - (heightPercent / 2));
+                  
+                      const updatedPrizes = placedPrizes.map(p =>
+                        p.id === prize.id ? { ...p, x: newXPercent, y: newYPercent } : p
+                      );
+                      setPlacedPrizes(updatedPrizes);
+                      await savePrizesToDb(updatedPrizes);
+                    }}
                     whileDrag={{ scale: 1.05, zIndex: 50 }}
                     onDragStart={(event) => {
                       if (!isStationConfirmed) {
@@ -675,12 +686,11 @@ export default function Station9() {
                         setSelectedPrizeId(prize.id);
                       }
                     }}
-                    onDrag={(e, info) => handlePrizeDrag(prize.id, info)}
-                    onDragEnd={() => handlePrizeDragEnd(prize.id)}
                     className="placed-prize-wrapper absolute"
                     style={{
                       left: `${prize.x}%`,
                       top: `${prize.y}%`,
+                      // 🔧 CAMBIO: tamaño responsivo y cuadrado
                       width: `calc(min(8vw, 8vh) * ${prize.scale || 1})`,
                       height: `calc(min(8vw, 8vh) * ${prize.scale || 1})`,
                       transform: "translate(-50%, -50%)",
