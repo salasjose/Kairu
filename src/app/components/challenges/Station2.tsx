@@ -407,7 +407,7 @@ export default function Station2() {
     const nextDayIndex = dayIndex + 1;
     if (nextDayIndex < days.length) {
       if (newDays[nextDayIndex].status === "locked") {
-        newDays[nextDayIndex].unlockTime = Date.now() + 5 * 60 * 1000; // 5 minutes from now
+        newDays[nextDayIndex].unlockTime = Date.now() + 6 * 60 * 1000; // 6 minutes from now
       }
     }
 
@@ -500,7 +500,7 @@ export default function Station2() {
                   <div className="flex flex-wrap justify-center gap-4 md:gap-6">
                     {days.slice(4, 7).map((_, index) => renderDayButton(index + 4))}
                   </div>
-                    <p className="text-sm text-muted-foreground mt-4">MECÁNICA: Cada vez que subas tu foto, pasadas 5 minutos se activará el siguiente candado para continuar.</p>
+                    <p className="text-sm text-muted-foreground mt-4">MECÁNICA: Cada vez que subas tu foto, pasadas 6 minutos se activará el siguiente candado para continuar.</p>
                 </div>
             </div>
        </>

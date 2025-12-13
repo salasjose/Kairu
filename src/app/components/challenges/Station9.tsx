@@ -17,7 +17,6 @@ import { Slider } from "@/components/ui/slider";
 import { Trash2, Gift, X, Check, Download } from "lucide-react";
 import html2canvas from "html2canvas";
 import { useIsMobile } from "@/hooks/use-mobile";
-import ResponsiveBackground from "../ResponsiveBackground";
 
 // ------------------------------------------------------------------
 // Tipos
@@ -27,8 +26,8 @@ type PlacedPrize = {
   id: string;
   imageUrl: string;
   name: string;
-  x: number;
-  y: number;
+  x: number; // porcentaje 0-100 del ancho del lienzo
+  y: number; // porcentaje 0-100 del alto del lienzo
   scale: number;
   stationId: number;
 };
@@ -40,6 +39,7 @@ type PlacedPrize = {
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
+// Algunas insignias pueden escalarse más (ej: íconos grandes del escenario)
 const isSpecialPrize = (imageUrl: string) => {
   return (
     imageUrl.includes("Molinos.png") ||
@@ -48,7 +48,7 @@ const isSpecialPrize = (imageUrl: string) => {
 };
 
 // ------------------------------------------------------------------
-// Componente: DraggablePrize
+// Componente: DraggablePrize (INSIGNIAS EN EL SIDEBAR)
 // ------------------------------------------------------------------
 
 const DraggablePrize = ({
@@ -83,7 +83,7 @@ const DraggablePrize = ({
 };
 
 // ------------------------------------------------------------------
-// Componente: ScenarioPicker
+// Componente: ScenarioPicker (ELEGIR LIENZO)
 // ------------------------------------------------------------------
 
 const ScenarioPicker = ({
@@ -152,12 +152,16 @@ const ScenarioPicker = ({
 export default function Station9() {
   const [chosenScenario, setChosenScenario] = useState<string | null>(null);
   const [playerName, setPlayerName] = useState<string>("");
+
   const [isLoading, setIsLoading] = useState(true);
+
   const [placedPrizes, setPlacedPrizes] = useState<PlacedPrize[]>([]);
   const [selectedPrizeId, setSelectedPrizeId] = useState<string | null>(null);
+
   const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
   const [isYaraMessageVisible, setIsYaraMessageVisible] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
   const [isStationConfirmed, setIsStationConfirmed] = useState(false);
   const [isStationFinalized, setIsStationFinalized] = useState(false);
 
@@ -171,43 +175,38 @@ export default function Station9() {
   );
   const yaraTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMobile = useIsMobile();
-  
-  const scenarioBackgrounds = useMemo(() => {
+
+  // 🔧 Mapeo de escenario por ID y dispositivo
+  const scenarioImageUrl = useMemo(() => {
     if (!chosenScenario) return null;
 
-    if (chosenScenario.includes('bosque-seco') || chosenScenario.includes('Bosque_Seco_Tropical')) {
-        return {
-            desktopSrc: '/backgrounds/Terral1366_X_768.png',
-            tabletSrc: '/backgrounds/Terral1024_X_768.png',
-            mobileSrc: '/backgrounds/Terral1075_X_1944.png',
-        };
+    const baseName =
+      chosenScenario === "scenario-bosque-seco"
+        ? "Terral"
+        : chosenScenario === "scenario-ciudad"
+        ? "Civika"
+        : chosenScenario === "scenario-mar-costero"
+        ? "Mareva"
+        : chosenScenario === "scenario-manglares"
+        ? "Manglia"
+        : null;
+
+    if (!baseName) {
+      // Fallback para URLs antiguas
+      if (chosenScenario.includes("Bosque_Seco_Tropical")) return "/backgrounds/Terral1366_X_768.png";
+      if (chosenScenario.includes("Ciudad_Sostenible")) return "/backgrounds/Civika1366_X_768.png";
+      if (chosenScenario.includes("Mar_Costero")) return "/backgrounds/Mareva1366_X_768.png";
+      if (chosenScenario.includes("Manglares")) return "/backgrounds/Manglia1366_X_768.png";
+      return null;
     }
-    if (chosenScenario.includes('ciudad') || chosenScenario.includes('Ciudad_Sostenible')) {
-        return {
-            desktopSrc: '/backgrounds/Civika1366_X_768.png',
-            tabletSrc: '/backgrounds/Civika1024_X_768.png',
-            mobileSrc: '/backgrounds/Civika1075_X_1944.png',
-        };
-    }
-    if (chosenScenario.includes('mar-costero') || chosenScenario.includes('Mar_Costero')) {
-        return {
-            desktopSrc: '/backgrounds/Mareva1366_X_768.png',
-            tabletSrc: '/backgrounds/Mareva1024_X_768.png',
-            mobileSrc: '/backgrounds/Mareva1075_X_1944.png',
-        };
-    }
-    if (chosenScenario.includes('manglares') || chosenScenario.includes('Manglares')) {
-        return {
-            desktopSrc: '/backgrounds/Manglia1366_X_768.png',
-            tabletSrc: '/backgrounds/Manglia1024_X_768.png',
-            mobileSrc: '/backgrounds/Manglia1075_X_1944.png',
-        };
-    }
-    return null;
-  }, [chosenScenario]);
+
+    // Puedes cambiar aquí para usar imágenes distintas en móvil
+    // if (isMobile) return `/backgrounds/${baseName}_MOBILE.png`;
+    return `/backgrounds/${baseName}1366_X_768.png`;
+  }, [chosenScenario, isMobile]);
 
   // ------------------------------------------------------------------
-  // Carga de datos
+  // Carga de datos de usuario
   // ------------------------------------------------------------------
 
   useEffect(() => {
@@ -252,7 +251,7 @@ export default function Station9() {
   }, [user, db]);
 
   // ------------------------------------------------------------------
-  // Mensaje de Yara
+  // Mensaje de Yara programado
   // ------------------------------------------------------------------
 
   const scheduleYaraDialog = useCallback(() => {
@@ -278,7 +277,8 @@ export default function Station9() {
   }, [isLoading, scheduleYaraDialog]);
 
   // ------------------------------------------------------------------
-  // Guardar en Firestore
+  // Guardar insignias en Firestore (posición + escala)
+  // 🔧 OPTIMIZACIÓN: debounce opcional para evitar saturar Firestore
   // ------------------------------------------------------------------
 
   const savePrizesToDb = useCallback(
@@ -304,7 +304,7 @@ export default function Station9() {
   );
 
   // ------------------------------------------------------------------
-  // 🔧 COLOCAR INSIGNIA (desde sidebar)
+  // Colocar insignia desde el sidebar al lienzo
   // ------------------------------------------------------------------
 
   const handlePrizeDrop = async (prizeId: string, info: PanInfo) => {
@@ -314,6 +314,7 @@ export default function Station9() {
     const pointerX = info.point.x;
     const pointerY = info.point.y;
 
+    // Verificar que el drop esté dentro del canvas
     if (
       pointerX < canvasRect.left ||
       pointerX > canvasRect.right ||
@@ -331,10 +332,10 @@ export default function Station9() {
     let x = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
     let y = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
 
-    // Margen mínimo
+    // Margen mínimo para no quedar pegado al borde
     x = clamp(x, 3, 97);
     y = clamp(y, 3, 97);
-    
+
     const prizeData = collectedPrizes.find((p) => p.id === prizeId);
     if (!prizeData) return;
 
@@ -354,9 +355,9 @@ export default function Station9() {
     setPlacedPrizes(newPlacedPrizes);
     await savePrizesToDb(newPlacedPrizes);
   };
-  
+
   // ------------------------------------------------------------------
-  // Escala
+  // Escala de insignias
   // ------------------------------------------------------------------
 
   const handleScaleChange = (prizeId: string, newScale: number[]) => {
@@ -394,7 +395,7 @@ export default function Station9() {
   };
 
   // ------------------------------------------------------------------
-  // Eliminar
+  // Eliminar insignia
   // ------------------------------------------------------------------
 
   const handleDeletePrize = async (prizeId: string) => {
@@ -407,7 +408,7 @@ export default function Station9() {
   };
 
   // ------------------------------------------------------------------
-  // Guardar / Desbloquear estación
+  // GUARDAR / DESBLOQUEAR ESTACIÓN
   // ------------------------------------------------------------------
 
   const handleSaveStation = async () => {
@@ -484,7 +485,7 @@ export default function Station9() {
   };
 
   // ------------------------------------------------------------------
-  // Descargar imagen
+  // DESCARGAR IMAGEN
   // ------------------------------------------------------------------
 
   const handleDownloadImage = async () => {
@@ -614,18 +615,20 @@ export default function Station9() {
         <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
       ) : (
         <>
-          {/* LIENZO */}
+          {/* LIENZO A PANTALLA COMPLETA */}
           <div
             ref={canvasRef}
             className="absolute inset-0 z-10 overflow-hidden"
           >
-            {scenarioBackgrounds ? (
-              <ResponsiveBackground
-                desktopSrc={scenarioBackgrounds.desktopSrc}
-                tabletSrc={scenarioBackgrounds.tabletSrc}
-                mobileSrc={scenarioBackgrounds.mobileSrc}
+            {scenarioImageUrl && (
+              <Image
+                src={scenarioImageUrl}
+                alt="Fondo del lienzo"
+                fill
+                className="object-cover"
+                priority
               />
-            ) : null}
+            )}
 
             {/* INSIGNIAS COLOCADAS */}
             <div className="absolute inset-0 z-10">
@@ -651,19 +654,17 @@ export default function Station9() {
 
                       const rect = canvasRef.current.getBoundingClientRect();
 
-                      // 🔧 Posición anterior en píxeles
+                      // 🔧 Partimos de la posición anterior en píxeles
                       const prevXPx = (prize.x / 100) * rect.width;
                       const prevYPx = (prize.y / 100) * rect.height;
 
-                      // Nueva posición sumando el offset
                       const newXPx = prevXPx + info.offset.x;
                       const newYPx = prevYPx + info.offset.y;
 
-                      // Convertir a porcentaje
                       let newXPercent = (newXPx / rect.width) * 100;
                       let newYPercent = (newYPx / rect.height) * 100;
 
-                      // Margen mínimo
+                      // 🔧 Margen mínimo para que no se salga
                       const margin = 3;
                       newXPercent = clamp(newXPercent, margin, 100 - margin);
                       newYPercent = clamp(newYPercent, margin, 100 - margin);
@@ -675,7 +676,7 @@ export default function Station9() {
                       );
                       setPlacedPrizes(updated);
                       
-                      // 🔧 OPCIONAL: comentar si quieres guardar solo al final
+                      // 🔧 OPCIONAL: comentar esta línea si quieres guardar solo al final
                       await savePrizesToDb(updated);
                     }}
                     className="placed-prize-wrapper absolute"
@@ -715,7 +716,7 @@ export default function Station9() {
                       />
                     </div>
 
-                    {/* CONTROLES */}
+                    {/* CONTROLES DE ESCALA Y ELIMINAR */}
                     {isSelected && !isStationConfirmed && (
                       <div
                         className={`
@@ -731,10 +732,18 @@ export default function Station9() {
                           bg-background/95 p-2 rounded-lg shadow-xl 
                           flex items-center gap-2
                         `}
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) => e.stopPropagation()}
-                        onTouchStart={(e) => e.stopPropagation()}
-                        onMouseDown={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onTouchStart={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                        }}
                       >
                         <Slider
                           value={[prize.scale || 1]}
@@ -768,7 +777,7 @@ export default function Station9() {
             </div>
           </div>
 
-          {/* BOTÓN TOGGLE SIDEBAR */}
+          {/* BOTÓN PARA ABRIR/CERRAR SIDEBAR */}
           <Button
             variant="outline"
             size="icon"
@@ -800,7 +809,7 @@ export default function Station9() {
             </AnimatePresence>
           </Button>
 
-          {/* SIDEBAR */}
+          {/* SIDEBAR/BOTTOM BAR DE INSIGNIAS */}
           <AnimatePresence>
             {isSidebarOpen && (
               <motion.div
@@ -816,6 +825,7 @@ export default function Station9() {
                   Insignias
                 </h3>
 
+                {/* Scroll horizontal en móvil, vertical en desktop */}
                 <div className="flex-grow w-full overflow-x-auto md:overflow-x-hidden md:overflow-y-auto">
                   <div className="flex flex-row md:flex-col gap-2 p-1 h-full md:h-auto">
                     {unplacedPrizes.map((prize) => (
@@ -841,7 +851,7 @@ export default function Station9() {
                   </div>
                 </div>
 
-                {/* BOTONES */}
+                {/* BOTONES DE ACCIÓN */}
                 <div className="w-full mt-auto flex flex-row md:flex-col gap-2 p-1">
                   <Button
                     onClick={handleSaveStation}
@@ -863,6 +873,7 @@ export default function Station9() {
                     <span className="hidden md:inline">Descargar</span>
                   </Button>
 
+                  {/* Botón de debug / admin para desbloquear */}
                   <Button
                     onClick={handleUnlockStation}
                     className="flex-1 md:w-full text-xs md:text-sm"
