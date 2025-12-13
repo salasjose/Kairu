@@ -12,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Camera, Lightbulb, Link as LinkIcon, CheckCircle, X, SwitchCamera, Video } from "lucide-react";
+import { ArrowLeft, Camera, Lightbulb, Link as LinkIcon, CheckCircle, X, SwitchCamera, Video } from "lucide-react";
 import PrizeDialog from "../PrizeDialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Input } from "@/components/ui/input";
