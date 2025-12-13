@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import dynamic from 'next/dynamic';
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -254,7 +254,7 @@ const ChallengeScreen = ({ challengeId, onBack, onComplete, isCompleted }: { cha
     const mediaContent = () => {
         if (isLoading) return <p className="text-white">Cargando...</p>;
         if (videoUrl) return <iframe src={videoUrl} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen className="rounded-lg w-full h-full"></iframe>;
-        if (imageUrl) return <Image src={imageUrl} alt="Imagen subida" layout="fill" className="rounded-lg object-cover" />;
+        if (imageUrl) return <Image src={imageUrl} alt="Imagen subida" fill className="rounded-lg object-cover" />;
         if (imageInfo) return <Image src={imageInfo.imageUrl} alt={imageInfo.description} width={400} height={300} className="rounded-lg object-cover w-full h-full opacity-50" data-ai-hint={imageInfo.imageHint} />;
         return null;
     };
@@ -469,5 +469,3 @@ export default function Station8() {
     </>
   );
 }
-
-    
