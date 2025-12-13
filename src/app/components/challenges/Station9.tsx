@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -28,8 +27,8 @@ type PlacedPrize = {
   id: string;
   imageUrl: string;
   name: string;
-  x: number; // porcentaje 0-100 del ancho del lienzo
-  y: number; // porcentaje 0-100 del alto del lienzo
+  x: number;
+  y: number;
   scale: number;
   stationId: number;
 };
@@ -41,7 +40,6 @@ type PlacedPrize = {
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
-// Algunas insignias pueden escalarse más (ej: íconos grandes del escenario)
 const isSpecialPrize = (imageUrl: string) => {
   return (
     imageUrl.includes("Molinos.png") ||
@@ -50,7 +48,7 @@ const isSpecialPrize = (imageUrl: string) => {
 };
 
 // ------------------------------------------------------------------
-// Componente: DraggablePrize (INSIGNIAS EN EL SIDEBAR)
+// Componente: DraggablePrize
 // ------------------------------------------------------------------
 
 const DraggablePrize = ({
@@ -85,7 +83,7 @@ const DraggablePrize = ({
 };
 
 // ------------------------------------------------------------------
-// Componente: ScenarioPicker (ELEGIR LIENZO)
+// Componente: ScenarioPicker
 // ------------------------------------------------------------------
 
 const ScenarioPicker = ({
@@ -154,16 +152,12 @@ const ScenarioPicker = ({
 export default function Station9() {
   const [chosenScenario, setChosenScenario] = useState<string | null>(null);
   const [playerName, setPlayerName] = useState<string>("");
-
   const [isLoading, setIsLoading] = useState(true);
-
   const [placedPrizes, setPlacedPrizes] = useState<PlacedPrize[]>([]);
   const [selectedPrizeId, setSelectedPrizeId] = useState<string | null>(null);
-
   const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
   const [isYaraMessageVisible, setIsYaraMessageVisible] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
   const [isStationConfirmed, setIsStationConfirmed] = useState(false);
   const [isStationFinalized, setIsStationFinalized] = useState(false);
 
@@ -213,7 +207,7 @@ export default function Station9() {
   }, [chosenScenario]);
 
   // ------------------------------------------------------------------
-  // Carga de datos de usuario
+  // Carga de datos
   // ------------------------------------------------------------------
 
   useEffect(() => {
@@ -258,7 +252,7 @@ export default function Station9() {
   }, [user, db]);
 
   // ------------------------------------------------------------------
-  // Mensaje de Yara programado
+  // Mensaje de Yara
   // ------------------------------------------------------------------
 
   const scheduleYaraDialog = useCallback(() => {
@@ -284,7 +278,7 @@ export default function Station9() {
   }, [isLoading, scheduleYaraDialog]);
 
   // ------------------------------------------------------------------
-  // Guardar insignias en Firestore (posición + escala)
+  // Guardar en Firestore
   // ------------------------------------------------------------------
 
   const savePrizesToDb = useCallback(
@@ -310,7 +304,7 @@ export default function Station9() {
   );
 
   // ------------------------------------------------------------------
-  // Colocar insignia desde el sidebar al lienzo
+  // 🔧 COLOCAR INSIGNIA (desde sidebar)
   // ------------------------------------------------------------------
 
   const handlePrizeDrop = async (prizeId: string, info: PanInfo) => {
@@ -336,6 +330,10 @@ export default function Station9() {
 
     let x = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
     let y = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
+
+    // Margen mínimo
+    x = clamp(x, 3, 97);
+    y = clamp(y, 3, 97);
     
     const prizeData = collectedPrizes.find((p) => p.id === prizeId);
     if (!prizeData) return;
@@ -357,49 +355,8 @@ export default function Station9() {
     await savePrizesToDb(newPlacedPrizes);
   };
   
-  const handleDragEnd = async (prizeId: string, info: PanInfo) => {
-      if (isStationConfirmed || !canvasRef.current) return;
-
-      const prize = placedPrizes.find(p => p.id === prizeId);
-      if (!prize) return;
-
-      const rect = canvasRef.current.getBoundingClientRect();
-      const prizeElement = (info.point.x as any).target?.closest('.placed-prize-wrapper') as HTMLElement | null;
-      if (!prizeElement) return;
-
-      const prizeRect = prizeElement.getBoundingClientRect();
-      const prizeWidthPercent = (prizeRect.width / rect.width) * 100;
-      const prizeHeightPercent = (prizeRect.height / rect.height) * 100;
-
-      // Current position in pixels from top-left of canvas
-      const currentXPx = (prize.x / 100) * rect.width + info.offset.x;
-      const currentYPx = (prize.y / 100) * rect.height + info.offset.y;
-
-      // Convert to percentage
-      let newXPercent = (currentXPx / rect.width) * 100;
-      let newYPercent = (currentYPx / rect.height) * 100;
-      
-      // Clamp position to keep the entire badge inside the canvas
-      const minX = (prizeWidthPercent / 2);
-      const maxX = 100 - (prizeWidthPercent / 2);
-      const minY = (prizeHeightPercent / 2);
-      const maxY = 100 - (prizeHeightPercent / 2);
-
-      newXPercent = clamp(newXPercent, minX, maxX);
-      newYPercent = clamp(newYPercent, minY, maxY);
-
-      const updated = placedPrizes.map((p) =>
-        p.id === prize.id
-          ? { ...p, x: newXPercent, y: newYPercent }
-          : p
-      );
-      setPlacedPrizes(updated);
-      await savePrizesToDb(updated);
-  }
-
-
   // ------------------------------------------------------------------
-  // Escala de insignias
+  // Escala
   // ------------------------------------------------------------------
 
   const handleScaleChange = (prizeId: string, newScale: number[]) => {
@@ -437,7 +394,7 @@ export default function Station9() {
   };
 
   // ------------------------------------------------------------------
-  // Eliminar insignia
+  // Eliminar
   // ------------------------------------------------------------------
 
   const handleDeletePrize = async (prizeId: string) => {
@@ -450,7 +407,7 @@ export default function Station9() {
   };
 
   // ------------------------------------------------------------------
-  // GUARDAR / DESBLOQUEAR ESTACIÓN
+  // Guardar / Desbloquear estación
   // ------------------------------------------------------------------
 
   const handleSaveStation = async () => {
@@ -527,7 +484,7 @@ export default function Station9() {
   };
 
   // ------------------------------------------------------------------
-  // DESCARGAR IMAGEN
+  // Descargar imagen
   // ------------------------------------------------------------------
 
   const handleDownloadImage = async () => {
@@ -657,7 +614,7 @@ export default function Station9() {
         <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
       ) : (
         <>
-          {/* LIENZO A PANTALLA COMPLETA */}
+          {/* LIENZO */}
           <div
             ref={canvasRef}
             className="absolute inset-0 z-10 overflow-hidden"
@@ -681,13 +638,45 @@ export default function Station9() {
                     key={prize.id}
                     drag={!isStationConfirmed}
                     dragMomentum={false}
-                    onDragEnd={(event, info) => handleDragEnd(prize.id, info)}
+                    dragElastic={0}
                     whileDrag={{ scale: 1.05, zIndex: 50 }}
                     onDragStart={(event) => {
                       if (!isStationConfirmed) {
                         event.stopPropagation();
                         setSelectedPrizeId(prize.id);
                       }
+                    }}
+                    onDragEnd={async (event, info) => {
+                      if (isStationConfirmed || !canvasRef.current) return;
+
+                      const rect = canvasRef.current.getBoundingClientRect();
+
+                      // 🔧 Posición anterior en píxeles
+                      const prevXPx = (prize.x / 100) * rect.width;
+                      const prevYPx = (prize.y / 100) * rect.height;
+
+                      // Nueva posición sumando el offset
+                      const newXPx = prevXPx + info.offset.x;
+                      const newYPx = prevYPx + info.offset.y;
+
+                      // Convertir a porcentaje
+                      let newXPercent = (newXPx / rect.width) * 100;
+                      let newYPercent = (newYPx / rect.height) * 100;
+
+                      // Margen mínimo
+                      const margin = 3;
+                      newXPercent = clamp(newXPercent, margin, 100 - margin);
+                      newYPercent = clamp(newYPercent, margin, 100 - margin);
+
+                      const updated = placedPrizes.map((p) =>
+                        p.id === prize.id
+                          ? { ...p, x: newXPercent, y: newYPercent }
+                          : p
+                      );
+                      setPlacedPrizes(updated);
+                      
+                      // 🔧 OPCIONAL: comentar si quieres guardar solo al final
+                      await savePrizesToDb(updated);
                     }}
                     className="placed-prize-wrapper absolute"
                     style={{
@@ -726,7 +715,7 @@ export default function Station9() {
                       />
                     </div>
 
-                    {/* CONTROLES DE ESCALA Y ELIMINAR */}
+                    {/* CONTROLES */}
                     {isSelected && !isStationConfirmed && (
                       <div
                         className={`
@@ -742,18 +731,10 @@ export default function Station9() {
                           bg-background/95 p-2 rounded-lg shadow-xl 
                           flex items-center gap-2
                         `}
-                        onPointerDown={(e) => {
-                          e.stopPropagation();
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                        }}
-                        onTouchStart={(e) => {
-                          e.stopPropagation();
-                        }}
-                        onMouseDown={(e) => {
-                          e.stopPropagation();
-                        }}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
                       >
                         <Slider
                           value={[prize.scale || 1]}
@@ -787,7 +768,7 @@ export default function Station9() {
             </div>
           </div>
 
-          {/* BOTÓN PARA ABRIR/CERRAR SIDEBAR */}
+          {/* BOTÓN TOGGLE SIDEBAR */}
           <Button
             variant="outline"
             size="icon"
@@ -819,7 +800,7 @@ export default function Station9() {
             </AnimatePresence>
           </Button>
 
-          {/* SIDEBAR/BOTTOM BAR DE INSIGNIAS */}
+          {/* SIDEBAR */}
           <AnimatePresence>
             {isSidebarOpen && (
               <motion.div
@@ -835,7 +816,6 @@ export default function Station9() {
                   Insignias
                 </h3>
 
-                {/* Scroll horizontal en móvil, vertical en desktop */}
                 <div className="flex-grow w-full overflow-x-auto md:overflow-x-hidden md:overflow-y-auto">
                   <div className="flex flex-row md:flex-col gap-2 p-1 h-full md:h-auto">
                     {unplacedPrizes.map((prize) => (
@@ -861,7 +841,7 @@ export default function Station9() {
                   </div>
                 </div>
 
-                {/* BOTONES DE ACCIÓN */}
+                {/* BOTONES */}
                 <div className="w-full mt-auto flex flex-row md:flex-col gap-2 p-1">
                   <Button
                     onClick={handleSaveStation}
@@ -883,7 +863,6 @@ export default function Station9() {
                     <span className="hidden md:inline">Descargar</span>
                   </Button>
 
-                  {/* Botón de debug / admin para desbloquear */}
                   <Button
                     onClick={handleUnlockStation}
                     className="flex-1 md:w-full text-xs md:text-sm"
