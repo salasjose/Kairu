@@ -184,7 +184,6 @@ const AddBusinessDialog = ({
   };
   
   const handleTakePhoto = () => {
-    onClose(); 
     setIsCameraOpen(true);
   }
 
@@ -192,7 +191,7 @@ const AddBusinessDialog = ({
   return (
     <>
       {isCameraOpen && <CameraView onCapture={handleCapture} onCancel={() => setIsCameraOpen(false)} />}
-      <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
+      <Dialog open={open && !isCameraOpen} onOpenChange={(isOpen) => !isOpen && handleClose()}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Añadir Negocio Verde</DialogTitle>
