@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
@@ -142,7 +142,7 @@ const AddBusinessDialog = ({
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => setImage(e.target?.result as string);
+      reader.onload = (e) => setImage(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
