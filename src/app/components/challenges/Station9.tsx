@@ -653,19 +653,15 @@ export default function Station9() {
 
                       const rect = canvasRef.current.getBoundingClientRect();
 
-                      // 🔧 Posición anterior en píxeles
                       const prevXPx = (prize.x / 100) * rect.width;
                       const prevYPx = (prize.y / 100) * rect.height;
 
-                      // Nueva posición sumando el offset
                       const newXPx = prevXPx + info.offset.x;
                       const newYPx = prevYPx + info.offset.y;
 
-                      // Convertir a porcentaje
                       let newXPercent = (newXPx / rect.width) * 100;
                       let newYPercent = (newYPx / rect.height) * 100;
 
-                      // Margen mínimo
                       const margin = 3;
                       newXPercent = clamp(newXPercent, margin, 100 - margin);
                       newYPercent = clamp(newYPercent, margin, 100 - margin);
@@ -677,7 +673,6 @@ export default function Station9() {
                       );
                       setPlacedPrizes(updated);
                       
-                      // 🔧 OPCIONAL: comentar si quieres guardar solo al final
                       await savePrizesToDb(updated);
                     }}
                     className="placed-prize-wrapper group/prize absolute"
@@ -692,7 +687,7 @@ export default function Station9() {
                     }}
                     initial={false}
                     animate={{
-                      boxShadow: isSelected
+                      boxShadow: isSelected && !isStationConfirmed
                         ? "0px 0px 15px rgba(255,255,100,0.8)"
                         : "0px 0px 0px rgba(0,0,0,0)",
                     }}
@@ -719,7 +714,7 @@ export default function Station9() {
 
                     {/* CONTROLES */}
                     <AnimatePresence>
-                    { !isStationConfirmed && (
+                    {isSelected && !isStationConfirmed && (
                       <motion.div
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -736,8 +731,6 @@ export default function Station9() {
                           w-40 max-w-[90vw]
                           bg-background/95 p-2 rounded-lg shadow-xl 
                           flex items-center gap-2
-                          pointer-events-none group-hover/prize:pointer-events-auto md:opacity-0 group-hover/prize:opacity-100
-                          ${isSelected ? '!opacity-100' : ''}
                         `}
                         onPointerDown={(e) => e.stopPropagation()}
                         onClick={(e) => e.stopPropagation()}
