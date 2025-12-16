@@ -1,685 +1,398 @@
-
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { useUser, useFirestore } from "@/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { usePrizeCart } from "@/hooks/use-prize-cart";
-import { motion, AnimatePresence, PanInfo, useDragControls } from "framer-motion";
-import { toast } from "@/hooks/use-toast";
-import CompletionDialog from "../CompletionDialog";
-import type { Prize } from "@/lib/data";
-import { Card } from "@/components/ui/card";
-import TypewriterText from "../auth/TypewriterText";
-import { Slider } from "@/components/ui/slider";
-import { Trash2, Gift, X, Check, Download, Edit, PanelLeft } from "lucide-react";
+import { motion, PanInfo } from "framer-motion";
 import html2canvas from "html2canvas";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { toast } from "@/hooks/use-toast";
+
+import { useUser, useFirestore } from "@/firebase";
+import { usePrizeCart } from "@/hooks/use-prize-cart";
 import { useIsMobile } from "@/hooks/use-mobile";
+
+import CompletionDialog from "../CompletionDialog";
+import TypewriterText from "../auth/TypewriterText";
 import ResponsiveBackground from "../ResponsiveBackground";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+
+import { Check, Download, Pencil, Trash2, Gift, Menu, X } from "lucide-react";
+import type { Prize } from "@/lib/data";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { cn } from "@/lib/utils";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import Logo from "../Logo";
 
-// ------------------------------------------------------------------
+
 // Tipos
-// ------------------------------------------------------------------
-
 type PlacedPrize = Prize & {
-  x: number; // porcentaje
-  y: number; // porcentaje
+  x: number;
+  y: number;
   scale: number;
+  stationId?: number;
 };
 
-// ------------------------------------------------------------------
 // Helpers
-// ------------------------------------------------------------------
-
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
-
+const isSpecialPrize = (imageUrl: string) => imageUrl.includes("Molinos.png") || imageUrl.includes("Ciudad.png");
 const getBadgeBasePx = (rect: DOMRect) => Math.min(rect.width * 0.08, rect.height * 0.08);
 
 const clampPositionByBadgeSize = (xPercent: number, yPercent: number, rect: DOMRect, scale: number) => {
-  if (!rect.width || !rect.height) return { x: 50, y: 50 }; // Fallback
-
   const basePx = getBadgeBasePx(rect);
   const badgePx = basePx * (scale || 1);
-
   const halfWPercent = (badgePx / rect.width) * 50;
   const halfHPercent = (badgePx / rect.height) * 50;
-
   const x = clamp(xPercent, halfWPercent, 100 - halfWPercent);
   const y = clamp(yPercent, halfHPercent, 100 - halfHPercent);
-
   return { x, y };
 };
 
-const isSpecialPrize = (imageUrl: string) =>
-  imageUrl.includes("Molinos.png") || imageUrl.includes("Ciudad.png");
-
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const scenarioBackgrounds: Record<string, { pc: string; tablet: string; mobile: string }> = {
-    "/backgrounds/Bosque_Seco_Tropical.png": {
-      pc: "/backgrounds/Terral1366_X_768.png",
-      tablet: "/backgrounds/Terral1024_X_768.png",
-      mobile: "/backgrounds/Terral1075_X_1944.png",
-    },
-    "/backgrounds/Ciudad_Sostenible.png": {
-      pc: "/backgrounds/Civika1366_X_768.png",
-      tablet: "/backgrounds/Civika1024_X_768.png",
-      mobile: "/backgrounds/Civika1075_X_1944.png",
-    },
-    "/backgrounds/Mar_Costero.png": {
-      pc: "/backgrounds/Mareva1366_X_768.png",
-      tablet: "/backgrounds/Mareva1024_X_768.png",
-      mobile: "/backgrounds/Mareva1075_X_1944.png",
-    },
-    "/backgrounds/Manglares.png": {
-      pc: "/backgrounds/Manglia1366_X_768.png",
-      tablet: "/backgrounds/Manglia1024_X_768.png",
-      mobile: "/backgrounds/Manglia1075_X_1944.png",
-    },
-};
-
-const scenarioOptions = [
-    { name: "Terral", id: 'scenario-bosque-seco', imageUrl: "/backgrounds/Bosque_Seco_Tropical.png" },
-    { name: "Civika", id: 'scenario-ciudad', imageUrl: "/backgrounds/Ciudad_Sostenible.png" },
-    { name: "Mareva", id: 'scenario-mar-costero', imageUrl: "/backgrounds/Mar_Costero.png" },
-    { name: "Manglia", id: 'scenario-manglares', imageUrl: "/backgrounds/Manglares.png" },
-];
-
-async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
-    const res = await fetch(dataUrl);
-    return await res.blob();
-}
-
-
-// ------------------------------------------------------------------
-// Componente principal
-// ------------------------------------------------------------------
 
 export default function Station9() {
-  const [chosenScenario, setChosenScenario] = useState<string | null>(null);
-  const [playerName, setPlayerName] = useState<string>("");
-  const [isStationConfirmed, setIsStationConfirmed] = useState(false);
-  const [placedPrizes, setPlacedPrizes] = useState<PlacedPrize[]>([]);
-  const [selectedPrizeId, setSelectedPrizeId] = useState<string | null>(null);
-  const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
-  const [showYaraMessage, setShowYaraMessage] = useState(true);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const canvasRef = useRef<HTMLDivElement | null>(null);
-  const canvasRectRef = useRef<DOMRect | null>(null);
   const isMobile = useIsMobile();
-  const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara-final');
-
   const { user } = useUser();
   const db = useFirestore();
+  const { prizes: collectedPrizes = [] } = usePrizeCart?.() ?? { prizes: [] };
 
-  const { prizes: collectedPrizes = [] } = usePrizeCart() ?? {};
+  const canvasRef = useRef<HTMLDivElement | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [chosenScenario, setChosenScenario] = useState<string | null>(null);
+  const [playerName, setPlayerName] = useState<string>("Guardián");
+  const [placedPrizes, setPlacedPrizes] = useState<PlacedPrize[]>([]);
+  const [selectedPrizeId, setSelectedPrizeId] = useState<string | null>(null);
+  const [interactionMode, setInteractionMode] = useState<null | "move" | "resize">(null);
+  const [resizePrizeId, setResizePrizeId] = useState<string | null>(null);
+  const [isStationConfirmed, setIsStationConfirmed] = useState(false);
+  const [isStationFinalized, setIsStationFinalized] = useState(false);
+  const [isYaraVisible, setIsYaraVisible] = useState(false);
+  const yaraShowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const yaraHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [canvasRect, setCanvasRect] = useState<DOMRect | null>(null);
 
-  const selectedPrize = useMemo(
-    () => placedPrizes.find((p) => p.id === selectedPrizeId) || null,
-    [placedPrizes, selectedPrizeId]
-  );
-  
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const latestToSaveRef = useRef<PlacedPrize[] | null>(null);
-
-  const savePrizesToDb = useCallback(
-    async (prizesToSave: PlacedPrize[]) => {
-      if (!user || !db) return;
-      try {
-        const userDocRef = doc(db, "users", user.uid);
-        await setDoc(userDocRef, { placedPrizes: prizesToSave }, { merge: true });
-      } catch (e) {
-        console.error("Error saving prizes:", e);
-      }
-    },
-    [user, db]
-  );
-
-  const scheduleSave = useCallback(
-    (next: PlacedPrize[]) => {
-      latestToSaveRef.current = next;
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-
-      saveTimerRef.current = setTimeout(() => {
-        const payload = latestToSaveRef.current;
-        if (payload) void savePrizesToDb(payload);
-      }, 600);
-    },
-    [savePrizesToDb]
-  );
-  
   useEffect(() => {
-    const savedSidebarState = localStorage.getItem('kairu-sidebar-open');
-    if (savedSidebarState !== null) {
-      setIsSidebarOpen(JSON.parse(savedSidebarState));
+    if (canvasRef.current) {
+        setCanvasRect(canvasRef.current.getBoundingClientRect());
     }
-  }, []);
-  
-  useEffect(() => {
-    localStorage.setItem('kairu-sidebar-open', JSON.stringify(isSidebarOpen));
-  }, [isSidebarOpen]);
-
-  useEffect(() => {
-    if (!user || !db) {
-        setIsLoading(false);
-        return;
+    const handleResize = () => {
+        if (canvasRef.current) {
+            setCanvasRect(canvasRef.current.getBoundingClientRect());
+        }
     };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-    const load = async () => {
+  const scenarioBackgrounds = useMemo(() => {
+    if (!chosenScenario) return null;
+    const v = chosenScenario;
+    const isBosque = v.includes("Bosque_Seco_Tropical") || v.includes("bosque-seco");
+    const isCiudad = v.includes("Ciudad_Sostenible") || v.includes("ciudad");
+    const isMar = v.includes("Mar_Costero") || v.includes("mar-costero");
+    const isManglares = v.includes("Manglares") || v.includes("manglares");
+
+    if (isBosque) return { desktopSrc: "/backgrounds/Terral1366_X_768.png", tabletSrc: "/backgrounds/Terral1024_X_768.png", mobileSrc: "/backgrounds/Terral1075_X_1944.png" };
+    if (isCiudad) return { desktopSrc: "/backgrounds/Civika1366_X_768.png", tabletSrc: "/backgrounds/Civika1024_X_768.png", mobileSrc: "/backgrounds/Civika1075_X_1944.png" };
+    if (isMar) return { desktopSrc: "/backgrounds/Mareva1366_X_768.png", tabletSrc: "/backgrounds/Mareva1024_X_768.png", mobileSrc: "/backgrounds/Mareva1075_X_1944.png" };
+    if (isManglares) return { desktopSrc: "/backgrounds/Manglia1366_X_768.png", tabletSrc: "/backgrounds/Manglia1024_X_768.png", mobileSrc: "/backgrounds/Manglia1075_X_1944.png" };
+    return null;
+  }, [chosenScenario]);
+  
+  const [availableCanvases, setAvailableCanvases] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchPlayerData = async () => {
+      if (!user || !db) { setIsLoading(false); return; }
       try {
-        setIsLoading(true);
         const userDocRef = doc(db, "users", user.uid);
         const snap = await getDoc(userDocRef);
-        if (!snap.exists()) {
-            setIsLoading(false);
-            return;
+        if (snap.exists()) {
+          const data = snap.data() as any;
+          if (data.chosenScenario) {
+            setChosenScenario(data.chosenScenario);
+          } else {
+            const scenarios = PlaceHolderImages.filter(p => p.id.startsWith('scenario-'));
+            setAvailableCanvases(scenarios);
+          }
+          const fullName = data.playerName || data.usuario || `${data.nombre || ""} ${data.apellido || ""}`.trim();
+          setPlayerName(fullName || "Guardián");
+          setPlacedPrizes((data.placedPrizes ?? []).map((p: PlacedPrize) => ({ ...p, scale: typeof p.scale === "number" ? p.scale : 1, stationId: p.stationId ?? 9 })));
+          const confirmed = !!data.station9Confirmed;
+          const finalized = !!data.station9Finalized;
+          setIsStationConfirmed(confirmed || finalized);
+          setIsStationFinalized(finalized);
+        } else {
+            const scenarios = PlaceHolderImages.filter(p => p.id.startsWith('scenario-'));
+            setAvailableCanvases(scenarios);
         }
-
-        const data = snap.data() as any;
-
-        setChosenScenario(data.chosenScenario ?? null);
-        setPlayerName(data.nombre ?? data.usuario ?? "Guardián");
-        setIsStationConfirmed(!!data.station9Confirmed);
-
-        const savedPlaced = (data.placedPrizes ?? []) as PlacedPrize[];
-        setPlacedPrizes(
-          savedPlaced.map((p) => ({
-            ...p,
-            scale: typeof p.scale === "number" ? p.scale : 1,
-          }))
-        );
       } catch (e) {
         console.error(e);
-        toast({
-          title: "Error al cargar",
-          description: "No se pudo cargar la estación.",
-          variant: "destructive",
-        });
+        toast({ title: "Error", description: "No se pudo cargar la estación 9.", variant: "destructive" });
       } finally {
         setIsLoading(false);
       }
     };
-
-    void load();
+    fetchPlayerData();
   }, [user, db]);
 
   useEffect(() => {
-      const yaraTimer = setTimeout(() => {
-          setShowYaraMessage(false)
-      }, 25000);
-      return () => clearTimeout(yaraTimer);
-  }, []);
-  
-  const updateCanvasRect = useCallback(() => {
-    if (canvasRef.current) {
-      canvasRectRef.current = canvasRef.current.getBoundingClientRect();
-    }
-  }, []);
-  
-  const addPrizeToCanvasCenter = (prize: Prize) => {
-    if (isStationConfirmed) return;
-    updateCanvasRect();
-    if (!canvasRectRef.current) return;
-
-    const rect = canvasRectRef.current;
-    const rawX = 50;
-    const rawY = 50;
-
-    const scale = 1;
-    const { x, y } = clampPositionByBadgeSize(rawX, rawY, rect, scale);
-
-    const newPlaced: PlacedPrize = {
-      ...prize,
-      x,
-      y,
-      scale,
+    if (isLoading) return;
+    if (yaraShowTimerRef.current) clearTimeout(yaraShowTimerRef.current);
+    if (yaraHideTimerRef.current) clearTimeout(yaraHideTimerRef.current);
+    yaraShowTimerRef.current = setTimeout(() => {
+      setIsYaraVisible(true);
+      yaraHideTimerRef.current = setTimeout(() => setIsYaraVisible(false), 25000);
+    }, 800);
+    return () => {
+      if (yaraShowTimerRef.current) clearTimeout(yaraShowTimerRef.current);
+      if (yaraHideTimerRef.current) clearTimeout(yaraHideTimerRef.current);
     };
+  }, [isLoading]);
 
+  const savePrizesToDb = useCallback(async (prizesToSave: PlacedPrize[]) => {
+    if (!user || !db) return;
+    const userDocRef = doc(db, "users", user.uid);
+    await setDoc(userDocRef, { placedPrizes: prizesToSave }, { merge: true });
+  }, [user, db]);
+
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestRef = useRef<PlacedPrize[] | null>(null);
+  const scheduleSave = useCallback((next: PlacedPrize[]) => {
+    latestRef.current = next;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      const payload = latestRef.current;
+      if (payload) savePrizesToDb(payload);
+    }, 500);
+  }, [savePrizesToDb]);
+
+  useEffect(() => () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); }, []);
+
+  const addPrizeAtCenter = useCallback((prize: Prize) => {
+    if (!canvasRect) return;
+    if (isStationConfirmed || isStationFinalized) return;
+    const scale = 1;
+    const { x, y } = clampPositionByBadgeSize(50, 50, canvasRect, scale);
+    const newPlaced: PlacedPrize = { ...prize, x, y, scale, stationId: (prize as any).stationId ?? 9 };
     const updated = [...placedPrizes.filter((p) => p.id !== prize.id), newPlaced];
     setPlacedPrizes(updated);
     scheduleSave(updated);
     setSelectedPrizeId(prize.id);
-  };
-  
-  const handlePrizeDropToCanvas = (prize: Prize, info: PanInfo) => {
-    if (isStationConfirmed) return;
-    updateCanvasRect();
-    if (!canvasRectRef.current) return;
+    setInteractionMode(null);
+    setResizePrizeId(null);
+    if(isMobile) setIsSidebarOpen(false);
+  }, [placedPrizes, scheduleSave, isStationConfirmed, isStationFinalized, isMobile, canvasRect]);
 
-    const rect = canvasRectRef.current;
-    const px = info.point.x;
-    const py = info.point.y;
-
-    if (px < rect.left || px > rect.right || py < rect.top || py > rect.bottom) return;
-
-    const rawX = ((px - rect.left) / rect.width) * 100;
-    const rawY = ((py - rect.top) / rect.height) * 100;
-
-    const scale = 1;
-    const { x, y } = clampPositionByBadgeSize(rawX, rawY, rect, scale);
-
-    const newPlaced: PlacedPrize = {
-      ...prize,
-      x,
-      y,
-      scale,
-    };
-
-    const updated = [...placedPrizes.filter((p) => p.id !== prize.id), newPlaced];
-    setPlacedPrizes(updated);
-    scheduleSave(updated);
-    setSelectedPrizeId(prize.id);
-  };
-
-  const movePlacedPrize = (id: string, info: PanInfo) => {
-    if (isStationConfirmed || selectedPrizeId) return;
-    
-    updateCanvasRect();
-    if (!canvasRectRef.current) return;
-
-    const rect = canvasRectRef.current;
+  const movePlacedPrize = useCallback((id: string, info: PanInfo) => {
+    if (!canvasRect) return;
+    if (isStationConfirmed || isStationFinalized || interactionMode === "resize") return;
     const current = placedPrizes.find((p) => p.id === id);
     if (!current) return;
-
-    const prevXPx = (current.x / 100) * rect.width;
-    const prevYPx = (current.y / 100) * rect.height;
-
-    const newXPx = prevXPx + info.offset.x;
-    const newYPx = prevYPx + info.offset.y;
-
-    const rawX = (newXPx / rect.width) * 100;
-    const rawY = (newYPx / rect.height) * 100;
-
-    const { x, y } = clampPositionByBadgeSize(rawX, rawY, rect, current.scale || 1);
-
+    const newXPx = (current.x / 100) * canvasRect.width + info.offset.x;
+    const newYPx = (current.y / 100) * canvasRect.height + info.offset.y;
+    const rawX = (newXPx / canvasRect.width) * 100;
+    const rawY = (newYPx / canvasRect.height) * 100;
+    const { x, y } = clampPositionByBadgeSize(rawX, rawY, canvasRect, current.scale || 1);
     const updated = placedPrizes.map((p) => (p.id === id ? { ...p, x, y } : p));
     setPlacedPrizes(updated);
-  };
-  
-  const handleDragEnd = (id: string) => {
-    scheduleSave(placedPrizes);
-  };
+    scheduleSave(updated);
+  }, [placedPrizes, scheduleSave, isStationConfirmed, isStationFinalized, interactionMode, canvasRect]);
 
-  const handleScaleChange = (id: string, value: number[]) => {
-    if (isStationConfirmed) return;
+  const closeResize = useCallback(() => {
+    setResizePrizeId(null);
+    setInteractionMode(null);
+  }, []);
 
-    setPlacedPrizes((prev) => prev.map((p) => (p.id === id ? { ...p, scale: value[0] } : p)));
-  };
-  
-  const handleScaleCommit = (id: string, value: number[]) => {
-    if (isStationConfirmed) return;
-    updateCanvasRect();
-    if (!canvasRectRef.current) return;
-
-    const rect = canvasRectRef.current;
+  const handleScaleChange = useCallback((id: string, value: number[]) => {
+    if (isStationConfirmed || isStationFinalized || resizePrizeId !== id) return;
     const prize = placedPrizes.find((p) => p.id === id);
     if (!prize) return;
-
     const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
     const scale = clamp(value[0], 0.5, maxScale);
-    const { x, y } = clampPositionByBadgeSize(prize.x, prize.y, rect, scale);
+    setPlacedPrizes((prev) => prev.map((p) => (p.id === id ? { ...p, scale } : p)));
+  }, [placedPrizes, resizePrizeId, isStationConfirmed, isStationFinalized]);
 
+  const handleScaleCommit = useCallback((id: string, value: number[]) => {
+    if (!canvasRect || isStationConfirmed || isStationFinalized || resizePrizeId !== id) return;
+    const prize = placedPrizes.find((p) => p.id === id);
+    if (!prize) return;
+    const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
+    const scale = clamp(value[0], 0.5, maxScale);
+    const { x, y } = clampPositionByBadgeSize(prize.x, prize.y, canvasRect, scale);
     const updated = placedPrizes.map((p) => (p.id === id ? { ...p, x, y, scale } : p));
     setPlacedPrizes(updated);
     scheduleSave(updated);
-  };
+  }, [placedPrizes, resizePrizeId, scheduleSave, isStationConfirmed, isStationFinalized, canvasRect]);
 
-  const deletePrize = (id: string) => {
-    if (isStationConfirmed) return;
+  const deletePrize = useCallback((id: string) => {
+    if (isStationConfirmed || isStationFinalized) return;
     const updated = placedPrizes.filter((p) => p.id !== id);
     setPlacedPrizes(updated);
     scheduleSave(updated);
-    setSelectedPrizeId(null);
-  };
+    if (selectedPrizeId === id) setSelectedPrizeId(null);
+    if (resizePrizeId === id) closeResize();
+  }, [placedPrizes, scheduleSave, selectedPrizeId, resizePrizeId, closeResize, isStationConfirmed, isStationFinalized]);
 
-  const allPlaced =
-    collectedPrizes.length > 0 && collectedPrizes.every((cp) => placedPrizes.some((p) => p.id === cp.id));
+  const placedIds = useMemo(() => new Set(placedPrizes.map((p) => p.id)), [placedPrizes]);
+  const remainingPrizes = useMemo(() => (Array.isArray(collectedPrizes) ? collectedPrizes : []).filter((p) => !placedIds.has(p.id)), [collectedPrizes, placedIds]);
+  const allPlaced = useMemo(() => (Array.isArray(collectedPrizes) ? collectedPrizes : []).length > 0 && remainingPrizes.length === 0, [collectedPrizes, remainingPrizes]);
 
-  const handleSaveStation = async () => {
-    if (!user || !db) return;
-    if (!allPlaced) {
-      toast({
-        title: "Faltan insignias",
-        description: "Debes colocar todas las insignias antes de confirmar.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const confirmStation = useCallback(async () => {
+    if (!user || !db || !allPlaced) { toast({ title: "Faltan insignias", description: "Debes colocar todas las insignias antes de confirmar.", variant: "destructive" }); return; }
     try {
       const userDocRef = doc(db, "users", user.uid);
       await setDoc(userDocRef, { station9Confirmed: true }, { merge: true });
       setIsStationConfirmed(true);
       setSelectedPrizeId(null);
-
-      toast({
-        title: "Estación Confirmada",
-        description: "Tu lienzo ha sido guardado. Ahora puedes descargar la imagen.",
-      });
+      closeResize();
+      toast({ title: "Estación confirmada", description: "Quedó bloqueada. Puedes descargar o modificar." });
     } catch (e) {
       console.error(e);
       toast({ title: "Error", description: "No se pudo confirmar la estación.", variant: "destructive" });
     }
-  };
-  
-  const handleUnlockStation = async () => {
-    if (!user || !db) return;
+  }, [user, db, allPlaced, closeResize]);
+
+  const enableModify = useCallback(async () => {
+    if (!user || !db || isStationFinalized) return;
     try {
       const userDocRef = doc(db, "users", user.uid);
       await setDoc(userDocRef, { station9Confirmed: false }, { merge: true });
       setIsStationConfirmed(false);
-      toast({ title: "Lienzo Desbloqueado", description: "Puedes editar nuevamente." });
+      toast({ title: "Modo edición", description: "Ya puedes mover y redimensionar." });
     } catch (e) {
       console.error(e);
-      toast({ title: "Error", description: "No se pudo desbloquear.", variant: "destructive" });
+      toast({ title: "Error", description: "No se pudo habilitar modificar.", variant: "destructive" });
     }
-  };
+  }, [user, db, isStationFinalized]);
 
-  const handleDownloadImage = async () => {
-    if (!canvasRef.current) return;
-  
-    if (!isStationConfirmed) {
-      toast({
-        title: "Primero confirma la estación",
-        description: "Debes confirmar la estación antes de descargar la imagen.",
-        variant: "destructive",
-      });
+  const handleDownloadImage = useCallback(async () => {
+    if (!canvasRef.current || !isStationConfirmed || isStationFinalized) {
+      toast({ title: "No se puede descargar", description: "Confirma la estación primero.", variant: "destructive" });
       return;
     }
-  
-    try {
-      setSelectedPrizeId(null);
-      await sleep(150);
-  
-      const canvas = await html2canvas(canvasRef.current, {
-        useCORS: true,
-        backgroundColor: null,
-        scale: Math.max(2, window.devicePixelRatio || 2),
-      });
-  
-      const dataUrl = canvas.toDataURL("image/png");
-      const blob = await dataUrlToBlob(dataUrl);
-      const imageFile = new File([blob], "mi-estacion-kairu.png", { type: "image/png" });
-  
-      if (navigator.canShare && navigator.canShare({ files: [imageFile] })) {
-        await navigator.share({
-          title: "Mi Estación Kairu",
-          text: "¡Mira la estación que creé en Kairu!",
-          files: [imageFile],
-        });
-      } else {
+    setSelectedPrizeId(null);
+    closeResize();
+    await sleep(200);
+
+    const canvas = await html2canvas(canvasRef.current, { useCORS: true, backgroundColor: null, scale: window.devicePixelRatio || 2 });
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+
+    if (!blob) { toast({ title: "Error", description: "No se pudo generar la imagen.", variant: "destructive" }); return; }
+
+    const file = new File([blob], 'estacion-kairu.png', { type: 'image/png' });
+    
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+            await navigator.share({
+                title: 'Mi Estación Kairu',
+                text: '¡Mira la estación que creé en EcoQuest Explorers!',
+                files: [file],
+            });
+        } catch (error) {
+            console.error('Error sharing:', error);
+            toast({ title: "Compartir cancelado", description: "No se pudo compartir la imagen.", variant: "default" });
+        }
+    } else {
         const link = document.createElement("a");
-        link.href = dataUrl;
-        link.download = "mi-estacion-kairu.png";
+        link.href = URL.createObjectURL(blob);
+        link.download = "estacion-kairu.png";
         link.click();
-      }
-  
-      if (user && db) {
+        URL.revokeObjectURL(link.href);
+    }
+    
+    if (user && db) {
         const userDocRef = doc(db, "users", user.uid);
         await setDoc(userDocRef, { station9Finalized: true }, { merge: true });
-      }
-  
-      setIsCompletionDialogOpen(true);
-    } catch (e) {
-      console.error("Error al descargar/compartir la imagen:", e);
-      if (e instanceof Error && e.name !== 'AbortError') {
-          toast({ title: "Error", description: "No se pudo generar o compartir la imagen.", variant: "destructive" });
-      }
     }
-  };
+    setIsStationFinalized(true);
+    setIsCompletionDialogOpen(true);
+  }, [isStationConfirmed, isStationFinalized, closeResize, user, db]);
   
-  const handleSelectScenario = async (scenarioUrl: string) => {
+  const handleSelectCanvas = async (scenario: any) => {
     if (!user || !db) return;
     try {
-        const userDocRef = doc(db, "users", user.uid);
-        await setDoc(userDocRef, { chosenScenario: scenarioUrl }, { merge: true });
-        setChosenScenario(scenarioUrl);
-        toast({ title: "Lienzo seleccionado", description: "¡Ya puedes empezar a decorar!" });
-    } catch(e) {
-        console.error(e);
-        toast({ title: "Error", description: "No se pudo guardar tu selección.", variant: "destructive" });
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { chosenScenario: scenario.imageUrl }, { merge: true });
+        setChosenScenario(scenario.imageUrl);
+        setAvailableCanvases([]);
+    } catch (e) {
+        console.error("Error saving canvas choice", e);
+        toast({ title: "Error", description: "No se pudo guardar tu elección de lienzo.", variant: "destructive" });
     }
-  };
-  
-  const backgrounds = chosenScenario ? scenarioBackgrounds[chosenScenario] : null;
+  }
 
-  const remaining = useMemo(() => {
-    const safe = Array.isArray(collectedPrizes) ? collectedPrizes : [];
-    return safe.filter((p) => !placedPrizes.some((pp) => pp.id === p.id));
-  }, [collectedPrizes, placedPrizes]);
-  
-  const PlacedItem = ({ prize }: { prize: PlacedPrize }) => {
-    const isSelected = selectedPrizeId === prize.id;
-    const scale = prize.scale || 1;
-    const dragControls = useDragControls();
+  const yaraCharImage = PlaceHolderImages.find((p) => p.id === "char-yara-final");
 
-    return (
-        <motion.div
-            key={prize.id}
-            drag={!isStationConfirmed && !isSelected}
-            dragListener={false}
-            dragControls={dragControls}
-            dragMomentum={false}
-            dragElastic={0}
-            onPointerDown={(e) => {
-                if (isMobile && !isStationConfirmed && !isSelected) {
-                    dragControls.start(e, { snapToCursor: true });
-                }
-            }}
-            onTap={(e) => {
-                if(isMobile && !isStationConfirmed) {
-                    e.stopPropagation();
-                    setSelectedPrizeId(prize.id);
-                }
-            }}
-            onDoubleClick={(e) => {
-                if (isStationConfirmed || isMobile) return;
-                e.stopPropagation();
-                setSelectedPrizeId(prize.id);
-            }}
-            whileDrag={{ zIndex: 120, scale: 1.05 }}
-            onDragStart={updateCanvasRect}
-            onDrag={(e, info) => movePlacedPrize(prize.id, info)}
-            onDragEnd={() => handleDragEnd(prize.id)}
-            className="absolute"
-            style={{
-                left: `${prize.x}%`,
-                top: `${prize.y}%`,
-                width: `calc(min(8vw, 8vh) * ${scale})`,
-                height: `calc(min(8vw, 8vh) * ${scale})`,
-                transform: "translate(-50%, -50%)",
-                touchAction: "none",
-                cursor: isStationConfirmed ? "default" : isSelected ? "default" : "grab",
-                zIndex: isSelected ? 110 : 20,
-            }}
-        >
-            <Image src={prize.imageUrl} alt={prize.name} fill className="object-contain pointer-events-none" draggable={false} />
+  const sidebarContent = (
+    <div className="flex h-full flex-col">
+        <SheetHeader className="p-4 border-b">
+            <SheetTitle className="flex items-center gap-2">
+                <Gift className="w-5 h-5" />
+                Insignias Ganadas
+            </SheetTitle>
+            <SheetDescription className="text-left">
+                Colocadas: <b>{placedPrizes.length}</b> / <b>{collectedPrizes.length}</b>
+            </SheetDescription>
+        </SheetHeader>
 
-            {!isStationConfirmed && isSelected && (
-            <div
-                className={
-                isMobile
-                    ? "fixed left-1/2 -translate-x-1/2 bottom-20 z-[150] w-[92vw] max-w-md"
-                    : "absolute left-1/2 -translate-x-1/2 -bottom-24 z-[150] w-64"
-                }
-                onClick={(e) => e.stopPropagation()}
-            >
-                <Card className="p-2 shadow-xl">
-                <div className="flex items-center justify-between gap-2">
-                    <Button size="icon" variant="ghost" onClick={() => deletePrize(prize.id)} title="Eliminar">
-                    <Trash2 className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="secondary" onClick={() => setSelectedPrizeId(null)}>
-                    <X className="w-4 h-4 mr-1" />
-                    Cerrar
-                    </Button>
-                </div>
-
-                <div className="mt-2 px-2">
-                    <Slider
-                    value={[scale]}
-                    min={0.5}
-                    max={isSpecialPrize(prize.imageUrl) ? 7 : 5}
-                    step={0.1}
-                    onValueChange={(v) => handleScaleChange(prize.id, v)}
-                    onValueCommit={(v) => handleScaleCommit(prize.id, v)}
-                    />
-                </div>
-                </Card>
-            </div>
-            )}
-        </motion.div>
-    );
-};
-
-  const SidebarContent = () => (
-     <div className="flex flex-col h-full bg-background/70 backdrop-blur-sm p-4">
-      <div className="flex items-center justify-between gap-2 mb-3">
-        <div className="flex items-center gap-2">
-            <Gift className="w-5 h-5" />
-            <div className="font-semibold">Insignias</div>
-        </div>
-        {!isMobile && (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsSidebarOpen(false)}>
-                <X className="w-4 h-4"/>
-            </Button>
-        )}
-      </div>
-
-      <div className="flex-grow overflow-y-auto pr-2 -mr-2">
-        <div className="grid grid-cols-2 gap-3">
-          {remaining.map((prize) => (
-            <div key={prize.id} className="relative rounded-lg border bg-card p-2 select-none">
-              <button
-                type="button"
-                className="w-full"
-                disabled={isStationConfirmed}
-                onClick={() => addPrizeToCanvasCenter(prize)}
-              >
-                <div className="relative w-16 h-16 mx-auto">
-                  <Image src={prize.imageUrl} alt={prize.name} fill className="object-contain" />
-                </div>
-                <div className="text-[11px] mt-1 text-center line-clamp-2">{prize.name}</div>
-              </button>
-
-              {!isMobile && !isStationConfirmed && (
-                <motion.div
-                  drag
-                  dragMomentum={false}
-                  dragElastic={0}
-                  dragSnapToOrigin
-                  whileDrag={{ opacity: 0.9, scale: 1.05, zIndex: 80, cursor: 'grabbing' }}
-                  onDragStart={updateCanvasRect}
-                  onDragEnd={(e, info) => handlePrizeDropToCanvas(prize, info)}
-                  className="mt-1 text-[10px] text-center text-muted-foreground cursor-grab"
-                  style={{ touchAction: "none" }}
-                >
-                  (Arrastra)
-                </motion.div>
-              )}
-            </div>
-          ))}
-
-          {remaining.length === 0 && (
-            <div className="text-xs text-muted-foreground p-2 col-span-2 text-center">¡Ya colocaste todas!</div>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-4 flex flex-col gap-2 pt-4 border-t">
-        {!isStationConfirmed ? (
-          <Button onClick={handleSaveStation} className="w-full" disabled={!allPlaced}>
-            <Check className="w-4 h-4 mr-2" />
-            Confirmar Estación
-          </Button>
-        ) : (
-          <>
-            <Button onClick={handleDownloadImage} className="w-full">
-              <Download className="w-4 h-4 mr-2" />
-              Descargar Imagen
-            </Button>
-            <Button onClick={handleUnlockStation} className="w-full" variant="secondary">
-              <Edit className="w-4 h-4 mr-2" />
-              Modificar
-            </Button>
-          </>
-        )}
-      </div>
-    </div>
-  )
-
-  const Sidebar = () => {
-    if(isMobile) {
-        return (
-            <Sheet>
-                <SheetTrigger asChild>
-                    <Button className="fixed bottom-4 right-4 z-50 rounded-full h-14 w-14 shadow-lg">
-                        <Gift className="w-6 h-6"/>
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="bottom" className="h-[60vh] p-0 border-t-0 bg-transparent">
-                    <div className="h-full bg-background/80 backdrop-blur-sm rounded-t-2xl">
-                      <SheetHeader className="p-4 pb-0">
-                        <SheetTitle className="sr-only">Insignias</SheetTitle>
-                      </SheetHeader>
-                      <SidebarContent />
+        <div className="grid grid-cols-2 gap-3 p-4 overflow-y-auto flex-grow">
+            {collectedPrizes.map((prize) => {
+                const isPlaced = placedIds.has(prize.id);
+                return (
+                    <div key={prize.id} className={cn("rounded-lg border p-2", isPlaced && "opacity-50")}>
+                        <button type="button" className="w-full" disabled={isPlaced || isStationConfirmed || isStationFinalized} onClick={() => addPrizeAtCenter(prize)}>
+                            <div className="relative w-16 h-16 mx-auto">
+                                <Image src={prize.imageUrl} alt={prize.name} fill className="object-contain" />
+                            </div>
+                            <div className="text-[11px] mt-1 text-center line-clamp-2">{prize.name}</div>
+                            <div className="text-[10px] text-center mt-1 text-muted-foreground">{isPlaced ? "Colocada" : "Toca para agregar"}</div>
+                        </button>
                     </div>
-                </SheetContent>
-            </Sheet>
-        )
-    }
-
-    if (!isSidebarOpen) {
-        return (
-             <Button className="fixed top-1/2 -translate-y-1/2 right-0 z-50 rounded-r-none" onClick={() => setIsSidebarOpen(true)}>
-                <PanelLeft className="w-5 h-5"/>
-            </Button>
-        )
-    }
-
-    return (
-        <div className="w-72 shrink-0 border-l">
-            <SidebarContent />
+                );
+            })}
+            {collectedPrizes.length === 0 && <div className="text-xs text-muted-foreground col-span-2">No tienes insignias aún.</div>}
         </div>
-    )
-  };
-  
-    if (isLoading) {
-        return (
-            <div className="w-full h-screen bg-background text-foreground flex flex-col items-center justify-center p-4">
-                <Logo className="h-24 animate-pulse" />
-                <p className="text-primary/70 mt-4">Cargando tu estación...</p>
-            </div>
-        );
-    }
-  
+
+        <div className="p-4 border-t mt-auto flex flex-col gap-2">
+            {!isStationConfirmed && !isStationFinalized && (
+                <Button onClick={confirmStation} disabled={!allPlaced} className="w-full">
+                    <Check className="w-4 h-4 mr-2" />
+                    Confirmar estación
+                </Button>
+            )}
+            {isStationConfirmed && !isStationFinalized && (
+                <>
+                    <Button onClick={handleDownloadImage} className="w-full"><Download className="w-4 h-4 mr-2" />Descargar Imagen</Button>
+                    <Button onClick={enableModify} variant="secondary" className="w-full"><Pencil className="w-4 h-4 mr-2" />Modificar</Button>
+                </>
+            )}
+            {isStationFinalized && <div className="text-xs text-muted-foreground text-center">Estación finalizada.</div>}
+        </div>
+    </div>
+  );
+
+  if (isLoading) {
+    return <div className="w-screen h-screen bg-background flex items-center justify-center">Cargando estación...</div>;
+  }
+
   if (!chosenScenario) {
     return (
-        <div className="w-full h-screen bg-background text-foreground flex flex-col items-center justify-center p-4">
-            <h1 className="text-3xl font-bold mb-2">Elige tu Lienzo</h1>
-            <p className="text-muted-foreground mb-6">Selecciona el escenario para tu estación personalizada antes de continuar.</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-                {scenarioOptions.map((scenario) => {
-                    const img = PlaceHolderImages.find(p => p.id === scenario.id);
-                    return (
-                        <Card 
-                            key={scenario.id} 
-                            onClick={() => handleSelectScenario(scenario.imageUrl)}
-                            className="p-2 cursor-pointer hover:border-primary hover:scale-105 transition-transform duration-300"
-                        >
-                            {img && <Image src={img.imageUrl} alt={img.description ?? ''} width={200} height={200} className="rounded-md aspect-square object-cover" />}
-                             <p className="font-bold mt-2 text-sm">{scenario.name}</p>
-                        </Card>
-                    )
-                })}
+        <div className="w-screen h-screen bg-background flex flex-col items-center justify-center p-4">
+            <h2 className="text-2xl font-bold mb-4">Elige tu Lienzo Final</h2>
+            <p className="text-muted-foreground mb-8">Este será el fondo de tu estación personalizada.</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {availableCanvases.map(scenario => (
+                    <Card key={scenario.id} onClick={() => handleSelectCanvas(scenario)} className="p-2 cursor-pointer hover:border-primary hover:scale-105 transition-transform duration-300">
+                        <Image src={scenario.imageUrl} alt={scenario.description} width={200} height={200} className="rounded-md aspect-square object-cover" />
+                        <p className="font-bold mt-2 text-sm">{scenario.imageHint.split(' ')[0]}</p>
+                    </Card>
+                ))}
             </div>
         </div>
     )
@@ -687,58 +400,123 @@ export default function Station9() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
-      <AnimatePresence>
-        {showYaraMessage && yaraCharImage && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20, transition: { duration: 0.5 } }}
-            className="absolute top-4 left-1/2 -translate-x-1/2 z-[200] max-w-lg w-[90%] pointer-events-none"
-          >
-            <Card className="p-3 shadow-xl bg-white/95 relative pointer-events-auto">
-                <div className="flex items-start gap-2">
-                    <div className="relative w-16 h-20 -mt-8 -ml-6 shrink-0">
-                        <Image src={yaraCharImage.imageUrl} alt={yaraCharImage.description} fill className="object-contain" />
-                    </div>
-                    <div className="flex-1 pt-1">
-                        <TypewriterText text={`¡Hola ${playerName}! Esta es tu estación. Añade tus insignias y decora tu lienzo. Cuando termines, confirma para poder descargar tu obra de arte.`} />
-                    </div>
-                    <Button size="icon" variant="ghost" className="shrink-0 h-7 w-7" onClick={() => setShowYaraMessage(false)}>
-                        <X className="w-4 h-4" />
-                    </Button>
-                </div>
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {isYaraVisible && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[200] w-[92vw] max-w-2xl">
+          <Card className="p-3 shadow-lg">
+            <div className="flex items-start gap-3">
+              {yaraCharImage?.imageUrl && <div className="relative w-12 h-12 shrink-0"><Image src={yaraCharImage.imageUrl} alt="Yara" fill className="object-contain" /></div>}
+              <div className="flex-1">
+                <TypewriterText text={`¡Felicidades, ${playerName}! Has llegado a tu estación. Coloca todas tus insignias sobre el lienzo. Arrastra para ubicar, y haz doble clic para cambiar el tamaño. Cuando termines, confirma y descarga tu obra maestra.`} />
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
 
       <div className="flex w-full h-full">
         <div className="relative flex-1">
-          <div 
-            ref={canvasRef} 
-            className="absolute inset-0 w-full h-full" 
-            onClick={() => setSelectedPrizeId(null)} 
-            onMouseDown={updateCanvasRect}
-            onPointerDown={updateCanvasRect}
-          >
+          <div ref={canvasRef} className="absolute inset-0 w-full h-full" onClick={() => { setSelectedPrizeId(null); closeResize(); }}>
             <div className="absolute inset-0 z-0 pointer-events-none">
-              {backgrounds ? (
-                <ResponsiveBackground desktopSrc={backgrounds.pc} tabletSrc={backgrounds.tablet} mobileSrc={backgrounds.mobile} />
-              ) : (
-                <div className="w-full h-full bg-muted" />
-              )}
+              {scenarioBackgrounds ? <ResponsiveBackground {...scenarioBackgrounds} /> : <div className="w-full h-full bg-muted" />}
             </div>
-
             <div className="absolute inset-0 z-10">
-              {placedPrizes.map((prize) => (
-                <PlacedItem key={prize.id} prize={prize} />
-              ))}
+              {placedPrizes.map((prize) => {
+                const isSelected = selectedPrizeId === prize.id;
+                const scale = prize.scale || 1;
+                const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
+                const isResizeOpen = resizePrizeId === prize.id && interactionMode === "resize";
+                const canEdit = !isStationConfirmed && !isStationFinalized;
+
+                return (
+                  <motion.div
+                    key={prize.id}
+                    className="absolute"
+                    style={{
+                      left: `${prize.x}%`,
+                      top: `${prize.y}%`,
+                      width: `calc(min(8vw, 8vh) * ${scale})`,
+                      height: `calc(min(8vw, 8vh) * ${scale})`,
+                      transform: "translate(-50%, -50%)",
+                      touchAction: "none",
+                      cursor: canEdit && !isResizeOpen ? "grab" : "default",
+                      zIndex: isSelected ? 120 : 20,
+                    }}
+                    drag={canEdit && !isResizeOpen}
+                    dragMomentum={false}
+                    dragElastic={0}
+                    dragConstraints={canvasRef}
+                    dragTransition={{ power: 0, timeConstant: 100 }}
+                    onDragStart={(e) => {
+                      if (!canEdit) return;
+                      e.stopPropagation();
+                      setSelectedPrizeId(prize.id);
+                      setInteractionMode("move");
+                      setResizePrizeId(null);
+                    }}
+                    onDragEnd={(e, info) => {
+                      if (!canEdit) return;
+                      e.stopPropagation();
+                      movePlacedPrize(prize.id, info);
+                      setInteractionMode(null);
+                    }}
+                    onClick={(e) => { e.stopPropagation(); setSelectedPrizeId(prize.id); }}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      if (!canEdit) return;
+                      setResizePrizeId(prize.id);
+      setInteractionMode("resize");
+                    }}
+                  >
+                    <Image src={prize.imageUrl} alt={prize.name} fill className="object-contain" draggable={false} />
+
+                    {canEdit && isSelected && isResizeOpen && (
+                        <div
+                            className={cn(
+                                "absolute z-[200] p-3 shadow-xl bg-background/80 backdrop-blur-sm rounded-lg",
+                                isMobile ? "left-1/2 -translate-x-1/2 bottom-4 w-64" : "left-full ml-2 top-1/2 -translate-y-1/2 w-48"
+                            )}
+                            onClick={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between gap-2">
+                                <Button size="icon" variant="ghost" onClick={() => deletePrize(prize.id)} title="Eliminar"><Trash2 className="w-4 h-4" /></Button>
+                            </div>
+                            <div className="mt-2"><Slider value={[scale]} min={0.5} max={maxScale} step={0.1} onValueChange={(v) => handleScaleChange(prize.id, v)} onValueCommit={(v) => handleScaleCommit(prize.id, v)} /></div>
+                            <div className="mt-2 flex justify-end"><Button size="sm" variant="secondary" onClick={closeResize}>Listo</Button></div>
+                        </div>
+                    )}
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
         </div>
-        <Sidebar />
-      </div>
 
+        {isMobile ? (
+             <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+                <SheetTrigger asChild>
+                    <Button variant="outline" size="icon" className="absolute bottom-4 right-4 z-50 rounded-full h-14 w-14 shadow-lg"><Gift /></Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[80vh] p-0 flex flex-col bg-background/90 backdrop-blur-sm">
+                    {sidebarContent}
+                </SheetContent>
+            </Sheet>
+        ) : (
+          <div className={cn("transition-all duration-300 ease-in-out bg-background/80 backdrop-blur-sm border-l", sidebarOpen ? "w-80" : "w-0 overflow-hidden")}>
+             {sidebarOpen && sidebarContent}
+          </div>
+        )}
+         {!isMobile && (
+            <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className={cn("absolute top-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out z-50", sidebarOpen ? "right-80" : "right-2")}
+            >
+                {sidebarOpen ? <X/> : <Menu />}
+            </Button>
+        )}
+      </div>
       <CompletionDialog open={isCompletionDialogOpen} onOpenChange={setIsCompletionDialogOpen} />
     </div>
   );
