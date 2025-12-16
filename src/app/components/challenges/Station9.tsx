@@ -640,8 +640,7 @@ export default function Station9() {
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Card className="p-2 shadow-xl">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="text-xs font-medium">Tamaño</div>
+                          <div className="flex items-center justify-end gap-2">
                             <Button size="icon" variant="ghost" onClick={() => deletePrize(prize.id)} title="Eliminar">
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -679,4 +678,3 @@ export default function Station9() {
     </div>
   );
 }
-
