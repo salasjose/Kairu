@@ -21,6 +21,7 @@ import ResponsiveBackground from "../ResponsiveBackground";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import Logo from "../Logo";
 
 // ------------------------------------------------------------------
 // Tipos
@@ -104,6 +105,7 @@ export default function Station9() {
   const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
   const [showYaraMessage, setShowYaraMessage] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const canvasRectRef = useRef<DOMRect | null>(null);
@@ -165,9 +167,13 @@ export default function Station9() {
 
     const load = async () => {
       try {
+        setIsLoading(true);
         const userDocRef = doc(db, "users", user.uid);
         const snap = await getDoc(userDocRef);
-        if (!snap.exists()) return;
+        if (!snap.exists()) {
+            setIsLoading(false);
+            return;
+        }
 
         const data = snap.data() as any;
 
@@ -189,6 +195,8 @@ export default function Station9() {
           description: "No se pudo cargar la estación.",
           variant: "destructive",
         });
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -264,9 +272,10 @@ export default function Station9() {
   };
 
   const movePlacedPrize = (id: string, info: PanInfo) => {
-    if (isStationConfirmed || !canvasRectRef.current) return;
+    if (isStationConfirmed || selectedPrizeId) return;
     
-    if(selectedPrizeId === id) setSelectedPrizeId(null);
+    updateCanvasRect();
+    if (!canvasRectRef.current) return;
 
     const rect = canvasRectRef.current;
     const current = placedPrizes.find((p) => p.id === id);
@@ -533,6 +542,15 @@ export default function Station9() {
     )
   };
   
+    if (isLoading) {
+        return (
+            <div className="w-full h-screen bg-background text-foreground flex flex-col items-center justify-center p-4">
+                <Logo className="h-24 animate-pulse" />
+                <p className="text-primary/70 mt-4">Cargando tu estación...</p>
+            </div>
+        );
+    }
+  
   if (!chosenScenario) {
     return (
         <div className="w-full h-screen bg-background text-foreground flex flex-col items-center justify-center p-4">
@@ -635,18 +653,22 @@ export default function Station9() {
                         className={
                           isMobile
                             ? "fixed left-1/2 -translate-x-1/2 bottom-20 z-[150] w-[92vw] max-w-md"
-                            : "absolute left-1/2 -translate-x-1/2 -bottom-20 z-[150] w-64"
+                            : "absolute left-1/2 -translate-x-1/2 -bottom-24 z-[150] w-64"
                         }
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Card className="p-2 shadow-xl">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-between gap-2">
                             <Button size="icon" variant="ghost" onClick={() => deletePrize(prize.id)} title="Eliminar">
                               <Trash2 className="w-4 h-4" />
                             </Button>
+                             <Button size="sm" variant="secondary" onClick={() => setSelectedPrizeId(null)}>
+                              <X className="w-4 h-4 mr-1" />
+                              Cerrar
+                            </Button>
                           </div>
 
-                          <div className="mt-2">
+                          <div className="mt-2 px-2">
                             <Slider
                               value={[scale]}
                               min={0.5}
@@ -655,12 +677,6 @@ export default function Station9() {
                               onValueChange={(v) => handleScaleChange(prize.id, v)}
                               onValueCommit={(v) => handleScaleCommit(prize.id, v)}
                             />
-                          </div>
-                          <div className="mt-2 flex justify-end">
-                            <Button size="sm" variant="secondary" onClick={() => setSelectedPrizeId(null)}>
-                              <X className="w-4 h-4 mr-1" />
-                              Cerrar
-                            </Button>
                           </div>
                         </Card>
                       </div>
@@ -678,3 +694,4 @@ export default function Station9() {
     </div>
   );
 }
+
