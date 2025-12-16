@@ -179,6 +179,12 @@ export default function Station9() {
     void load();
   }, [user, db]);
 
+  useEffect(() => {
+      const yaraTimer = setTimeout(() => {
+          setShowYaraMessage(false)
+      }, 25000);
+      return () => clearTimeout(yaraTimer);
+  }, [])
   
   const addPrizeToCanvasCenter = (prize: Prize) => {
     if (isStationConfirmed || !canvasRef.current) return;
@@ -233,6 +239,9 @@ export default function Station9() {
 
   const movePlacedPrize = (id: string, info: PanInfo) => {
     if (isStationConfirmed || !canvasRef.current) return;
+    
+    // Al empezar a mover, ocultamos los controles de edición
+    if(selectedPrizeId === id) setSelectedPrizeId(null);
 
     const rect = canvasRef.current.getBoundingClientRect();
     const current = placedPrizes.find((p) => p.id === id);
@@ -533,7 +542,7 @@ export default function Station9() {
                   <motion.div
                     key={prize.id}
                     layout
-                    drag={!isStationConfirmed}
+                    drag={!isStationConfirmed && !isSelected}
                     dragMomentum={false}
                     dragElastic={0}
                     whileDrag={{ zIndex: 120, scale: 1.05 }}
@@ -606,7 +615,5 @@ export default function Station9() {
     </div>
   );
 }
-
-    
 
     
