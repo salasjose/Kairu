@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useUser, useFirestore } from "@/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { usePrizeCart } from "@/hooks/use-prize-cart";
-import { motion, AnimatePresence, PanInfo } from "framer-motion";
+import { motion, AnimatePresence, PanInfo, useDragControls } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import CompletionDialog from "../CompletionDialog";
 import type { Prize } from "@/lib/data";
@@ -455,6 +455,90 @@ export default function Station9() {
     const safe = Array.isArray(collectedPrizes) ? collectedPrizes : [];
     return safe.filter((p) => !placedPrizes.some((pp) => pp.id === p.id));
   }, [collectedPrizes, placedPrizes]);
+  
+  const PlacedItem = ({ prize }: { prize: PlacedPrize }) => {
+    const isSelected = selectedPrizeId === prize.id;
+    const scale = prize.scale || 1;
+    const dragControls = useDragControls();
+
+    return (
+        <motion.div
+            key={prize.id}
+            drag={!isStationConfirmed && !isSelected}
+            dragListener={false}
+            dragControls={dragControls}
+            dragMomentum={false}
+            dragElastic={0}
+            onPointerDown={(e) => {
+                if (isMobile && !isStationConfirmed && !isSelected) {
+                    dragControls.start(e, { snapToCursor: true });
+                }
+            }}
+            onTap={(e) => {
+                if(isMobile && !isStationConfirmed) {
+                    e.stopPropagation();
+                    setSelectedPrizeId(prize.id);
+                }
+            }}
+            onDoubleClick={(e) => {
+                if (isStationConfirmed || isMobile) return;
+                e.stopPropagation();
+                setSelectedPrizeId(prize.id);
+            }}
+            whileDrag={{ zIndex: 120, scale: 1.05 }}
+            onDragStart={updateCanvasRect}
+            onDrag={(e, info) => movePlacedPrize(prize.id, info)}
+            onDragEnd={() => handleDragEnd(prize.id)}
+            className="absolute"
+            style={{
+                left: `${prize.x}%`,
+                top: `${prize.y}%`,
+                width: `calc(min(8vw, 8vh) * ${scale})`,
+                height: `calc(min(8vw, 8vh) * ${scale})`,
+                transform: "translate(-50%, -50%)",
+                touchAction: "none",
+                cursor: isStationConfirmed ? "default" : isSelected ? "default" : "grab",
+                zIndex: isSelected ? 110 : 20,
+            }}
+        >
+            <Image src={prize.imageUrl} alt={prize.name} fill className="object-contain pointer-events-none" draggable={false} />
+
+            {!isStationConfirmed && isSelected && (
+            <div
+                className={
+                isMobile
+                    ? "fixed left-1/2 -translate-x-1/2 bottom-20 z-[150] w-[92vw] max-w-md"
+                    : "absolute left-1/2 -translate-x-1/2 -bottom-24 z-[150] w-64"
+                }
+                onClick={(e) => e.stopPropagation()}
+            >
+                <Card className="p-2 shadow-xl">
+                <div className="flex items-center justify-between gap-2">
+                    <Button size="icon" variant="ghost" onClick={() => deletePrize(prize.id)} title="Eliminar">
+                    <Trash2 className="w-4 h-4" />
+                    </Button>
+                    <Button size="sm" variant="secondary" onClick={() => setSelectedPrizeId(null)}>
+                    <X className="w-4 h-4 mr-1" />
+                    Cerrar
+                    </Button>
+                </div>
+
+                <div className="mt-2 px-2">
+                    <Slider
+                    value={[scale]}
+                    min={0.5}
+                    max={isSpecialPrize(prize.imageUrl) ? 7 : 5}
+                    step={0.1}
+                    onValueChange={(v) => handleScaleChange(prize.id, v)}
+                    onValueCommit={(v) => handleScaleCommit(prize.id, v)}
+                    />
+                </div>
+                </Card>
+            </div>
+            )}
+        </motion.div>
+    );
+};
 
   const SidebarContent = () => (
      <div className="flex flex-col h-full bg-background/70 backdrop-blur-sm p-4">
@@ -646,82 +730,9 @@ export default function Station9() {
             </div>
 
             <div className="absolute inset-0 z-10">
-              {placedPrizes.map((prize) => {
-                const isSelected = selectedPrizeId === prize.id;
-                const scale = prize.scale || 1;
-
-                return (
-                  <motion.div
-                    key={prize.id}
-                    drag={!isStationConfirmed && !isSelected}
-                    dragMomentum={false}
-                    dragElastic={0}
-                    dragControls={isMobile ? { "longPress": 200 } as any : undefined}
-                    onTap={(e) => {
-                      if(isMobile && !isStationConfirmed) {
-                        e.stopPropagation();
-                        setSelectedPrizeId(prize.id);
-                      }
-                    }}
-                    onDoubleClick={(e) => {
-                        if (isStationConfirmed || isMobile) return;
-                        e.stopPropagation();
-                        setSelectedPrizeId(prize.id);
-                    }}
-                    whileDrag={{ zIndex: 120, scale: 1.05 }}
-                    onDragStart={updateCanvasRect}
-                    onDrag={(e, info) => movePlacedPrize(prize.id, info)}
-                    onDragEnd={() => handleDragEnd(prize.id)}
-                    className="absolute"
-                    style={{
-                      left: `${prize.x}%`,
-                      top: `${prize.y}%`,
-                      width: `calc(min(8vw, 8vh) * ${scale})`,
-                      height: `calc(min(8vw, 8vh) * ${scale})`,
-                      transform: "translate(-50%, -50%)",
-                      touchAction: "none",
-                      cursor: isStationConfirmed ? "default" : isSelected ? "default" : "grab",
-                      zIndex: isSelected ? 110 : 20,
-                    }}
-                  >
-                    <Image src={prize.imageUrl} alt={prize.name} fill className="object-contain" draggable={false} />
-
-                    {!isStationConfirmed && isSelected && (
-                      <div
-                        className={
-                          isMobile
-                            ? "fixed left-1/2 -translate-x-1/2 bottom-20 z-[150] w-[92vw] max-w-md"
-                            : "absolute left-1/2 -translate-x-1/2 -bottom-24 z-[150] w-64"
-                        }
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Card className="p-2 shadow-xl">
-                          <div className="flex items-center justify-between gap-2">
-                            <Button size="icon" variant="ghost" onClick={() => deletePrize(prize.id)} title="Eliminar">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                             <Button size="sm" variant="secondary" onClick={() => setSelectedPrizeId(null)}>
-                              <X className="w-4 h-4 mr-1" />
-                              Cerrar
-                            </Button>
-                          </div>
-
-                          <div className="mt-2 px-2">
-                            <Slider
-                              value={[scale]}
-                              min={0.5}
-                              max={isSpecialPrize(prize.imageUrl) ? 7 : 5}
-                              step={0.1}
-                              onValueChange={(v) => handleScaleChange(prize.id, v)}
-                              onValueCommit={(v) => handleScaleCommit(prize.id, v)}
-                            />
-                          </div>
-                        </Card>
-                      </div>
-                    )}
-                  </motion.div>
-                );
-              })}
+              {placedPrizes.map((prize) => (
+                <PlacedItem key={prize.id} prize={prize} />
+              ))}
             </div>
           </div>
         </div>
@@ -732,3 +743,5 @@ export default function Station9() {
     </div>
   );
 }
+
+    
