@@ -1,937 +1,300 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { useUser, useFirestore } from "@/firebase";
+import { motion, AnimatePresence } from "framer-motion";
+import { useUser, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { usePrizeCart } from "@/hooks/use-prize-cart";
-import { motion, AnimatePresence, PanInfo } from "framer-motion";
-import { toast } from "@/hooks/use-toast";
-import CompletionDialog from "../CompletionDialog";
-import type { Prize } from "@/lib/data";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { Prize } from "@/lib/data";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import TypewriterText from "../auth/TypewriterText";
 import { Slider } from "@/components/ui/slider";
-import { Trash2, Gift, X, Check, Download } from "lucide-react";
-import html2canvas from "html2canvas";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Trash2, CheckCircle } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import ResponsiveBackground from "../ResponsiveBackground";
+import { cn } from "@/lib/utils";
 
-// ------------------------------------------------------------------
-// Tipos
-// ------------------------------------------------------------------
-
-type PlacedPrize = {
-  id: string;
-  imageUrl: string;
-  name: string;
+type PlacedPrize = Prize & {
   x: number;
   y: number;
   scale: number;
-  stationId: number;
 };
 
-// ------------------------------------------------------------------
-// Utils
-// ------------------------------------------------------------------
-
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(Math.max(value, min), max);
-
-const isSpecialPrize = (imageUrl: string) => {
-  return (
-    imageUrl.includes("Molinos.png") ||
-    imageUrl.includes("Ciudad.png")
-  );
+const SCENARIO_BACKGROUNDS = {
+  "/backgrounds/Bosque_Seco_Tropical.png": {
+    desktopSrc: "/backgrounds/Terral1366_X_768.png",
+    tabletSrc: "/backgrounds/Terral1024_X_768.png",
+    mobileSrc: "/backgrounds/Terral1075_X_1944.png",
+  },
+  "/backgrounds/Ciudad_Sostenible.png": {
+    desktopSrc: "/backgrounds/Civika1366_X_768.png",
+    tabletSrc: "/backgrounds/Civika1024_X_768.png",
+    mobileSrc: "/backgrounds/Civika1075_X_1944.png",
+  },
+  "/backgrounds/Mar_Costero.png": {
+    desktopSrc: "/backgrounds/Mareva1366_X_768.png",
+    tabletSrc: "/backgrounds/Mareva1024_X_768.png",
+    mobileSrc: "/backgrounds/Mareva1075_X_1944.png",
+  },
+  "/backgrounds/Manglares.png": {
+    desktopSrc: "/backgrounds/Manglia1366_X_768.png",
+    tabletSrc: "/backgrounds/Manglia1024_X_768.png",
+    mobileSrc: "/backgrounds/Manglia1075_X_1944.png",
+  },
 };
-
-// ------------------------------------------------------------------
-// Componente: DraggablePrize
-// ------------------------------------------------------------------
-
-const DraggablePrize = ({
-  prize,
-  onDragEnd,
-}: {
-  prize: Prize;
-  onDragEnd: (
-    event: MouseEvent | TouchEvent | PointerEvent,
-    info: PanInfo
-  ) => void;
-}) => {
-  return (
-    <motion.div
-      key={prize.id}
-      drag
-      dragMomentum={false}
-      onDragEnd={onDragEnd}
-      className="w-full h-full aspect-square bg-white/20 rounded-md p-1 cursor-grab active:cursor-grabbing"
-      style={{ touchAction: "none" }}
-    >
-      <div className="relative w-full h-full">
-        <Image
-          src={prize.imageUrl}
-          alt={prize.name}
-          fill
-          style={{ objectFit: "contain" }}
-        />
-      </div>
-    </motion.div>
-  );
-};
-
-// ------------------------------------------------------------------
-// Componente: ScenarioPicker
-// ------------------------------------------------------------------
-
-const ScenarioPicker = ({
-  onScenarioSelect,
-}: {
-  onScenarioSelect: (scenarioId: string) => void;
-}) => {
-  const scenarios = useMemo(
-    () =>
-      [
-        {
-          name: "Terral",
-          ...PlaceHolderImages.find((p) => p.id === "scenario-bosque-seco"),
-        },
-        {
-          name: "Civika",
-          ...PlaceHolderImages.find((p) => p.id === "scenario-ciudad"),
-        },
-        {
-          name: "Mareva",
-          ...PlaceHolderImages.find((p) => p.id === "scenario-mar-costero"),
-        },
-        {
-          name: "Manglia",
-          ...PlaceHolderImages.find((p) => p.id === "scenario-manglares"),
-        },
-      ].filter((s) => s.imageUrl) as any[],
-    []
-  );
-
-  return (
-    <div className="w-full h-full bg-background/80 backdrop-blur-sm flex items-center justify-center p-8 text-center">
-      <Card className="p-8 max-w-4xl">
-        <h2 className="text-2xl font-bold text-primary mb-4">Elige tu Lienzo</h2>
-        <p className="text-muted-foreground mb-6">
-          Parece que no tienes un lienzo asignado. Por favor, selecciona uno
-          para continuar y crear tu estación.
-        </p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {scenarios.map((scenario) => (
-            <Card
-              key={scenario.id}
-              onClick={() => onScenarioSelect(scenario.imageUrl)}
-              className="p-2 cursor-pointer hover:border-primary hover:scale-105 transition-transform duration-300"
-            >
-              <Image
-                src={scenario.imageUrl}
-                alt={scenario.description}
-                width={200}
-                height={200}
-                className="rounded-md aspect-square object-cover"
-              />
-              <p className="font-bold mt-2 text-sm">{scenario.name}</p>
-            </Card>
-          ))}
-        </div>
-      </Card>
-    </div>
-  );
-};
-
-// ------------------------------------------------------------------
-// Componente principal: Station9
-// ------------------------------------------------------------------
 
 export default function Station9() {
-  const [chosenScenario, setChosenScenario] = useState<string | null>(null);
-  const [playerName, setPlayerName] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [placedPrizes, setPlacedPrizes] = useState<PlacedPrize[]>([]);
-  const [selectedPrizeId, setSelectedPrizeId] = useState<string | null>(null);
-  const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
-  const [isYaraMessageVisible, setIsYaraMessageVisible] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isStationConfirmed, setIsStationConfirmed] = useState(false);
-  const [isStationFinalized, setIsStationFinalized] = useState(false);
-
   const { user } = useUser();
   const db = useFirestore();
   const { prizes: collectedPrizes = [] } = usePrizeCart() ?? {};
-
-  const canvasRef = useRef<HTMLDivElement | null>(null);
-  const yaraCharImage = PlaceHolderImages.find(
-    (p) => p.id === "char-yara-final"
-  );
-  const yaraTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isMobile = useIsMobile();
+  const [placedPrizes, setPlacedPrizes] = useState<PlacedPrize[]>([]);
+  const [selectedPrizeId, setSelectedPrizeId] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isFinalized, setIsFinalized] = useState(false);
+  const [backgroundProps, setBackgroundProps] = useState({
+    desktopSrc: "/backgrounds/MapaPc.png",
+    tabletSrc: "/backgrounds/MapaTablet.png",
+    mobileSrc: "/backgrounds/MapaTelefono.png",
+  });
   
-  const scenarioBackgrounds = useMemo(() => {
-    if (!chosenScenario) return null;
+  const canvasRef = useRef<HTMLDivElement>(null);
 
-    if (chosenScenario.includes('Bosque_Seco_Tropical')) {
-        return {
-            desktopSrc: '/backgrounds/Terral1366_X_768.png',
-            tabletSrc: '/backgrounds/Terral1024_X_768.png',
-            mobileSrc: '/backgrounds/Terral1075_X_1944.png',
-        };
-    }
-    if (chosenScenario.includes('Ciudad_Sostenible')) {
-        return {
-            desktopSrc: '/backgrounds/Civika1366_X_768.png',
-            tabletSrc: '/backgrounds/Civika1024_X_768.png',
-            mobileSrc: '/backgrounds/Civika1075_X_1944.png',
-        };
-    }
-    if (chosenScenario.includes('Mar_Costero')) {
-        return {
-            desktopSrc: '/backgrounds/Mareva1366_X_768.png',
-            tabletSrc: '/backgrounds/Mareva1024_X_768.png',
-            mobileSrc: '/backgrounds/Mareva1075_X_1944.png',
-        };
-    }
-    if (chosenScenario.includes('Manglares')) {
-        return {
-            desktopSrc: '/backgrounds/Manglia1366_X_768.png',
-            tabletSrc: '/backgrounds/Manglia1024_X_768.png',
-            mobileSrc: '/backgrounds/Manglia1075_X_1944.png',
-        };
-    }
-    return null;
-  }, [chosenScenario]);
-
-  // ------------------------------------------------------------------
-  // Carga de datos
-  // ------------------------------------------------------------------
+  const userDocRef = useMemoFirebase(() => {
+    if (!user || !db) return null;
+    return doc(db, 'users', user.uid);
+  }, [user, db]);
 
   useEffect(() => {
-    const fetchPlayerData = async () => {
-      if (!user || !db) {
-        setIsLoading(false);
-        return;
-      }
-      try {
-        const userDocRef = doc(db, "users", user.uid);
+    const fetchUserData = async () => {
+      if (userDocRef) {
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
-
-          setChosenScenario(data.chosenScenario || null);
-
-          setPlacedPrizes(
-            (data.placedPrizes || []).map((p: any) => ({
-              ...p,
-              scale: p.scale || 1,
-              stationId: p.stationId ?? 9,
-            }))
-          );
-
-          const fullName =
-            data.usuario || `${data.nombre || ""} ${data.apellido || ""}`.trim();
-          setPlayerName(fullName || "Guardián");
-
-          const confirmed = data.station9Confirmed || false;
-          const finalized = data.station9Finalized || false;
-
-          setIsStationConfirmed(confirmed || finalized);
-          setIsStationFinalized(finalized);
+          setPlacedPrizes(data.placedPrizes || []);
+          setIsFinalized(data.station9Finalized || false);
+          
+          const scenarioKey = Object.keys(SCENARIO_BACKGROUNDS).find(key => data.chosenScenario?.includes(key));
+          if (scenarioKey) {
+            setBackgroundProps(SCENARIO_BACKGROUNDS[scenarioKey as keyof typeof SCENARIO_BACKGROUNDS]);
+          }
         }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      } finally {
-        setIsLoading(false);
       }
     };
-    fetchPlayerData();
-  }, [user, db]);
+    fetchUserData();
+  }, [userDocRef]);
 
-  // ------------------------------------------------------------------
-  // Mensaje de Yara
-  // ------------------------------------------------------------------
+  const savePlacedPrizes = useCallback(async (prizesToSave: PlacedPrize[]) => {
+    if (!userDocRef) return;
+    await setDoc(userDocRef, { placedPrizes: prizesToSave }, { merge: true });
+  }, [userDocRef]);
 
-  const scheduleYaraDialog = useCallback(() => {
-    if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
-    if (!chosenScenario) return;
-
-    const showTimer = setTimeout(() => {
-      setIsYaraMessageVisible(true);
-      const hideTimer = setTimeout(() => setIsYaraMessageVisible(false), 15000);
-      yaraTimerRef.current = hideTimer;
-    }, 1000);
-
-    yaraTimerRef.current = showTimer;
-  }, [chosenScenario]);
-
-  useEffect(() => {
-    if (!isLoading) {
-      scheduleYaraDialog();
-    }
-    return () => {
-      if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
-    };
-  }, [isLoading, scheduleYaraDialog]);
-
-  // ------------------------------------------------------------------
-  // Guardar en Firestore
-  // ------------------------------------------------------------------
-
-  const savePrizesToDb = useCallback(
-    async (prizesToSave: PlacedPrize[]) => {
-      if (!user || !db) return;
-      try {
-        const userDocRef = doc(db, "users", user.uid);
-        await setDoc(
-          userDocRef,
-          { placedPrizes: prizesToSave },
-          { merge: true }
-        );
-      } catch (error) {
-        console.error("Failed to save prize position", error);
-        toast({
-          title: "Error al guardar",
-          description: "No se pudo guardar la posición de la insignia.",
-          variant: "destructive",
-        });
-      }
-    },
-    [user, db]
-  );
-
-  // ------------------------------------------------------------------
-  // 🔧 COLOCAR INSIGNIA (desde sidebar)
-  // ------------------------------------------------------------------
-
-  const handlePrizeDrop = async (prizeId: string, info: PanInfo) => {
-    if (isStationConfirmed || !canvasRef.current) return;
-
-    const canvasRect = canvasRef.current.getBoundingClientRect();
-    const pointerX = info.point.x;
-    const pointerY = info.point.y;
-
-    if (
-      pointerX < canvasRect.left ||
-      pointerX > canvasRect.right ||
-      pointerY < canvasRect.top ||
-      pointerY > canvasRect.bottom
-    ) {
-      toast({
-        title: "Fuera del lienzo",
-        description: "Arrastra la insignia dentro del área del lienzo.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    let x = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
-    let y = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
-
-    // Margen mínimo
-    x = clamp(x, 3, 97);
-    y = clamp(y, 3, 97);
-    
-    const prizeData = collectedPrizes.find((p) => p.id === prizeId);
-    if (!prizeData) return;
-
-    const newPlacedPrize: PlacedPrize = {
-      ...prizeData,
-      x,
-      y,
-      scale: 1,
-      stationId: (prizeData as any).stationId ?? 9,
-    };
-
-    const newPlacedPrizes = [
-      ...placedPrizes.filter((p) => p.id !== prizeId),
-      newPlacedPrize,
-    ];
-
+  const handleDrop = (prize: Prize, offset: { x: number; y: number }) => {
+    if (isFinalized) return;
+    const newPrize: PlacedPrize = { ...prize, x: offset.x, y: offset.y, scale: 1 };
+    const newPlacedPrizes = [...placedPrizes, newPrize];
     setPlacedPrizes(newPlacedPrizes);
-    await savePrizesToDb(newPlacedPrizes);
+    savePlacedPrizes(newPlacedPrizes);
   };
-  
-  // ------------------------------------------------------------------
-  // Escala
-  // ------------------------------------------------------------------
+
+  const handleDragEnd = (prizeId: string, info: any) => {
+    if (isFinalized) return;
+    const newPlacedPrizes = placedPrizes.map((p) => {
+      if (p.id === prizeId) {
+        const canvasRect = canvasRef.current?.getBoundingClientRect();
+        if (!canvasRect) return p;
+
+        const prizeWidth = 100 * p.scale; 
+        const prizeHeight = 100 * p.scale; 
+
+        const clampedX = Math.max(0, Math.min(info.point.x - canvasRect.left - prizeWidth / 2, canvasRect.width - prizeWidth));
+        const clampedY = Math.max(0, Math.min(info.point.y - canvasRect.top - prizeHeight / 2, canvasRect.height - prizeHeight));
+        
+        return { ...p, x: clampedX, y: clampedY };
+      }
+      return p;
+    });
+    setPlacedPrizes(newPlacedPrizes);
+    savePlacedPrizes(newPlacedPrizes);
+  };
 
   const handleScaleChange = (prizeId: string, newScale: number[]) => {
-    if (isStationConfirmed) return;
-
-    const prize = placedPrizes.find((p) => p.id === prizeId);
-    if (!prize) return;
-
-    const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
-    const scale = clamp(newScale[0], 0.5, maxScale);
-
-    const updated = placedPrizes.map((p) =>
-      p.id === prizeId ? { ...p, scale } : p
+    if (isFinalized) return;
+    const newPlacedPrizes = placedPrizes.map((p) =>
+      p.id === prizeId ? { ...p, scale: newScale[0] } : p
     );
-    setPlacedPrizes(updated);
-  };
-
-  const handleScaleChangeCommit = async (
-    prizeId: string,
-    newScale: number[]
-  ) => {
-    if (isStationConfirmed) return;
-
-    const prize = placedPrizes.find((p) => p.id === prizeId);
-    if (!prize) return;
-
-    const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
-    const scale = clamp(newScale[0], 0.5, maxScale);
-
-    const updated = placedPrizes.map((p) =>
-      p.id === prizeId ? { ...p, scale } : p
-    );
-    setPlacedPrizes(updated);
-    await savePrizesToDb(updated);
-  };
-
-  // ------------------------------------------------------------------
-  // Eliminar
-  // ------------------------------------------------------------------
-
-  const handleDeletePrize = async (prizeId: string) => {
-    if (isStationConfirmed) return;
-
-    const newPlacedPrizes = placedPrizes.filter((p) => p.id !== prizeId);
     setPlacedPrizes(newPlacedPrizes);
-    await savePrizesToDb(newPlacedPrizes);
-    setSelectedPrizeId(null);
+    savePlacedPrizes(newPlacedPrizes);
+  };
+  
+  const handleRemovePrize = (prizeId: string) => {
+      if (isFinalized) return;
+      const newPlacedPrizes = placedPrizes.filter((p) => p.id !== prizeId);
+      setPlacedPrizes(newPlacedPrizes);
+      savePlacedPrizes(newPlacedPrizes);
   };
 
-  // ------------------------------------------------------------------
-  // Guardar / Desbloquear estación
-  // ------------------------------------------------------------------
-
-  const handleSaveStation = async () => {
-    if (!user || !db) return;
-    if (isStationConfirmed) return;
-
-    const safeCollectedPrizes = Array.isArray(collectedPrizes) ? collectedPrizes : [];
-    const unplaced = safeCollectedPrizes.filter(
-        (p) => !placedPrizes.some((pp) => pp.id === p.id)
-    );
-    
-    if (safeCollectedPrizes.length === 0 || unplaced.length > 0) {
-      toast({
-        title: "Insignias incompletas",
-        description:
-          "Debes colocar todas las insignias antes de guardar la estación.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const userDocRef = doc(db, "users", user.uid);
-      await setDoc(
-        userDocRef,
-        { station9Confirmed: true },
-        { merge: true }
-      );
-
-      setIsStationConfirmed(true);
-      setSelectedPrizeId(null);
-
-      toast({
-        title: "Estación guardada",
-        description:
-          "Tus insignias han sido bloqueadas y la estación quedó lista para descargar.",
-      });
-    } catch (e) {
-      console.error("Error saving station", e);
-      toast({
-        title: "Error",
-        description: "Ocurrió un problema al guardar la estación.",
-        variant: "destructive",
-      });
-    }
+  const handleFinalize = async () => {
+    if (!userDocRef) return;
+    await setDoc(userDocRef, { station9Finalized: true }, { merge: true });
+    setIsFinalized(true);
+    toast({
+        title: "¡Lienzo Guardado!",
+        description: "Tu estación personalizada ha sido guardada. ¡Felicidades, Guardián de la Naturaleza!",
+    });
   };
 
-  const handleUnlockStation = async () => {
-    if (!user || !db) return;
-
-    try {
-      const userDocRef = doc(db, "users", user.uid);
-      await setDoc(
-        userDocRef,
-        { station9Confirmed: false, station9Finalized: false },
-        { merge: true }
-      );
-
-      setIsStationConfirmed(false);
-      setIsStationFinalized(false);
-      setSelectedPrizeId(null);
-
-      toast({
-        title: "Estación desbloqueada",
-        description:
-          "Ahora puedes mover y escalar nuevamente tus insignias.",
-      });
-    } catch (e) {
-      console.error("Error unlocking station", e);
-      toast({
-        title: "Error",
-        description: "No se pudo desbloquear la estación.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // ------------------------------------------------------------------
-  // Descargar imagen
-  // ------------------------------------------------------------------
-
-  const handleDownloadImage = async () => {
-    if (!user || !db || !canvasRef.current) return;
-
-    if (!isStationConfirmed) {
-      toast({
-        title: "Primero guarda tu estación",
-        description:
-          "Debes pulsar 'Guardar estación' antes de descargar la imagen.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const userDocRef = doc(db, "users", user.uid);
-
-      setSelectedPrizeId(null);
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const canvas = await html2canvas(canvasRef.current, {
-        useCORS: true,
-        backgroundColor: null,
-      });
-
-      const dataUrl = canvas.toDataURL("image/png");
-      const link = document.createElement("a");
-      link.href = dataUrl;
-      link.download = "mi-estacion-kairu.png";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      await setDoc(
-        userDocRef,
-        { station9Finalized: true },
-        { merge: true }
-      );
-      setIsStationFinalized(true);
-
-      toast({
-        title: "Imagen descargada",
-        description: "Tu estación fue descargada correctamente.",
-      });
-
-      setTimeout(() => {
-        setIsCompletionDialogOpen(true);
-      }, 1000);
-    } catch (e) {
-      console.error("Error downloading image", e);
-      toast({
-        title: "Error",
-        description: "Ocurrió un problema al descargar la estación.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // ------------------------------------------------------------------
-  // Guardar lienzo elegido
-  // ------------------------------------------------------------------
-
-  const handleScenarioSelect = async (scenarioUrl: string) => {
-    if (!user || !db) return;
-    const imageUrl = PlaceHolderImages.find(p => p.imageUrl === scenarioUrl)?.imageUrl;
-    if (!imageUrl) return;
-
-    try {
-        const userDocRef = doc(db, "users", user.uid);
-        await setDoc(userDocRef, { chosenScenario: imageUrl }, { merge: true });
-        setChosenScenario(imageUrl);
-        toast({
-            title: "Lienzo guardado",
-            description: "Tu estación ahora tiene un fondo.",
-        });
-    } catch (error) {
-        console.error("Failed to save chosen scenario:", error);
-        toast({
-            title: "Error",
-            description: "No se pudo guardar tu selección de lienzo.",
-            variant: "destructive",
-        });
-    }
-  };
-
-  // ------------------------------------------------------------------
-  // Auxiliares
-  // ------------------------------------------------------------------
-  const safeCollectedPrizes = Array.isArray(collectedPrizes) ? collectedPrizes : [];
-  const unplacedPrizes = useMemo(
-    () =>
-      safeCollectedPrizes.filter(
-        (p) => !placedPrizes.some((pp) => pp.id === p.id)
-      ),
-    [safeCollectedPrizes, placedPrizes]
-  );
-
-  const allPrizesPlaced =
-    safeCollectedPrizes.length > 0 && unplacedPrizes.length === 0;
-
-  // ------------------------------------------------------------------
-  // Loading
-  // ------------------------------------------------------------------
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen w-screen bg-background">
-        Cargando tu estación personalizada...
-      </div>
-    );
-  }
-
-  const yaraMessage = `${playerName}, ¡Ya eres un Guardián de la Naturaleza! Ahora es tiempo de armar tu Estación. Moverás tus Insignias por todo tu lienzo; para ello, debes arrastrarlas desde la barra lateral.`;
-
-  // ------------------------------------------------------------------
-  // Render
-  // ------------------------------------------------------------------
+  const selectedPrize = selectedPrizeId ? placedPrizes.find(p => p.id === selectedPrizeId) : null;
 
   return (
-    <div
-      className="relative w-screen h-screen bg-background overflow-hidden"
-      onClick={(e) => {
-        if (!(e.target as HTMLElement).closest(".placed-prize-wrapper")) {
-          setSelectedPrizeId(null);
-        }
-      }}
-    >
-      {!chosenScenario ? (
-        <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
-      ) : (
-        <>
-          {/* LIENZO */}
-          <div
-            ref={canvasRef}
-            className="absolute inset-0 z-10 overflow-hidden"
+    <div className="flex h-screen w-full bg-background text-foreground">
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div
+            initial={{ width: 0, x: "-100%" }}
+            animate={{ width: "250px", x: 0 }}
+            exit={{ width: 0, x: "-100%" }}
+            transition={{ type: "tween", ease: "easeInOut", duration: 0.3 }}
+            className="flex-shrink-0 h-full overflow-y-auto bg-card border-r"
           >
-            {scenarioBackgrounds ? (
-              <ResponsiveBackground
-                desktopSrc={scenarioBackgrounds.desktopSrc}
-                tabletSrc={scenarioBackgrounds.tabletSrc}
-                mobileSrc={scenarioBackgrounds.mobileSrc}
-              />
-            ) : null}
+            <SidebarContent
+              collectedPrizes={collectedPrizes}
+              placedPrizes={placedPrizes}
+              onDrop={handleDrop}
+              isFinalized={isFinalized}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-            {/* INSIGNIAS COLOCADAS */}
-            <div className="absolute inset-0 z-10">
-              {placedPrizes.map((prize) => {
-                const isSelected = selectedPrizeId === prize.id;
-                const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
-
-                return (
-                  <motion.div
-                    key={prize.id}
-                    drag={!isStationConfirmed}
-                    dragMomentum={false}
-                    dragElastic={0}
-                    whileDrag={{ scale: 1.05, zIndex: 50 }}
-                    onDragStart={(event) => {
-                      if (!isStationConfirmed) {
-                        event.stopPropagation();
-                        setSelectedPrizeId(prize.id);
-                      }
-                    }}
-                    onDragEnd={async (event, info) => {
-                      if (isStationConfirmed || !canvasRef.current) return;
-
-                      const rect = canvasRef.current.getBoundingClientRect();
-
-                      const prevXPx = (prize.x / 100) * rect.width;
-                      const prevYPx = (prize.y / 100) * rect.height;
-
-                      const newXPx = prevXPx + info.offset.x;
-                      const newYPx = prevYPx + info.offset.y;
-
-                      let newXPercent = (newXPx / rect.width) * 100;
-                      let newYPercent = (newYPx / rect.height) * 100;
-
-                      const margin = 3;
-                      newXPercent = clamp(newXPercent, margin, 100 - margin);
-                      newYPercent = clamp(newYPercent, margin, 100 - margin);
-
-                      const updated = placedPrizes.map((p) =>
-                        p.id === prize.id
-                          ? { ...p, x: newXPercent, y: newYPercent }
-                          : p
-                      );
-                      setPlacedPrizes(updated);
-                      
-                      await savePrizesToDb(updated);
-                    }}
-                    className="placed-prize-wrapper group/prize absolute"
-                    style={{
-                      left: `${prize.x}%`,
-                      top: `${prize.y}%`,
-                      width: `calc(min(8vw, 8vh) * ${prize.scale || 1})`,
-                      height: `calc(min(8vw, 8vh) * ${prize.scale || 1})`,
-                      transform: "translate(-50%, -50%)",
-                      touchAction: "none",
-                      cursor: isStationConfirmed ? "default" : "grab",
-                    }}
-                    initial={false}
-                    animate={{
-                      boxShadow: isSelected && !isStationConfirmed
-                        ? "0px 0px 15px rgba(255,255,100,0.8)"
-                        : "0px 0px 0px rgba(0,0,0,0)",
-                    }}
-                    transition={{ duration: 0.15 }}
-                    onClick={(e) => {
-                      if (isStationConfirmed) return;
-                      e.stopPropagation();
-                      setSelectedPrizeId(prize.id);
-                    }}
-                  >
-                    <div className="w-full h-full relative select-none">
-                      <Image
-                        src={prize.imageUrl}
-                        alt={prize.name}
-                        fill
-                        style={{ objectFit: "contain" }}
-                        draggable={false}
-                      />
-                    </div>
-
-                    {/* CONTROLES */}
-                    <AnimatePresence>
-                    {isSelected && !isStationConfirmed && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        transition={{ duration: 0.2 }}
-                        className={`
-                          absolute z-50
-                          ${isMobile
-                            ? "bottom-full mb-2 left-1/2 -translate-x-1/2"
-                            : prize.x > 50 
-                            ? "right-full mr-2 top-1/2 -translate-y-1/2" 
-                            : "left-full ml-2 top-1/2 -translate-y-1/2"
-                          }
-                          w-40 max-w-[90vw]
-                          bg-background/95 p-2 rounded-lg shadow-xl 
-                          flex items-center gap-2
-                        `}
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) => e.stopPropagation()}
-                        onTouchStart={(e) => e.stopPropagation()}
-                        onMouseDown={(e) => e.stopPropagation()}
-                      >
-                        <Slider
-                          value={[prize.scale || 1]}
-                          min={0.5}
-                          max={maxScale}
-                          step={0.1}
-                          onValueChange={(value) =>
-                            handleScaleChange(prize.id, value)
-                          }
-                          onValueCommit={(value) =>
-                            handleScaleChangeCommit(prize.id, value)
-                          }
-                          className="flex-1"
-                        />
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          className="h-8 w-8 shrink-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeletePrize(prize.id);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </motion.div>
-                    )}
-                    </AnimatePresence>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* BOTÓN TOGGLE SIDEBAR */}
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="absolute top-4 right-4 z-40 bg-white/80"
-          >
-            <AnimatePresence mode="wait" initial={false}>
-              {isSidebarOpen ? (
-                <motion.div
-                  key="close"
-                  initial={{ rotate: -90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: -90, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <X />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="open"
-                  initial={{ rotate: 90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 90, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Gift />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </Button>
-
-          {/* SIDEBAR */}
-          <AnimatePresence>
-            {isSidebarOpen && (
-              <motion.div
-                className="absolute z-30 bg-black/60 backdrop-blur-sm p-2 flex items-center
-                          md:top-0 md:right-0 md:h-full md:w-32 md:flex-col
-                          bottom-0 left-0 right-0 h-40 flex-row"
-                initial={isMobile ? { y: "100%" } : { x: "100%" }}
-                animate={isMobile ? { y: 0 } : { x: 0 }}
-                exit={isMobile ? { y: "100%" } : { x: "100%" }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              >
-                <h3 className="text-white font-bold text-sm mb-2 text-center md:mt-2 hidden md:block">
-                  Insignias
-                </h3>
-
-                <div className="flex-grow w-full overflow-x-auto md:overflow-x-hidden md:overflow-y-auto">
-                  <div className="flex flex-row md:flex-col gap-2 p-1 h-full md:h-auto">
-                    {unplacedPrizes.map((prize) => (
-                      <div
-                        className="w-20 h-20 md:w-full md:aspect-square shrink-0"
+      <div className="flex-grow flex flex-col relative">
+        <Button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="absolute top-4 left-4 z-20"
+          size="sm"
+        >
+          {isSidebarOpen ? "Ocultar Insignias" : "Mostrar Insignias"}
+        </Button>
+        <ResponsiveBackground {...backgroundProps}>
+            <div
+                ref={canvasRef}
+                className="w-full h-full relative"
+                onClick={() => setSelectedPrizeId(null)}
+            >
+                {placedPrizes.map((prize) => (
+                    <PlacedPrize
                         key={prize.id}
-                      >
-                        <DraggablePrize
-                          prize={prize}
-                          onDragEnd={(event, info) =>
-                            handlePrizeDrop(prize.id, info)
-                          }
-                        />
-                      </div>
-                    ))}
-                    {unplacedPrizes.length === 0 && (
-                      <div className="w-full h-full flex items-center justify-center px-4">
-                        <p className="text-white/70 text-xs text-center">
-                          ¡Todas colocadas!
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* BOTONES */}
-                <div className="w-full mt-auto flex flex-row md:flex-col gap-2 p-1">
-                  <Button
-                    onClick={handleSaveStation}
-                    className="flex-1 md:w-full text-xs md:text-sm"
-                    disabled={!allPrizesPlaced || isStationConfirmed}
-                    size="sm"
-                  >
-                    <Check className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
-                    <span className="hidden md:inline">Guardar</span>
-                  </Button>
-                  <Button
-                    onClick={handleDownloadImage}
-                    className="flex-1 md:w-full text-xs md:text-sm"
-                    disabled={!isStationConfirmed}
-                    variant={isStationFinalized ? "secondary" : "default"}
-                    size="sm"
-                  >
-                    <Download className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
-                    <span className="hidden md:inline">Descargar</span>
-                  </Button>
-
-                  <Button
-                    onClick={handleUnlockStation}
-                    className="flex-1 md:w-full text-xs md:text-sm"
-                    variant="outline"
-                    size="sm"
-                  >
-                    Desbloquear
-                  </Button>
-                </div>
-
-                {isStationFinalized && (
-                  <Button
-                    onClick={() => setIsCompletionDialogOpen(true)}
-                    className="mt-2 w-full text-xs"
-                    variant="secondary"
-                    size="sm"
-                  >
-                    Finalizar
-                  </Button>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* DIÁLOGO YARA */}
-          <AnimatePresence>
-            {isYaraMessageVisible && yaraCharImage && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.3 }}
-                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-                onClick={() => setIsYaraMessageVisible(false)}
-              >
-                <div
-                  className="relative flex flex-col md:flex-row items-center gap-4 max-w-2xl mx-auto"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="w-32 h-auto md:w-48 shrink-0 order-first md:order-last">
-                    <Image
-                      src={yaraCharImage.imageUrl}
-                      alt={yaraCharImage.description}
-                      width={150}
-                      height={187}
-                      className="h-auto w-full select-none"
+                        prize={prize}
+                        onDragEnd={handleDragEnd}
+                        onScaleChange={handleScaleChange}
+                        onRemove={handleRemovePrize}
+                        isSelected={prize.id === selectedPrizeId}
+                        onSelect={() => !isFinalized && setSelectedPrizeId(prize.id)}
+                        isFinalized={isFinalized}
                     />
-                  </div>
-                  <div className="w-full">
-                    <Card className="p-4 shadow-lg bg-white/95 relative">
-                      <TypewriterText
-                        text={yaraMessage}
-                        className="text-base text-primary font-medium"
-                      />
-                      <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 md:left-auto md:right-[-10px] md:top-1/2 md:-translate-y-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-white/95 md:border-t-[10px] md:border-t-transparent md:border-b-[10px] md:border-b-transparent md:border-l-[10px] md:border-l-white/95" />
-                    </Card>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </>
-      )}
-
-      <CompletionDialog
-        open={isCompletionDialogOpen}
-        onOpenChange={setIsCompletionDialogOpen}
-      />
+                ))}
+            </div>
+        </ResponsiveBackground>
+        {!isFinalized && (
+            <div className="absolute bottom-4 right-4 z-20">
+                <Button onClick={handleFinalize} size="lg">
+                    <CheckCircle className="mr-2" />
+                    Finalizar y Guardar Lienzo
+                </Button>
+            </div>
+        )}
+      </div>
     </div>
   );
 }
+
+const SidebarContent = ({ collectedPrizes, placedPrizes, onDrop, isFinalized }: { collectedPrizes: Prize[], placedPrizes: PlacedPrize[], onDrop: (prize: Prize, offset: {x:number, y:number}) => void, isFinalized: boolean }) => {
+  const safeCollectedPrizes = Array.isArray(collectedPrizes) ? collectedPrizes : [];
+  const remainingPrizes = safeCollectedPrizes.filter(
+    (p) => !placedPrizes.some((pp) => pp.id === p.id)
+  );
+
+  return (
+    <div className="p-4">
+      <h2 className="text-lg font-bold mb-4">Tus Insignias</h2>
+      {isFinalized && (
+         <p className="text-sm text-muted-foreground mb-4">Tu lienzo está finalizado. No puedes añadir más insignias.</p>
+      )}
+      <div className="grid grid-cols-2 gap-4">
+        {remainingPrizes.map((prize) => (
+          <motion.div
+            key={prize.id}
+            drag={!isFinalized}
+            dragSnapToOrigin={true}
+            onDragEnd={(_event, info) => onDrop(prize, info.offset)}
+            className={cn("cursor-grab", isFinalized && "cursor-not-allowed opacity-50")}
+          >
+            <Card className="p-2 aspect-square flex flex-col items-center justify-center text-center">
+              <Image src={prize.imageUrl} alt={prize.name} width={60} height={60} className="object-contain" />
+              <p className="text-xs mt-1">{prize.name}</p>
+            </Card>
+          </motion.div>
+        ))}
+        {remainingPrizes.length === 0 && !isFinalized && (
+            <p className="col-span-2 text-sm text-muted-foreground">Ya has colocado todas tus insignias. ¡Buen trabajo!</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+
+const PlacedPrize = ({ prize, onDragEnd, onScaleChange, onRemove, isSelected, onSelect, isFinalized }: { prize: PlacedPrize, onDragEnd: (id: string, info: any) => void, onScaleChange: (id: string, scale: number[]) => void, onRemove: (id: string) => void, isSelected: boolean, onSelect: () => void, isFinalized: boolean }) => {
+    
+    return (
+        <motion.div
+            drag={!isFinalized}
+            dragMomentum={false}
+            onDragEnd={(event, info) => onDragEnd(prize.id, info)}
+            initial={{ x: prize.x, y: prize.y, scale: prize.scale }}
+            animate={{ x: prize.x, y: prize.y, scale: prize.scale }}
+            transition={{ type: "spring", stiffness: 500, damping: 50 }}
+            className="absolute w-[100px] h-[100px] cursor-grab active:cursor-grabbing focus:outline-none"
+            style={{
+                outline: isSelected ? '2px dashed hsl(var(--primary))' : 'none',
+                outlineOffset: '4px'
+            }}
+            onClick={(e) => { e.stopPropagation(); onSelect(); }}
+        >
+            <Image
+                src={prize.imageUrl}
+                alt={prize.name}
+                layout="fill"
+                className="object-contain pointer-events-none"
+            />
+            <AnimatePresence>
+                {isSelected && !isFinalized && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute -bottom-16 left-1/2 -translate-x-1/2 w-48 bg-card p-2 rounded-lg shadow-lg border"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <p className="text-xs font-bold text-center mb-2">{prize.name}</p>
+                        <Slider
+                            defaultValue={[prize.scale]}
+                            min={0.5}
+                            max={2.5}
+                            step={0.1}
+                            onValueChange={(value) => onScaleChange(prize.id, value)}
+                        />
+                        <Button
+                            variant="destructive"
+                            size="icon"
+                            className="absolute -top-3 -right-3 h-7 w-7"
+                            onClick={() => onRemove(prize.id)}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </motion.div>
+    );
+};
