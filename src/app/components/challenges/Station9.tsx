@@ -91,6 +91,11 @@ const scenarioOptions = [
     { name: "Manglia", id: 'scenario-manglares', imageUrl: "/backgrounds/Manglares.png" },
 ];
 
+async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
+    const res = await fetch(dataUrl);
+    return await res.blob();
+}
+
 
 // ------------------------------------------------------------------
 // Componente principal
@@ -163,7 +168,10 @@ export default function Station9() {
   }, [isSidebarOpen]);
 
   useEffect(() => {
-    if (!user || !db) return;
+    if (!user || !db) {
+        setIsLoading(false);
+        return;
+    };
 
     const load = async () => {
       try {
@@ -377,7 +385,7 @@ export default function Station9() {
 
   const handleDownloadImage = async () => {
     if (!canvasRef.current) return;
-
+  
     if (!isStationConfirmed) {
       toast({
         title: "Primero confirma la estación",
@@ -386,32 +394,47 @@ export default function Station9() {
       });
       return;
     }
-
+  
     try {
       setSelectedPrizeId(null);
       await sleep(150);
-
+  
       const canvas = await html2canvas(canvasRef.current, {
         useCORS: true,
         backgroundColor: null,
         scale: Math.max(2, window.devicePixelRatio || 2),
       });
-
+  
       const dataUrl = canvas.toDataURL("image/png");
-      const link = document.createElement("a");
-      link.href = dataUrl;
-      link.download = "mi-estacion-kairu.png";
-      link.click();
-
+      const blob = await dataUrlToBlob(dataUrl);
+      const imageFile = new File([blob], "mi-estacion-kairu.png", { type: "image/png" });
+  
+      // Web Share API for mobile
+      if (navigator.canShare && navigator.canShare({ files: [imageFile] })) {
+        await navigator.share({
+          title: "Mi Estación Kairu",
+          text: "¡Mira la estación que creé en Kairu!",
+          files: [imageFile],
+        });
+      } else {
+        // Fallback for desktop
+        const link = document.createElement("a");
+        link.href = dataUrl;
+        link.download = "mi-estacion-kairu.png";
+        link.click();
+      }
+  
       if (user && db) {
         const userDocRef = doc(db, "users", user.uid);
         await setDoc(userDocRef, { station9Finalized: true }, { merge: true });
       }
-
+  
       setIsCompletionDialogOpen(true);
     } catch (e) {
-      console.error(e);
-      toast({ title: "Error", description: "No se pudo generar la imagen.", variant: "destructive" });
+      console.error("Error al descargar/compartir la imagen:", e);
+      if (e instanceof Error && e.name !== 'AbortError') { // AbortError is user canceling share
+          toast({ title: "Error", description: "No se pudo generar o compartir la imagen.", variant: "destructive" });
+      }
     }
   };
   
@@ -699,5 +722,3 @@ export default function Station9() {
     </div>
   );
 }
-
-    
