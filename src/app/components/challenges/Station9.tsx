@@ -14,12 +14,13 @@ import type { Prize } from "@/lib/data";
 import { Card } from "@/components/ui/card";
 import TypewriterText from "../auth/TypewriterText";
 import { Slider } from "@/components/ui/slider";
-import { Trash2, Gift, X, Check, Download, Edit } from "lucide-react";
+import { Trash2, Gift, X, Check, Download, Edit, PanelLeft } from "lucide-react";
 import html2canvas from "html2canvas";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ResponsiveBackground from "../ResponsiveBackground";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { cn } from "@/lib/utils";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 // ------------------------------------------------------------------
 // Tipos
@@ -40,6 +41,8 @@ const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min)
 const getBadgeBasePx = (rect: DOMRect) => Math.min(rect.width * 0.08, rect.height * 0.08);
 
 const clampPositionByBadgeSize = (xPercent: number, yPercent: number, rect: DOMRect, scale: number) => {
+  if (!rect.width || !rect.height) return { x: 50, y: 50 }; // Fallback
+
   const basePx = getBadgeBasePx(rect);
   const badgePx = basePx * (scale || 1);
 
@@ -100,8 +103,10 @@ export default function Station9() {
   const [selectedPrizeId, setSelectedPrizeId] = useState<string | null>(null);
   const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
   const [showYaraMessage, setShowYaraMessage] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const canvasRef = useRef<HTMLDivElement | null>(null);
+  const canvasRectRef = useRef<DOMRect | null>(null);
   const isMobile = useIsMobile();
   const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara-final');
 
@@ -145,6 +150,17 @@ export default function Station9() {
   );
   
   useEffect(() => {
+    const savedSidebarState = localStorage.getItem('kairu-sidebar-open');
+    if (savedSidebarState !== null) {
+      setIsSidebarOpen(JSON.parse(savedSidebarState));
+    }
+  }, []);
+  
+  useEffect(() => {
+    localStorage.setItem('kairu-sidebar-open', JSON.stringify(isSidebarOpen));
+  }, [isSidebarOpen]);
+
+  useEffect(() => {
     if (!user || !db) return;
 
     const load = async () => {
@@ -156,7 +172,7 @@ export default function Station9() {
         const data = snap.data() as any;
 
         setChosenScenario(data.chosenScenario ?? null);
-        setPlayerName(data.playerName ?? data.usuario ?? "Guardián");
+        setPlayerName(data.nombre ?? data.usuario ?? "Guardián");
         setIsStationConfirmed(!!data.station9Confirmed);
 
         const savedPlaced = (data.placedPrizes ?? []) as PlacedPrize[];
@@ -184,12 +200,20 @@ export default function Station9() {
           setShowYaraMessage(false)
       }, 25000);
       return () => clearTimeout(yaraTimer);
-  }, [])
+  }, []);
+  
+  const updateCanvasRect = useCallback(() => {
+    if (canvasRef.current) {
+      canvasRectRef.current = canvasRef.current.getBoundingClientRect();
+    }
+  }, []);
   
   const addPrizeToCanvasCenter = (prize: Prize) => {
-    if (isStationConfirmed || !canvasRef.current) return;
+    if (isStationConfirmed) return;
+    updateCanvasRect();
+    if (!canvasRectRef.current) return;
 
-    const rect = canvasRef.current.getBoundingClientRect();
+    const rect = canvasRectRef.current;
     const rawX = 50;
     const rawY = 50;
 
@@ -210,9 +234,11 @@ export default function Station9() {
   };
   
   const handlePrizeDropToCanvas = (prize: Prize, info: PanInfo) => {
-    if (isStationConfirmed || !canvasRef.current) return;
+    if (isStationConfirmed) return;
+    updateCanvasRect();
+    if (!canvasRectRef.current) return;
 
-    const rect = canvasRef.current.getBoundingClientRect();
+    const rect = canvasRectRef.current;
     const px = info.point.x;
     const py = info.point.y;
 
@@ -238,12 +264,11 @@ export default function Station9() {
   };
 
   const movePlacedPrize = (id: string, info: PanInfo) => {
-    if (isStationConfirmed || !canvasRef.current) return;
+    if (isStationConfirmed || !canvasRectRef.current) return;
     
-    // Al empezar a mover, ocultamos los controles de edición
     if(selectedPrizeId === id) setSelectedPrizeId(null);
 
-    const rect = canvasRef.current.getBoundingClientRect();
+    const rect = canvasRectRef.current;
     const current = placedPrizes.find((p) => p.id === id);
     if (!current) return;
 
@@ -260,7 +285,10 @@ export default function Station9() {
 
     const updated = placedPrizes.map((p) => (p.id === id ? { ...p, x, y } : p));
     setPlacedPrizes(updated);
-    scheduleSave(updated);
+  };
+  
+  const handleDragEnd = (id: string) => {
+    scheduleSave(placedPrizes);
   };
 
   const handleScaleChange = (id: string, value: number[]) => {
@@ -270,9 +298,11 @@ export default function Station9() {
   };
   
   const handleScaleCommit = (id: string, value: number[]) => {
-    if (isStationConfirmed || !canvasRef.current) return;
+    if (isStationConfirmed) return;
+    updateCanvasRect();
+    if (!canvasRectRef.current) return;
 
-    const rect = canvasRef.current.getBoundingClientRect();
+    const rect = canvasRectRef.current;
     const prize = placedPrizes.find((p) => p.id === id);
     if (!prize) return;
 
@@ -396,60 +426,61 @@ export default function Station9() {
     return safe.filter((p) => !placedPrizes.some((pp) => pp.id === p.id));
   }, [collectedPrizes, placedPrizes]);
 
-  const Sidebar = () => (
-    <div
-      className={
-        isMobile
-          ? "fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur border-t p-3 z-50"
-          : "w-72 shrink-0 border-l bg-background/90 backdrop-blur p-4"
-      }
-    >
-      <div className="flex items-center gap-2 mb-3">
-        <Gift className="w-5 h-5" />
-        <div className="font-semibold">Insignias</div>
-      </div>
-
-      <div className={isMobile ? "flex gap-3 overflow-x-auto pb-1" : "grid grid-cols-2 gap-3"}>
-        {remaining.map((prize) => (
-          <div key={prize.id} className="relative rounded-lg border bg-card p-2 select-none">
-            <button
-              type="button"
-              className="w-full"
-              disabled={isStationConfirmed}
-              onClick={() => addPrizeToCanvasCenter(prize)}
-            >
-              <div className="relative w-16 h-16 mx-auto">
-                <Image src={prize.imageUrl} alt={prize.name} fill className="object-contain" />
-              </div>
-              <div className="text-[11px] mt-1 text-center line-clamp-2">{prize.name}</div>
-              <div className="text-[10px] text-center text-muted-foreground mt-1">
-                {isMobile ? "Toca para agregar" : "Click para agregar"}
-              </div>
-            </button>
-
-            {!isMobile && !isStationConfirmed && (
-              <motion.div
-                drag
-                dragMomentum={false}
-                dragElastic={0}
-                dragSnapToOrigin
-                whileDrag={{ opacity: 0.9, scale: 1.05, zIndex: 80 }}
-                onDragEnd={(e, info) => handlePrizeDropToCanvas(prize, info)}
-                className="mt-2 text-[10px] text-center text-muted-foreground cursor-grab active:cursor-grabbing"
-                style={{ touchAction: "none" }}
-              >
-                (o arrastra)
-              </motion.div>
-            )}
-          </div>
-        ))}
-
-        {remaining.length === 0 && (
-          <div className="text-xs text-muted-foreground p-2">¡Ya colocaste todas!</div>
+  const SidebarContent = () => (
+     <div className="flex flex-col h-full bg-background/90 backdrop-blur p-4">
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2">
+            <Gift className="w-5 h-5" />
+            <div className="font-semibold">Insignias</div>
+        </div>
+        {!isMobile && (
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsSidebarOpen(false)}>
+                <X className="w-4 h-4"/>
+            </Button>
         )}
       </div>
 
-      <div className="mt-4 flex flex-col gap-2">
+      <div className="flex-grow overflow-y-auto pr-2 -mr-2">
+        <div className="grid grid-cols-2 gap-3">
+          {remaining.map((prize) => (
+            <div key={prize.id} className="relative rounded-lg border bg-card p-2 select-none">
+              <button
+                type="button"
+                className="w-full"
+                disabled={isStationConfirmed}
+                onClick={() => addPrizeToCanvasCenter(prize)}
+              >
+                <div className="relative w-16 h-16 mx-auto">
+                  <Image src={prize.imageUrl} alt={prize.name} fill className="object-contain" />
+                </div>
+                <div className="text-[11px] mt-1 text-center line-clamp-2">{prize.name}</div>
+              </button>
+
+              {!isMobile && !isStationConfirmed && (
+                <motion.div
+                  drag
+                  dragMomentum={false}
+                  dragElastic={0}
+                  dragSnapToOrigin
+                  whileDrag={{ opacity: 0.9, scale: 1.05, zIndex: 80, cursor: 'grabbing' }}
+                  onDragStart={updateCanvasRect}
+                  onDragEnd={(e, info) => handlePrizeDropToCanvas(prize, info)}
+                  className="mt-1 text-[10px] text-center text-muted-foreground cursor-grab"
+                  style={{ touchAction: "none" }}
+                >
+                  (Arrastra)
+                </motion.div>
+              )}
+            </div>
+          ))}
+
+          {remaining.length === 0 && (
+            <div className="text-xs text-muted-foreground p-2 col-span-2 text-center">¡Ya colocaste todas!</div>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-col gap-2 pt-4 border-t">
         {!isStationConfirmed ? (
           <Button onClick={handleSaveStation} className="w-full" disabled={!allPlaced}>
             <Check className="w-4 h-4 mr-2" />
@@ -469,7 +500,38 @@ export default function Station9() {
         )}
       </div>
     </div>
-  );
+  )
+
+  const Sidebar = () => {
+    if(isMobile) {
+        return (
+            <Sheet>
+                <SheetTrigger asChild>
+                    <Button className="fixed bottom-4 right-4 z-50 rounded-full h-14 w-14 shadow-lg">
+                        <Gift className="w-6 h-6"/>
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[60vh]">
+                    <SidebarContent />
+                </SheetContent>
+            </Sheet>
+        )
+    }
+
+    if (!isSidebarOpen) {
+        return (
+             <Button className="fixed top-1/2 -translate-y-1/2 right-0 z-50 rounded-r-none" onClick={() => setIsSidebarOpen(true)}>
+                <PanelLeft className="w-5 h-5"/>
+            </Button>
+        )
+    }
+
+    return (
+        <div className="w-72 shrink-0 border-l">
+            <SidebarContent />
+        </div>
+    )
+  };
   
   if (!chosenScenario) {
     return (
@@ -505,7 +567,7 @@ export default function Station9() {
             exit={{ opacity: 0, y: -20, transition: { duration: 0.5 } }}
             className="absolute top-4 left-1/2 -translate-x-1/2 z-[200] max-w-lg w-[90%] pointer-events-none"
           >
-            <Card className="p-3 shadow-lg bg-white/95 relative pointer-events-auto">
+            <Card className="p-3 shadow-xl bg-white/95 relative pointer-events-auto">
                 <div className="flex items-start gap-2">
                     <div className="relative w-16 h-20 -mt-8 -ml-6 shrink-0">
                         <Image src={yaraCharImage.imageUrl} alt={yaraCharImage.description} fill className="object-contain" />
@@ -522,9 +584,9 @@ export default function Station9() {
         )}
       </AnimatePresence>
 
-      <div className={isMobile ? "w-full h-full" : "flex w-full h-full"}>
+      <div className="flex w-full h-full">
         <div className="relative flex-1">
-          <div ref={canvasRef} className="absolute inset-0 w-full h-full" onClick={() => setSelectedPrizeId(null)}>
+          <div ref={canvasRef} className="absolute inset-0 w-full h-full" onClick={() => setSelectedPrizeId(null)} onMouseDown={updateCanvasRect}>
             <div className="absolute inset-0 z-0 pointer-events-none">
               {backgrounds ? (
                 <ResponsiveBackground desktopSrc={backgrounds.pc} tabletSrc={backgrounds.tablet} mobileSrc={backgrounds.mobile} />
@@ -551,7 +613,9 @@ export default function Station9() {
                         e.stopPropagation();
                         setSelectedPrizeId(prize.id);
                     }}
-                    onDragEnd={(e, info) => movePlacedPrize(prize.id, info)}
+                    onDragStart={updateCanvasRect}
+                    onDrag={(e, info) => movePlacedPrize(prize.id, info)}
+                    onDragEnd={() => handleDragEnd(prize.id)}
                     className="absolute"
                     style={{
                       left: `${prize.x}%`,
@@ -560,7 +624,7 @@ export default function Station9() {
                       height: `calc(min(8vw, 8vh) * ${scale})`,
                       transform: "translate(-50%, -50%)",
                       touchAction: "none",
-                      cursor: isStationConfirmed ? "default" : "grab",
+                      cursor: isStationConfirmed ? "default" : isSelected ? "default" : "grab",
                       zIndex: isSelected ? 110 : 20,
                     }}
                   >
@@ -570,7 +634,7 @@ export default function Station9() {
                       <div
                         className={
                           isMobile
-                            ? "fixed left-1/2 -translate-x-1/2 bottom-[88px] z-[150] w-[92vw] max-w-md"
+                            ? "fixed left-1/2 -translate-x-1/2 bottom-20 z-[150] w-[92vw] max-w-md"
                             : "absolute left-1/2 -translate-x-1/2 -bottom-20 z-[150] w-64"
                         }
                         onClick={(e) => e.stopPropagation()}
@@ -615,3 +679,4 @@ export default function Station9() {
     </div>
   );
 }
+
