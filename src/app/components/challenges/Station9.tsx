@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -64,7 +65,6 @@ export default function Station9() {
   const [playerName, setPlayerName] = useState<string>("Guardián");
   const [placedPrizes, setPlacedPrizes] = useState<PlacedPrize[]>([]);
   const [selectedPrizeId, setSelectedPrizeId] = useState<string | null>(null);
-  const [interactionMode, setInteractionMode] = useState<null | "move" | "resize">(null);
   const [resizePrizeId, setResizePrizeId] = useState<string | null>(null);
   const [isStationConfirmed, setIsStationConfirmed] = useState(false);
   const [isStationFinalized, setIsStationFinalized] = useState(false);
@@ -184,14 +184,13 @@ export default function Station9() {
     setPlacedPrizes(updated);
     scheduleSave(updated);
     setSelectedPrizeId(prize.id);
-    setInteractionMode(null);
     setResizePrizeId(null);
     if(isMobile) setIsSidebarOpen(false);
   }, [placedPrizes, scheduleSave, isStationConfirmed, isStationFinalized, isMobile, canvasRect]);
 
   const movePlacedPrize = useCallback((id: string, info: PanInfo) => {
     if (!canvasRect) return;
-    if (isStationConfirmed || isStationFinalized || interactionMode === "resize") return;
+    if (isStationConfirmed || isStationFinalized || resizePrizeId !== null) return;
     const current = placedPrizes.find((p) => p.id === id);
     if (!current) return;
     const newXPx = (current.x / 100) * canvasRect.width + info.offset.x;
@@ -202,11 +201,10 @@ export default function Station9() {
     const updated = placedPrizes.map((p) => (p.id === id ? { ...p, x, y } : p));
     setPlacedPrizes(updated);
     scheduleSave(updated);
-  }, [placedPrizes, scheduleSave, isStationConfirmed, isStationFinalized, interactionMode, canvasRect]);
+  }, [placedPrizes, scheduleSave, isStationConfirmed, isStationFinalized, resizePrizeId, canvasRect]);
 
   const closeResize = useCallback(() => {
     setResizePrizeId(null);
-    setInteractionMode(null);
   }, []);
 
   const handleScaleChange = useCallback((id: string, value: number[]) => {
@@ -424,7 +422,7 @@ export default function Station9() {
                 const isSelected = selectedPrizeId === prize.id;
                 const scale = prize.scale || 1;
                 const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
-                const isResizeOpen = resizePrizeId === prize.id && interactionMode === "resize";
+                const isResizeOpen = resizePrizeId === prize.id;
                 const canEdit = !isStationConfirmed && !isStationFinalized;
 
                 return (
@@ -443,33 +441,29 @@ export default function Station9() {
                     }}
                     drag={canEdit && !isResizeOpen}
                     dragMomentum={false}
-                    dragElastic={0}
                     dragConstraints={canvasRef}
                     dragTransition={{ power: 0, timeConstant: 100 }}
                     onDragStart={(e) => {
                       if (!canEdit) return;
                       e.stopPropagation();
                       setSelectedPrizeId(prize.id);
-                      setInteractionMode("move");
                       setResizePrizeId(null);
                     }}
                     onDragEnd={(e, info) => {
                       if (!canEdit) return;
                       e.stopPropagation();
                       movePlacedPrize(prize.id, info);
-                      setInteractionMode(null);
                     }}
                     onClick={(e) => { e.stopPropagation(); setSelectedPrizeId(prize.id); }}
                     onDoubleClick={(e) => {
                       e.stopPropagation();
                       if (!canEdit) return;
                       setResizePrizeId(prize.id);
-      setInteractionMode("resize");
                     }}
                   >
                     <Image src={prize.imageUrl} alt={prize.name} fill className="object-contain" draggable={false} />
 
-                    {canEdit && isSelected && isResizeOpen && (
+                    {canEdit && isResizeOpen && (
                         <div
                             className={cn(
                                 "absolute z-[200] p-3 shadow-xl bg-background/80 backdrop-blur-sm rounded-lg",
@@ -521,5 +515,3 @@ export default function Station9() {
     </div>
   );
 }
-
-    
