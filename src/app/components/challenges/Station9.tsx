@@ -436,7 +436,7 @@ export default function Station9() {
   }, [collectedPrizes, placedPrizes]);
 
   const SidebarContent = () => (
-     <div className="flex flex-col h-full bg-background/90 backdrop-blur p-4">
+     <div className="flex flex-col h-full bg-background/70 backdrop-blur-sm p-4">
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
             <Gift className="w-5 h-5" />
@@ -520,7 +520,7 @@ export default function Station9() {
                         <Gift className="w-6 h-6"/>
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="bottom" className="h-[60vh]">
+                <SheetContent side="bottom" className="h-[60vh] bg-background/70 backdrop-blur-sm">
                     <SidebarContent />
                 </SheetContent>
             </Sheet>
@@ -604,7 +604,13 @@ export default function Station9() {
 
       <div className="flex w-full h-full">
         <div className="relative flex-1">
-          <div ref={canvasRef} className="absolute inset-0 w-full h-full" onClick={() => setSelectedPrizeId(null)} onMouseDown={updateCanvasRect}>
+          <div 
+            ref={canvasRef} 
+            className="absolute inset-0 w-full h-full" 
+            onClick={() => setSelectedPrizeId(null)} 
+            onMouseDown={updateCanvasRect}
+            onPointerDown={updateCanvasRect}
+          >
             <div className="absolute inset-0 z-0 pointer-events-none">
               {backgrounds ? (
                 <ResponsiveBackground desktopSrc={backgrounds.pc} tabletSrc={backgrounds.tablet} mobileSrc={backgrounds.mobile} />
@@ -621,7 +627,6 @@ export default function Station9() {
                 return (
                   <motion.div
                     key={prize.id}
-                    layout
                     drag={!isStationConfirmed && !isSelected}
                     dragMomentum={false}
                     dragElastic={0}
@@ -695,3 +700,4 @@ export default function Station9() {
   );
 }
 
+    
