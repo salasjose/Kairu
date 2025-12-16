@@ -10,6 +10,7 @@ import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import CompletionDialog from "../CompletionDialog";
 import type { Prize } from "@/lib/data";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card } from "@/components/ui/card";
 import TypewriterText from "../auth/TypewriterText";
 import { Slider } from "@/components/ui/slider";
@@ -22,47 +23,127 @@ import ResponsiveBackground from "../ResponsiveBackground";
 // Tipos
 // ------------------------------------------------------------------
 
-type PlacedPrize = Prize & {
-  x: number; // porcentaje
-  y: number; // porcentaje
-  scale?: number;
-  stationId?: number;
+type PlacedPrize = {
+  id: string;
+  imageUrl: string;
+  name: string;
+  x: number;
+  y: number;
+  scale: number;
+  stationId: number;
 };
 
 // ------------------------------------------------------------------
-// Helpers
+// Utils
 // ------------------------------------------------------------------
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
-const getBadgeBasePx = (rect: DOMRect) => {
-  return Math.min(rect.width * 0.08, rect.height * 0.08);
-};
-
-const clampPositionByBadgeSize = (
-  xPercent: number,
-  yPercent: number,
-  rect: DOMRect,
-  scale: number
-) => {
-  const basePx = getBadgeBasePx(rect);
-  const badgePx = basePx * (scale || 1);
-
-  const halfWPercent = (badgePx / rect.width) * 50;
-  const halfHPercent = (badgePx / rect.height) * 50;
-
-  const safeX = clamp(xPercent, halfWPercent, 100 - halfWPercent);
-  const safeY = clamp(yPercent, halfHPercent, 100 - halfHPercent);
-
-  return { x: safeX, y: safeY };
-};
-
 const isSpecialPrize = (imageUrl: string) => {
-  return imageUrl.includes("Molinos.png") || imageUrl.includes("Ciudad.png");
+  return (
+    imageUrl.includes("Molinos.png") ||
+    imageUrl.includes("Ciudad.png")
+  );
 };
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+// ------------------------------------------------------------------
+// Componente: DraggablePrize
+// ------------------------------------------------------------------
+
+const DraggablePrize = ({
+  prize,
+  onDragEnd,
+}: {
+  prize: Prize;
+  onDragEnd: (
+    event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) => void;
+}) => {
+  return (
+    <motion.div
+      key={prize.id}
+      drag
+      dragMomentum={false}
+      onDragEnd={onDragEnd}
+      className="w-full h-full aspect-square bg-white/20 rounded-md p-1 cursor-grab active:cursor-grabbing"
+      style={{ touchAction: "none" }}
+    >
+      <div className="relative w-full h-full">
+        <Image
+          src={prize.imageUrl}
+          alt={prize.name}
+          fill
+          style={{ objectFit: "contain" }}
+        />
+      </div>
+    </motion.div>
+  );
+};
+
+// ------------------------------------------------------------------
+// Componente: ScenarioPicker
+// ------------------------------------------------------------------
+
+const ScenarioPicker = ({
+  onScenarioSelect,
+}: {
+  onScenarioSelect: (scenarioId: string) => void;
+}) => {
+  const scenarios = useMemo(
+    () =>
+      [
+        {
+          name: "Terral",
+          ...PlaceHolderImages.find((p) => p.id === "scenario-bosque-seco"),
+        },
+        {
+          name: "Civika",
+          ...PlaceHolderImages.find((p) => p.id === "scenario-ciudad"),
+        },
+        {
+          name: "Mareva",
+          ...PlaceHolderImages.find((p) => p.id === "scenario-mar-costero"),
+        },
+        {
+          name: "Manglia",
+          ...PlaceHolderImages.find((p) => p.id === "scenario-manglares"),
+        },
+      ].filter((s) => s.imageUrl) as any[],
+    []
+  );
+
+  return (
+    <div className="w-full h-full bg-background/80 backdrop-blur-sm flex items-center justify-center p-8 text-center">
+      <Card className="p-8 max-w-4xl">
+        <h2 className="text-2xl font-bold text-primary mb-4">Elige tu Lienzo</h2>
+        <p className="text-muted-foreground mb-6">
+          Parece que no tienes un lienzo asignado. Por favor, selecciona uno
+          para continuar y crear tu estación.
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {scenarios.map((scenario) => (
+            <Card
+              key={scenario.id}
+              onClick={() => onScenarioSelect(scenario.id)}
+              className="p-2 cursor-pointer hover:border-primary hover:scale-105 transition-transform duration-300"
+            >
+              <Image
+                src={scenario.imageUrl}
+                alt={scenario.description}
+                width={200}
+                height={200}
+                className="rounded-md aspect-square object-cover"
+              />
+              <p className="font-bold mt-2 text-sm">{scenario.name}</p>
+            </Card>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+};
 
 // ------------------------------------------------------------------
 // Componente principal: Station9
@@ -71,67 +152,133 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export default function Station9() {
   const [chosenScenario, setChosenScenario] = useState<string | null>(null);
   const [playerName, setPlayerName] = useState<string>("");
-  const [isStationConfirmed, setIsStationConfirmed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [placedPrizes, setPlacedPrizes] = useState<PlacedPrize[]>([]);
   const [selectedPrizeId, setSelectedPrizeId] = useState<string | null>(null);
   const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
-  const [showYaraMessage, setShowYaraMessage] = useState(true);
+  const [isYaraMessageVisible, setIsYaraMessageVisible] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isStationConfirmed, setIsStationConfirmed] = useState(false);
+  const [isStationFinalized, setIsStationFinalized] = useState(false);
 
-  const canvasRef = useRef<HTMLDivElement | null>(null);
-
-  const isMobile = useIsMobile();
   const { user } = useUser();
   const db = useFirestore();
-
   const { prizes: collectedPrizes = [] } = usePrizeCart() ?? {};
 
-  const selectedPrize = useMemo(
-    () => placedPrizes.find((p) => p.id === selectedPrizeId) || null,
-    [placedPrizes, selectedPrizeId]
+  const canvasRef = useRef<HTMLDivElement | null>(null);
+  const yaraCharImage = PlaceHolderImages.find(
+    (p) => p.id === "char-yara-final"
   );
+  const yaraTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMobile = useIsMobile();
+  
+  const scenarioBackgrounds = useMemo(() => {
+    if (!chosenScenario) return null;
+
+    if (chosenScenario.includes('bosque-seco') || chosenScenario.includes('Bosque_Seco_Tropical')) {
+        return {
+            desktopSrc: '/backgrounds/Terral1366_X_768.png',
+            tabletSrc: '/backgrounds/Terral1024_X_768.png',
+            mobileSrc: '/backgrounds/Terral1075_X_1944.png',
+        };
+    }
+    if (chosenScenario.includes('ciudad') || chosenScenario.includes('Ciudad_Sostenible')) {
+        return {
+            desktopSrc: '/backgrounds/Civika1366_X_768.png',
+            tabletSrc: '/backgrounds/Civika1024_X_768.png',
+            mobileSrc: '/backgrounds/Civika1075_X_1944.png',
+        };
+    }
+    if (chosenScenario.includes('mar-costero') || chosenScenario.includes('Mar_Costero')) {
+        return {
+            desktopSrc: '/backgrounds/Mareva1366_X_768.png',
+            tabletSrc: '/backgrounds/Mareva1024_X_768.png',
+            mobileSrc: '/backgrounds/Mareva1075_X_1944.png',
+        };
+    }
+    if (chosenScenario.includes('manglares') || chosenScenario.includes('Manglares')) {
+        return {
+            desktopSrc: '/backgrounds/Manglia1366_X_768.png',
+            tabletSrc: '/backgrounds/Manglia1024_X_768.png',
+            mobileSrc: '/backgrounds/Manglia1075_X_1944.png',
+        };
+    }
+    return null;
+  }, [chosenScenario]);
 
   // ------------------------------------------------------------------
-  // Cargar estado desde Firestore
+  // Carga de datos
   // ------------------------------------------------------------------
 
   useEffect(() => {
-    if (!user || !db) return;
-
-    const load = async () => {
+    const fetchPlayerData = async () => {
+      if (!user || !db) {
+        setIsLoading(false);
+        return;
+      }
       try {
         const userDocRef = doc(db, "users", user.uid);
-        const snap = await getDoc(userDocRef);
-        if (!snap.exists()) return;
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
 
-        const data = snap.data() as any;
+          setChosenScenario(data.chosenScenario || null);
 
-        setChosenScenario(data.chosenScenario ?? null);
-        setPlayerName(data.playerName ?? "");
-        setIsStationConfirmed(!!data.station9Confirmed);
+          setPlacedPrizes(
+            (data.placedPrizes || []).map((p: any) => ({
+              ...p,
+              scale: p.scale || 1,
+              stationId: p.stationId ?? 9,
+            }))
+          );
 
-        const savedPlaced = (data.placedPrizes ?? []) as PlacedPrize[];
-        setPlacedPrizes(savedPlaced);
-      } catch (e) {
-        console.error(e);
-        toast({
-          title: "Error al cargar",
-          description: "No se pudo cargar el estado de la estación.",
-          variant: "destructive",
-        });
+          const fullName =
+            data.usuario || `${data.nombre || ""} ${data.apellido || ""}`.trim();
+          setPlayerName(fullName || "Guardián");
+
+          const confirmed = data.station9Confirmed || false;
+          const finalized = data.station9Finalized || false;
+
+          setIsStationConfirmed(confirmed || finalized);
+          setIsStationFinalized(finalized);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
-
-    void load();
+    fetchPlayerData();
   }, [user, db]);
 
-  // Mensaje guía (Yara)
+  // ------------------------------------------------------------------
+  // Mensaje de Yara
+  // ------------------------------------------------------------------
+
+  const scheduleYaraDialog = useCallback(() => {
+    if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
+    if (!chosenScenario) return;
+
+    const showTimer = setTimeout(() => {
+      setIsYaraMessageVisible(true);
+      const hideTimer = setTimeout(() => setIsYaraMessageVisible(false), 15000);
+      yaraTimerRef.current = hideTimer;
+    }, 1000);
+
+    yaraTimerRef.current = showTimer;
+  }, [chosenScenario]);
+
   useEffect(() => {
-    const t = setTimeout(() => setShowYaraMessage(false), 15000);
-    return () => clearTimeout(t);
-  }, []);
+    if (!isLoading) {
+      scheduleYaraDialog();
+    }
+    return () => {
+      if (yaraTimerRef.current) clearTimeout(yaraTimerRef.current);
+    };
+  }, [isLoading, scheduleYaraDialog]);
 
   // ------------------------------------------------------------------
-  // Guardado (Firestore)
+  // Guardar en Firestore
   // ------------------------------------------------------------------
 
   const savePrizesToDb = useCallback(
@@ -139,7 +286,11 @@ export default function Station9() {
       if (!user || !db) return;
       try {
         const userDocRef = doc(db, "users", user.uid);
-        await setDoc(userDocRef, { placedPrizes: prizesToSave }, { merge: true });
+        await setDoc(
+          userDocRef,
+          { placedPrizes: prizesToSave },
+          { merge: true }
+        );
       } catch (error) {
         console.error("Failed to save prize position", error);
         toast({
@@ -152,46 +303,17 @@ export default function Station9() {
     [user, db]
   );
 
-  // Guardado con debounce
-  const saveDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const latestPrizesToSaveRef = useRef<PlacedPrize[] | null>(null);
-
-  const scheduleSavePrizes = useCallback(
-    (prizesToSave: PlacedPrize[]) => {
-      if (!user || !db) return;
-
-      latestPrizesToSaveRef.current = prizesToSave;
-
-      if (saveDebounceTimerRef.current) {
-        clearTimeout(saveDebounceTimerRef.current);
-      }
-
-      saveDebounceTimerRef.current = setTimeout(() => {
-        const payload = latestPrizesToSaveRef.current;
-        if (payload) void savePrizesToDb(payload);
-      }, 600);
-    },
-    [user, db, savePrizesToDb]
-  );
-
-  useEffect(() => {
-    return () => {
-      if (saveDebounceTimerRef.current) clearTimeout(saveDebounceTimerRef.current);
-    };
-  }, []);
-
   // ------------------------------------------------------------------
-  // Colocar insignia desde el sidebar al lienzo
+  // 🔧 COLOCAR INSIGNIA (desde sidebar)
   // ------------------------------------------------------------------
 
-  const handlePrizeDrop = (prizeId: string, info: PanInfo) => {
+  const handlePrizeDrop = async (prizeId: string, info: PanInfo) => {
     if (isStationConfirmed || !canvasRef.current) return;
 
     const canvasRect = canvasRef.current.getBoundingClientRect();
     const pointerX = info.point.x;
     const pointerY = info.point.y;
 
-    // Drop dentro del canvas
     if (
       pointerX < canvasRect.left ||
       pointerX > canvasRect.right ||
@@ -206,11 +328,13 @@ export default function Station9() {
       return;
     }
 
-    const rawX = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
-    const rawY = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
+    let x = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
+    let y = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
 
-    const { x, y } = clampPositionByBadgeSize(rawX, rawY, canvasRect, 1);
-
+    // Margen mínimo
+    x = clamp(x, 3, 97);
+    y = clamp(y, 3, 97);
+    
     const prizeData = collectedPrizes.find((p) => p.id === prizeId);
     if (!prizeData) return;
 
@@ -228,15 +352,16 @@ export default function Station9() {
     ];
 
     setPlacedPrizes(newPlacedPrizes);
-    scheduleSavePrizes(newPlacedPrizes);
+    await savePrizesToDb(newPlacedPrizes);
   };
-
+  
   // ------------------------------------------------------------------
-  // Escala (UI)
+  // Escala
   // ------------------------------------------------------------------
 
   const handleScaleChange = (prizeId: string, newScale: number[]) => {
     if (isStationConfirmed) return;
+
     const prize = placedPrizes.find((p) => p.id === prizeId);
     if (!prize) return;
 
@@ -249,7 +374,10 @@ export default function Station9() {
     setPlacedPrizes(updated);
   };
 
-  const handleScaleChangeCommit = (prizeId: string, newScale: number[]) => {
+  const handleScaleChangeCommit = async (
+    prizeId: string,
+    newScale: number[]
+  ) => {
     if (isStationConfirmed) return;
 
     const prize = placedPrizes.find((p) => p.id === prizeId);
@@ -258,53 +386,44 @@ export default function Station9() {
     const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
     const scale = clamp(newScale[0], 0.5, maxScale);
 
-    let nextX = prize.x;
-    let nextY = prize.y;
-
-    if (canvasRef.current) {
-      const rect = canvasRef.current.getBoundingClientRect();
-      const clampedPos = clampPositionByBadgeSize(prize.x, prize.y, rect, scale);
-      nextX = clampedPos.x;
-      nextY = clampedPos.y;
-    }
-
     const updated = placedPrizes.map((p) =>
-      p.id === prizeId ? { ...p, x: nextX, y: nextY, scale } : p
+      p.id === prizeId ? { ...p, scale } : p
     );
-
     setPlacedPrizes(updated);
-    scheduleSavePrizes(updated);
+    await savePrizesToDb(updated);
   };
 
   // ------------------------------------------------------------------
-  // Eliminar insignia
+  // Eliminar
   // ------------------------------------------------------------------
 
-  const handleDeletePrize = (prizeId: string) => {
+  const handleDeletePrize = async (prizeId: string) => {
     if (isStationConfirmed) return;
 
     const newPlacedPrizes = placedPrizes.filter((p) => p.id !== prizeId);
     setPlacedPrizes(newPlacedPrizes);
-    scheduleSavePrizes(newPlacedPrizes);
+    await savePrizesToDb(newPlacedPrizes);
     setSelectedPrizeId(null);
   };
 
   // ------------------------------------------------------------------
-  // GUARDAR / DESBLOQUEAR ESTACIÓN
+  // Guardar / Desbloquear estación
   // ------------------------------------------------------------------
 
   const handleSaveStation = async () => {
     if (!user || !db) return;
+    if (isStationConfirmed) return;
 
-    const allPlaced =
-      collectedPrizes.length > 0 &&
-      collectedPrizes.every((cp) => placedPrizes.some((p) => p.id === cp.id));
-
-    if (!allPlaced) {
+    const safeCollectedPrizes = Array.isArray(collectedPrizes) ? collectedPrizes : [];
+    const unplaced = safeCollectedPrizes.filter(
+        (p) => !placedPrizes.some((pp) => pp.id === p.id)
+    );
+    
+    if (safeCollectedPrizes.length === 0 || unplaced.length > 0) {
       toast({
-        title: "Faltan insignias",
+        title: "Insignias incompletas",
         description:
-          "Debes colocar todas las insignias en el lienzo antes de guardar.",
+          "Debes colocar todas las insignias antes de guardar la estación.",
         variant: "destructive",
       });
       return;
@@ -312,7 +431,11 @@ export default function Station9() {
 
     try {
       const userDocRef = doc(db, "users", user.uid);
-      await setDoc(userDocRef, { station9Confirmed: true }, { merge: true });
+      await setDoc(
+        userDocRef,
+        { station9Confirmed: true },
+        { merge: true }
+      );
 
       setIsStationConfirmed(true);
       setSelectedPrizeId(null);
@@ -320,13 +443,13 @@ export default function Station9() {
       toast({
         title: "Estación guardada",
         description:
-          "Tu estación quedó bloqueada. Puedes descargar la imagen o desbloquear para editar.",
+          "Tus insignias han sido bloqueadas y la estación quedó lista para descargar.",
       });
     } catch (e) {
-      console.error(e);
+      console.error("Error saving station", e);
       toast({
         title: "Error",
-        description: "No se pudo guardar la estación.",
+        description: "Ocurrió un problema al guardar la estación.",
         variant: "destructive",
       });
     }
@@ -334,17 +457,26 @@ export default function Station9() {
 
   const handleUnlockStation = async () => {
     if (!user || !db) return;
+
     try {
       const userDocRef = doc(db, "users", user.uid);
-      await setDoc(userDocRef, { station9Confirmed: false }, { merge: true });
+      await setDoc(
+        userDocRef,
+        { station9Confirmed: false, station9Finalized: false },
+        { merge: true }
+      );
 
       setIsStationConfirmed(false);
+      setIsStationFinalized(false);
+      setSelectedPrizeId(null);
+
       toast({
         title: "Estación desbloqueada",
-        description: "Ahora puedes mover, escalar o eliminar insignias.",
+        description:
+          "Ahora puedes mover y escalar nuevamente tus insignias.",
       });
     } catch (e) {
-      console.error(e);
+      console.error("Error unlocking station", e);
       toast({
         title: "Error",
         description: "No se pudo desbloquear la estación.",
@@ -358,321 +490,451 @@ export default function Station9() {
   // ------------------------------------------------------------------
 
   const handleDownloadImage = async () => {
-    if (!canvasRef.current) return;
+    if (!user || !db || !canvasRef.current) return;
 
     if (!isStationConfirmed) {
       toast({
-        title: "Primero guarda",
+        title: "Primero guarda tu estación",
         description:
-          "Debes guardar la estación antes de descargar la imagen final.",
+          "Debes pulsar 'Guardar estación' antes de descargar la imagen.",
         variant: "destructive",
       });
       return;
     }
 
     try {
+      const userDocRef = doc(db, "users", user.uid);
+
       setSelectedPrizeId(null);
-      await sleep(200);
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
       const canvas = await html2canvas(canvasRef.current, {
         useCORS: true,
-        scale: Math.max(2, window.devicePixelRatio || 2),
         backgroundColor: null,
       });
 
       const dataUrl = canvas.toDataURL("image/png");
       const link = document.createElement("a");
       link.href = dataUrl;
-      link.download = "lienzo-estacion-9.png";
+      link.download = "mi-estacion-kairu.png";
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
 
-      if (user && db) {
-        const userDocRef = doc(db, "users", user.uid);
-        await setDoc(userDocRef, { station9Finalized: true }, { merge: true });
-      }
+      await setDoc(
+        userDocRef,
+        { station9Finalized: true },
+        { merge: true }
+      );
+      setIsStationFinalized(true);
 
-      setIsCompletionDialogOpen(true);
+      toast({
+        title: "Imagen descargada",
+        description: "Tu estación fue descargada correctamente.",
+      });
+
+      setTimeout(() => {
+        setIsCompletionDialogOpen(true);
+      }, 1000);
     } catch (e) {
-      console.error(e);
+      console.error("Error downloading image", e);
       toast({
         title: "Error",
-        description: "No se pudo generar la imagen.",
+        description: "Ocurrió un problema al descargar la estación.",
         variant: "destructive",
       });
     }
   };
 
   // ------------------------------------------------------------------
-  // Fondos responsivos
+  // Guardar lienzo elegido
   // ------------------------------------------------------------------
 
-  const scenarioBackgrounds: {
-    [key: string]: { pc: string; tablet: string; mobile: string };
-  } = {
-    "/backgrounds/Bosque_Seco_Tropical.png": {
-      pc: "/backgrounds/Terral1366_X_768.png",
-      tablet: "/backgrounds/Terral1024_X_768.png",
-      mobile: "/backgrounds/Terral1075_X_1944.png",
-    },
-    "/backgrounds/Ciudad_Sostenible.png": {
-      pc: "/backgrounds/Civika1366_X_768.png",
-      tablet: "/backgrounds/Civika1024_X_768.png",
-      mobile: "/backgrounds/Civika1075_X_1944.png",
-    },
-    "/backgrounds/Mar_Costero.png": {
-      pc: "/backgrounds/Mareva1366_X_768.png",
-      tablet: "/backgrounds/Mareva1024_X_768.png",
-      mobile: "/backgrounds/Mareva1075_X_1944.png",
-    },
-    "/backgrounds/Manglares.png": {
-      pc: "/backgrounds/Manglia1366_X_768.png",
-      tablet: "/backgrounds/Manglia1024_X_768.png",
-      mobile: "/backgrounds/Manglia1075_X_1944.png",
-    },
+  const handleScenarioSelect = async (scenarioId: string) => {
+    if (!user || !db) return;
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      await setDoc(userDocRef, { chosenScenario: scenarioId }, { merge: true });
+      setChosenScenario(scenarioId);
+      toast({
+        title: "Lienzo guardado",
+        description: "Tu estación ahora tiene un fondo.",
+      });
+    } catch (error) {
+      console.error("Failed to save chosen scenario:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo guardar tu selección de lienzo.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const backgrounds = chosenScenario ? scenarioBackgrounds[chosenScenario] : null;
+  // ------------------------------------------------------------------
+  // Auxiliares
+  // ------------------------------------------------------------------
+  const safeCollectedPrizes = Array.isArray(collectedPrizes) ? collectedPrizes : [];
+  const unplacedPrizes = useMemo(
+    () =>
+      safeCollectedPrizes.filter(
+        (p) => !placedPrizes.some((pp) => pp.id === p.id)
+      ),
+    [safeCollectedPrizes, placedPrizes]
+  );
+
+  const allPrizesPlaced =
+    safeCollectedPrizes.length > 0 && unplacedPrizes.length === 0;
 
   // ------------------------------------------------------------------
-  // Sidebar
+  // Loading
   // ------------------------------------------------------------------
 
-  const Sidebar = () => {
-    const safeCollectedPrizes = Array.isArray(collectedPrizes)
-      ? collectedPrizes
-      : [];
-
-    const remaining = safeCollectedPrizes.filter(
-      (p) => !placedPrizes.some((pp) => pp.id === p.id)
-    );
-
+  if (isLoading) {
     return (
-      <div
-        className={
-          isMobile
-            ? "fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur border-t p-3 z-50"
-            : "w-72 shrink-0 border-l bg-background/90 backdrop-blur p-4"
-        }
-      >
-        <div className="flex items-center gap-2 mb-3">
-          <Gift className="w-5 h-5" />
-          <div className="font-semibold">Insignias</div>
-        </div>
-
-        <div
-          className={
-            isMobile
-              ? "flex gap-3 overflow-x-auto pb-1"
-              : "grid grid-cols-2 gap-3"
-          }
-        >
-          {remaining.map((prize) => (
-            <motion.div
-              key={prize.id}
-              drag={!isStationConfirmed}
-              dragMomentum={false}
-              dragElastic={0}
-              whileDrag={{ scale: 1.05, zIndex: 50 }}
-              onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
-              className="relative rounded-lg border bg-card p-2 cursor-grab active:cursor-grabbing select-none"
-              style={{ touchAction: "none" }}
-            >
-              <div className="relative w-16 h-16 mx-auto">
-                <Image
-                  src={prize.imageUrl}
-                  alt={prize.name}
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <div className="text-[11px] mt-1 text-center line-clamp-2">
-                {prize.name}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        <div className="mt-4 flex flex-col gap-2">
-          {!isStationConfirmed ? (
-            <Button onClick={handleSaveStation} className="w-full">
-              <Check className="w-4 h-4 mr-2" />
-              Guardar estación
-            </Button>
-          ) : (
-            <>
-              <Button onClick={handleDownloadImage} className="w-full" variant="default">
-                <Download className="w-4 h-4 mr-2" />
-                Descargar imagen
-              </Button>
-              <Button onClick={handleUnlockStation} className="w-full" variant="secondary">
-                Desbloquear
-              </Button>
-            </>
-          )}
-        </div>
+      <div className="flex items-center justify-center h-screen w-screen bg-background">
+        Cargando tu estación personalizada...
       </div>
     );
-  };
+  }
+
+  const yaraMessage = `${playerName}, ¡Ya eres un Guardián de la Naturaleza! Ahora es tiempo de armar tu Estación. Moverás tus Insignias por todo tu lienzo; para ello, debes arrastrarlas desde la barra lateral.`;
 
   // ------------------------------------------------------------------
   // Render
   // ------------------------------------------------------------------
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-background">
-      <AnimatePresence>
-        {showYaraMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="absolute top-3 left-1/2 -translate-x-1/2 z-50"
-          >
-            <Card className="p-3 shadow-lg">
-              <TypewriterText text="Arrastra las insignias al lienzo. Ajusta el tamaño y guarda para descargar tu imagen final." />
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className={isMobile ? "w-full h-full" : "flex w-full h-full"}>
-        <div className="relative flex-1">
+    <div
+      className="relative w-screen h-screen bg-background overflow-hidden"
+      onClick={(e) => {
+        if (!(e.target as HTMLElement).closest(".placed-prize-wrapper")) {
+          setSelectedPrizeId(null);
+        }
+      }}
+    >
+      {!chosenScenario ? (
+        <ScenarioPicker onScenarioSelect={handleScenarioSelect} />
+      ) : (
+        <>
+          {/* LIENZO */}
           <div
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full"
-            onClick={() => setSelectedPrizeId(null)}
+            className="absolute inset-0 z-10 overflow-hidden"
           >
-            {backgrounds ? (
+            {scenarioBackgrounds ? (
               <ResponsiveBackground
-                desktopSrc={backgrounds.pc}
-                tabletSrc={backgrounds.tablet}
-                mobileSrc={backgrounds.mobile}
+                desktopSrc={scenarioBackgrounds.desktopSrc}
+                tabletSrc={scenarioBackgrounds.tabletSrc}
+                mobileSrc={scenarioBackgrounds.mobileSrc}
               />
-            ) : (
-              <div className="w-full h-full bg-muted" />
-            )}
+            ) : null}
 
-            {placedPrizes.map((prize) => {
-              const isSelected = selectedPrizeId === prize.id;
-              const scale = prize.scale || 1;
-              const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
+            {/* INSIGNIAS COLOCADAS */}
+            <div className="absolute inset-0 z-10">
+              {placedPrizes.map((prize) => {
+                const isSelected = selectedPrizeId === prize.id;
+                const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
 
-              return (
-                <motion.div
-                  key={prize.id}
-                  layout
-                  drag={!isStationConfirmed}
-                  dragMomentum={false}
-                  dragElastic={0}
-                  whileDrag={{ scale: 1.05, zIndex: 50 }}
-                  onDrag={(event, info) => {
-                    if (isStationConfirmed || !canvasRef.current) return;
-                     const rect = canvasRef.current.getBoundingClientRect();
-                    const { x, y } = clampPositionByBadgeSize(
-                      (info.point.x - rect.left) / rect.width * 100,
-                      (info.point.y - rect.top) / rect.height * 100,
-                      rect,
-                      prize.scale || 1
-                    );
-                    const updatedPrizes = placedPrizes.map(p => 
-                      p.id === prize.id ? { ...p, x, y } : p
-                    );
-                    setPlacedPrizes(updatedPrizes);
-                  }}
-                  onDragStart={(event) => {
-                    if (!isStationConfirmed) {
-                      event.stopPropagation();
-                      setSelectedPrizeId(prize.id);
-                    }
-                  }}
-                  onDragEnd={(event, info) => {
-                    if (isStationConfirmed) return;
-                    scheduleSavePrizes(placedPrizes);
-                  }}
-                  className="placed-prize-wrapper absolute"
-                  style={{
-                    left: `${prize.x}%`,
-                    top: `${prize.y}%`,
-                    width: `calc(min(8vw, 8vh) * ${scale})`,
-                    height: `calc(min(8vw, 8vh) * ${scale})`,
-                    transform: "translate(-50%, -50%)",
-                    touchAction: "none",
-                    cursor: isStationConfirmed ? "default" : "grab",
-                  }}
-                  initial={false}
-                  animate={{
-                    boxShadow: isSelected
-                      ? "0px 0px 15px rgba(255,255,100,0.8)"
-                      : "0px 0px 0px rgba(0,0,0,0)",
-                  }}
-                  transition={{ duration: 0.15 }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (!isStationConfirmed) setSelectedPrizeId(prize.id);
-                  }}
-                >
-                  <Image
-                    src={prize.imageUrl}
-                    alt={prize.name}
-                    fill
-                    className="object-contain"
-                    draggable={false}
-                  />
-
-                  {!isStationConfirmed && isSelected && (
-                    <div
-                      className={
-                        isMobile
-                          ? "fixed left-1/2 -translate-x-1/2 bottom-[88px] z-[60] w-[92vw] max-w-md"
-                          : "absolute left-1/2 -translate-x-1/2 -bottom-16 z-50 w-64"
+                return (
+                  <motion.div
+                    key={prize.id}
+                    drag={!isStationConfirmed}
+                    dragMomentum={false}
+                    dragElastic={0}
+                    whileDrag={{ scale: 1.05, zIndex: 50 }}
+                    onDragStart={(event) => {
+                      if (!isStationConfirmed) {
+                        event.stopPropagation();
+                        setSelectedPrizeId(prize.id);
                       }
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Card className="p-2 shadow-xl">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="text-xs font-medium">Tamaño</div>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handleDeletePrize(prize.id)}
-                            title="Eliminar"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                    }}
+                    onDragEnd={async (event, info) => {
+                      if (isStationConfirmed || !canvasRef.current) return;
 
-                        <div className="mt-2">
-                          <Slider
-                            value={[scale]}
-                            min={0.5}
-                            max={maxScale}
-                            step={0.1}
-                            onValueChange={(v) => handleScaleChange(prize.id, v)}
-                            onValueCommit={(v) => handleScaleChangeCommit(prize.id, v)}
-                          />
-                        </div>
+                      const rect = canvasRef.current.getBoundingClientRect();
 
-                        <div className="mt-2 flex justify-end">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => setSelectedPrizeId(null)}
-                          >
-                            <X className="w-4 h-4 mr-1" />
-                            Cerrar
-                          </Button>
-                        </div>
-                      </Card>
+                      // 🔧 Posición anterior en píxeles
+                      const prevXPx = (prize.x / 100) * rect.width;
+                      const prevYPx = (prize.y / 100) * rect.height;
+
+                      // Nueva posición sumando el offset
+                      const newXPx = prevXPx + info.offset.x;
+                      const newYPx = prevYPx + info.offset.y;
+
+                      // Convertir a porcentaje
+                      let newXPercent = (newXPx / rect.width) * 100;
+                      let newYPercent = (newYPx / rect.height) * 100;
+
+                      // Margen mínimo
+                      const margin = 3;
+                      newXPercent = clamp(newXPercent, margin, 100 - margin);
+                      newYPercent = clamp(newYPercent, margin, 100 - margin);
+
+                      const updated = placedPrizes.map((p) =>
+                        p.id === prize.id
+                          ? { ...p, x: newXPercent, y: newYPercent }
+                          : p
+                      );
+                      setPlacedPrizes(updated);
+                      
+                      // 🔧 OPCIONAL: comentar si quieres guardar solo al final
+                      await savePrizesToDb(updated);
+                    }}
+                    className="placed-prize-wrapper group/prize absolute"
+                    style={{
+                      left: `${prize.x}%`,
+                      top: `${prize.y}%`,
+                      width: `calc(min(8vw, 8vh) * ${prize.scale || 1})`,
+                      height: `calc(min(8vw, 8vh) * ${prize.scale || 1})`,
+                      transform: "translate(-50%, -50%)",
+                      touchAction: "none",
+                      cursor: isStationConfirmed ? "default" : "grab",
+                    }}
+                    initial={false}
+                    animate={{
+                      boxShadow: isSelected
+                        ? "0px 0px 15px rgba(255,255,100,0.8)"
+                        : "0px 0px 0px rgba(0,0,0,0)",
+                    }}
+                    transition={{ duration: 0.15 }}
+                    onClick={(e) => {
+                      if (isStationConfirmed) return;
+                      e.stopPropagation();
+                      setSelectedPrizeId(prize.id);
+                    }}
+                    onPointerDown={(e) => {
+                      if (isStationConfirmed) return;
+                      e.stopPropagation();
+                    }}
+                  >
+                    <div className="w-full h-full relative select-none">
+                      <Image
+                        src={prize.imageUrl}
+                        alt={prize.name}
+                        fill
+                        style={{ objectFit: "contain" }}
+                        draggable={false}
+                      />
                     </div>
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
 
-        <Sidebar />
-      </div>
+                    {/* CONTROLES */}
+                    <AnimatePresence>
+                    { !isStationConfirmed && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        className={`
+                          absolute z-50
+                          ${isMobile
+                            ? "bottom-full mb-2 left-1/2 -translate-x-1/2"
+                            : prize.x > 50 
+                            ? "right-full mr-2 top-1/2 -translate-y-1/2" 
+                            : "left-full ml-2 top-1/2 -translate-y-1/2"
+                          }
+                          w-40 max-w-[90vw]
+                          bg-background/95 p-2 rounded-lg shadow-xl 
+                          flex items-center gap-2
+                          pointer-events-none group-hover/prize:pointer-events-auto md:opacity-0 group-hover/prize:opacity-100
+                          ${isSelected ? '!opacity-100' : ''}
+                        `}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                      >
+                        <Slider
+                          value={[prize.scale || 1]}
+                          min={0.5}
+                          max={maxScale}
+                          step={0.1}
+                          onValueChange={(value) =>
+                            handleScaleChange(prize.id, value)
+                          }
+                          onValueCommit={(value) =>
+                            handleScaleChangeCommit(prize.id, value)
+                          }
+                          className="flex-1"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeletePrize(prize.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </motion.div>
+                    )}
+                    </AnimatePresence>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* BOTÓN TOGGLE SIDEBAR */}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="absolute top-4 right-4 z-40 bg-white/80"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {isSidebarOpen ? (
+                <motion.div
+                  key="close"
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: -90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <X />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="open"
+                  initial={{ rotate: 90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Gift />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Button>
+
+          {/* SIDEBAR */}
+          <AnimatePresence>
+            {isSidebarOpen && (
+              <motion.div
+                className="absolute z-30 bg-black/60 backdrop-blur-sm p-2 flex items-center
+                          md:top-0 md:right-0 md:h-full md:w-32 md:flex-col
+                          bottom-0 left-0 right-0 h-40 flex-row"
+                initial={isMobile ? { y: "100%" } : { x: "100%" }}
+                animate={isMobile ? { y: 0 } : { x: 0 }}
+                exit={isMobile ? { y: "100%" } : { x: "100%" }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <h3 className="text-white font-bold text-sm mb-2 text-center md:mt-2 hidden md:block">
+                  Insignias
+                </h3>
+
+                <div className="flex-grow w-full overflow-x-auto md:overflow-x-hidden md:overflow-y-auto">
+                  <div className="flex flex-row md:flex-col gap-2 p-1 h-full md:h-auto">
+                    {unplacedPrizes.map((prize) => (
+                      <div
+                        className="w-20 h-20 md:w-full md:aspect-square shrink-0"
+                        key={prize.id}
+                      >
+                        <DraggablePrize
+                          prize={prize}
+                          onDragEnd={(event, info) =>
+                            handlePrizeDrop(prize.id, info)
+                          }
+                        />
+                      </div>
+                    ))}
+                    {unplacedPrizes.length === 0 && (
+                      <div className="w-full h-full flex items-center justify-center px-4">
+                        <p className="text-white/70 text-xs text-center">
+                          ¡Todas colocadas!
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* BOTONES */}
+                <div className="w-full mt-auto flex flex-row md:flex-col gap-2 p-1">
+                  <Button
+                    onClick={handleSaveStation}
+                    className="flex-1 md:w-full text-xs md:text-sm"
+                    disabled={!allPrizesPlaced || isStationConfirmed}
+                    size="sm"
+                  >
+                    <Check className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
+                    <span className="hidden md:inline">Guardar</span>
+                  </Button>
+                  <Button
+                    onClick={handleDownloadImage}
+                    className="flex-1 md:w-full text-xs md:text-sm"
+                    disabled={!isStationConfirmed}
+                    variant={isStationFinalized ? "secondary" : "default"}
+                    size="sm"
+                  >
+                    <Download className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
+                    <span className="hidden md:inline">Descargar</span>
+                  </Button>
+
+                  <Button
+                    onClick={handleUnlockStation}
+                    className="flex-1 md:w-full text-xs md:text-sm"
+                    variant="outline"
+                    size="sm"
+                  >
+                    Desbloquear
+                  </Button>
+                </div>
+
+                {isStationFinalized && (
+                  <Button
+                    onClick={() => setIsCompletionDialogOpen(true)}
+                    className="mt-2 w-full text-xs"
+                    variant="secondary"
+                    size="sm"
+                  >
+                    Finalizar
+                  </Button>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* DIÁLOGO YARA */}
+          <AnimatePresence>
+            {isYaraMessageVisible && yaraCharImage && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3 }}
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                onClick={() => setIsYaraMessageVisible(false)}
+              >
+                <div
+                  className="relative flex flex-col md:flex-row items-center gap-4 max-w-2xl mx-auto"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="w-32 h-auto md:w-48 shrink-0 order-first md:order-last">
+                    <Image
+                      src={yaraCharImage.imageUrl}
+                      alt={yaraCharImage.description}
+                      width={150}
+                      height={187}
+                      className="h-auto w-full select-none"
+                    />
+                  </div>
+                  <div className="w-full">
+                    <Card className="p-4 shadow-lg bg-white/95 relative">
+                      <TypewriterText
+                        text={yaraMessage}
+                        className="text-base text-primary font-medium"
+                      />
+                      <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 md:left-auto md:right-[-10px] md:top-1/2 md:-translate-y-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-white/95 md:border-t-[10px] md:border-t-transparent md:border-b-[10px] md:border-b-transparent md:border-l-[10px] md:border-l-white/95" />
+                    </Card>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
+      )}
 
       <CompletionDialog
         open={isCompletionDialogOpen}
