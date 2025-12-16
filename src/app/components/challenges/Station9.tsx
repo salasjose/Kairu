@@ -409,7 +409,6 @@ export default function Station9() {
       const blob = await dataUrlToBlob(dataUrl);
       const imageFile = new File([blob], "mi-estacion-kairu.png", { type: "image/png" });
   
-      // Web Share API for mobile
       if (navigator.canShare && navigator.canShare({ files: [imageFile] })) {
         await navigator.share({
           title: "Mi Estación Kairu",
@@ -417,7 +416,6 @@ export default function Station9() {
           files: [imageFile],
         });
       } else {
-        // Fallback for desktop
         const link = document.createElement("a");
         link.href = dataUrl;
         link.download = "mi-estacion-kairu.png";
@@ -432,7 +430,7 @@ export default function Station9() {
       setIsCompletionDialogOpen(true);
     } catch (e) {
       console.error("Error al descargar/compartir la imagen:", e);
-      if (e instanceof Error && e.name !== 'AbortError') { // AbortError is user canceling share
+      if (e instanceof Error && e.name !== 'AbortError') {
           toast({ title: "Error", description: "No se pudo generar o compartir la imagen.", variant: "destructive" });
       }
     }
@@ -593,7 +591,7 @@ export default function Station9() {
                             onClick={() => handleSelectScenario(scenario.imageUrl)}
                             className="p-2 cursor-pointer hover:border-primary hover:scale-105 transition-transform duration-300"
                         >
-                            {img && <Image src={img.imageUrl} alt={img.description} width={200} height={200} className="rounded-md aspect-square object-cover" />}
+                            {img && <Image src={img.imageUrl} alt={img.description ?? ''} width={200} height={200} className="rounded-md aspect-square object-cover" />}
                              <p className="font-bold mt-2 text-sm">{scenario.name}</p>
                         </Card>
                     )
@@ -658,12 +656,19 @@ export default function Station9() {
                     drag={!isStationConfirmed && !isSelected}
                     dragMomentum={false}
                     dragElastic={0}
-                    whileDrag={{ zIndex: 120, scale: 1.05 }}
+                    dragControls={isMobile ? { "longPress": 200 } as any : undefined}
+                    onTap={(e) => {
+                      if(isMobile && !isStationConfirmed) {
+                        e.stopPropagation();
+                        setSelectedPrizeId(prize.id);
+                      }
+                    }}
                     onDoubleClick={(e) => {
-                        if (isStationConfirmed) return;
+                        if (isStationConfirmed || isMobile) return;
                         e.stopPropagation();
                         setSelectedPrizeId(prize.id);
                     }}
+                    whileDrag={{ zIndex: 120, scale: 1.05 }}
                     onDragStart={updateCanvasRect}
                     onDrag={(e, info) => movePlacedPrize(prize.id, info)}
                     onDragEnd={() => handleDragEnd(prize.id)}
