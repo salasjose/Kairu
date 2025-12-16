@@ -126,7 +126,7 @@ const ScenarioPicker = ({
           {scenarios.map((scenario) => (
             <Card
               key={scenario.id}
-              onClick={() => onScenarioSelect(scenario.id)}
+              onClick={() => onScenarioSelect(scenario.imageUrl)}
               className="p-2 cursor-pointer hover:border-primary hover:scale-105 transition-transform duration-300"
             >
               <Image
@@ -175,28 +175,28 @@ export default function Station9() {
   const scenarioBackgrounds = useMemo(() => {
     if (!chosenScenario) return null;
 
-    if (chosenScenario.includes('bosque-seco') || chosenScenario.includes('Bosque_Seco_Tropical')) {
+    if (chosenScenario.includes('Bosque_Seco_Tropical')) {
         return {
             desktopSrc: '/backgrounds/Terral1366_X_768.png',
             tabletSrc: '/backgrounds/Terral1024_X_768.png',
             mobileSrc: '/backgrounds/Terral1075_X_1944.png',
         };
     }
-    if (chosenScenario.includes('ciudad') || chosenScenario.includes('Ciudad_Sostenible')) {
+    if (chosenScenario.includes('Ciudad_Sostenible')) {
         return {
             desktopSrc: '/backgrounds/Civika1366_X_768.png',
             tabletSrc: '/backgrounds/Civika1024_X_768.png',
             mobileSrc: '/backgrounds/Civika1075_X_1944.png',
         };
     }
-    if (chosenScenario.includes('mar-costero') || chosenScenario.includes('Mar_Costero')) {
+    if (chosenScenario.includes('Mar_Costero')) {
         return {
             desktopSrc: '/backgrounds/Mareva1366_X_768.png',
             tabletSrc: '/backgrounds/Mareva1024_X_768.png',
             mobileSrc: '/backgrounds/Mareva1075_X_1944.png',
         };
     }
-    if (chosenScenario.includes('manglares') || chosenScenario.includes('Manglares')) {
+    if (chosenScenario.includes('Manglares')) {
         return {
             desktopSrc: '/backgrounds/Manglia1366_X_768.png',
             tabletSrc: '/backgrounds/Manglia1024_X_768.png',
@@ -550,23 +550,26 @@ export default function Station9() {
   // Guardar lienzo elegido
   // ------------------------------------------------------------------
 
-  const handleScenarioSelect = async (scenarioId: string) => {
+  const handleScenarioSelect = async (scenarioUrl: string) => {
     if (!user || !db) return;
+    const imageUrl = PlaceHolderImages.find(p => p.imageUrl === scenarioUrl)?.imageUrl;
+    if (!imageUrl) return;
+
     try {
-      const userDocRef = doc(db, "users", user.uid);
-      await setDoc(userDocRef, { chosenScenario: scenarioId }, { merge: true });
-      setChosenScenario(scenarioId);
-      toast({
-        title: "Lienzo guardado",
-        description: "Tu estación ahora tiene un fondo.",
-      });
+        const userDocRef = doc(db, "users", user.uid);
+        await setDoc(userDocRef, { chosenScenario: imageUrl }, { merge: true });
+        setChosenScenario(imageUrl);
+        toast({
+            title: "Lienzo guardado",
+            description: "Tu estación ahora tiene un fondo.",
+        });
     } catch (error) {
-      console.error("Failed to save chosen scenario:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo guardar tu selección de lienzo.",
-        variant: "destructive",
-      });
+        console.error("Failed to save chosen scenario:", error);
+        toast({
+            title: "Error",
+            description: "No se pudo guardar tu selección de lienzo.",
+            variant: "destructive",
+        });
     }
   };
 
@@ -696,10 +699,6 @@ export default function Station9() {
                       if (isStationConfirmed) return;
                       e.stopPropagation();
                       setSelectedPrizeId(prize.id);
-                    }}
-                    onPointerDown={(e) => {
-                      if (isStationConfirmed) return;
-                      e.stopPropagation();
                     }}
                   >
                     <div className="w-full h-full relative select-none">
