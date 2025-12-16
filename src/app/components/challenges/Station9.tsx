@@ -20,7 +20,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import ResponsiveBackground from "../ResponsiveBackground";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { cn } from "@/lib/utils";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import Logo from "../Logo";
 
 // ------------------------------------------------------------------
@@ -543,8 +543,13 @@ export default function Station9() {
                         <Gift className="w-6 h-6"/>
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="bottom" className="h-[60vh] bg-background/70 backdrop-blur-sm">
-                    <SidebarContent />
+                <SheetContent side="bottom" className="h-[60vh] p-0 border-t-0 bg-transparent">
+                    <div className="h-full bg-background/80 backdrop-blur-sm rounded-t-2xl">
+                      <SheetHeader className="p-4 pb-0">
+                        <SheetTitle className="sr-only">Insignias</SheetTitle>
+                      </SheetHeader>
+                      <SidebarContent />
+                    </div>
                 </SheetContent>
             </Sheet>
         )
