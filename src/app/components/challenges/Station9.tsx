@@ -103,6 +103,7 @@ export default function Station9() {
 
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const isMobile = useIsMobile();
+  const yaraCharImage = PlaceHolderImages.find((p) => p.id === 'char-yara-final');
 
   const { user } = useUser();
   const db = useFirestore();
@@ -488,24 +489,25 @@ export default function Station9() {
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
       <AnimatePresence>
-        {showYaraMessage && (
+        {showYaraMessage && yaraCharImage && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="absolute top-3 left-1/2 -translate-x-1/2 z-[200] max-w-lg w-[90%]"
+            exit={{ opacity: 0, y: -20, transition: { duration: 0.5 } }}
+            className="absolute top-4 left-1/2 -translate-x-1/2 z-[200] max-w-lg w-[90%] pointer-events-none"
           >
-            <Card className="p-3 shadow-lg">
-              <div className="flex items-start gap-3">
-                <div className="flex-1">
-                  <TypewriterText
-                    text={`¡Hola ${playerName}! Añade tus insignias y decora tu lienzo. Cuando termines, confirma la estación para poder descargar tu obra de arte.`}
-                  />
+            <Card className="p-3 shadow-lg bg-white/95 relative pointer-events-auto">
+                <div className="flex items-start gap-2">
+                    <div className="relative w-16 h-20 -mt-8 -ml-6 shrink-0">
+                        <Image src={yaraCharImage.imageUrl} alt={yaraCharImage.description} fill className="object-contain" />
+                    </div>
+                    <div className="flex-1 pt-1">
+                        <TypewriterText text={`¡Hola ${playerName}! Esta es tu estación. Añade tus insignias y decora tu lienzo. Cuando termines, confirma para poder descargar tu obra de arte.`} />
+                    </div>
+                    <Button size="icon" variant="ghost" className="shrink-0 h-7 w-7" onClick={() => setShowYaraMessage(false)}>
+                        <X className="w-4 h-4" />
+                    </Button>
                 </div>
-                <Button size="icon" variant="ghost" className="shrink-0" onClick={() => setShowYaraMessage(false)}>
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
             </Card>
           </motion.div>
         )}
@@ -535,11 +537,10 @@ export default function Station9() {
                     dragMomentum={false}
                     dragElastic={0}
                     whileDrag={{ zIndex: 120, scale: 1.05 }}
-                    onDragStart={(e) => {
-                      if (!isStationConfirmed) {
+                    onDoubleClick={(e) => {
+                        if (isStationConfirmed) return;
                         e.stopPropagation();
                         setSelectedPrizeId(prize.id);
-                      }
                     }}
                     onDragEnd={(e, info) => movePlacedPrize(prize.id, info)}
                     className="absolute"
@@ -552,10 +553,6 @@ export default function Station9() {
                       touchAction: "none",
                       cursor: isStationConfirmed ? "default" : "grab",
                       zIndex: isSelected ? 110 : 20,
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!isStationConfirmed) setSelectedPrizeId(prize.id);
                     }}
                   >
                     <Image src={prize.imageUrl} alt={prize.name} fill className="object-contain" draggable={false} />
@@ -609,5 +606,7 @@ export default function Station9() {
     </div>
   );
 }
+
+    
 
     
