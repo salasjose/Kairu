@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -11,7 +10,6 @@ import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import CompletionDialog from "../CompletionDialog";
 import type { Prize } from "@/lib/data";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card } from "@/components/ui/card";
 import TypewriterText from "../auth/TypewriterText";
 import { Slider } from "@/components/ui/slider";
@@ -38,7 +36,6 @@ type PlacedPrize = Prize & {
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
-// Calcula el tamaño base de la insignia en px (equivalente a min(8vw, 8vh) cuando el lienzo es pantalla completa)
 const getBadgeBasePx = (rect: DOMRect) => {
   return Math.min(rect.width * 0.08, rect.height * 0.08);
 };
@@ -52,7 +49,6 @@ const clampPositionByBadgeSize = (
   const basePx = getBadgeBasePx(rect);
   const badgePx = basePx * (scale || 1);
 
-  // Por el translate(-50%, -50%) usamos la mitad del tamaño como "margen" real
   const halfWPercent = (badgePx / rect.width) * 50;
   const halfHPercent = (badgePx / rect.height) * 50;
 
@@ -62,14 +58,11 @@ const clampPositionByBadgeSize = (
   return { x: safeX, y: safeY };
 };
 
-// Algunas insignias pueden escalarse más (ej: íconos grandes del escenario)
 const isSpecialPrize = (imageUrl: string) => {
   return imageUrl.includes("Molinos.png") || imageUrl.includes("Ciudad.png");
 };
 
-// Pequeño sleep
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 
 // ------------------------------------------------------------------
 // Componente principal: Station9
@@ -87,7 +80,6 @@ export default function Station9() {
   const canvasRef = useRef<HTMLDivElement | null>(null);
 
   const isMobile = useIsMobile();
-
   const { user } = useUser();
   const db = useFirestore();
 
@@ -115,7 +107,6 @@ export default function Station9() {
 
         setChosenScenario(data.chosenScenario ?? null);
         setPlayerName(data.playerName ?? "");
-
         setIsStationConfirmed(!!data.station9Confirmed);
 
         const savedPlaced = (data.placedPrizes ?? []) as PlacedPrize[];
@@ -139,7 +130,6 @@ export default function Station9() {
     return () => clearTimeout(t);
   }, []);
 
-  
   // ------------------------------------------------------------------
   // Guardado (Firestore)
   // ------------------------------------------------------------------
@@ -162,9 +152,7 @@ export default function Station9() {
     [user, db]
   );
 
-  // ------------------------------------------------------------------
-  // Guardado con debounce (evita "trabas" por múltiples escrituras seguidas)
-  // ------------------------------------------------------------------
+  // Guardado con debounce
   const saveDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestPrizesToSaveRef = useRef<PlacedPrize[] | null>(null);
 
@@ -180,9 +168,7 @@ export default function Station9() {
 
       saveDebounceTimerRef.current = setTimeout(() => {
         const payload = latestPrizesToSaveRef.current;
-        if (payload) {
-          void savePrizesToDb(payload);
-        }
+        if (payload) void savePrizesToDb(payload);
       }, 600);
     },
     [user, db, savePrizesToDb]
@@ -190,8 +176,7 @@ export default function Station9() {
 
   useEffect(() => {
     return () => {
-      if (saveDebounceTimerRef.current)
-        clearTimeout(saveDebounceTimerRef.current);
+      if (saveDebounceTimerRef.current) clearTimeout(saveDebounceTimerRef.current);
     };
   }, []);
 
@@ -206,7 +191,7 @@ export default function Station9() {
     const pointerX = info.point.x;
     const pointerY = info.point.y;
 
-    // Verificar que el drop esté dentro del canvas
+    // Drop dentro del canvas
     if (
       pointerX < canvasRect.left ||
       pointerX > canvasRect.right ||
@@ -247,7 +232,7 @@ export default function Station9() {
   };
 
   // ------------------------------------------------------------------
-  // Escala en vivo (solo UI)
+  // Escala (UI)
   // ------------------------------------------------------------------
 
   const handleScaleChange = (prizeId: string, newScale: number[]) => {
@@ -264,10 +249,6 @@ export default function Station9() {
     setPlacedPrizes(updated);
   };
 
-  // ------------------------------------------------------------------
-  // Escala final (persistir + clamping)
-  // ------------------------------------------------------------------
-
   const handleScaleChangeCommit = (prizeId: string, newScale: number[]) => {
     if (isStationConfirmed) return;
 
@@ -282,9 +263,9 @@ export default function Station9() {
 
     if (canvasRef.current) {
       const rect = canvasRef.current.getBoundingClientRect();
-      const clamped = clampPositionByBadgeSize(prize.x, prize.y, rect, scale);
-      nextX = clamped.x;
-      nextY = clamped.y;
+      const clampedPos = clampPositionByBadgeSize(prize.x, prize.y, rect, scale);
+      nextX = clampedPos.x;
+      nextY = clampedPos.y;
     }
 
     const updated = placedPrizes.map((p) =>
@@ -315,7 +296,6 @@ export default function Station9() {
   const handleSaveStation = async () => {
     if (!user || !db) return;
 
-    // Validación: todas las insignias del carrito deben estar colocadas
     const allPlaced =
       collectedPrizes.length > 0 &&
       collectedPrizes.every((cp) => placedPrizes.some((p) => p.id === cp.id));
@@ -332,11 +312,7 @@ export default function Station9() {
 
     try {
       const userDocRef = doc(db, "users", user.uid);
-      await setDoc(
-        userDocRef,
-        { station9Confirmed: true },
-        { merge: true }
-      );
+      await setDoc(userDocRef, { station9Confirmed: true }, { merge: true });
 
       setIsStationConfirmed(true);
       setSelectedPrizeId(null);
@@ -360,11 +336,7 @@ export default function Station9() {
     if (!user || !db) return;
     try {
       const userDocRef = doc(db, "users", user.uid);
-      await setDoc(
-        userDocRef,
-        { station9Confirmed: false },
-        { merge: true }
-      );
+      await setDoc(userDocRef, { station9Confirmed: false }, { merge: true });
 
       setIsStationConfirmed(false);
       toast({
@@ -382,7 +354,7 @@ export default function Station9() {
   };
 
   // ------------------------------------------------------------------
-  // Descargar imagen (con insignias)
+  // Descargar imagen
   // ------------------------------------------------------------------
 
   const handleDownloadImage = async () => {
@@ -416,11 +388,7 @@ export default function Station9() {
 
       if (user && db) {
         const userDocRef = doc(db, "users", user.uid);
-        await setDoc(
-          userDocRef,
-          { station9Finalized: true },
-          { merge: true }
-        );
+        await setDoc(userDocRef, { station9Finalized: true }, { merge: true });
       }
 
       setIsCompletionDialogOpen(true);
@@ -438,42 +406,44 @@ export default function Station9() {
   // Fondos responsivos
   // ------------------------------------------------------------------
 
-  const scenarioBackgrounds: { [key: string]: { pc: string; tablet: string; mobile: string } } = {
-    '/backgrounds/Bosque_Seco_Tropical.png': {
-      pc: '/backgrounds/Terral1366_X_768.png',
-      tablet: '/backgrounds/Terral1024_X_768.png',
-      mobile: '/backgrounds/Terral1075_X_1944.png',
+  const scenarioBackgrounds: {
+    [key: string]: { pc: string; tablet: string; mobile: string };
+  } = {
+    "/backgrounds/Bosque_Seco_Tropical.png": {
+      pc: "/backgrounds/Terral1366_X_768.png",
+      tablet: "/backgrounds/Terral1024_X_768.png",
+      mobile: "/backgrounds/Terral1075_X_1944.png",
     },
-    '/backgrounds/Ciudad_Sostenible.png': {
-      pc: '/backgrounds/Civika1366_X_768.png',
-      tablet: '/backgrounds/Civika1024_X_768.png',
-      mobile: '/backgrounds/Civika1075_X_1944.png',
+    "/backgrounds/Ciudad_Sostenible.png": {
+      pc: "/backgrounds/Civika1366_X_768.png",
+      tablet: "/backgrounds/Civika1024_X_768.png",
+      mobile: "/backgrounds/Civika1075_X_1944.png",
     },
-    '/backgrounds/Mar_Costero.png': {
-      pc: '/backgrounds/Mareva1366_X_768.png',
-      tablet: '/backgrounds/Mareva1024_X_768.png',
-      mobile: '/backgrounds/Mareva1075_X_1944.png',
+    "/backgrounds/Mar_Costero.png": {
+      pc: "/backgrounds/Mareva1366_X_768.png",
+      tablet: "/backgrounds/Mareva1024_X_768.png",
+      mobile: "/backgrounds/Mareva1075_X_1944.png",
     },
-    '/backgrounds/Manglares.png': {
-      pc: '/backgrounds/Manglia1366_X_768.png',
-      tablet: '/backgrounds/Manglia1024_X_768.png',
-      mobile: '/backgrounds/Manglia1075_X_1944.png',
+    "/backgrounds/Manglares.png": {
+      pc: "/backgrounds/Manglia1366_X_768.png",
+      tablet: "/backgrounds/Manglia1024_X_768.png",
+      mobile: "/backgrounds/Manglia1075_X_1944.png",
     },
   };
 
   const backgrounds = chosenScenario ? scenarioBackgrounds[chosenScenario] : null;
 
-
   // ------------------------------------------------------------------
-  // UI Sidebar de insignias
+  // Sidebar
   // ------------------------------------------------------------------
 
   const Sidebar = () => {
-    // Blindaje defensivo como recomendaste
-    const safeCollectedPrizes = Array.isArray(collectedPrizes) ? collectedPrizes : [];
+    const safeCollectedPrizes = Array.isArray(collectedPrizes)
+      ? collectedPrizes
+      : [];
 
     const remaining = safeCollectedPrizes.filter(
-        (p) => !placedPrizes.some((pp) => pp.id === p.id)
+      (p) => !placedPrizes.some((pp) => pp.id === p.id)
     );
 
     return (
@@ -530,19 +500,11 @@ export default function Station9() {
             </Button>
           ) : (
             <>
-              <Button
-                onClick={handleDownloadImage}
-                className="w-full"
-                variant="default"
-              >
+              <Button onClick={handleDownloadImage} className="w-full" variant="default">
                 <Download className="w-4 h-4 mr-2" />
                 Descargar imagen
               </Button>
-              <Button
-                onClick={handleUnlockStation}
-                className="w-full"
-                variant="secondary"
-              >
+              <Button onClick={handleUnlockStation} className="w-full" variant="secondary">
                 Desbloquear
               </Button>
             </>
@@ -552,14 +514,12 @@ export default function Station9() {
     );
   };
 
-
   // ------------------------------------------------------------------
   // Render
   // ------------------------------------------------------------------
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-background">
-      {/* Mensaje guiado */}
       <AnimatePresence>
         {showYaraMessage && (
           <motion.div
@@ -569,35 +529,29 @@ export default function Station9() {
             className="absolute top-3 left-1/2 -translate-x-1/2 z-50"
           >
             <Card className="p-3 shadow-lg">
-              <TypewriterText
-                text="Arrastra las insignias al lienzo. Ajusta el tamaño y guarda para descargar tu imagen final."
-              />
+              <TypewriterText text="Arrastra las insignias al lienzo. Ajusta el tamaño y guarda para descargar tu imagen final." />
             </Card>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Área principal: lienzo + sidebar */}
       <div className={isMobile ? "w-full h-full" : "flex w-full h-full"}>
-        {/* Lienzo */}
         <div className="relative flex-1">
           <div
             ref={canvasRef}
             className="absolute inset-0 w-full h-full"
             onClick={() => setSelectedPrizeId(null)}
           >
-            {/* Fondo */}
             {backgrounds ? (
               <ResponsiveBackground
-                  desktopSrc={backgrounds.pc}
-                  tabletSrc={backgrounds.tablet}
-                  mobileSrc={backgrounds.mobile}
+                desktopSrc={backgrounds.pc}
+                tabletSrc={backgrounds.tablet}
+                mobileSrc={backgrounds.mobile}
               />
             ) : (
               <div className="w-full h-full bg-muted" />
             )}
 
-            {/* Insignias colocadas */}
             {placedPrizes.map((prize) => {
               const isSelected = selectedPrizeId === prize.id;
               const scale = prize.scale || 1;
@@ -606,43 +560,33 @@ export default function Station9() {
               return (
                 <motion.div
                   key={prize.id}
+                  layout
                   drag={!isStationConfirmed}
                   dragMomentum={false}
                   dragElastic={0}
-                  dragConstraints={canvasRef}
-                  dragPropagation={false}
                   whileDrag={{ scale: 1.05, zIndex: 50 }}
+                  onDrag={(event, info) => {
+                    if (isStationConfirmed || !canvasRef.current) return;
+                     const rect = canvasRef.current.getBoundingClientRect();
+                    const { x, y } = clampPositionByBadgeSize(
+                      (info.point.x - rect.left) / rect.width * 100,
+                      (info.point.y - rect.top) / rect.height * 100,
+                      rect,
+                      prize.scale || 1
+                    );
+                    const updatedPrizes = placedPrizes.map(p => 
+                      p.id === prize.id ? { ...p, x, y } : p
+                    );
+                    setPlacedPrizes(updatedPrizes);
+                  }}
                   onDragStart={(event) => {
                     if (!isStationConfirmed) {
                       event.stopPropagation();
                       setSelectedPrizeId(prize.id);
                     }
                   }}
-                  onDrag={(event, info) => {
-                    if (isStationConfirmed || !canvasRef.current) return;
-                    
-                    const rect = canvasRef.current.getBoundingClientRect();
-                    const newXPx = info.point.x - rect.left;
-                    const newYPx = info.point.y - rect.top;
-
-                    const rawXPercent = (newXPx / rect.width) * 100;
-                    const rawYPercent = (newYPx / rect.height) * 100;
-
-                    const { x: newXPercent, y: newYPercent } = clampPositionByBadgeSize(
-                        rawXPercent,
-                        rawYPercent,
-                        rect,
-                        prize.scale || 1
-                    );
-
-                    const updated = placedPrizes.map((p) =>
-                      p.id === prize.id
-                        ? { ...p, x: newXPercent, y: newYPercent }
-                        : p
-                    );
-                    setPlacedPrizes(updated);
-                  }}
-                  onDragEnd={() => {
+                  onDragEnd={(event, info) => {
+                    if (isStationConfirmed) return;
                     scheduleSavePrizes(placedPrizes);
                   }}
                   className="placed-prize-wrapper absolute"
@@ -675,7 +619,6 @@ export default function Station9() {
                     draggable={false}
                   />
 
-                  {/* Controles (solo si está seleccionada y no confirmada) */}
                   {!isStationConfirmed && isSelected && (
                     <div
                       className={
@@ -705,9 +648,7 @@ export default function Station9() {
                             max={maxScale}
                             step={0.1}
                             onValueChange={(v) => handleScaleChange(prize.id, v)}
-                            onValueCommit={(v) =>
-                              handleScaleChangeCommit(prize.id, v)
-                            }
+                            onValueCommit={(v) => handleScaleChangeCommit(prize.id, v)}
                           />
                         </div>
 
@@ -730,11 +671,9 @@ export default function Station9() {
           </div>
         </div>
 
-        {/* Sidebar */}
         <Sidebar />
       </div>
 
-      {/* Completion dialog */}
       <CompletionDialog
         open={isCompletionDialogOpen}
         onOpenChange={setIsCompletionDialogOpen}
