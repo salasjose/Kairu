@@ -5,7 +5,6 @@ import { signOut } from "firebase/auth";
 import { LogOut, MoreVertical, Settings } from "lucide-react";
 import { useAuth } from "@/firebase";
 import { usePrizeCart } from "@/hooks/use-prize-cart";
-import { useStationProgress } from "@/hooks/use-station-progress";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -14,6 +13,7 @@ import Logo from "./Logo";
 import PrizeCart from "./PrizeCart";
 import SettingsPanel from "./SettingsPanel";
 import type { PlayerState } from "./GameClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface GameHeaderProps {
   playerState: PlayerState;
@@ -24,17 +24,29 @@ interface GameHeaderProps {
 export default function GameHeader({ playerState, setPlayerState, onFullReset }: GameHeaderProps) {
   const auth = useAuth();
   const { clearCart } = usePrizeCart();
-  const { resetProgress } = useStationProgress();
+  const { toast } = useToast();
   
   const handleLogout = async () => {
-    if (!auth) return;
+    if (!auth) {
+        toast({
+            title: "Error",
+            description: "Servicio de autenticación no disponible.",
+            variant: "destructive"
+        });
+        return;
+    };
     
-    await resetProgress();
+    // Limpia solo el estado local y el carrito temporal, no el progreso en la DB.
     await clearCart();
-    
     setPlayerState(null);
     
+    // Cierra la sesión del usuario.
     await signOut(auth);
+
+    toast({
+        title: "Sesión Cerrada",
+        description: "¡Vuelve pronto!"
+    });
   }
 
   return (
