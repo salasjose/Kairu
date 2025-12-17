@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -7,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { usePrizeCart } from "@/hooks/use-prize-cart";
-import { motion, AnimatePresence, PanInfo } from "framer-motion";
+import { motion, AnimatePresence, PanInfo, useDragControls } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import CompletionDialog from "../CompletionDialog";
 import type { Prize } from "@/lib/data";
@@ -21,7 +20,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import ResponsiveBackground from "../ResponsiveBackground";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
 
 // ------------------------------------------------------------------
 // Tipos
@@ -67,30 +65,30 @@ const DraggablePrize = ({
 }) => {
   return (
     <TooltipProvider>
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <motion.div
-                key={prize.id}
-                drag
-                dragMomentum={false}
-                onDragEnd={onDragEnd}
-                className="w-full h-full aspect-square bg-white/20 rounded-md p-1 cursor-grab active:cursor-grabbing"
-                style={{ touchAction: "none" }}
-                >
-                <div className="relative w-full h-full">
-                    <Image
-                    src={prize.imageUrl}
-                    alt={prize.name}
-                    fill
-                    style={{ objectFit: "contain" }}
-                    />
-                </div>
-                </motion.div>
-            </TooltipTrigger>
-            <TooltipContent side="top">
-                <p>{prize.name}</p>
-            </TooltipContent>
-        </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <motion.div
+            key={prize.id}
+            drag
+            dragMomentum={false}
+            onDragEnd={onDragEnd}
+            className="w-full h-full aspect-square bg-white/20 rounded-md p-1 cursor-grab active:cursor-grabbing"
+            style={{ touchAction: "none" }}
+          >
+            <div className="relative w-full h-full">
+              <Image
+                src={prize.imageUrl}
+                alt={prize.name}
+                fill
+                style={{ objectFit: "contain" }}
+              />
+            </div>
+          </motion.div>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          <p>{prize.name}</p>
+        </TooltipContent>
+      </Tooltip>
     </TooltipProvider>
   );
 };
@@ -197,34 +195,54 @@ export default function Station9() {
 
     const value = chosenScenario;
 
-    if (value.includes("Bosque_Seco_Tropical") || value.includes("scenario-bosque-seco")) {
+    // Bosque Seco Tropical → Terral
+    if (
+      value.includes("Bosque_Seco_Tropical") ||
+      value.includes("scenario-bosque-seco")
+    ) {
       return {
         desktopSrc: "/backgrounds/Terral1366_X_768.png",
         tabletSrc: "/backgrounds/Terral1024_X_768.png",
         mobileSrc: "/backgrounds/Terral1075_X_1944.png",
       };
     }
-    if (value.includes("Ciudad_Sostenible") || value.includes("scenario-ciudad")) {
+
+    // Ciudad Sostenible → Civika
+    if (
+      value.includes("Ciudad_Sostenible") ||
+      value.includes("scenario-ciudad")
+    ) {
       return {
         desktopSrc: "/backgrounds/Civika1366_X_768.png",
         tabletSrc: "/backgrounds/Civika1024_X_768.png",
         mobileSrc: "/backgrounds/Civika1075_X_1944.png",
       };
     }
-    if (value.includes("Mar_Costero.png") || value.includes("scenario-mar-costero")) {
+
+    // Mar Costero → Mareva
+    if (
+      value.includes("Mar_Costero.png") ||
+      value.includes("scenario-mar-costero")
+    ) {
       return {
         desktopSrc: "/backgrounds/Mareva1366_X_768.png",
         tabletSrc: "/backgrounds/Mareva1024_X_768.png",
         mobileSrc: "/backgrounds/Mareva1075_X_1944.png",
       };
     }
-    if (value.includes("Manglares") || value.includes("scenario-manglares")) {
+
+    // Manglares → Manglia
+    if (
+      value.includes("Manglares") ||
+      value.includes("scenario-manglares")
+    ) {
       return {
         desktopSrc: "/backgrounds/Manglia1366_X_768.png",
         tabletSrc: "/backgrounds/Manglia1024_X_768.png",
         mobileSrc: "/backgrounds/Manglia1075_X_1944.png",
       };
     }
+
     return null;
   }, [chosenScenario]);
 
@@ -309,6 +327,7 @@ export default function Station9() {
     },
     [user, db]
   );
+
   // ------------------------------------------------------------------
   // Colocar insignia desde el sidebar
   // ------------------------------------------------------------------
@@ -320,6 +339,7 @@ export default function Station9() {
     const pointerX = info.point.x;
     const pointerY = info.point.y;
 
+    // Verificar que el drop sea dentro del lienzo
     if (
       pointerX < canvasRect.left ||
       pointerX > canvasRect.right ||
@@ -329,9 +349,11 @@ export default function Station9() {
       return;
     }
 
+    // Calcular posición en porcentajes
     let x = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
     let y = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
 
+    // Aplicar márgenes para que no se salga de los bordes
     x = clamp(x, 5, 95);
     y = clamp(y, 5, 95);
 
@@ -355,153 +377,156 @@ export default function Station9() {
     await savePrizesToDb(newPlacedPrizes);
   };
   
-    // ------------------------------------------------------------------
-    // Cambiar escala
-    // ------------------------------------------------------------------
-  
-    const handleScaleChange = (prizeId: string, newScale: number[]) => {
-      if (isStationConfirmed) return;
-  
-      const prize = placedPrizes.find((p) => p.id === prizeId);
-      if (!prize) return;
-  
-      const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
-      const scale = clamp(newScale[0], 0.5, maxScale);
-  
-      const updated = placedPrizes.map((p) =>
-        p.id === prizeId ? { ...p, scale } : p
+  // ------------------------------------------------------------------
+  // Cambiar escala
+  // ------------------------------------------------------------------
+
+  const handleScaleChange = (prizeId: string, newScale: number[]) => {
+    if (isStationConfirmed) return;
+
+    const prize = placedPrizes.find((p) => p.id === prizeId);
+    if (!prize) return;
+
+    const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
+    const scale = clamp(newScale[0], 0.5, maxScale);
+
+    const updated = placedPrizes.map((p) =>
+      p.id === prizeId ? { ...p, scale } : p
+    );
+    setPlacedPrizes(updated);
+  };
+
+  const handleScaleChangeCommit = async (
+    prizeId: string,
+    newScale: number[]
+  ) => {
+    if (isStationConfirmed) return;
+
+    const prize = placedPrizes.find((p) => p.id === prizeId);
+    if (!prize) return;
+
+    const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
+    const scale = clamp(newScale[0], 0.5, maxScale);
+
+    const updated = placedPrizes.map((p) =>
+      p.id === prizeId ? { ...p, scale } : p
+    );
+    setPlacedPrizes(updated);
+    await savePrizesToDb(updated);
+  };
+
+  // ------------------------------------------------------------------
+  // Eliminar insignia
+  // ------------------------------------------------------------------
+
+  const handleDeletePrize = async (prizeId: string) => {
+    if (isStationConfirmed) return;
+
+    const newPlacedPrizes = placedPrizes.filter((p) => p.id !== prizeId);
+    setPlacedPrizes(newPlacedPrizes);
+    await savePrizesToDb(newPlacedPrizes);
+    setSelectedPrizeId(null);
+    setResizePrizeId(null);
+  };
+
+  // ------------------------------------------------------------------
+  // Confirmar / Modificar estación
+  // ------------------------------------------------------------------
+
+  const handleSaveStation = async () => {
+    if (!user || !db) return;
+    if (isStationConfirmed) return;
+
+    // Verificar que hay al menos una insignia ganada
+    if (collectedPrizes.length === 0) {
+      toast({
+        title: "Sin insignias",
+        description: "No has ganado insignias aún.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Verificar que todas las insignias ganadas estén colocadas
+    const unplaced = collectedPrizes.filter(
+      (p) => !placedPrizes.some((pp) => pp.id === p.id)
+    );
+    
+    if (unplaced.length > 0) {
+      toast({
+        title: "Insignias incompletas",
+        description: `Te faltan ${unplaced.length} insignia(s) por colocar.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      await setDoc(
+        userDocRef,
+        { station9Confirmed: true },
+        { merge: true }
       );
-      setPlacedPrizes(updated);
-    };
-  
-    const handleScaleChangeCommit = async (
-      prizeId: string,
-      newScale: number[]
-    ) => {
-      if (isStationConfirmed) return;
-  
-      const prize = placedPrizes.find((p) => p.id === prizeId);
-      if (!prize) return;
-  
-      const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
-      const scale = clamp(newScale[0], 0.5, maxScale);
-  
-      const updated = placedPrizes.map((p) =>
-        p.id === prizeId ? { ...p, scale } : p
-      );
-      setPlacedPrizes(updated);
-      await savePrizesToDb(updated);
-    };
-  
-    // ------------------------------------------------------------------
-    // Eliminar insignia
-    // ------------------------------------------------------------------
-  
-    const handleDeletePrize = async (prizeId: string) => {
-      if (isStationConfirmed) return;
-  
-      const newPlacedPrizes = placedPrizes.filter((p) => p.id !== prizeId);
-      setPlacedPrizes(newPlacedPrizes);
-      await savePrizesToDb(newPlacedPrizes);
+
+      setIsStationConfirmed(true);
       setSelectedPrizeId(null);
       setResizePrizeId(null);
-    };
-  
-    // ------------------------------------------------------------------
-    // Confirmar / Modificar estación
-    // ------------------------------------------------------------------
-  
-    const handleSaveStation = async () => {
-      if (!user || !db) return;
-      if (isStationConfirmed) return;
 
-      if (collectedPrizes.length === 0) {
-        toast({
-          title: "Sin insignias",
-          description: "Aún no has ganado insignias para colocar en tu estación.",
-          variant: "destructive",
-        });
-        return;
-      }
-  
-      const unplaced = collectedPrizes.filter(
-        (p) => !placedPrizes.some((pp) => pp.id === p.id)
+      toast({
+        title: "Estación confirmada",
+        description:
+          "Tus insignias han sido bloqueadas. Ahora puedes descargar la foto de tu estación.",
+      });
+    } catch (e) {
+      console.error("Error saving station", e);
+      toast({
+        title: "Error",
+        description: "Ocurrió un problema al confirmar la estación.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUnlockStation = async () => {
+    if (!user || !db) return;
+
+    if (isStationFinalized) {
+      toast({
+        title: "Estación finalizada",
+        description:
+          "Ya descargaste la foto de tu estación. No se puede modificar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      await setDoc(
+        userDocRef,
+        { station9Confirmed: false },
+        { merge: true }
       );
-      if (unplaced.length > 0) {
-        toast({
-          title: "Insignias incompletas",
-          description: `Te faltan ${unplaced.length} insignia(s) por colocar para poder confirmar.`,
-          variant: "destructive",
-        });
-        return;
-      }
-  
-      try {
-        const userDocRef = doc(db, "users", user.uid);
-        await setDoc(
-          userDocRef,
-          { station9Confirmed: true },
-          { merge: true }
-        );
-  
-        setIsStationConfirmed(true);
-        setSelectedPrizeId(null);
-        setResizePrizeId(null);
-  
-        toast({
-          title: "Estación confirmada",
-          description:
-            "Tus insignias han sido bloqueadas. Ahora puedes descargar la foto de tu estación.",
-        });
-      } catch (e) {
-        console.error("Error saving station", e);
-        toast({
-          title: "Error",
-          description: "Ocurrió un problema al confirmar la estación.",
-          variant: "destructive",
-        });
-      }
-    };
-  
-    const handleUnlockStation = async () => {
-      if (!user || !db) return;
-  
-      if (isStationFinalized) {
-        toast({
-          title: "Estación finalizada",
-          description:
-            "Ya descargaste la foto de tu estación. No se puede modificar.",
-          variant: "destructive",
-        });
-        return;
-      }
-  
-      try {
-        const userDocRef = doc(db, "users", user.uid);
-        await setDoc(
-          userDocRef,
-          { station9Confirmed: false },
-          { merge: true }
-        );
-  
-        setIsStationConfirmed(false);
-        setSelectedPrizeId(null);
-        setResizePrizeId(null);
-  
-        toast({
-          title: "Modo edición activado",
-          description:
-            "Ahora puedes mover y cambiar el tamaño de tus insignias.",
-        });
-      } catch (e) {
-        console.error("Error unlocking station", e);
-        toast({
-          title: "Error",
-          description: "No se pudo modificar la estación.",
-          variant: "destructive",
-        });
-      }
-    };
+
+      setIsStationConfirmed(false);
+      setSelectedPrizeId(null);
+      setResizePrizeId(null);
+
+      toast({
+        title: "Modo edición activado",
+        description:
+          "Ahora puedes mover y cambiar el tamaño de tus insignias.",
+      });
+    } catch (e) {
+      console.error("Error unlocking station", e);
+      toast({
+        title: "Error",
+        description: "No se pudo modificar la estación.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // ------------------------------------------------------------------
   // Descargar imagen de la estación
@@ -520,6 +545,7 @@ export default function Station9() {
     }
 
     try {
+      // Ocultar temporalmente los controles de edición
       setSelectedPrizeId(null);
       setResizePrizeId(null);
       await new Promise((resolve) => setTimeout(resolve, 200));
@@ -529,6 +555,7 @@ export default function Station9() {
         backgroundColor: null,
       });
 
+      // Para móvil: usar Web Share API
       if (navigator.canShare && navigator.canShare({ files: [new File([], '')] })) {
         canvas.toBlob(async (blob) => {
           if (blob) {
@@ -541,6 +568,7 @@ export default function Station9() {
               });
               await finalizeDownload();
             } catch (error) {
+              // Si el usuario cancela el diálogo de compartir, no es realmente un error.
               if ((error as DOMException).name !== 'AbortError') {
                 console.error("Error sharing image:", error);
                 toast({
@@ -553,6 +581,7 @@ export default function Station9() {
           }
         });
       } else {
+        // Para escritorio: método tradicional
         const dataUrl = canvas.toDataURL("image/png");
         const link = document.createElement("a");
         link.href = dataUrl;
@@ -646,13 +675,9 @@ export default function Station9() {
   const yaraMessage = `${playerName}, ¡Ya eres un Guardián de la Naturaleza! Ahora es tiempo de armar tu Estación. Moverás tus Insignias por todo tu lienzo; para ello, debes arrastrarlas desde la barra lateral.`;
 
   // ------------------------------------------------------------------
-  // Render
+  // Sidebar Content Component
   // ------------------------------------------------------------------
 
-  if (!chosenScenario) {
-    return <ScenarioPicker onScenarioSelect={handleScenarioSelect} />;
-  }
-  
   const SidebarContent = () => (
     <>
       <div className="flex-grow w-full overflow-x-auto md:overflow-x-hidden md:overflow-y-auto">
@@ -670,17 +695,25 @@ export default function Station9() {
               />
             </div>
           ))}
-          {unplacedPrizes.length === 0 && (
+          {unplacedPrizes.length === 0 && collectedPrizes.length > 0 && (
             <div className="w-full h-full flex items-center justify-center px-4">
               <p className="text-white/70 text-xs text-center">
                 ¡Todas colocadas!
               </p>
             </div>
           )}
+          {collectedPrizes.length === 0 && (
+            <div className="w-full h-full flex items-center justify-center px-4">
+              <p className="text-white/70 text-xs text-center">
+                No tienes insignias aún
+              </p>
+            </div>
+          )}
         </div>
       </div>
-       {/* BOTONES */}
-       <div className="w-full mt-auto flex flex-row md:flex-col gap-2 p-1">
+      
+      {/* BOTONES */}
+      <div className="w-full mt-auto flex flex-row md:flex-col gap-2 p-1">
         {!isStationConfirmed && allPrizesPlaced && (
           <Button
             onClick={handleSaveStation}
@@ -728,6 +761,14 @@ export default function Station9() {
     </>
   );
 
+  // ------------------------------------------------------------------
+  // Render
+  // ------------------------------------------------------------------
+
+  if (!chosenScenario) {
+    return <ScenarioPicker onScenarioSelect={handleScenarioSelect} />;
+  }
+
   return (
     <div
       className="relative w-screen h-screen bg-background overflow-hidden"
@@ -767,7 +808,7 @@ export default function Station9() {
                 dragConstraints={canvasRef}
                 onDragStart={() => {
                   setSelectedPrizeId(prize.id);
-                  setResizePrizeId(null);
+                  setResizePrizeId(null); // Ocultar panel al empezar a mover
                 }}
                 onDragEnd={async (event, info) => {
                   if (isStationConfirmed || !canvasRef.current) return;
@@ -840,71 +881,144 @@ export default function Station9() {
       {/* -- SIDEBAR / BOTTOM SHEET -- */}
       {isMobile ? (
         <Sheet>
-            <SheetTrigger asChild>
-                <Button className="absolute bottom-4 left-4 z-40 bg-black/70 backdrop-blur-sm text-white hover:bg-black">
-                    <Gift className="mr-2 h-4 w-4" />
-                    Insignias
+          <SheetTrigger asChild>
+            <Button className="absolute bottom-4 left-4 z-40 bg-black/70 backdrop-blur-sm text-white hover:bg-black">
+              <Gift className="mr-2 h-4 w-4" />
+              Insignias
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="h-[40vh] bg-black/70 backdrop-blur-sm border-t-2 border-white/20 text-white">
+            <SheetHeader>
+              <SheetTitle className="text-white">Tus Insignias</SheetTitle>
+            </SheetHeader>
+            <div className="h-full flex flex-col pt-2">
+              {/* Contenido del sidebar para mobile */}
+              <div className="flex-grow w-full overflow-x-auto">
+                <div className="flex flex-row gap-2 p-1">
+                  {unplacedPrizes.map((prize) => (
+                    <div className="w-20 h-20 shrink-0" key={prize.id}>
+                      <DraggablePrize
+                        prize={prize}
+                        onDragEnd={(event, info) => handlePrizeDrop(prize.id, info)}
+                      />
+                    </div>
+                  ))}
+                  {unplacedPrizes.length === 0 && collectedPrizes.length > 0 && (
+                    <div className="w-full h-full flex items-center justify-center px-4">
+                      <p className="text-white/70 text-xs text-center">
+                        ¡Todas colocadas!
+                      </p>
+                    </div>
+                  )}
+                  {collectedPrizes.length === 0 && (
+                    <div className="w-full h-full flex items-center justify-center px-4">
+                      <p className="text-white/70 text-xs text-center">
+                        No tienes insignias aún
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Botones para mobile */}
+              <div className="w-full mt-auto flex flex-row gap-2 p-1">
+                {!isStationConfirmed && allPrizesPlaced && (
+                  <Button
+                    onClick={handleSaveStation}
+                    className="flex-1 text-xs"
+                    size="sm"
+                  >
+                    <Check className="h-3 w-3 mr-1" />
+                    Confirmar
+                  </Button>
+                )}
+                {isStationConfirmed && !isStationFinalized && (
+                  <Button
+                    onClick={handleUnlockStation}
+                    className="flex-1 text-xs"
+                    variant="outline"
+                    size="sm"
+                  >
+                    Modificar
+                  </Button>
+                )}
+                <Button
+                  onClick={handleDownloadImage}
+                  className="flex-1 text-xs"
+                  disabled={!isStationConfirmed}
+                  variant={isStationFinalized ? "secondary" : "default"}
+                  size="sm"
+                >
+                  <Download className="h-3 w-3 mr-1" />
+                  Descargar
                 </Button>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="h-[40vh] bg-black/70 backdrop-blur-sm border-t-2 border-white/20 text-white flex flex-col">
-                 <SheetHeader>
-                    <SheetTitle className="text-white">Tus Insignias</SheetTitle>
-                </SheetHeader>
-                <SidebarContent />
-            </SheetContent>
+              </div>
+
+              {isStationFinalized && (
+                <Button
+                  onClick={() => setIsCompletionDialogOpen(true)}
+                  className="mt-2 w-full text-xs"
+                  variant="secondary"
+                  size="sm"
+                >
+                  Finalizar
+                </Button>
+              )}
+            </div>
+          </SheetContent>
         </Sheet>
       ) : (
-         <AnimatePresence>
-            {isSidebarOpen && (
-              <motion.div
-                className="absolute z-30 bg-black/60 backdrop-blur-sm p-2 flex items-center top-0 right-0 h-full w-32 flex-col"
-                initial={{ x: "100%" }}
-                animate={{ x: 0 }}
-                exit={{ x: "100%" }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              >
-                 <h3 className="text-white font-bold text-sm mb-2 text-center mt-12">
-                  Insignias
-                </h3>
-                <SidebarContent />
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <AnimatePresence>
+          {isSidebarOpen && (
+            <motion.div
+              className="absolute z-30 bg-black/60 backdrop-blur-sm p-2 flex items-center top-0 right-0 h-full w-32 flex-col"
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            >
+              <h3 className="text-white font-bold text-sm mb-2 text-center mt-12">
+                Insignias
+              </h3>
+              <SidebarContent />
+            </motion.div>
+          )}
+        </AnimatePresence>
       )}
 
       {/* BOTÓN TOGGLE SIDEBAR (Desktop) */}
       {!isMobile && (
         <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="absolute top-4 right-4 z-40 bg-white/80"
+          variant="outline"
+          size="icon"
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="absolute top-4 right-4 z-40 bg-white/80"
         >
-            <AnimatePresence mode="wait" initial={false}>
+          <AnimatePresence mode="wait" initial={false}>
             {isSidebarOpen ? (
-                <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.2 }}>
+              <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.2 }}>
                 <X />
-                </motion.div>
+              </motion.div>
             ) : (
-                <motion.div key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }}>
+              <motion.div key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }}>
                 <Gift />
-                </motion.div>
+              </motion.div>
             )}
-            </AnimatePresence>
+          </AnimatePresence>
         </Button>
       )}
 
-       {/* PANEL INFERIOR PARA CAMBIAR TAMAÑO */}
-       {resizePrizeId && !isStationConfirmed && (
+      {/* PANEL INFERIOR PARA CAMBIAR TAMAÑO */}
+      {resizePrizeId && !isStationConfirmed && (
         <div
-            className={`
-                fixed z-50 max-w-md w-[90vw]
-                bg-background/95 p-3 rounded-xl shadow-xl 
-                flex items-center gap-3
-                ${isMobile ? 'left-1/2 bottom-4 -translate-x-1/2' : 'top-4 left-4'}
-            `}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
+          className={`
+            fixed z-50 max-w-md w-[90vw]
+            bg-background/95 p-3 rounded-xl shadow-xl 
+            flex items-center gap-3
+            ${isMobile ? 'left-1/2 bottom-4 -translate-x-1/2' : 'top-4 left-4'}
+          `}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
         >
           {(() => {
             const prize = placedPrizes.find((p) => p.id === resizePrizeId);
