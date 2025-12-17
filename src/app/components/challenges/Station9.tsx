@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { usePrizeCart } from "@/hooks/use-prize-cart";
-import { motion, AnimatePresence, PanInfo, useDragControls } from "framer-motion";
+import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import CompletionDialog from "../CompletionDialog";
 import type { Prize } from "@/lib/data";
@@ -196,54 +197,34 @@ export default function Station9() {
 
     const value = chosenScenario;
 
-    // Bosque Seco Tropical → Terral
-    if (
-      value.includes("Bosque_Seco_Tropical") ||
-      value.includes("scenario-bosque-seco")
-    ) {
+    if (value.includes("Bosque_Seco_Tropical") || value.includes("scenario-bosque-seco")) {
       return {
         desktopSrc: "/backgrounds/Terral1366_X_768.png",
         tabletSrc: "/backgrounds/Terral1024_X_768.png",
         mobileSrc: "/backgrounds/Terral1075_X_1944.png",
       };
     }
-
-    // Ciudad Sostenible → Civika
-    if (
-      value.includes("Ciudad_Sostenible") ||
-      value.includes("scenario-ciudad")
-    ) {
+    if (value.includes("Ciudad_Sostenible") || value.includes("scenario-ciudad")) {
       return {
         desktopSrc: "/backgrounds/Civika1366_X_768.png",
         tabletSrc: "/backgrounds/Civika1024_X_768.png",
         mobileSrc: "/backgrounds/Civika1075_X_1944.png",
       };
     }
-
-    // Mar Costero → Mareva
-    if (
-      value.includes("Mar_Costero.png") ||
-      value.includes("scenario-mar-costero")
-    ) {
+    if (value.includes("Mar_Costero.png") || value.includes("scenario-mar-costero")) {
       return {
         desktopSrc: "/backgrounds/Mareva1366_X_768.png",
         tabletSrc: "/backgrounds/Mareva1024_X_768.png",
         mobileSrc: "/backgrounds/Mareva1075_X_1944.png",
       };
     }
-
-    // Manglares → Manglia
-    if (
-      value.includes("Manglares") ||
-      value.includes("scenario-manglares")
-    ) {
+    if (value.includes("Manglares") || value.includes("scenario-manglares")) {
       return {
         desktopSrc: "/backgrounds/Manglia1366_X_768.png",
         tabletSrc: "/backgrounds/Manglia1024_X_768.png",
         mobileSrc: "/backgrounds/Manglia1075_X_1944.png",
       };
     }
-
     return null;
   }, [chosenScenario]);
 
@@ -351,8 +332,8 @@ export default function Station9() {
     let x = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
     let y = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
 
-    x = clamp(x, 3, 97);
-    y = clamp(y, 3, 97);
+    x = clamp(x, 5, 95);
+    y = clamp(y, 5, 95);
 
     const prizeData = collectedPrizes.find((p) => p.id === prizeId);
     if (!prizeData) return;
@@ -433,15 +414,23 @@ export default function Station9() {
     const handleSaveStation = async () => {
       if (!user || !db) return;
       if (isStationConfirmed) return;
+
+      if (collectedPrizes.length === 0) {
+        toast({
+          title: "Sin insignias",
+          description: "Aún no has ganado insignias para colocar en tu estación.",
+          variant: "destructive",
+        });
+        return;
+      }
   
       const unplaced = collectedPrizes.filter(
         (p) => !placedPrizes.some((pp) => pp.id === p.id)
       );
-      if (collectedPrizes.length === 0 || unplaced.length > 0) {
+      if (unplaced.length > 0) {
         toast({
           title: "Insignias incompletas",
-          description:
-            "Debes colocar todas las insignias antes de confirmar la estación.",
+          description: `Te faltan ${unplaced.length} insignia(s) por colocar para poder confirmar.`,
           variant: "destructive",
         });
         return;
@@ -531,7 +520,6 @@ export default function Station9() {
     }
 
     try {
-      // Ocultar temporalmente los controles de edición
       setSelectedPrizeId(null);
       setResizePrizeId(null);
       await new Promise((resolve) => setTimeout(resolve, 200));
@@ -541,7 +529,6 @@ export default function Station9() {
         backgroundColor: null,
       });
 
-      // Para móvil: usar Web Share API
       if (navigator.canShare && navigator.canShare({ files: [new File([], '')] })) {
         canvas.toBlob(async (blob) => {
           if (blob) {
@@ -554,7 +541,6 @@ export default function Station9() {
               });
               await finalizeDownload();
             } catch (error) {
-              // Si el usuario cancela el diálogo de compartir, no es realmente un error.
               if ((error as DOMException).name !== 'AbortError') {
                 console.error("Error sharing image:", error);
                 toast({
@@ -567,7 +553,6 @@ export default function Station9() {
           }
         });
       } else {
-        // Para escritorio: método tradicional
         const dataUrl = canvas.toDataURL("image/png");
         const link = document.createElement("a");
         link.href = dataUrl;
@@ -794,8 +779,8 @@ export default function Station9() {
                   let newXPercent = (newXPx / rect.width) * 100;
                   let newYPercent = (newYPx / rect.height) * 100;
                   
-                  newXPercent = clamp(newXPercent, 3, 97);
-                  newYPercent = clamp(newYPercent, 3, 97);
+                  newXPercent = clamp(newXPercent, 5, 95);
+                  newYPercent = clamp(newYPercent, 5, 95);
 
                   const updated = placedPrizes.map((p) =>
                     p.id === prize.id
@@ -833,7 +818,7 @@ export default function Station9() {
                   if (isStationConfirmed) return;
                   e.stopPropagation();
                   setSelectedPrizeId(prize.id);
-                  setResizePrizeId(prize.id);
+                  setResizePrizeId(prev => prev === prize.id ? null : prize.id);
                 }}
                 onPointerDown={(e) => e.stopPropagation()}
               >
@@ -861,13 +846,11 @@ export default function Station9() {
                     Insignias
                 </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="h-[40vh] bg-black/70 backdrop-blur-sm border-t-2 border-white/20 text-white">
+            <SheetContent side="bottom" className="h-[40vh] bg-black/70 backdrop-blur-sm border-t-2 border-white/20 text-white flex flex-col">
                  <SheetHeader>
                     <SheetTitle className="text-white">Tus Insignias</SheetTitle>
                 </SheetHeader>
-                <div className="h-full flex flex-col pt-2">
-                    <SidebarContent />
-                </div>
+                <SidebarContent />
             </SheetContent>
         </Sheet>
       ) : (
