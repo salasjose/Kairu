@@ -60,10 +60,7 @@ const isSpecialPrize = (imageUrl: string) =>
  * Margen dinámico (en %) para evitar que al escalar grande se salga del lienzo.
  * Ajusta los valores si quieres más/menos “aire”.
  */
-const getDynamicMarginPercent = (scale: number) => {
-  // mínimo 6%, máximo 22% aprox.
-  return clamp(6 + scale * 2, 6, 22);
-};
+const getDynamicMarginPercent = (scale: number) => clamp(6 + scale * 2, 6, 22);
 
 // ------------------------------------------------------------------
 // Componente: DraggablePrize (insignia en sidebar)
@@ -137,7 +134,6 @@ function ScenarioPicker({
     ].filter((s) => s?.imageUrl);
 
     return list as Array<{
-      id?: string;
       name: string;
       imageUrl: string;
       description?: string;
@@ -181,7 +177,7 @@ function ScenarioPicker({
 // ------------------------------------------------------------------
 
 export default function Station9() {
-  // ⬇️ IMPORTANTE: ahora guardamos las insignias de la estación 9 en un campo separado
+  // Guardado separado por estación
   const PLACED_FIELD = "placedPrizesStation9";
   const CONFIRMED_FIELD = "station9Confirmed";
   const FINALIZED_FIELD = "station9Finalized";
@@ -218,7 +214,6 @@ export default function Station9() {
 
     const value = chosenScenario;
 
-    // Bosque Seco Tropical → Terral
     if (
       value.includes("Bosque_Seco_Tropical") ||
       value.includes("scenario-bosque-seco")
@@ -230,7 +225,6 @@ export default function Station9() {
       };
     }
 
-    // Ciudad Sostenible → Civika
     if (value.includes("Ciudad_Sostenible") || value.includes("scenario-ciudad")) {
       return {
         desktopSrc: "/backgrounds/Civika1366_X_768.png",
@@ -239,7 +233,6 @@ export default function Station9() {
       };
     }
 
-    // Mar Costero → Mareva
     if (value.includes("Mar_Costero.png") || value.includes("scenario-mar-costero")) {
       return {
         desktopSrc: "/backgrounds/Mareva1366_X_768.png",
@@ -248,7 +241,6 @@ export default function Station9() {
       };
     }
 
-    // Manglares → Manglia
     if (value.includes("Manglares") || value.includes("scenario-manglares")) {
       return {
         desktopSrc: "/backgrounds/Manglia1366_X_768.png",
@@ -281,7 +273,6 @@ export default function Station9() {
           setChosenScenario(data.chosenScenario || null);
           setPlayerName(data.nombre || data.usuario || "Guardián");
 
-          // ⬇️ SOLO la estación 9 (si no existe, usa [])
           const station9Placed: PlacedPrize[] = (data[PLACED_FIELD] || []).map(
             (p: any) => ({
               id: p.id,
@@ -341,11 +332,7 @@ export default function Station9() {
       if (!user || !db) return;
       try {
         const userDocRef = doc(db, "users", user.uid);
-        await setDoc(
-          userDocRef,
-          { [PLACED_FIELD]: prizesToSave },
-          { merge: true }
-        );
+        await setDoc(userDocRef, { [PLACED_FIELD]: prizesToSave }, { merge: true });
       } catch (error) {
         console.error("Failed to save prize position", error);
         toast({
@@ -366,10 +353,10 @@ export default function Station9() {
     if (isStationConfirmed || !canvasRef.current) return;
 
     const canvasRect = canvasRef.current.getBoundingClientRect();
+
     const pointerX = info.point.x;
     const pointerY = info.point.y;
 
-    // Debe caer dentro del lienzo
     if (
       pointerX < canvasRect.left ||
       pointerX > canvasRect.right ||
@@ -379,7 +366,6 @@ export default function Station9() {
       return;
     }
 
-    // Posición % por punto absoluto
     let x = ((pointerX - canvasRect.left) / canvasRect.width) * 100;
     let y = ((pointerY - canvasRect.top) / canvasRect.height) * 100;
 
@@ -402,7 +388,6 @@ export default function Station9() {
       stationId: 9,
     };
 
-    // Reemplaza si ya existe
     const newPlacedPrizes = [
       ...placedPrizes.filter((p) => p.id !== prizeId),
       newPlacedPrize,
@@ -424,8 +409,6 @@ export default function Station9() {
 
     const maxScale = isSpecialPrize(prize.imageUrl) ? 7 : 5;
     const scale = clamp(newScale[0], 0.5, maxScale);
-
-    // Ajusta también su posición por margen dinámico
     const margin = getDynamicMarginPercent(scale);
 
     const updated = placedPrizes.map((p) =>
@@ -607,7 +590,6 @@ export default function Station9() {
       setSelectedPrizeId(null);
       setResizePrizeId(null);
 
-      // un poquito más para asegurar carga visual
       await new Promise((r) => setTimeout(r, 350));
 
       const capture = await html2canvas(canvasRef.current, {
@@ -627,15 +609,12 @@ export default function Station9() {
           return;
         }
 
-        const file = new File([blob], "mi-estacion-kairu.png", {
-          type: "image/png",
-        });
+        const file = new File([blob], "mi-estacion-kairu.png", { type: "image/png" });
 
         const canShare =
           isMobile &&
           typeof navigator !== "undefined" &&
           "share" in navigator &&
-          // algunos navegadores exigen canShare para archivos
           (!("canShare" in navigator) || (navigator as any).canShare?.({ files: [file] }));
 
         if (canShare) {
@@ -648,13 +627,11 @@ export default function Station9() {
             await finalizeDownload();
             return;
           } catch (error) {
-            // si cancela, no hacemos toast destructivo
             if ((error as DOMException).name === "AbortError") return;
             console.error("Error sharing image:", error);
           }
         }
 
-        // Fallback: descarga tradicional por blob URL
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
@@ -686,10 +663,7 @@ export default function Station9() {
       const userDocRef = doc(db, "users", user.uid);
       await setDoc(userDocRef, { chosenScenario: scenarioImageUrl }, { merge: true });
       setChosenScenario(scenarioImageUrl);
-      toast({
-        title: "Lienzo guardado",
-        description: "Tu estación ahora tiene un fondo.",
-      });
+      toast({ title: "Lienzo guardado", description: "Tu estación ahora tiene un fondo." });
     } catch (error) {
       console.error("Failed to save chosen scenario:", error);
       toast({
@@ -766,12 +740,7 @@ export default function Station9() {
         )}
 
         {isStationConfirmed && !isStationFinalized && (
-          <Button
-            onClick={handleUnlockStation}
-            className="flex-1 md:w-full text-xs md:text-sm"
-            variant="outline"
-            size="sm"
-          >
+          <Button onClick={handleUnlockStation} className="flex-1 md:w-full text-xs md:text-sm" variant="outline" size="sm">
             Modificar
           </Button>
         )}
@@ -853,13 +822,10 @@ export default function Station9() {
                     if (isStationConfirmed || !canvasRef.current) return;
 
                     const rect = canvasRef.current.getBoundingClientRect();
-
-                    // ✅ más estable: usar punto absoluto
                     let newXPercent = ((info.point.x - rect.left) / rect.width) * 100;
                     let newYPercent = ((info.point.y - rect.top) / rect.height) * 100;
 
                     const margin = getDynamicMarginPercent(prize.scale || 1);
-
                     newXPercent = clamp(newXPercent, margin, 100 - margin);
                     newYPercent = clamp(newYPercent, margin, 100 - margin);
 
@@ -888,12 +854,8 @@ export default function Station9() {
                     zIndex: isSelected ? 40 : 20,
                   }}
                   transition={{ duration: 0.15 }}
+                  // ✅ MEJORA: un solo toque/click abre/cierra panel de tamaño (móvil incluido)
                   onClick={(e) => {
-                    if (isStationConfirmed) return;
-                    e.stopPropagation();
-                    setSelectedPrizeId(prize.id);
-                  }}
-                  onDoubleClick={(e) => {
                     if (isStationConfirmed) return;
                     e.stopPropagation();
                     setSelectedPrizeId(prize.id);
@@ -969,12 +931,7 @@ export default function Station9() {
                   )}
 
                   {isStationConfirmed && !isStationFinalized && (
-                    <Button
-                      onClick={handleUnlockStation}
-                      className="flex-1 text-xs"
-                      variant="outline"
-                      size="sm"
-                    >
+                    <Button onClick={handleUnlockStation} className="flex-1 text-xs" variant="outline" size="sm">
                       Modificar
                     </Button>
                   )}
@@ -1078,12 +1035,7 @@ export default function Station9() {
               return (
                 <>
                   <div className="w-10 h-10 relative shrink-0">
-                    <Image
-                      src={prize.imageUrl}
-                      alt={prize.name}
-                      fill
-                      style={{ objectFit: "contain" }}
-                    />
+                    <Image src={prize.imageUrl} alt={prize.name} fill style={{ objectFit: "contain" }} />
                   </div>
 
                   <Slider
@@ -1146,10 +1098,7 @@ export default function Station9() {
 
                 <div className="w-full">
                   <Card className="p-4 shadow-lg bg-white/95 relative">
-                    <TypewriterText
-                      text={yaraMessage}
-                      className="text-base text-primary font-medium"
-                    />
+                    <TypewriterText text={yaraMessage} className="text-base text-primary font-medium" />
                     <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 md:left-auto md:right-[-10px] md:top-1/2 md:-translate-y-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-white/95 md:border-t-[10px] md:border-t-transparent md:border-b-[10px] md:border-b-transparent md:border-l-[10px] md:border-l-white/95" />
                   </Card>
                 </div>
