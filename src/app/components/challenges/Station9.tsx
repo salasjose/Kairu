@@ -363,6 +363,19 @@ export default function Station9() {
   };
 
   // ------------------------------------------------------------------
+  // Eliminar
+  // ------------------------------------------------------------------
+
+  const handleDeletePrize = async (prizeId: string) => {
+    if (isStationConfirmed) return;
+    const updated = placedPrizes.filter((p) => p.id !== prizeId);
+    setPlacedPrizes(updated);
+    await savePrizesToDb(updated);
+    setResizePrizeId(null);
+    setSelectedPrizeId(null);
+  };
+
+  // ------------------------------------------------------------------
   // Acciones Estación
   // ------------------------------------------------------------------
 
@@ -441,24 +454,21 @@ export default function Station9() {
   };
 
   // ------------------------------------------------------------------
-  // Render
+  // Auxiliares para Sidebar
   // ------------------------------------------------------------------
 
-  if (isLoading) return <div className="flex items-center justify-center h-screen">Cargando estación...</div>;
-  if (!chosenScenario) return <ScenarioPicker onScenarioSelect={async (url) => {
-    if (user && db) {
-      await setDoc(doc(db, "users", user.uid), { chosenScenario: url }, { merge: true });
-      setChosenScenario(url);
-    }
-  }} />;
+  const unplacedPrizes = useMemo(
+    () => collectedPrizes.filter((p) => !placedPrizes.some((pp) => pp.id === p.id)),
+    [collectedPrizes, placedPrizes]
+  );
 
-  const yaraMessage = `${playerName}, ¡Ya eres un Guardián! Mueve tus insignias por el lienzo arrastrándolas. Haz doble clic en ellas para ajustar su tamaño. ¡Crea tu estación ideal!`;
+  const allPrizesPlaced = collectedPrizes.length > 0 && unplacedPrizes.length === 0;
 
   const SidebarContent = () => (
     <>
       <div className="flex-grow w-full overflow-x-auto md:overflow-y-auto">
         <div className="flex flex-row md:flex-col gap-2 p-1">
-          {collectedPrizes.filter(p => !placedPrizes.some(pp => pp.id === p.id)).map((prize) => (
+          {unplacedPrizes.map((prize) => (
             <div key={prize.id} className="w-20 h-20 md:w-full aspect-square shrink-0">
               <DraggablePrize prize={prize} onDragEnd={(e, info) => handlePrizeDrop(prize.id, info)} />
             </div>
@@ -476,6 +486,20 @@ export default function Station9() {
       </div>
     </>
   );
+
+  // ------------------------------------------------------------------
+  // Render
+  // ------------------------------------------------------------------
+
+  if (isLoading) return <div className="flex items-center justify-center h-screen">Cargando estación...</div>;
+  if (!chosenScenario) return <ScenarioPicker onScenarioSelect={async (url) => {
+    if (user && db) {
+      await setDoc(doc(db, "users", user.uid), { chosenScenario: url }, { merge: true });
+      setChosenScenario(url);
+    }
+  }} />;
+
+  const yaraMessageFinal = `${playerName}, ¡Ya eres un Guardián! Mueve tus insignias por el lienzo arrastrándolas. Haz doble clic en ellas para ajustar su tamaño. ¡Crea tu estación ideal!`;
 
   return (
     <div className="relative w-screen h-screen bg-background overflow-hidden" onClick={() => { setSelectedPrizeId(null); setResizePrizeId(null); }}>
@@ -496,10 +520,18 @@ export default function Station9() {
                 onDragEnd={async (e, info) => {
                   if (isStationConfirmed || !canvasRef.current) return;
                   const rect = canvasRef.current.getBoundingClientRect();
-                  let x = ((info.point.x - rect.left) / rect.width) * 100;
-                  let y = ((info.point.y - rect.top) / rect.height) * 100;
-                  x = clamp(x, 5, 95); y = clamp(y, 5, 95);
-                  const updated = placedPrizes.map((p) => p.id === prize.id ? { ...p, x, y } : p);
+                  
+                  // Calcular nueva posición absoluta en píxeles y convertir a %
+                  const currentXPx = (prize.x / 100) * rect.width;
+                  const currentYPx = (prize.y / 100) * rect.height;
+                  
+                  let newX = ((currentXPx + info.offset.x) / rect.width) * 100;
+                  let newY = ((currentYPx + info.offset.y) / rect.height) * 100;
+                  
+                  newX = clamp(newX, 5, 95); 
+                  newY = clamp(newY, 5, 95);
+                  
+                  const updated = placedPrizes.map((p) => p.id === prize.id ? { ...p, x: newX, y: newY } : p);
                   setPlacedPrizes(updated);
                   await savePrizesToDb(updated);
                 }}
@@ -535,7 +567,7 @@ export default function Station9() {
       ) : (
         <AnimatePresence>
           {isSidebarOpen && (
-            <motion.div className="absolute z-30 bg-black/60 p-2 right-0 h-full w-32 flex flex-col" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}>
+            <motion.div className="absolute z-30 bg-black/60 p-2 right-0 top-0 h-full w-32 flex flex-col" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}>
               <h3 className="text-white font-bold text-sm mb-2 text-center mt-12">Insignias</h3>
               <SidebarContent />
             </motion.div>
@@ -566,7 +598,7 @@ export default function Station9() {
             <div className="relative flex flex-col md:flex-row items-center gap-4 max-w-2xl" onClick={(e) => e.stopPropagation()}>
               <div className="w-32 h-auto md:w-48 shrink-0"><Image src={yaraCharImage.imageUrl} alt="Yara" width={150} height={187} className="h-auto w-full" /></div>
               <div className="w-full"><Card className="p-4 shadow-lg bg-white/95 relative">
-                <TypewriterText text={yaraMessage} className="text-base text-primary font-medium" />
+                <TypewriterText text={yaraMessageFinal} className="text-base text-primary font-medium" />
                 <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 md:left-auto md:right-[-10px] md:top-1/2 md:-translate-y-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-white/95 md:border-l-[10px] md:border-l-white/95" />
               </Card></div>
             </div>
